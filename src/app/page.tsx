@@ -50,14 +50,14 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <AppHeader />
-      <main className="flex-1 items-center justify-center p-4 text-center md:p-6 lg:p-8">
+      <main className="flex-1 container mx-auto flex flex-col items-center justify-center p-4 text-center">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold font-heading">Welcome, {user.username}!</h1>
           <p className="text-muted-foreground mt-2">
             Select a date to see the schedule and track your progress.
           </p>
         </div>
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-md w-full mx-auto mb-8">
          <CountdownTimer targetDate={neet2026ExamDate} />
         </div>
         <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card">
