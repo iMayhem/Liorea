@@ -7,12 +7,14 @@ import {FeedbackCard} from '@/components/feedback-card';
 import {AppHeader} from '@/components/header';
 
 interface DashboardProps {
+  date: string;
   timetable: TimeTableData;
   user1Progress: UserProgress;
   user2Progress: UserProgress;
 }
 
 export function Dashboard({
+  date,
   timetable,
   user1Progress: initialUser1Progress,
   user2Progress: initialUser2Progress,
@@ -44,7 +46,6 @@ export function Dashboard({
   };
 
   const activeProgress = activeTab === 'user1' ? user1Progress : user2Progress;
-  const todayKey = Object.keys(timetable)[0];
 
   return (
     <div>
@@ -79,8 +80,8 @@ export function Dashboard({
         <hr style={{margin: '1rem 0'}} />
 
         <TimeTableView
-          day={todayKey}
-          subjects={timetable[todayKey]}
+          day={date}
+          subjects={timetable[date]}
           progress={activeProgress}
           onTaskToggle={handleTaskToggle}
         />
