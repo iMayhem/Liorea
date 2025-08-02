@@ -9,17 +9,15 @@ import { AppHeader } from '@/components/header';
 import * as React from 'react';
 
 export default function DayTrackerPage({params}: {params: {date: string}}) {
-  // The warning from Next.js is a bit misleading for client components,
-  // but we can ensure stability by validating the param carefully.
-  const { date } = params;
-
   // We'll use a state to manage the validity and parsed date to avoid issues during rendering.
   const [isValidDate, setIsValidDate] = React.useState<boolean | null>(null);
   const [parsedDate, setParsedDate] = React.useState<Date | null>(null);
 
   React.useEffect(() => {
-    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      const d = parseISO(date);
+    // Access params.date only on the client-side within useEffect.
+    const dateString = params.date;
+    if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const d = parseISO(dateString);
       if (isValid(d)) {
         setParsedDate(d);
         setIsValidDate(true);
@@ -27,7 +25,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       }
     }
     setIsValidDate(false);
-  }, [date]);
+  }, [params.date]); // Depend on params.date to re-run if it changes.
 
 
   if (isValidDate === null) {
