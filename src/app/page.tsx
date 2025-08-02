@@ -6,12 +6,13 @@ import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import {format} from 'date-fns';
 import {Calendar} from '@/components/ui/calendar';
-import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
+import {Card, CardContent} from '@/components/ui/card';
 import { AppLogo } from '@/components/icons';
 
 export default function HomePage() {
   const router = useRouter();
-  const [date, setDate] = React.useState<Date | undefined>(new Date('2025-08-03T00:00:00'));
+  // Set the initial date to undefined so no date is selected by default.
+  const [date, setDate] = React.useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -44,15 +45,18 @@ export default function HomePage() {
             <p className="text-muted-foreground mt-2">Select a date to see the schedule and track your progress.</p>
         </div>
         {isClient ? (
-          <Card className="w-full max-w-md shadow-lg border-0 bg-transparent">
+          <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50">
             <CardContent className="flex justify-center p-0">
               <Calendar
                 mode="single"
                 selected={date}
                 onSelect={handleDateSelect}
                 className="rounded-md"
+                // The first selectable date.
                 fromDate={new Date('2025-08-03')}
                 toDate={new Date('2026-05-05')}
+                // Set the calendar to open to August 2025.
+                defaultMonth={new Date('2025-08-01')}
               />
             </CardContent>
           </Card>
