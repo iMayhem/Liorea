@@ -38,7 +38,7 @@ function calculateCompletionPercentage(
   progress: UserProgress,
   day: string
 ) {
-  if (!subjects || subjects.length === 0) {
+  if (!subjects || subjects.length === 0 || !progress || !progress[day]) {
     return 0;
   }
   let totalTasks = 0;

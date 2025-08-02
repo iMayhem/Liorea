@@ -1,5 +1,5 @@
 import Link from 'next/link';
-export const AppLogo = () => (
+export const AppLogo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     width="32"
     height="32"
@@ -7,6 +7,7 @@ export const AppLogo = () => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className="text-primary"
+    {...props}
   >
     <path
       d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2V3z"

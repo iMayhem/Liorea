@@ -13,6 +13,7 @@ import {Skeleton} from '@/components/ui/skeleton';
 export default function DayTrackerPage({params}: {params: {date: string}}) {
   const {user, loading: authLoading} = useAuth();
   const router = useRouter();
+  const { date: dateString } = params;
 
   // We'll use a state to manage the validity and parsed date to avoid issues during rendering.
   const [isValidDate, setIsValidDate] = React.useState<boolean | null>(null);
@@ -26,7 +27,6 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
 
   React.useEffect(() => {
     // Access params.date only on the client-side within useEffect.
-    const {date: dateString} = params;
     if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const d = parseISO(dateString);
       if (isValid(d)) {
@@ -36,7 +36,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       }
     }
     setIsValidDate(false);
-  }, [params]); // Depend on the entire params object
+  }, [dateString]); 
 
   if (authLoading || isValidDate === null) {
     // Render a loading state or nothing while we validate the date on the client.
