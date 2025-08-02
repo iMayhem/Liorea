@@ -16,7 +16,7 @@ const fontHeading = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'NEET Trackr',
+  title: 'Neet Tracker',
   description: 'Track your NEET preparation with your partner.',
 };
 

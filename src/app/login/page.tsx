@@ -56,7 +56,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
             <AppLogo />
           </div>
-          <CardTitle>Welcome to NEET Trackr</CardTitle>
+          <CardTitle>Welcome to Neet Tracker</CardTitle>
           <CardDescription>Enter your username to continue.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

@@ -15,7 +15,7 @@ export function AppHeader() {
         <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <AppLogo />
-            <span className="font-bold">NEET Trackr</span>
+            <span className="font-bold">Neet Tracker</span>
           </Link>
         </div>
         {user && <p className="text-sm text-muted-foreground">Signed in as {user.username}</p>}
