@@ -1,5 +1,5 @@
-import { Dashboard } from "@/components/dashboard";
-import { timetableData, user1ProgressData, user2ProgressData } from "@/lib/data";
+import {Dashboard} from '@/components/dashboard';
+import {timetableData, user1ProgressData, user2ProgressData} from '@/lib/data';
 
 export default function Home() {
   return (
