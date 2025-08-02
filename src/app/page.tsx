@@ -8,10 +8,11 @@ import {Calendar} from '@/components/ui/calendar';
 
 export default function HomePage() {
   const router = useRouter();
-  const [date, setDate] = React.useState<Date | undefined>(undefined);
+  const [date, setDate] = React.useState<Date | undefined>(new Date('2025-08-03T00:00:00'));
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
-    setDate(new Date('2025-08-03T00:00:00'));
+    setIsClient(true);
   }, []);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -29,14 +30,16 @@ export default function HomePage() {
         <p className="text-muted-foreground">Select a date to see the schedule</p>
       </header>
       <main>
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={handleDateSelect}
-          className="rounded-md border"
-          fromDate={new Date('2025-08-03')}
-          toDate={new Date('2026-05-05')}
-        />
+        {isClient && (
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleDateSelect}
+            className="rounded-md border"
+            fromDate={new Date('2025-08-03')}
+            toDate={new Date('2026-05-05')}
+          />
+        )}
       </main>
     </div>
   );
