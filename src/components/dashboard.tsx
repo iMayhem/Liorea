@@ -5,6 +5,8 @@ import type {TimeTableData, UserProgress} from '@/lib/types';
 import {TimeTableView} from '@/components/timetable-view';
 import {FeedbackCard} from '@/components/feedback-card';
 import {AppHeader} from '@/components/header';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {Card, CardContent} from '@/components/ui/card';
 
 interface DashboardProps {
   date: string;
@@ -48,44 +50,67 @@ export function Dashboard({
   const activeProgress = activeTab === 'user1' ? user1Progress : user2Progress;
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
-      <main style={{padding: '1rem'}}>
-        <div>
-          <button
-            onClick={() => setActiveTab('user1')}
-            style={{
-              marginRight: '1rem',
-              textDecoration: activeTab === 'user1' ? 'underline' : 'none',
-            }}
-          >
-            My Progress
-          </button>
-          <button
-            onClick={() => setActiveTab('user2')}
-            style={{
-              textDecoration: activeTab === 'user2' ? 'underline' : 'none',
-            }}
-          >
-            Partner's Progress
-          </button>
-        </div>
-
-        <FeedbackCard
-          key={activeTab}
-          progress={activeProgress}
-          timetable={timetable}
-        />
-
-        <hr style={{margin: '1rem 0'}} />
-
-        <TimeTableView
-          day={date}
-          subjects={timetable[date]}
-          progress={activeProgress}
-          onTaskToggle={handleTaskToggle}
-        />
+      <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="user1">My Progress</TabsTrigger>
+            <TabsTrigger value="user2">Partner's Progress</TabsTrigger>
+          </TabsList>
+          <TabsContent value="user1">
+            <DashboardContent
+              progress={user1Progress}
+              timetable={timetable}
+              date={date}
+              handleTaskToggle={handleTaskToggle}
+            />
+          </TabsContent>
+          <TabsContent value="user2">
+            <DashboardContent
+              progress={user2Progress}
+              timetable={timetable}
+              date={date}
+              handleTaskToggle={handleTaskToggle}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
+    </div>
+  );
+}
+
+interface DashboardContentProps {
+  progress: UserProgress;
+  timetable: TimeTableData;
+  date: string;
+  handleTaskToggle: (
+    day: string,
+    subject: string,
+    task: string,
+    isCompleted: boolean
+  ) => void;
+}
+
+function DashboardContent({
+  progress,
+  timetable,
+  date,
+  handleTaskToggle,
+}: DashboardContentProps) {
+  return (
+    <div className="grid gap-6 mt-4">
+      <FeedbackCard
+        key={date}
+        progress={progress}
+        timetable={timetable}
+      />
+      <TimeTableView
+        day={date}
+        subjects={timetable[date]}
+        progress={progress}
+        onTaskToggle={handleTaskToggle}
+      />
     </div>
   );
 }
