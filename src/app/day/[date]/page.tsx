@@ -1,4 +1,3 @@
-
 // src/app/day/[date]/page.tsx
 'use client';
 

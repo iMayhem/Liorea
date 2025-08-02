@@ -10,12 +10,11 @@ import { AppLogo } from '@/components/icons';
 
 export default function HomePage() {
   const router = useRouter();
-  const [date, setDate] = React.useState<Date | undefined>(undefined);
+  const [date, setDate] = React.useState<Date | undefined>(new Date('2025-08-03T00:00:00'));
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true);
-    setDate(new Date('2025-08-03T00:00:00'));
   }, []);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
