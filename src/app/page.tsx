@@ -8,7 +8,11 @@ import {Calendar} from '@/components/ui/calendar';
 
 export default function HomePage() {
   const router = useRouter();
-  const [date, setDate] = React.useState<Date | undefined>(new Date('2025-08-03T00:00:00'));
+  const [date, setDate] = React.useState<Date | undefined>(undefined);
+
+  React.useEffect(() => {
+    setDate(new Date('2025-08-03T00:00:00'));
+  }, []);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -19,26 +23,17 @@ export default function HomePage() {
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-      }}
-    >
-      <header style={{padding: '1rem', textAlign: 'center'}}>
-        <h1>NEET Trackr</h1>
-        <p>Select a date to see the schedule</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
+      <header className="p-4 text-center">
+        <h1 className="text-4xl font-bold font-sans">NEET Trackr</h1>
+        <p className="text-muted-foreground">Select a date to see the schedule</p>
       </header>
       <main>
         <Calendar
           mode="single"
           selected={date}
           onSelect={handleDateSelect}
-          style={{border: '1px solid black', borderRadius: '0.5rem'}}
-          // Can be removed if we want to show dates beyond the range
+          className="rounded-md border"
           fromDate={new Date('2025-08-03')}
           toDate={new Date('2026-05-05')}
         />
