@@ -7,7 +7,6 @@ export interface Task {
 
 export interface Subject {
   name: string;
-  time: string;
 }
 
 export type DaySchedule = Subject[];

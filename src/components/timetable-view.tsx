@@ -94,9 +94,6 @@ export function TimeTableView({
                   <div className="flex items-center justify-between w-full">
                     <div className="text-left">
                       <h3 className="font-semibold">{subject.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {subject.time}
-                      </p>
                     </div>
                   </div>
                 </AccordionTrigger>
