@@ -1,31 +1,24 @@
 import type { TimeTableData, UserProgress } from "./types";
 import { format, eachDayOfInterval, getDay } from 'date-fns';
 
+const dailySchedule: { name: string; time: string }[] = [
+  { name: "11th Physics", time: "8:00 AM - 9:00 AM" },
+  { name: "12th Physics", time: "9:00 AM - 10:00 AM" },
+  { name: "11th Bio", time: "10:00 AM - 11:00 AM" },
+  { name: "12th Bio", time: "11:00 AM - 12:00 PM" },
+  { name: "Organic Chemistry", time: "1:00 PM - 2:00 PM" },
+  { name: "Inorganic Chemistry", time: "2:00 PM - 3:00 PM" },
+  { name: "Physical Chemistry", time: "3:00 PM - 4:00 PM" },
+];
+
 const weeklySchedule: { [key: number]: { name: string; time: string }[] } = {
-  1: [ // Monday
-    { name: "11th Physics", time: "9:00 AM - 10:30 AM" },
-    { name: "Organic Chemistry", time: "11:00 AM - 12:30 PM" },
-  ],
-  2: [ // Tuesday
-    { name: "11th Bio", time: "9:00 AM - 10:30 AM" },
-    { name: "12th Physics", time: "2:00 PM - 3:30 PM" },
-  ],
-  3: [ // Wednesday
-    { name: "Inorganic Chemistry", time: "9:00 AM - 10:30 AM" },
-    { name: "12th Bio", time: "11:00 AM - 12:30 PM" },
-  ],
-  4: [ // Thursday
-    { name: "11th Physics", time: "9:00 AM - 10:30 AM" },
-    { name: "Physical Chemistry", time: "2:00 PM - 3:30 PM" },
-  ],
-  5: [ // Friday
-    { name: "11th Bio", time: "9:00 AM - 10:30 AM" },
-    { name: "12th Physics", time: "11:00 AM - 12:30 PM" },
-  ],
-  6: [ // Saturday
-    { name: "Organic Chemistry", time: "10:00 AM - 12:00 PM" }
-  ],
-  0: [], // Sunday
+  0: dailySchedule, // Sunday
+  1: dailySchedule, // Monday
+  2: dailySchedule, // Tuesday
+  3: dailySchedule, // Wednesday
+  4: dailySchedule, // Thursday
+  5: dailySchedule, // Friday
+  6: dailySchedule, // Saturday
 };
 
 const generateTimeTableData = (): TimeTableData => {
