@@ -1,4 +1,5 @@
 import type {NextConfig} from 'next';
+const {headers} = require('./headers');
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -17,6 +18,14 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: headers,
+      },
+    ];
   },
 };
 

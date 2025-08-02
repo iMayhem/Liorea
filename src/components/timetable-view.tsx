@@ -68,9 +68,9 @@ export function TimeTableView({
   const completionPercentage = useMemo(() => calculateCompletionPercentage(subjects, progress, day), [subjects, progress, day]);
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg bg-card">
       <CardHeader>
-        <CardTitle>Today's Schedule ({day})</CardTitle>
+        <CardTitle className="font-heading">Today's Schedule ({day})</CardTitle>
         <CardDescription>
           Check off your tasks as you complete them.
         </CardDescription>
@@ -83,9 +83,9 @@ export function TimeTableView({
         {subjects && subjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {subjects.map((subject: Subject) => (
-              <Card key={subject.name} className="shadow-md">
+              <Card key={subject.name} className="shadow-md bg-card/80">
                 <CardHeader>
-                  <CardTitle className="text-lg">{subject.name}</CardTitle>
+                  <CardTitle className="text-lg font-heading">{subject.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
                    <div className="grid gap-4 pl-2">

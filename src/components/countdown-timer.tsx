@@ -48,45 +48,45 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   if (!timeLeft) {
     return (
         <div className="text-center p-4">
-            <h2 className="text-2xl font-bold">The exam date has passed!</h2>
+            <h2 className="text-xl font-bold font-heading">The exam date has passed!</h2>
         </div>
     );
   }
 
   return (
-    <div className="p-4 rounded-lg">
-      <h2 className="text-xl font-bold text-center mb-4">Time Remaining for NEET 2026</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
+    <div className="p-2 rounded-lg">
+      <h2 className="text-lg font-bold text-center mb-3 font-heading">Time Remaining for NEET 2026</h2>
+      <div className="grid grid-cols-4 gap-2 md:gap-3 text-center">
+        <Card className="bg-card/50">
+          <CardHeader className="p-2">
+            <CardTitle className="text-2xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Days</p>
+          <CardContent className="p-2 pt-0">
+            <p className="text-xs text-muted-foreground">Days</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
+        <Card className="bg-card/50">
+          <CardHeader className="p-2">
+            <CardTitle className="text-2xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Hours</p>
+          <CardContent className="p-2 pt-0">
+            <p className="text-xs text-muted-foreground">Hours</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
+        <Card className="bg-card/50">
+          <CardHeader className="p-2">
+            <CardTitle className="text-2xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Minutes</p>
+          <CardContent className="p-2 pt-0">
+            <p className="text-xs text-muted-foreground">Minutes</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
+        <Card className="bg-card/50">
+          <CardHeader className="p-2">
+            <CardTitle className="text-2xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Seconds</p>
+          <CardContent className="p-2 pt-0">
+            <p className="text-xs text-muted-foreground">Seconds</p>
           </CardContent>
         </Card>
       </div>

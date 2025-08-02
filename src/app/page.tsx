@@ -6,10 +6,8 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
-import { AppLogo } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 
@@ -54,7 +52,7 @@ export default function HomePage() {
       <AppHeader />
       <main className="flex-1 items-center justify-center p-4 text-center md:p-6 lg:p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold font-sans">Welcome, {user.username}!</h1>
+          <h1 className="text-4xl font-bold font-heading">Welcome, {user.username}!</h1>
           <p className="text-muted-foreground mt-2">
             Select a date to see the schedule and track your progress.
           </p>
@@ -62,7 +60,7 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto mb-8">
          <CountdownTimer targetDate={neet2026ExamDate} />
         </div>
-        <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto">
+        <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card">
           <CardContent className="flex justify-center p-0">
             <Calendar
               mode="single"
