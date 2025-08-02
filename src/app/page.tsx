@@ -13,11 +13,6 @@ export default function HomePage() {
   const router = useRouter();
   // Set the initial date to undefined so no date is selected by default.
   const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -44,25 +39,21 @@ export default function HomePage() {
             <h1 className="text-4xl font-bold font-sans">NEET Trackr</h1>
             <p className="text-muted-foreground mt-2">Select a date to see the schedule and track your progress.</p>
         </div>
-        {isClient ? (
-          <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50">
-            <CardContent className="flex justify-center p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={handleDateSelect}
-                className="rounded-md"
-                // The first selectable date.
-                fromDate={new Date('2025-08-03')}
-                toDate={new Date('2026-05-05')}
-                // Set the calendar to open to August 2025.
-                defaultMonth={new Date('2025-08-01')}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="w-[350px] h-[360px] bg-muted rounded-lg animate-pulse" />
-        )}
+        <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50">
+          <CardContent className="flex justify-center p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={handleDateSelect}
+              className="rounded-md"
+              // The first selectable date.
+              fromDate={new Date('2025-08-03')}
+              toDate={new Date('2026-05-05')}
+              // Set the calendar to open to August 2025.
+              defaultMonth={new Date('2025-08-01')}
+            />
+          </CardContent>
+        </Card>
       </main>
       <footer className="mt-auto p-4 text-center text-sm text-muted-foreground">
         <p>Built to help you succeed.</p>
