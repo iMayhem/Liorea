@@ -55,11 +55,11 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
   return (
     <div className="p-4 rounded-lg">
-      <h2 className="text-2xl font-bold text-center mb-4">Time Remaining for NEET 2026</h2>
+      <h2 className="text-xl font-bold text-center mb-4">Time Remaining for NEET 2026</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
         <Card>
           <CardHeader>
-            <CardTitle className="text-4xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">Days</p>
@@ -67,7 +67,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-4xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">Hours</p>
@@ -75,7 +75,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-4xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">Minutes</p>
@@ -83,7 +83,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-4xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">Seconds</p>
