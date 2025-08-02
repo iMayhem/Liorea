@@ -1,4 +1,4 @@
-import {genkit, configureGenkit} from 'genkit';
+import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import next from '@genkit-ai/next';
 
@@ -13,9 +13,7 @@ export const ai =
       googleAI({
         apiKey: process.env.GEMINI_API_KEY,
       }),
-      next({
-        // The Next.js plugin is required for Genkit to work with Next.js.
-      }),
+      next(), // The Next.js plugin is required for Genkit to work with Next.js.
     ],
     logLevel: 'debug',
     enableTracing: true,
@@ -24,15 +22,3 @@ export const ai =
 if (process.env.NODE_ENV !== 'production') {
   g.ai = ai;
 }
-
-// The configureGenkit call is essential for the Next.js plugin to work correctly.
-configureGenkit({
-  plugins: [
-    googleAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    }),
-    next(),
-  ],
-  logLevel: 'debug',
-  enableTracing: true,
-});
