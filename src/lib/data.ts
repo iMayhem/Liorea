@@ -3,27 +3,27 @@ import { format, eachDayOfInterval, getDay } from 'date-fns';
 
 const weeklySchedule: { [key: number]: { name: string; time: string }[] } = {
   1: [ // Monday
-    { name: "Physics", time: "9:00 AM - 10:30 AM" },
-    { name: "Chemistry", time: "11:00 AM - 12:30 PM" },
+    { name: "11th Physics", time: "9:00 AM - 10:30 AM" },
+    { name: "Organic Chemistry", time: "11:00 AM - 12:30 PM" },
   ],
   2: [ // Tuesday
-    { name: "Biology", time: "9:00 AM - 10:30 AM" },
-    { name: "Physics", time: "2:00 PM - 3:30 PM" },
+    { name: "11th Bio", time: "9:00 AM - 10:30 AM" },
+    { name: "12th Physics", time: "2:00 PM - 3:30 PM" },
   ],
   3: [ // Wednesday
-    { name: "Chemistry", time: "9:00 AM - 10:30 AM" },
-    { name: "Biology", time: "11:00 AM - 12:30 PM" },
+    { name: "Inorganic Chemistry", time: "9:00 AM - 10:30 AM" },
+    { name: "12th Bio", time: "11:00 AM - 12:30 PM" },
   ],
   4: [ // Thursday
-    { name: "Physics", time: "9:00 AM - 10:30 AM" },
-    { name: "Chemistry", time: "2:00 PM - 3:30 PM" },
+    { name: "11th Physics", time: "9:00 AM - 10:30 AM" },
+    { name: "Physical Chemistry", time: "2:00 PM - 3:30 PM" },
   ],
   5: [ // Friday
-    { name: "Biology", time: "9:00 AM - 10:30 AM" },
-    { name: "Physics", time: "11:00 AM - 12:30 PM" },
+    { name: "11th Bio", time: "9:00 AM - 10:30 AM" },
+    { name: "12th Physics", time: "11:00 AM - 12:30 PM" },
   ],
   6: [ // Saturday
-    { name: "Chemistry", time: "10:00 AM - 12:00 PM" }
+    { name: "Organic Chemistry", time: "10:00 AM - 12:00 PM" }
   ],
   0: [], // Sunday
 };
