@@ -12,58 +12,67 @@ import {db} from '@/lib/firebase';
 import {doc, onSnapshot} from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { getDocId } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 interface DashboardProps {
+  username: string;
   date: string;
   timetable: TimeTableData;
 }
 
-export function Dashboard({date, timetable}: DashboardProps) {
-  const [user1Progress, setUser1Progress] = useState<UserProgress | null>(null);
-  const [user2Progress, setUser2Progress] = useState<UserProgress | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('user1');
+export function Dashboard({username, date, timetable}: DashboardProps) {
+  const {user} = useAuth();
+  const [partnerUsername, setPartnerUsername] = useState<string>('');
+  const [myProgress, setMyProgress] = useState<UserProgress | null>(null);
+  const [partnerProgress, setPartnerProgress] = useState<UserProgress | null>(
+    null
+  );
+  const [activeTab, setActiveTab] = useState<string>('my-progress');
   const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    if (user?.partner) {
+      setPartnerUsername(user.partner);
+    }
+  }, [user]);
 
   useEffect(() => {
     setLoading(true);
     // Reset progress when date changes
-    setUser1Progress(null);
-    setUser2Progress(null);
+    setMyProgress(null);
+    setPartnerProgress(null);
 
-    const docId1 = getDocId('user1', date);
-    const docId2 = getDocId('user2', date);
-
-    const unsubUser1 = onSnapshot(doc(db, 'progress', docId1), (snapshot) => {
+    const unsubMyProgress = onSnapshot(doc(db, 'progress', getDocId(username, date)), (snapshot) => {
       if (snapshot.exists()) {
-        setUser1Progress(snapshot.data() as UserProgress);
+        setMyProgress(snapshot.data() as UserProgress);
       } else {
-        // If document doesn't exist, create it.
-        getProgressForUser('user1', date, timetable).then(setUser1Progress);
+        getProgressForUser(username, date, timetable).then(setMyProgress);
       }
     });
 
-    const unsubUser2 = onSnapshot(doc(db, 'progress', docId2), (snapshot) => {
-      if (snapshot.exists()) {
-        setUser2Progress(snapshot.data() as UserProgress);
-      } else {
-        // If document doesn't exist, create it.
-        getProgressForUser('user2', date, timetable).then(setUser2Progress);
-      }
-    });
-    
+    let unsubPartnerProgress = () => {};
+    if (partnerUsername) {
+      unsubPartnerProgress = onSnapshot(doc(db, 'progress', getDocId(partnerUsername, date)), (snapshot) => {
+        if (snapshot.exists()) {
+          setPartnerProgress(snapshot.data() as UserProgress);
+        } else {
+          getProgressForUser(partnerUsername, date, timetable).then(setPartnerProgress);
+        }
+      });
+    }
+
     return () => {
-      unsubUser1();
-      unsubUser2();
+      unsubMyProgress();
+      unsubPartnerProgress();
     };
-  }, [date, timetable]);
+  }, [date, timetable, username, partnerUsername]);
 
   useEffect(() => {
-    // Set loading to false only when both users' data has been loaded
-    if(user1Progress && user2Progress) {
-        setLoading(false);
+    // Set loading to false only when necessary data has been loaded
+    if (myProgress && (!partnerUsername || partnerProgress)) {
+      setLoading(false);
     }
-  }, [user1Progress, user2Progress]);
-
+  }, [myProgress, partnerProgress, partnerUsername]);
 
   const handleTaskToggle = async (
     day: string,
@@ -71,27 +80,28 @@ export function Dashboard({date, timetable}: DashboardProps) {
     task: string,
     isCompleted: boolean
   ) => {
-    const userId = activeTab;
-    // Optimistic update
-    const progressUpdater = userId === 'user1' ? setUser1Progress : setUser2Progress;
-     progressUpdater(prev => {
-      if (!prev) return null;
-      return {
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [subject]: {
-          ...prev[day][subject],
-          [task]: isCompleted,
-        },
-      },
-    }});
-
-    try {
-      await updateTask(userId, day, subject, task, isCompleted);
-    } catch (error) {
-        console.error("Failed to update task:", error);
-        // Here you might want to revert the optimistic update and show a toast notification
+    // Users can only edit their own progress
+    if (activeTab === 'my-progress') {
+       // Optimistic update
+      setMyProgress(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          [day]: {
+            ...prev[day],
+            [subject]: {
+              ...prev[day][subject],
+              [task]: isCompleted,
+            },
+          },
+        };
+      });
+      try {
+        await updateTask(username, day, subject, task, isCompleted);
+      } catch (error) {
+          console.error("Failed to update task:", error);
+          // Here you might want to revert the optimistic update and show a toast notification
+      }
     }
   };
   
@@ -116,24 +126,34 @@ export function Dashboard({date, timetable}: DashboardProps) {
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="user1">My Progress</TabsTrigger>
-            <TabsTrigger value="user2">Partner's Progress</TabsTrigger>
+            <TabsTrigger value="my-progress">My Progress</TabsTrigger>
+            <TabsTrigger value="partner-progress" disabled={!partnerUsername}>
+              {partnerUsername ? `${partnerUsername}'s Progress` : "Partner's Progress"}
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="user1">
+          <TabsContent value="my-progress">
             <DashboardContent
-              progress={user1Progress}
+              progress={myProgress}
               timetable={timetable}
               date={date}
               handleTaskToggle={handleTaskToggle}
+              isReadOnly={false}
             />
           </TabsContent>
-          <TabsContent value="user2">
-             <DashboardContent
-              progress={user2Progress}
-              timetable={timetable}
-              date={date}
-              handleTaskToggle={handleTaskToggle}
-            />
+          <TabsContent value="partner-progress">
+             {partnerUsername ? (
+              <DashboardContent
+                progress={partnerProgress}
+                timetable={timetable}
+                date={date}
+                handleTaskToggle={handleTaskToggle}
+                isReadOnly={true}
+              />
+            ) : (
+               <div className="text-center p-8">
+                  <p>You haven't added a partner yet.</p>
+               </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
@@ -151,6 +171,7 @@ interface DashboardContentProps {
     task: string,
     isCompleted: boolean
   ) => void;
+  isReadOnly: boolean;
 }
 
 function DashboardContent({
@@ -158,6 +179,7 @@ function DashboardContent({
   timetable,
   date,
   handleTaskToggle,
+  isReadOnly,
 }: DashboardContentProps) {
   if (!progress) {
     return  <div className="space-y-4 mt-4">
@@ -177,6 +199,7 @@ function DashboardContent({
         subjects={timetable[date]}
         progress={progress}
         onTaskToggle={handleTaskToggle}
+        isReadOnly={isReadOnly}
       />
     </div>
   );

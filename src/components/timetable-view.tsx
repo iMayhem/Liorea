@@ -29,6 +29,7 @@ interface TimeTableViewProps {
     task: string,
     isCompleted: boolean
   ) => void;
+  isReadOnly: boolean;
 }
 
 const tasks = [
@@ -66,6 +67,7 @@ export function TimeTableView({
   subjects,
   progress,
   onTaskToggle,
+  isReadOnly,
 }: TimeTableViewProps) {
 
   const completionPercentage = useMemo(() => calculateCompletionPercentage(subjects, progress, day), [subjects, progress, day]);
@@ -114,6 +116,7 @@ export function TimeTableView({
                               !!checked
                             )
                           }
+                          disabled={isReadOnly}
                         />
                          <label
                           htmlFor={`${day}-${subject.name}-${task.id}`}

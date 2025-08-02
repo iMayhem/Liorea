@@ -7,8 +7,10 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { AppLogo } from '@/components/icons';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { AppHeader } from '@/components/header';
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -19,7 +21,15 @@ const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mo
 
 export default function HomePage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -29,21 +39,20 @@ export default function HomePage() {
     }
   };
 
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <AppLogo />
-              <span className="font-bold">NEET Trackr</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
       <main className="flex-1 items-center justify-center p-4 text-center md:p-6 lg:p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold font-sans">NEET Trackr</h1>
+          <h1 className="text-4xl font-bold font-sans">Welcome, {user.username}!</h1>
           <p className="text-muted-foreground mt-2">
             Select a date to see the schedule and track your progress.
           </p>
