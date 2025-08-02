@@ -1,3 +1,4 @@
+import Link from 'next/link';
 export const AppLogo = () => (
   <svg
     width="32"
@@ -23,7 +24,7 @@ export const AppLogo = () => (
     />
      <path
       d="m9 12 2 2 4-4"
-      stroke="hsl(var(--primary-foreground))"
+      stroke="hsl(var(--background))"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"

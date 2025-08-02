@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import {format} from 'date-fns';
 import {Calendar} from '@/components/ui/calendar';
@@ -26,25 +27,30 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
-      <header className="flex flex-col items-center text-center mb-8">
-        <AppLogo />
-        <h1 className="text-4xl font-bold font-sans mt-2">NEET Trackr</h1>
-        <p className="text-muted-foreground">Select a date to see the schedule and track your progress.</p>
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+            <div className="mr-4 flex items-center">
+            <Link href="/" className="flex items-center space-x-2">
+                <AppLogo />
+                <span className="font-bold">NEET Trackr</span>
+            </Link>
+            </div>
+        </div>
       </header>
-      <main>
+      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-6 lg:p-8">
+        <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold font-sans">NEET Trackr</h1>
+            <p className="text-muted-foreground mt-2">Select a date to see the schedule and track your progress.</p>
+        </div>
         {isClient ? (
-          <Card className="w-full max-w-md shadow-lg">
-            <CardHeader>
-              <CardTitle>Select a Date</CardTitle>
-              <CardDescription>Pick a day to view your study schedule.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
+          <Card className="w-full max-w-md shadow-lg border-0 bg-transparent">
+            <CardContent className="flex justify-center p-0">
               <Calendar
                 mode="single"
                 selected={date}
                 onSelect={handleDateSelect}
-                className="rounded-md border"
+                className="rounded-md"
                 fromDate={new Date('2025-08-03')}
                 toDate={new Date('2026-05-05')}
               />
@@ -54,7 +60,7 @@ export default function HomePage() {
           <div className="w-[350px] h-[360px] bg-muted rounded-lg animate-pulse" />
         )}
       </main>
-      <footer className="mt-8 text-center text-sm text-muted-foreground">
+      <footer className="mt-auto p-4 text-center text-sm text-muted-foreground">
         <p>Built to help you succeed.</p>
       </footer>
     </div>
