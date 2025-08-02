@@ -5,7 +5,6 @@ import React, {createContext, useContext, useState, useEffect, ReactNode} from '
 
 interface User {
   username: string;
-  partner?: string; // Optional partner username
 }
 
 interface AuthContextType {
@@ -13,7 +12,6 @@ interface AuthContextType {
   loading: boolean;
   login: (username: string) => void;
   logout: () => void;
-  setPartner: (partnerUsername: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,17 +45,9 @@ export function AuthProvider({children}: {children: ReactNode}) {
     localStorage.removeItem('user');
     setUser(null);
   };
-  
-  const setPartner = (partnerUsername: string) => {
-    if (user) {
-      const updatedUser = { ...user, partner: partnerUsername };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-    }
-  };
 
   return (
-    <AuthContext.Provider value={{user, loading, login, logout, setPartner}}>
+    <AuthContext.Provider value={{user, loading, login, logout}}>
       {children}
     </AuthContext.Provider>
   );
