@@ -28,10 +28,12 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
     if (!user) return;
     
     setLoading(true);
-    // Reset progress when date changes
     setMyProgress(null);
 
-    const unsubMyProgress = onSnapshot(doc(db, 'progress', getDocId(user.username, date)), (snapshot) => {
+    const docId = getDocId(user.username, date);
+    const docRef = doc(db, 'progress', docId);
+
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
         setMyProgress(snapshot.data() as UserProgress);
       } else {
@@ -43,9 +45,9 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
 
 
     return () => {
-      unsubMyProgress();
+      unsubscribe();
     };
-  }, [date, timetable, user, username]);
+  }, [date, user, timetable]);
 
   const handleTaskToggle = async (
     day: string,

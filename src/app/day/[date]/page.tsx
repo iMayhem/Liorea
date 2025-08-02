@@ -17,8 +17,15 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   const { date: dateString } = params;
 
   // We'll use a state to manage the validity and parsed date to avoid issues during rendering.
-  const [isValidDate, setIsValidDate] = React.useState<boolean | null>(null);
-  const [parsedDate, setParsedDate] = React.useState<Date | null>(null);
+  const [parsedDate, setParsedDate] = React.useState<Date | null>(() => {
+    if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const d = parseISO(dateString);
+      if (isValid(d)) {
+        return d;
+      }
+    }
+    return null;
+  });
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -26,20 +33,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
     }
   }, [user, authLoading, router]);
 
-  React.useEffect(() => {
-    // Access params.date only on the client-side within useEffect.
-    if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const d = parseISO(dateString);
-      if (isValid(d)) {
-        setParsedDate(d);
-        setIsValidDate(true);
-        return;
-      }
-    }
-    setIsValidDate(false);
-  }, [dateString]); 
-
-  if (authLoading || isValidDate === null) {
+  if (authLoading || !user) {
     // Render a loading state or nothing while we validate the date on the client.
     return (
       <div className="flex flex-col min-h-screen bg-background">
@@ -54,8 +48,8 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       </div>
     );
   }
-
-  if (isValidDate === false || !parsedDate) {
+  
+  if (!parsedDate) {
     return (
       <div>
         <AppHeader />
@@ -78,23 +72,6 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   const formattedDate = format(parsedDate, 'MMMM d, yyyy');
 
   const timetable = generateTimeTableForDate(formattedDate);
-
-  if (!user) {
-    // This will be captured by the loading state mostly, but as a fallback
-    return (
-       <div className="flex flex-col min-h-screen bg-background">
-        <AppHeader />
-        <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-96 w-full" />
-            </div>
-         </main>
-      </div>
-    );
-  }
-
 
   return (
     <Dashboard
