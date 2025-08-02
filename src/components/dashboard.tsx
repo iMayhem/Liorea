@@ -4,7 +4,6 @@
 import React, {useState, useEffect} from 'react';
 import type {TimeTableData, UserProgress} from '@/lib/types';
 import {TimeTableView} from '@/components/timetable-view';
-import {FeedbackCard} from '@/components/feedback-card';
 import {AppHeader} from '@/components/header';
 import {getProgressForUser, updateTask} from '@/lib/firestore';
 import {db} from '@/lib/firebase';
@@ -124,11 +123,6 @@ function DashboardContent({
   }
   return (
     <div className="grid gap-6 mt-4">
-      <FeedbackCard
-        key={date}
-        progress={progress}
-        timetable={timetable}
-      />
       <TimeTableView
         day={date}
         subjects={timetable[date]}
