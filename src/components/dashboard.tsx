@@ -7,18 +7,15 @@ import {TimeTableView} from '@/components/timetable-view';
 import {FeedbackCard} from '@/components/feedback-card';
 import {AppHeader} from '@/components/header';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
-import {getProgress, updateTask} from '@/lib/firestore';
+import {getProgressForUser, updateTask} from '@/lib/firestore';
 import {db} from '@/lib/firebase';
 import {doc, onSnapshot} from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
+import { getDocId } from '@/lib/utils';
 
 interface DashboardProps {
   date: string;
   timetable: TimeTableData;
-}
-
-function getDocId(userId: string, date: string): string {
-  return `${userId}-${date.replace(/, /g, '-')}`;
 }
 
 export function Dashboard({date, timetable}: DashboardProps) {
@@ -28,30 +25,38 @@ export function Dashboard({date, timetable}: DashboardProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchInitialProgress = async () => {
-      setLoading(true);
-      try {
-        const [p1, p2] = await Promise.all([
-          getProgress('user1', date, timetable),
-          getProgress('user2', date, timetable),
-        ]);
-        setUser1Progress(p1);
-        setUser2Progress(p2);
-      } catch(error) {
-        console.error("Failed to fetch initial progress:", error);
-      } finally {
-        setLoading(false);
+    setLoading(true);
+
+    const docId1 = getDocId('user1', date);
+    const docId2 = getDocId('user2', date);
+
+    const unsubUser1 = onSnapshot(doc(db, 'progress', docId1), (doc) => {
+      if (doc.exists()) {
+        setUser1Progress(doc.data() as UserProgress);
+      } else {
+        // If document doesn't exist, create it.
+        getProgressForUser('user1', date, timetable).then(setUser1Progress);
       }
-    };
-
-    fetchInitialProgress();
-
-    const unsubUser1 = onSnapshot(doc(db, 'progress', getDocId('user1', date)), (doc) => {
-        if(doc.exists()) setUser1Progress(doc.data() as UserProgress);
     });
-    const unsubUser2 = onSnapshot(doc(db, 'progress', getDocId('user2', date)), (doc) => {
-        if(doc.exists()) setUser2Progress(doc.data() as UserProgress);
+
+    const unsubUser2 = onSnapshot(doc(db, 'progress', docId2), (doc) => {
+      if (doc.exists()) {
+        setUser2Progress(doc.data() as UserProgress);
+      } else {
+        // If document doesn't exist, create it.
+        getProgressForUser('user2', date, timetable).then(setUser2Progress);
+      }
     });
+    
+    // Determine loading state
+    const checkLoading = async () => {
+        const p1 = await getProgressForUser('user1', date, timetable);
+        const p2 = await getProgressForUser('user2', date, timetable);
+        if(p1 && p2) {
+          setLoading(false);
+        }
+    }
+    checkLoading();
 
     return () => {
       unsubUser1();

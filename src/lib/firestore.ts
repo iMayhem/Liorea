@@ -2,20 +2,10 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import type { UserProgress, TimeTableData } from './types';
 import { generateInitialProgressForDate } from './data';
-
-/**
- * Generates a document ID for a given user and date.
- * @param userId - The ID of the user.
- * @param date - The date string (e.g., "August 3, 2025").
- * @returns The document ID.
- */
-function getDocId(userId: string, date: string): string {
-  // Firestore document IDs are case-sensitive and cannot contain slashes.
-  return `${userId}-${date.replace(/, /g, '-')}`;
-}
+import { getDocId } from './utils';
 
 
 /**
@@ -26,7 +16,7 @@ function getDocId(userId: string, date: string): string {
  * @param timetable - The timetable for the given date.
  * @returns The user's progress.
  */
-export async function getProgress(
+export async function getProgressForUser(
   userId: string,
   date: string,
   timetable: TimeTableData
