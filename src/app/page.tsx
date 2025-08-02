@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { AppHeader } from '@/components/header';
+import { CountdownTimer } from '@/components/countdown-timer';
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -23,6 +24,7 @@ export default function HomePage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
+  const neet2026ExamDate = '2026-05-03T00:00:00';
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -56,6 +58,9 @@ export default function HomePage() {
           <p className="text-muted-foreground mt-2">
             Select a date to see the schedule and track your progress.
           </p>
+        </div>
+        <div className="max-w-2xl mx-auto mb-8">
+         <CountdownTimer targetDate={neet2026ExamDate} />
         </div>
         <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto">
           <CardContent className="flex justify-center p-0">
