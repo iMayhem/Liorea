@@ -26,43 +26,44 @@ export function Dashboard({date, timetable}: DashboardProps) {
 
   useEffect(() => {
     setLoading(true);
+    // Reset progress when date changes
+    setUser1Progress(null);
+    setUser2Progress(null);
 
     const docId1 = getDocId('user1', date);
     const docId2 = getDocId('user2', date);
 
-    const unsubUser1 = onSnapshot(doc(db, 'progress', docId1), (doc) => {
-      if (doc.exists()) {
-        setUser1Progress(doc.data() as UserProgress);
+    const unsubUser1 = onSnapshot(doc(db, 'progress', docId1), (snapshot) => {
+      if (snapshot.exists()) {
+        setUser1Progress(snapshot.data() as UserProgress);
       } else {
         // If document doesn't exist, create it.
         getProgressForUser('user1', date, timetable).then(setUser1Progress);
       }
     });
 
-    const unsubUser2 = onSnapshot(doc(db, 'progress', docId2), (doc) => {
-      if (doc.exists()) {
-        setUser2Progress(doc.data() as UserProgress);
+    const unsubUser2 = onSnapshot(doc(db, 'progress', docId2), (snapshot) => {
+      if (snapshot.exists()) {
+        setUser2Progress(snapshot.data() as UserProgress);
       } else {
         // If document doesn't exist, create it.
         getProgressForUser('user2', date, timetable).then(setUser2Progress);
       }
     });
     
-    // Determine loading state
-    const checkLoading = async () => {
-        const p1 = await getProgressForUser('user1', date, timetable);
-        const p2 = await getProgressForUser('user2', date, timetable);
-        if(p1 && p2) {
-          setLoading(false);
-        }
-    }
-    checkLoading();
-
     return () => {
       unsubUser1();
       unsubUser2();
     };
   }, [date, timetable]);
+
+  useEffect(() => {
+    // Set loading to false only when both users' data has been loaded
+    if(user1Progress && user2Progress) {
+        setLoading(false);
+    }
+  }, [user1Progress, user2Progress]);
+
 
   const handleTaskToggle = async (
     day: string,
@@ -94,7 +95,7 @@ export function Dashboard({date, timetable}: DashboardProps) {
     }
   };
   
-  if (loading || !user1Progress || !user2Progress) {
+  if (loading) {
     return (
        <div className="flex flex-col min-h-screen bg-background">
         <AppHeader />
@@ -159,7 +160,10 @@ function DashboardContent({
   handleTaskToggle,
 }: DashboardContentProps) {
   if (!progress) {
-    return null;
+    return  <div className="space-y-4 mt-4">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-96 w-full" />
+            </div>;
   }
   return (
     <div className="grid gap-6 mt-4">
