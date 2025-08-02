@@ -8,12 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import {Checkbox} from '@/components/ui/checkbox';
 import {BookOpen, ClipboardList, Pencil, RefreshCw} from 'lucide-react';
 import {Progress} from './ui/progress';
@@ -51,9 +45,10 @@ function calculateCompletionPercentage(
   let completedTasks = 0;
 
   subjects.forEach(subject => {
+    // Each subject has a fixed number of tasks
+    totalTasks += tasks.length;
     const subjectProgress = progress[day]?.[subject.name];
     if (subjectProgress) {
-      totalTasks += tasks.length;
       completedTasks += Object.values(subjectProgress).filter(Boolean).length;
     }
   });
@@ -86,21 +81,14 @@ export function TimeTableView({
       </CardHeader>
       <CardContent>
         {subjects && subjects.length > 0 ? (
-          <Accordion type="single" collapsible className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {subjects.map((subject: Subject) => (
-              <AccordionItem
-                value={subject.name}
-                key={subject.name}
-              >
-                <AccordionTrigger>
-                  <div className="flex items-center justify-between w-full">
-                    <div className="text-left">
-                      <h3 className="font-semibold">{subject.name}</h3>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="grid gap-4 pl-2">
+              <Card key={subject.name} className="shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-lg">{subject.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                   <div className="grid gap-4 pl-2">
                     {tasks.map(task => (
                       <div key={task.id} className="flex items-center space-x-3">
                         <Checkbox
@@ -128,10 +116,10 @@ export function TimeTableView({
                       </div>
                     ))}
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+                </CardContent>
+              </Card>
             ))}
-          </Accordion>
+          </div>
         ) : (
           <p className="text-center text-muted-foreground py-8">
             No classes scheduled for today.
