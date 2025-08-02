@@ -12,6 +12,7 @@ import {Checkbox} from '@/components/ui/checkbox';
 import {BookOpen, ClipboardList, Pencil, RefreshCw} from 'lucide-react';
 import {Progress} from './ui/progress';
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 
 interface TimeTableViewProps {
   day: string;
@@ -64,8 +65,32 @@ export function TimeTableView({
   onTaskToggle,
   isReadOnly,
 }: TimeTableViewProps) {
+  const completionPercentage = useMemo(
+    () => calculateCompletionPercentage(subjects, progress, day),
+    [subjects, progress, day]
+  );
 
-  const completionPercentage = useMemo(() => calculateCompletionPercentage(subjects, progress, day), [subjects, progress, day]);
+  const containerVariants = {
+    hidden: {opacity: 0},
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: {y: 20, opacity: 0},
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+      },
+    },
+  };
 
   return (
     <Card className="shadow-lg bg-card">
@@ -76,50 +101,64 @@ export function TimeTableView({
         </CardDescription>
         <div className="pt-2">
           <Progress value={completionPercentage} className="w-full" />
-          <p className="text-right text-sm text-muted-foreground mt-1">{Math.round(completionPercentage)}% Complete</p>
+          <p className="text-right text-sm text-muted-foreground mt-1">
+            {Math.round(completionPercentage)}% Complete
+          </p>
         </div>
       </CardHeader>
       <CardContent>
         {subjects && subjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {subjects.map((subject: Subject) => (
-              <Card key={subject.name} className="shadow-md bg-card/80">
-                <CardHeader>
-                  <CardTitle className="text-lg font-heading">{subject.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                   <div className="grid gap-4 pl-2">
-                    {tasks.map(task => (
-                      <div key={task.id} className="flex items-center space-x-3">
-                        <Checkbox
-                          id={`${day}-${subject.name}-${task.id}`}
-                          checked={
-                            progress[day]?.[subject.name]?.[task.id] ?? false
-                          }
-                          onCheckedChange={checked =>
-                            onTaskToggle(
-                              day,
-                              subject.name,
-                              task.id,
-                              !!checked
-                            )
-                          }
-                          disabled={isReadOnly}
-                        />
-                         <label
-                          htmlFor={`${day}-${subject.name}-${task.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+              <motion.div key={subject.name} variants={itemVariants}>
+                <Card className="shadow-md bg-card/80 h-full">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-heading">
+                      {subject.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 pl-2">
+                      {tasks.map(task => (
+                        <div
+                          key={task.id}
+                          className="flex items-center space-x-3"
                         >
-                          {task.icon}
-                          {task.label}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                          <Checkbox
+                            id={`${day}-${subject.name}-${task.id}`}
+                            checked={
+                              progress[day]?.[subject.name]?.[task.id] ?? false
+                            }
+                            onCheckedChange={checked =>
+                              onTaskToggle(
+                                day,
+                                subject.name,
+                                task.id,
+                                !!checked
+                              )
+                            }
+                            disabled={isReadOnly}
+                          />
+                          <label
+                            htmlFor={`${day}-${subject.name}-${task.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                          >
+                            {task.icon}
+                            {task.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           <p className="text-center text-muted-foreground py-8">
             No classes scheduled for today.

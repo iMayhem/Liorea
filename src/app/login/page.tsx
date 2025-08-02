@@ -9,6 +9,7 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {AppLogo} from '@/components/icons';
 import {Loader2} from 'lucide-react';
+import {motion} from 'framer-motion';
 
 export default function LoginPage() {
   const {user, login, loading} = useAuth();
@@ -50,7 +51,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+    <motion.div
+      initial={{opacity: 0, scale: 0.95}}
+      animate={{opacity: 1, scale: 1}}
+      transition={{duration: 0.3}}
+      className="flex items-center justify-center min-h-screen bg-background p-4"
+    >
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -82,6 +88,6 @@ export default function LoginPage() {
           </CardFooter>
         </form>
       </Card>
-    </div>
+    </motion.div>
   );
 }

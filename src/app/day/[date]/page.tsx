@@ -9,6 +9,7 @@ import {generateTimeTableForDate} from '@/lib/data';
 import {AppHeader} from '@/components/header';
 import {useAuth} from '@/hooks/use-auth';
 import {Skeleton} from '@/components/ui/skeleton';
+import {motion} from 'framer-motion';
 
 export default function DayTrackerPage({params}: {params: {date: string}}) {
   const {user, loading: authLoading} = useAuth();
@@ -58,13 +59,18 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
     return (
       <div>
         <AppHeader />
-        <main className="container mx-auto p-4 text-center">
+        <motion.main
+          initial={{opacity: 0, y: 20}}
+          animate={{opacity: 1, y: 0}}
+          transition={{duration: 0.5}}
+          className="container mx-auto p-4 text-center"
+        >
           <h1 className="text-2xl font-bold mt-8">Invalid Date</h1>
           <p className="text-muted-foreground">
             The date provided is not valid or has an incorrect format
             (YYYY-MM-DD).
           </p>
-        </main>
+        </motion.main>
       </div>
     );
   }

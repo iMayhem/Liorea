@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
+import { motion } from 'framer-motion';
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -50,7 +51,13 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <AppHeader />
-      <main className="flex-1 container mx-auto flex flex-col items-center justify-center p-4 text-center">
+      <motion.main
+        initial={{opacity: 0, y: -20}}
+        animate={{opacity: 1, y: 0}}
+        exit={{opacity: 0, y: 20}}
+        transition={{duration: 0.5}}
+        className="flex-1 container mx-auto flex flex-col items-center justify-center p-4 text-center"
+      >
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold font-heading">Welcome, {user.username}!</h1>
           <p className="text-muted-foreground mt-2">
@@ -73,7 +80,7 @@ export default function HomePage() {
             />
           </CardContent>
         </Card>
-      </main>
+      </motion.main>
       <footer className="mt-auto p-4 text-center text-sm text-muted-foreground">
         <p>Built to help you succeed.</p>
       </footer>
