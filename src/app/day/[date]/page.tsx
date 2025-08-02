@@ -1,4 +1,6 @@
 // src/app/day/[date]/page.tsx
+'use client';
+
 import {Dashboard} from '@/components/dashboard';
 import {generateTimeTableForDate} from '@/lib/data';
 import {format, parseISO, isValid} from 'date-fns';
