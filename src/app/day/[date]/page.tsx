@@ -1,8 +1,6 @@
 // src/app/day/[date]/page.tsx
-'use client';
-
 import {Dashboard} from '@/components/dashboard';
-import {generateTimeTableForDate, generateInitialProgressForDate} from '@/lib/data';
+import {generateTimeTableForDate} from '@/lib/data';
 import {format, parseISO, isValid} from 'date-fns';
 import { AppHeader } from '@/components/header';
 import * as React from 'react';
@@ -53,15 +51,11 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   const formattedDate = format(parsedDate, 'MMMM d, yyyy');
 
   const timetable = generateTimeTableForDate(formattedDate);
-  const user1Progress = generateInitialProgressForDate(timetable);
-  const user2Progress = generateInitialProgressForDate(timetable);
-
+  
   return (
     <Dashboard
       date={formattedDate}
       timetable={timetable}
-      user1Progress={user1Progress}
-      user2Progress={user2Progress}
     />
   );
 }
