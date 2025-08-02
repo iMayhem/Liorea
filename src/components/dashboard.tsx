@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import type { TimeTableData, UserProgress } from "@/lib/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeTableView } from "@/components/timetable-view";
 import { FeedbackCard } from "@/components/feedback-card";
 import { AppHeader } from "@/components/header";
@@ -58,36 +57,36 @@ export function Dashboard({
   const activeProgress = activeTab === "user1" ? user1Progress : user2Progress;
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div>
       <AppHeader />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="user1">My Progress</TabsTrigger>
-              <TabsTrigger value="user2">Partner's Progress</TabsTrigger>
-            </TabsList>
-            <FeedbackCard
-              key={activeTab}
-              progress={activeProgress}
-              timetable={timetable}
-            />
-          </div>
-          <TabsContent value="user1">
-            <TimeTableView
-              timetable={timetable}
-              progress={user1Progress}
-              onTaskToggle={handleTaskToggle}
-            />
-          </TabsContent>
-          <TabsContent value="user2">
-            <TimeTableView
-              timetable={timetable}
-              progress={user2Progress}
-              onTaskToggle={handleTaskToggle}
-            />
-          </TabsContent>
-        </Tabs>
+      <main style={{padding: '1rem'}}>
+        <div>
+          <button onClick={() => setActiveTab("user1")} style={{marginRight: '1rem', textDecoration: activeTab === 'user1' ? 'underline' : 'none' }}>My Progress</button>
+          <button onClick={() => setActiveTab("user2")} style={{ textDecoration: activeTab === 'user2' ? 'underline' : 'none' }}>Partner's Progress</button>
+        </div>
+        
+        <FeedbackCard
+          key={activeTab}
+          progress={activeProgress}
+          timetable={timetable}
+        />
+
+        <hr style={{margin: '1rem 0'}} />
+        
+        {activeTab === 'user1' && (
+           <TimeTableView
+            timetable={timetable}
+            progress={user1Progress}
+            onTaskToggle={handleTaskToggle}
+          />
+        )}
+        {activeTab === 'user2' && (
+          <TimeTableView
+            timetable={timetable}
+            progress={user2Progress}
+            onTaskToggle={handleTaskToggle}
+          />
+        )}
       </main>
     </div>
   );

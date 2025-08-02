@@ -1,17 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Loader2, Sparkles } from "lucide-react";
 import { personalizedFeedback } from "@/ai/flows/personalized-feedback";
 import type { TimeTableData, UserProgress } from "@/lib/types";
 
@@ -57,11 +46,12 @@ function formatProgressForAI(
 export function FeedbackCard({ progress, timetable }: FeedbackCardProps) {
   const [feedback, setFeedback] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const handleGenerateFeedback = async () => {
     setIsLoading(true);
     setFeedback("");
+    setShowFeedback(true);
     try {
       const taskCompletionData = formatProgressForAI(progress, timetable);
       const result = await personalizedFeedback({ taskCompletionData });
@@ -75,36 +65,26 @@ export function FeedbackCard({ progress, timetable }: FeedbackCardProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button onClick={handleGenerateFeedback}>
-          <Sparkles className="mr-2 h-4 w-4" />
-          Get AI Feedback
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="font-headline flex items-center gap-2">
-            <Sparkles className="text-primary"/>
-            Personalized Feedback
-          </DialogTitle>
-          <DialogDescription>
+    <div style={{marginTop: '1rem'}}>
+      <button onClick={handleGenerateFeedback}>
+        Get AI Feedback
+      </button>
+      {showFeedback && (
+        <div style={{marginTop: '1rem', border: '1px solid black', padding: '1rem'}}>
+          <h3>Personalized Feedback</h3>
+          <p>
             Here is AI-powered feedback based on the tracked progress.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{feedback}</p>
-          )}
+          </p>
+          <div>
+            {isLoading ? (
+              <div>Loading...</div>
+            ) : (
+              <p>{feedback}</p>
+            )}
+          </div>
+           <button onClick={() => setShowFeedback(false)} style={{marginTop: '1rem'}}>Close</button>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   );
 }
