@@ -48,6 +48,7 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
       } else {
         getProgressForUser(username, date, timetable).then(setMyProgress);
       }
+       setLoading(false); // Stop loading as soon as user's progress is available
     });
 
     let unsubPartnerProgress = () => {};
@@ -59,6 +60,9 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
           getProgressForUser(partnerUsername, date, timetable).then(setPartnerProgress);
         }
       });
+    } else {
+      // If there's no partner, we don't need to wait for partner progress
+      setPartnerProgress(null);
     }
 
     return () => {
@@ -66,13 +70,6 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
       unsubPartnerProgress();
     };
   }, [date, timetable, username, partnerUsername]);
-
-  useEffect(() => {
-    // Set loading to false only when necessary data has been loaded
-    if (myProgress && (!partnerUsername || partnerProgress)) {
-      setLoading(false);
-    }
-  }, [myProgress, partnerProgress, partnerUsername]);
 
   const handleTaskToggle = async (
     day: string,
