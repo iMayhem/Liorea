@@ -12,10 +12,10 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   // We'll use a state to manage the validity and parsed date to avoid issues during rendering.
   const [isValidDate, setIsValidDate] = React.useState<boolean | null>(null);
   const [parsedDate, setParsedDate] = React.useState<Date | null>(null);
+  const { date: dateString } = params;
 
   React.useEffect(() => {
     // Access params.date only on the client-side within useEffect.
-    const dateString = params.date;
     if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const d = parseISO(dateString);
       if (isValid(d)) {
@@ -25,7 +25,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       }
     }
     setIsValidDate(false);
-  }, [params.date]); // Depend on params.date to re-run if it changes.
+  }, [dateString]); // Depend on dateString
 
 
   if (isValidDate === null) {
