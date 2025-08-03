@@ -33,6 +33,7 @@ export const practiceData: Subject[] = [
         slug: 'biology',
         chapters: [
             { name: 'Molecular Basis of Inheritance', slug: 'molecular-basis-of-inheritance' },
+            { name: 'Locomotion and Movement', slug: 'locomotion-and-movement' },
         ],
     },
 ];
