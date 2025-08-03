@@ -20,10 +20,13 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
-export default function PracticeQuestionPage({ params }: { params: { subject: string; chapter: string; type: string } }) {
+export default function PracticeQuestionPage({ params: paramsProp }: { params: { subject: string; chapter: string; type: string } }) {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
+    
+    // In recent Next.js versions, params can be a promise. We use `React.use` to unwrap it.
+    const params = React.use(paramsProp as any);
 
     const { subject: subjectSlug, chapter: chapterSlug, type: quizType } = params;
     const subject = practiceData.find((s) => s.slug === subjectSlug);
