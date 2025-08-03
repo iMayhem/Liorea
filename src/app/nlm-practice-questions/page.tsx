@@ -1,7 +1,8 @@
+
 // src/app/nlm-practice-questions/page.tsx
 'use client';
 
-import *reac from 'react';
+import * as React from 'react';
 import {useRouter} from 'next/navigation';
 import {AppHeader} from '@/components/header';
 import {Button} from '@/components/ui/button';
