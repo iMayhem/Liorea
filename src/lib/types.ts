@@ -29,3 +29,14 @@ export interface UserProgress {
     }
   }
 }
+
+export interface Question {
+  id?: string; // Optional for local data
+  questionNumber: number;
+  questionText: string;
+  questionImageURL?: string;
+  options: {[key: string]: string};
+  correctAnswer: string;
+  chapter?: string;
+  subject?: string;
+}
