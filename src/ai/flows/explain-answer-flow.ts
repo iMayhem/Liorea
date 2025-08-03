@@ -14,7 +14,7 @@ import {googleAI} from '@genkit-ai/googleai';
 // Define the schema for the input data.
 const ExplainAnswerInputSchema = z.object({
   questionText: z.string().describe('The text of the question.'),
-  options: z.record(z.string()).describe('The available options for the question.'),
+  options: z.any().describe('The available options for the question.'),
   selectedAnswer: z.string().describe("The user's selected (incorrect) answer."),
   correctAnswer: z.string().describe('The correct answer.'),
 });
