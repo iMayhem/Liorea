@@ -2,7 +2,7 @@ import type {TimeTableData, UserProgress, Subject} from './types';
 import {parse, getDay} from 'date-fns';
 
 const schedule: {[key: number]: Subject[]} = {
-  0: [], // Sunday
+  0: [{name: 'Short Notes'}, {name: 'Full Week Revision'}], // Sunday
   1: [ // Monday
     {name: '12th Physics'},
     {name: 'Inorganic Chemistry'},
