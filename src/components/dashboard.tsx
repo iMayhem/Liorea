@@ -5,7 +5,7 @@ import React, {useState, useEffect} from 'react';
 import type {TimeTableData, UserProgress} from '@/lib/types';
 import {TimeTableView} from '@/components/timetable-view';
 import {AppHeader} from '@/components/header';
-import {getProgressForUser, updateTask} from '@/lib/firestore';
+import {getProgressForUser, updateTask, updateScore} from '@/lib/firestore';
 import {db} from '@/lib/firebase';
 import {doc, onSnapshot} from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -76,6 +76,33 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
           // Here you might want to revert the optimistic update and show a toast notification
       }
   };
+
+  const handleScoreSave = async (
+    day: string,
+    subject: string,
+    score: number
+  ) => {
+    // Optimistic update
+    setMyProgress(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          [subject]: {
+            ...prev[day][subject],
+            score: score,
+          },
+        },
+      };
+    });
+    try {
+      await updateScore(username, day, subject, score);
+    } catch (error) {
+      console.error("Failed to save score:", error);
+       // Revert and show error
+    }
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -98,6 +125,7 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
               timetable={timetable}
               date={date}
               handleTaskToggle={handleTaskToggle}
+              handleScoreSave={handleScoreSave}
             />
          )}
       </motion.main>
@@ -115,6 +143,7 @@ interface DashboardContentProps {
     task: string,
     isCompleted: boolean
   ) => void;
+  handleScoreSave: (day: string, subject: string, score: number) => void;
 }
 
 function DashboardContent({
@@ -122,6 +151,7 @@ function DashboardContent({
   timetable,
   date,
   handleTaskToggle,
+  handleScoreSave,
 }: DashboardContentProps) {
   if (!progress) {
     return  <div className="space-y-4 mt-4">
@@ -136,6 +166,7 @@ function DashboardContent({
         subjects={timetable[date]}
         progress={progress}
         onTaskToggle={handleTaskToggle}
+        onScoreSave={handleScoreSave}
         isReadOnly={false}
       />
     </div>

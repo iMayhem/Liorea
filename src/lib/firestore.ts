@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import type { UserProgress, TimeTableData } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
@@ -67,4 +67,30 @@ export async function updateTask(
     },
     { merge: true } // Use merge to avoid overwriting the whole document
   );
+}
+
+
+/**
+ * Updates the score for a specific subject on a given date.
+ * @param userId - The ID of the user.
+ * @param date - The date string.
+ * @param subject - The subject name.
+ * @param score - The score to save.
+ */
+export async function updateScore(
+  userId: string,
+  date: string,
+  subject: string,
+  score: number
+): Promise<void> {
+    const docId = getDocId(userId, date);
+    const docRef = doc(db, 'progress', docId);
+
+    // Use dot notation to update only the score field of a specific subject
+    const fieldPath = `${date}.${subject}.score`;
+
+    // We use updateDoc here for clarity, but setDoc with merge would also work.
+    await updateDoc(docRef, {
+        [fieldPath]: score
+    });
 }

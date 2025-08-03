@@ -11,11 +11,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {Checkbox} from '@/components/ui/checkbox';
-import {BookOpen, ClipboardList, Pencil, RefreshCw, CheckSquare, Trophy as TrophyIcon} from 'lucide-react';
+import {BookOpen, ClipboardList, Pencil, RefreshCw, CheckSquare, Trophy as TrophyIcon, FilePlus } from 'lucide-react';
 import {Progress} from './ui/progress';
 import {motion} from 'framer-motion';
 import {RewardDialog} from './reward-dialog';
+import {ScoreDialog} from './score-dialog';
 import { testSchedule } from '@/lib/data';
+import { Button } from './ui/button';
 
 interface TimeTableViewProps {
   day: string;
@@ -27,6 +29,7 @@ interface TimeTableViewProps {
     task: string,
     isCompleted: boolean
   ) => void;
+  onScoreSave: (day: string, subject: string, score: number) => void;
   isReadOnly: boolean;
 }
 
@@ -68,7 +71,8 @@ function calculateCompletionPercentage(
     totalTasks += tasksForSubject.length;
     const subjectProgress = progress[day]?.[subject.name];
     if (subjectProgress) {
-      completedTasks += Object.values(subjectProgress).filter(Boolean).length;
+      // We only count boolean `true` values as completed tasks, ignoring the score
+      completedTasks += Object.values(subjectProgress).filter(val => val === true).length;
     }
   });
 
@@ -81,28 +85,42 @@ export function TimeTableView({
   subjects,
   progress,
   onTaskToggle,
+  onScoreSave,
   isReadOnly,
 }: TimeTableViewProps) {
   const [showReward, setShowReward] = useState(false);
-  
+  const [showScoreDialog, setShowScoreDialog] = useState(false);
+  const [selectedSubjectForScore, setSelectedSubjectForScore] = useState<string | null>(null);
+
   const completionPercentage = useMemo(
     () => calculateCompletionPercentage(subjects, progress, day),
     [subjects, progress, day]
   );
   
-  // Track if the reward has been shown for this session to avoid re-triggering
   const [rewardShown, setRewardShown] = useState(false);
 
   useEffect(() => {
     if (completionPercentage === 100 && !rewardShown) {
       setShowReward(true);
-      setRewardShown(true); // Ensure it only triggers once per mount/day change
+      setRewardShown(true); 
     }
-     // Reset if the day changes and completion is no longer 100%
     if (completionPercentage < 100) {
       setRewardShown(false);
     }
   }, [completionPercentage, rewardShown]);
+
+  const handleSaveScoreClick = (subjectName: string) => {
+    setSelectedSubjectForScore(subjectName);
+    setShowScoreDialog(true);
+  };
+  
+  const handleScoreDialogSubmit = (score: number) => {
+    if(selectedSubjectForScore) {
+      onScoreSave(day, selectedSubjectForScore, score);
+    }
+    setShowScoreDialog(false);
+    setSelectedSubjectForScore(null);
+  }
 
   const containerVariants = {
     hidden: {opacity: 0},
@@ -129,6 +147,14 @@ export function TimeTableView({
   return (
     <>
     <RewardDialog isOpen={showReward} onOpenChange={setShowReward} />
+    {selectedSubjectForScore && (
+        <ScoreDialog
+            isOpen={showScoreDialog}
+            onOpenChange={setShowScoreDialog}
+            onSave={handleScoreDialogSubmit}
+            testName={selectedSubjectForScore}
+        />
+    )}
     <Card className="shadow-lg bg-card">
       <CardHeader>
         <CardTitle className="font-heading">Today's Schedule ({day})</CardTitle>
@@ -150,7 +176,11 @@ export function TimeTableView({
             initial="hidden"
             animate="visible"
           >
-            {subjects.map((subject: Subject) => (
+            {subjects.map((subject: Subject) => {
+                const isTest = testSchedule.some(test => test.name === subject.name);
+                const savedScore = progress[day]?.[subject.name]?.score;
+
+               return (
               <motion.div key={subject.name} variants={itemVariants}>
                 <Card className="shadow-md bg-card/80 h-full">
                   <CardHeader>
@@ -168,7 +198,7 @@ export function TimeTableView({
                           <Checkbox
                             id={`${day}-${subject.name}-${task.id}`}
                             checked={
-                              progress[day]?.[subject.name]?.[task.id] ?? false
+                              !!progress[day]?.[subject.name]?.[task.id]
                             }
                             onCheckedChange={checked =>
                               onTaskToggle(
@@ -189,11 +219,23 @@ export function TimeTableView({
                           </label>
                         </div>
                       ))}
+                      {isTest && !isReadOnly && (
+                        <div className="mt-4">
+                          {typeof savedScore === 'number' ? (
+                                <p className="text-sm font-medium text-primary">Score: {savedScore}/720</p>
+                          ) : (
+                            <Button size="sm" onClick={() => handleSaveScoreClick(subject.name)}>
+                                <FilePlus className="mr-2 h-4 w-4" />
+                                Save Score
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+            )})}
           </motion.div>
         ) : (
           <p className="text-center text-muted-foreground py-8">
