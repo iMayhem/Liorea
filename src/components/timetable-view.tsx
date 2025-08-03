@@ -1,5 +1,7 @@
+// src/components/timetable-view.tsx
 'use client';
 
+import React, {useMemo, useState, useEffect} from 'react';
 import type {UserProgress, Subject} from '@/lib/types';
 import {
   Card,
@@ -11,8 +13,8 @@ import {
 import {Checkbox} from '@/components/ui/checkbox';
 import {BookOpen, ClipboardList, Pencil, RefreshCw} from 'lucide-react';
 import {Progress} from './ui/progress';
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import {motion} from 'framer-motion';
+import {RewardDialog} from './reward-dialog';
 
 interface TimeTableViewProps {
   day: string;
@@ -65,10 +67,26 @@ export function TimeTableView({
   onTaskToggle,
   isReadOnly,
 }: TimeTableViewProps) {
+  const [showReward, setShowReward] = useState(false);
+  
   const completionPercentage = useMemo(
     () => calculateCompletionPercentage(subjects, progress, day),
     [subjects, progress, day]
   );
+  
+  // Track if the reward has been shown for this session to avoid re-triggering
+  const [rewardShown, setRewardShown] = useState(false);
+
+  useEffect(() => {
+    if (completionPercentage === 100 && !rewardShown) {
+      setShowReward(true);
+      setRewardShown(true); // Ensure it only triggers once per mount/day change
+    }
+     // Reset if the day changes and completion is no longer 100%
+    if (completionPercentage < 100) {
+      setRewardShown(false);
+    }
+  }, [completionPercentage, rewardShown]);
 
   const containerVariants = {
     hidden: {opacity: 0},
@@ -93,6 +111,8 @@ export function TimeTableView({
   };
 
   return (
+    <>
+    <RewardDialog isOpen={showReward} onOpenChange={setShowReward} />
     <Card className="shadow-lg bg-card">
       <CardHeader>
         <CardTitle className="font-heading">Today's Schedule ({day})</CardTitle>
@@ -166,5 +186,6 @@ export function TimeTableView({
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
