@@ -15,7 +15,7 @@ import Image from 'next/image';
 
 interface Question {
   id: string;
-  question: number;
+  questionNumber: number;
   questionText: string;
   questionImageURL?: string;
   options: {[key: string]: string};
@@ -44,18 +44,21 @@ export default function NlmPracticePage() {
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
             const questionData = { id: doc.id, ...doc.data() } as Question;
-            // The document field is questionNumber, but our component state uses question
-            questionData.question = doc.data().questionNumber;
             setCurrentQuestion(questionData);
 
-            // Check if this is the last question
-            const nextQ = query(
-                collection(db, 'nlm_questions'),
-                where('questionNumber', '==', questionNumber + 1),
-                limit(1)
-            );
-            const nextSnapshot = await getDocs(nextQ);
-            setIsLastQuestion(nextSnapshot.empty);
+            // Check if this is the last question (assuming 119 questions)
+            if (questionNumber === 119) {
+              setIsLastQuestion(true);
+            } else {
+               // A more robust way to check if it's the last question
+                const nextQ = query(
+                    collection(db, 'nlm_questions'),
+                    where('questionNumber', '==', questionNumber + 1),
+                    limit(1)
+                );
+                const nextSnapshot = await getDocs(nextQ);
+                setIsLastQuestion(nextSnapshot.empty);
+            }
 
         } else if (questionNumber === 1) { 
             setCurrentQuestion(null);
@@ -88,7 +91,7 @@ export default function NlmPracticePage() {
     setAnswered(false);
     setSelectedAnswer(null);
     if(currentQuestion) {
-        fetchQuestionByNumber(currentQuestion.question + 1);
+        fetchQuestionByNumber(currentQuestion.questionNumber + 1);
     }
   };
 
@@ -124,7 +127,7 @@ export default function NlmPracticePage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                  <h2 className="text-xl font-bold mb-2">Question #{currentQuestion.question}</h2>
+                  <h2 className="text-xl font-bold mb-2">Question #{currentQuestion.questionNumber}</h2>
                   <p className="text-lg font-semibold mb-4 whitespace-pre-line">{currentQuestion.questionText}</p>
                   {currentQuestion.questionImageURL && (
                     <div className="mb-4 relative w-full h-64">
