@@ -3,10 +3,14 @@ import type { Question } from './types';
 
 export async function getQuestions(subject: string, chapter: string, type: string): Promise<Question[]> {
   let fileName = type;
+  
+  // This logic correctly maps the URL slug to the corresponding file name.
   if (type === 'topic-wise-questions') {
       fileName = 'topic-wise';
   } else if (type === 'neet-rankers-stuff') {
       fileName = 'neet-rankers';
+  } else if (type === 'neet-flashback') {
+      fileName = 'neet-flashback';
   }
 
   try {
