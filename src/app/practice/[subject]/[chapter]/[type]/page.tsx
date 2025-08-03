@@ -11,78 +11,140 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { nlmQuestions } from '@/lib/quiz-data';
-import type { Question } from '@/lib/types';
+import type { Question, QuizProgress } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import { getQuizProgress, saveQuizAttempt } from '@/lib/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function PracticeQuestionPage({ params }: { params: { subject: string; chapter: string; type: string } }) {
+    const { user, loading: authLoading } = useAuth();
+    const { toast } = useToast();
+    const router = useRouter();
+
     const subject = practiceData.find((s) => s.slug === params.subject);
     const chapter = subject?.chapters.find((c) => c.slug === params.chapter);
 
+    const [questions, setQuestions] = React.useState<Question[]>([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
+    const [loading, setLoading] = React.useState(true);
+    const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
+    const [answered, setAnswered] = React.useState(false);
+    const [progress, setProgress] = React.useState<QuizProgress | null>(null);
+    
+    // This effect handles fetching questions and user progress.
+    React.useEffect(() => {
+        if (!user) return;
+
+        async function loadData() {
+            setLoading(true);
+            // This condition ensures we only load NLM questions for now
+            if (params.subject === 'physics' && params.chapter === 'newtons-laws-of-motion' && params.type === 'topic-wise-questions') {
+                setQuestions(nlmQuestions);
+                try {
+                    const userProgress = await getQuizProgress(user.username);
+                    setProgress(userProgress[params.subject]?.[params.chapter] || {});
+                } catch (error) {
+                    console.error("Failed to fetch quiz progress:", error);
+                    toast({ title: "Error", description: "Could not load your progress." });
+                }
+            } else {
+                 setQuestions([]); // No questions for other sections yet
+            }
+            setLoading(false);
+        }
+
+        loadData();
+    }, [user, params.subject, params.chapter, params.type, toast]);
+    
+    // This effect updates the UI state based on loaded progress for the current question
+    React.useEffect(() => {
+        if (!progress || !questions.length) return;
+        
+        const currentQuestion = questions[currentQuestionIndex];
+        const savedAttempt = progress[currentQuestion.questionNumber];
+
+        if (savedAttempt) {
+            setSelectedAnswer(savedAttempt.selected);
+            setAnswered(true);
+        } else {
+            setSelectedAnswer(null);
+            setAnswered(false);
+        }
+    }, [currentQuestionIndex, progress, questions]);
+
+
     if (!subject || !chapter || params.type !== 'topic-wise-questions' || chapter.slug !== 'newtons-laws-of-motion') {
-         // This page is currently only for NLM Topic Wise Questions
          return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
     }
-
-
-  const [questions, setQuestions] = React.useState<Question[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
-  const [loading, setLoading] = React.useState(true);
-  const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
-  const [answered, setAnswered] = React.useState(false);
-  const router = useRouter();
-
-  React.useEffect(() => {
-    // For now, we only have NLM questions
-    if (chapter.slug === 'newtons-laws-of-motion') {
-        setQuestions(nlmQuestions);
-    }
-    setLoading(false);
-  }, [chapter]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
-  const handleAnswer = (optionKey: string) => {
-    if (answered) return;
+  const handleAnswer = async (optionKey: string) => {
+    if (answered || !user) return;
+    
+    const isCorrect = optionKey === currentQuestion.correctAnswer;
+    
     setSelectedAnswer(optionKey);
     setAnswered(true);
+
+    try {
+        await saveQuizAttempt(user.username, params.subject, params.chapter, currentQuestion.questionNumber, optionKey, isCorrect);
+        // Also update local progress state to re-render immediately
+        setProgress(prev => ({
+            ...prev,
+            [currentQuestion.questionNumber]: { selected: optionKey, isCorrect }
+        }));
+        toast({
+            title: isCorrect ? "Correct!" : "Incorrect",
+            description: isCorrect ? "Great job!" : `The correct answer is ${currentQuestion.correctAnswer}.`,
+            variant: isCorrect ? 'default' : 'destructive',
+        });
+    } catch (error) {
+        console.error("Failed to save attempt:", error);
+        toast({ title: "Error", description: "Could not save your answer. Please try again." });
+         // Revert optimistic UI updates
+        setSelectedAnswer(null);
+        setAnswered(false);
+    }
   };
 
   const handleNextQuestion = () => {
-    if (isLastQuestion && answered) {
-      router.push('/');
+    if (isLastQuestion) {
+      router.push(`/practice/${params.subject}/${params.chapter}`);
       return;
     }
-    setAnswered(false);
-    setSelectedAnswer(null);
     setCurrentQuestionIndex(prevIndex => prevIndex + 1);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <>
         <AppHeader />
-        <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex items-center justify-center min-h-[calc(100vh-56px)] bg-background">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </>
     );
   }
 
+  if (!questions.length) {
+     return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
+  }
+
   if (!currentQuestion) {
+    // This case handles when index might be out of bounds, though unlikely with current logic.
     return (
-      <>
+       <>
         <AppHeader />
-        <div className="container mx-auto p-4 text-center">
-          <h1 className="text-2xl font-bold mt-8">No Questions Found</h1>
-          <p className="text-muted-foreground">
-            Could not find any practice questions for this chapter.
-          </p>
+        <div className="flex items-center justify-center min-h-[calc(100vh-56px)] bg-background">
+           <p>Could not load question.</p>
         </div>
       </>
-    );
+    )
   }
 
   return (
@@ -117,8 +179,8 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
                     <Image
                       src={currentQuestion.questionImageURL}
                       alt={`Question ${currentQuestion.questionNumber} diagram`}
-                      layout="fill"
-                      objectFit="contain"
+                      fill={true}
+                      style={{objectFit: 'contain'}}
                     />
                   </div>
                 )}
@@ -136,12 +198,12 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
                           className={cn(
                             'h-auto py-3 whitespace-normal justify-start text-left',
                             {
-                              'bg-green-500 text-white hover:bg-green-600':
+                              'bg-green-700 text-white hover:bg-green-800':
                                 answered && isCorrect,
-                              'bg-red-500 text-white hover:bg-red-600':
+                              'bg-red-700 text-white hover:bg-red-800':
                                 answered && isSelected && !isCorrect,
-                              'border-green-500 border-2':
-                                answered && isCorrect && !isSelected,
+                               'border-green-500 border-2':
+                                answered && isCorrect && !isSelected
                             }
                           )}
                           variant="outline"

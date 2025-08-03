@@ -40,3 +40,16 @@ export interface Question {
   chapter?: string;
   subject?: string;
 }
+
+export interface QuizProgress {
+    [questionNumber: number]: {
+        selected: string;
+        isCorrect: boolean;
+    }
+}
+
+export interface UserQuizProgress {
+    [subject: string]: {
+        [chapter: string]: QuizProgress
+    }
+}

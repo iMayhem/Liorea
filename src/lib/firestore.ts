@@ -3,7 +3,7 @@
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import type { UserProgress, TimeTableData } from './types';
+import type { UserProgress, TimeTableData, UserQuizProgress } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
 
@@ -93,4 +93,59 @@ export async function updateScore(
     await updateDoc(docRef, {
         [fieldPath]: score
     });
+}
+
+
+/**
+ * Saves a user's quiz attempt for a specific question.
+ * @param userId - The ID of the user.
+ * @param subjectSlug - The slug of the subject.
+ * @param chapterSlug - The slug of the chapter.
+ * @param questionNumber - The number of the question.
+ * @param selectedOption - The option selected by the user.
+ * @param isCorrect - Whether the selected option was correct.
+ */
+export async function saveQuizAttempt(
+  userId: string,
+  subjectSlug: string,
+  chapterSlug: string,
+  questionNumber: number,
+  selectedOption: string,
+  isCorrect: boolean
+): Promise<void> {
+  const docRef = doc(db, 'quiz_progress', userId);
+
+  const fieldPath = `${subjectSlug}.${chapterSlug}.${questionNumber}`;
+
+  await setDoc(
+    docRef,
+    {
+      [subjectSlug]: {
+        [chapterSlug]: {
+          [questionNumber]: {
+            selected: selectedOption,
+            isCorrect: isCorrect,
+          },
+        },
+      },
+    },
+    { merge: true }
+  );
+}
+
+
+/**
+ * Retrieves a user's entire quiz progress.
+ * @param userId - The ID of the user.
+ * @returns The user's quiz progress, or an empty object if none exists.
+ */
+export async function getQuizProgress(userId: string): Promise<UserQuizProgress> {
+    const docRef = doc(db, 'quiz_progress', userId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return docSnap.data() as UserQuizProgress;
+    } else {
+        return {};
+    }
 }
