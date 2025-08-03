@@ -107,11 +107,6 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
             ...prev,
             [currentQuestion.questionNumber]: { ...prev?.[currentQuestion.questionNumber], selected: optionKey, isCorrect }
         }));
-        toast({
-            title: isCorrect ? "Correct!" : "Incorrect",
-            description: isCorrect ? "Great job!" : `The correct answer is ${currentQuestion.correctAnswer}.`,
-            variant: isCorrect ? 'default' : 'destructive',
-        });
     } catch (error) {
         console.error("Failed to save attempt:", error);
         toast({ title: "Error", description: "Could not save your answer. Please try again." });
