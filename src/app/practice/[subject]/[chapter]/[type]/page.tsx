@@ -1,21 +1,30 @@
-
-// src/app/nlm-practice-questions/page.tsx
+// src/app/practice/[subject]/[chapter]/[type]/page.tsx
 'use client';
 
 import * as React from 'react';
-import {useRouter} from 'next/navigation';
-import {AppHeader} from '@/components/header';
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Loader2} from 'lucide-react';
-import {motion} from 'framer-motion';
-import {cn} from '@/lib/utils';
+import { useRouter, notFound } from 'next/navigation';
+import { AppHeader } from '@/components/header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import {nlmQuestions} from '@/lib/quiz-data';
-import type {Question} from '@/lib/types';
+import { nlmQuestions } from '@/lib/quiz-data';
+import type { Question } from '@/lib/types';
+import { practiceData } from '@/lib/practice-data';
 
 
-export default function NlmPracticePage() {
+export default function PracticeQuestionPage({ params }: { params: { subject: string; chapter: string; type: string } }) {
+    const subject = practiceData.find((s) => s.slug === params.subject);
+    const chapter = subject?.chapters.find((c) => c.slug === params.chapter);
+
+    if (!subject || !chapter || params.type !== 'topic-wise-questions' || chapter.slug !== 'newtons-laws-of-motion') {
+         // This page is currently only for NLM Topic Wise Questions
+         return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
+    }
+
+
   const [questions, setQuestions] = React.useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
@@ -24,10 +33,12 @@ export default function NlmPracticePage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    // Load questions from the local data file
-    setQuestions(nlmQuestions);
+    // For now, we only have NLM questions
+    if (chapter.slug === 'newtons-laws-of-motion') {
+        setQuestions(nlmQuestions);
+    }
     setLoading(false);
-  }, []);
+  }, [chapter]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -66,7 +77,7 @@ export default function NlmPracticePage() {
         <div className="container mx-auto p-4 text-center">
           <h1 className="text-2xl font-bold mt-8">No Questions Found</h1>
           <p className="text-muted-foreground">
-            Could not find any practice questions for NLM in the local data.
+            Could not find any practice questions for this chapter.
           </p>
         </div>
       </>
@@ -86,7 +97,7 @@ export default function NlmPracticePage() {
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="font-heading text-2xl">
-                Newton's Laws of Motion (NLM) - Practice
+                {chapter.name} - Practice
               </CardTitle>
               <CardDescription>
                 Select the correct answer from the options below.
@@ -152,4 +163,30 @@ export default function NlmPracticePage() {
       </main>
     </>
   );
+}
+
+function ComingSoonPage({subject, chapter}: {subject?: string, chapter?: string}) {
+    return (
+        <>
+            <AppHeader />
+            <main className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
+                 <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <h1 className="text-4xl font-bold font-heading mt-12">Coming Soon!</h1>
+                    <p className="text-muted-foreground mt-4 text-lg">
+                        Practice questions for <span className="font-semibold text-primary">{chapter || 'this chapter'}</span> in <span className="font-semibold text-primary">{subject || 'this subject'}</span> are being prepared.
+                    </p>
+                    <p className="mt-2 text-muted-foreground">Please check back later.</p>
+                     <Button asChild className="mt-8">
+                        <Link href="/practice">
+                            Back to Practice Module
+                        </Link>
+                    </Button>
+                </motion.div>
+            </main>
+        </>
+    )
 }
