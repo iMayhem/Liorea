@@ -99,7 +99,7 @@ export default function HomePage() {
 
       </motion.main>
       <footer className="mt-auto p-4 text-center text-sm text-muted-foreground">
-        <p>Built to help you succeed.</p>
+        <p>specially built for achiever online batch</p>
       </footer>
     </div>
   );
