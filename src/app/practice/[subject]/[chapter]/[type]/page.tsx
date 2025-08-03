@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -15,8 +15,9 @@ import type { Question, QuizProgress } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { getQuizProgress, saveQuizAttempt } from '@/lib/firestore';
+import { getQuizProgress, saveQuizAttempt, toggleBookmark } from '@/lib/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
 export default function PracticeQuestionPage({ params }: { params: { subject: string; chapter: string; type: string } }) {
@@ -34,7 +35,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
     const [answered, setAnswered] = React.useState(false);
     const [progress, setProgress] = React.useState<QuizProgress | null>(null);
-
+    
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
         if (!user) return;
@@ -84,7 +85,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
         const currentQuestion = questions[currentQuestionIndex];
         const savedAttempt = progress[currentQuestion.questionNumber];
 
-        if (savedAttempt) {
+        if (savedAttempt?.selected) {
             setSelectedAnswer(savedAttempt.selected);
             setAnswered(true);
         } else {
@@ -93,6 +94,9 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
         }
     }, [currentQuestionIndex, progress, questions]);
 
+     const handleJumpToQuestion = (index: number) => {
+        setCurrentQuestionIndex(index);
+    };
 
     if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff', 'neet-flashback'].includes(quizType)) || (chapter.slug === 'electrostatics' && quizType !== 'topic-wise-questions')) {
          return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
@@ -114,7 +118,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
         // Also update local progress state to re-render immediately
         setProgress(prev => ({
             ...prev,
-            [currentQuestion.questionNumber]: { selected: optionKey, isCorrect }
+            [currentQuestion.questionNumber]: { ...prev?.[currentQuestion.questionNumber], selected: optionKey, isCorrect }
         }));
         toast({
             title: isCorrect ? "Correct!" : "Incorrect",
@@ -130,13 +134,35 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNext = () => {
     if (isLastQuestion) {
       router.push(`/practice/${subjectSlug}/${chapterSlug}`);
       return;
     }
     setCurrentQuestionIndex(prevIndex => prevIndex + 1);
   };
+  
+  const handleBookmark = async () => {
+    if(!user || !currentQuestion) return;
+
+    const currentBookmarkState = progress?.[currentQuestion.questionNumber]?.bookmarked || false;
+    const newBookmarkState = !currentBookmarkState;
+
+    try {
+        await toggleBookmark(user.username, subjectSlug, chapterSlug, quizType, currentQuestion.questionNumber, newBookmarkState);
+        setProgress(prev => ({
+            ...prev,
+            [currentQuestion.questionNumber]: { ...prev?.[currentQuestion.questionNumber], bookmarked: newBookmarkState }
+        }));
+        toast({
+            title: newBookmarkState ? "Bookmarked!" : "Bookmark Removed",
+        });
+    } catch (error) {
+        console.error("Failed to toggle bookmark:", error);
+        toast({ title: "Error", description: "Could not update bookmark." });
+    }
+  };
+
 
   if (authLoading || loading) {
     return (
@@ -169,6 +195,47 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     <>
       <AppHeader />
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
+        <Card className="max-w-2xl mx-auto mb-6">
+            <CardHeader>
+                <CardTitle>Question Navigator</CardTitle>
+                <CardDescription>Jump to any question. Colors indicate status.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="w-full whitespace-nowrap">
+                    <div className="flex space-x-2 pb-4">
+                        {questions.map((q, index) => {
+                             const qProgress = progress?.[q.questionNumber];
+                             const isBookmarked = qProgress?.bookmarked;
+                             const isAnswered = qProgress?.selected;
+                             const isCorrect = qProgress?.isCorrect;
+                             
+                            return (
+                                <Button
+                                    key={q.questionNumber}
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleJumpToQuestion(index)}
+                                    className={cn(
+                                        "h-10 w-10",
+                                        {
+                                            "border-primary text-primary": index === currentQuestionIndex,
+                                            "bg-green-700 text-white hover:bg-green-800": isAnswered && isCorrect,
+                                            "bg-red-700 text-white hover:bg-red-800": isAnswered && !isCorrect,
+                                            "bg-blue-600 text-white hover:bg-blue-700": isBookmarked && !(isAnswered && isCorrect) && !(isAnswered && !isCorrect),
+                                            "bg-white text-black hover:bg-gray-200": isAnswered && !isCorrect && !isBookmarked, // Attempted but not bookmarked/correct/incorrect - might not be needed with current logic but good for fallback.
+                                        }
+                                    )}
+                                >
+                                    {q.questionNumber}
+                                </Button>
+                            );
+                        })}
+                    </div>
+                     <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+            </CardContent>
+        </Card>
+
         <motion.div
           key={currentQuestionIndex}
           initial={{opacity: 0, y: 20}}
@@ -181,14 +248,11 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
                 {chapter.name} - {quizType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </CardTitle>
               <CardDescription>
-                Select the correct answer from the options below.
+                Question {currentQuestion.questionNumber} of {questions.length}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold mb-2">
-                  Question #{currentQuestion.questionNumber}
-                </h2>
                 <p className="text-lg font-semibold mb-4 whitespace-pre-line">
                   {currentQuestion.questionText}
                 </p>
@@ -232,10 +296,24 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
                     }
                   )}
                 </div>
-                <div className="mt-6 text-right">
-                  <Button onClick={handleNextQuestion} disabled={!answered}>
-                    {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
-                  </Button>
+                <div className="mt-6 flex justify-between items-center">
+                    <Button
+                        onClick={handleBookmark}
+                        variant="outline"
+                        size="icon"
+                        className={cn({ "bg-blue-600 text-white hover:bg-blue-700": progress?.[currentQuestion.questionNumber]?.bookmarked })}
+                    >
+                        <Bookmark className="h-4 w-4" />
+                        <span className="sr-only">Bookmark</span>
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={handleNext} variant="secondary">
+                            Skip
+                        </Button>
+                        <Button onClick={handleNext} disabled={!answered}>
+                            {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
+                        </Button>
+                    </div>
                 </div>
               </div>
             </CardContent>

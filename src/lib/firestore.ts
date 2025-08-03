@@ -152,3 +152,38 @@ export async function getQuizProgress(userId: string, quizType: string): Promise
         return {};
     }
 }
+
+/**
+ * Toggles the bookmark status for a specific question.
+ * @param userId - The ID of the user.
+ * @param subjectSlug - The slug of the subject.
+ * @param chapterSlug - The slug of the chapter.
+ * @param quizType - The type of quiz (e.g., 'topic-wise-questions').
+ * @param questionNumber - The number of the question.
+ * @param isBookmarked - The new bookmark status.
+ */
+export async function toggleBookmark(
+    userId: string,
+    subjectSlug: string,
+    chapterSlug: string,
+    quizType: string,
+    questionNumber: number,
+    isBookmarked: boolean
+): Promise<void> {
+    const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
+    const fieldPath = `${subjectSlug}.${chapterSlug}.${questionNumber}.bookmarked`;
+
+    await setDoc(
+        docRef,
+        {
+            [subjectSlug]: {
+                [chapterSlug]: {
+                    [questionNumber]: {
+                        bookmarked: isBookmarked,
+                    },
+                },
+            },
+        },
+        { merge: true }
+    );
+}

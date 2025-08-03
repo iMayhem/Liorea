@@ -45,6 +45,7 @@ export interface QuizProgress {
     [questionNumber: number]: {
         selected: string;
         isCorrect: boolean;
+        bookmarked?: boolean;
     }
 }
 
