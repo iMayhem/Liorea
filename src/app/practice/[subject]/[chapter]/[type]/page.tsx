@@ -175,11 +175,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       <AppHeader />
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="max-w-2xl mx-auto mb-6">
-            <CardHeader>
-                <CardTitle>Question Navigator</CardTitle>
-                <CardDescription>Jump to any question. Colors indicate status.</CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
                 <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex space-x-2 pb-4">
                         {questions.map((q, index) => {
