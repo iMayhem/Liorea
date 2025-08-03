@@ -11,8 +11,9 @@ import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ChapterPage({ params }: { params: { subject: string; chapter: string } }) {
-  const subject = practiceData.find((s) => s.slug === params.subject);
-  const chapter = subject?.chapters.find((c) => c.slug === params.chapter);
+  const { subject: subjectSlug, chapter: chapterSlug } = params;
+  const subject = practiceData.find((s) => s.slug === subjectSlug);
+  const chapter = subject?.chapters.find((c) => c.slug === chapterSlug);
 
   if (!subject || !chapter) {
     notFound();

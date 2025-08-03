@@ -12,7 +12,8 @@ import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function SubjectPage({ params }: { params: { subject: string } }) {
-  const subject = practiceData.find((s) => s.slug === params.subject);
+  const { subject: subjectSlug } = params;
+  const subject = practiceData.find((s) => s.slug === subjectSlug);
 
   if (!subject) {
     notFound();
