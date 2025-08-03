@@ -26,5 +26,3 @@ const questions: Question[] = [
   {"questionNumber": 22, "questionText": "A ball of mass 0.5 kg is dropped from a height of 40 m. The ball hits the ground and rises to a height of 10 m. The impulse imparted to the ball during its collision with the ground is (Take g = 9.8 m/s²)", "questionImageURL": "", "options": {"A": "21 Ns", "B": "7 Ns", "C": "0", "D": "84 Ns"}, "correctAnswer": "A"},
   {"questionNumber": 23, "questionText": "A uniform rod of mass 20 kg and length 5 m leans against a smooth vertical wall making an angle of 60° with it. The other end rests on a rough horizontal floor. The friction force that the floor exerts on the rod is (take g = 10 m/s²)", "questionImageURL": "", "options": {"A": "100 N", "B": "100√3 N", "C": "200 N", "D": "200√3 N"}, "correctAnswer": "B"}
 ]
-
-export default questions;
