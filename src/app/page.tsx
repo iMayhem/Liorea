@@ -7,12 +7,15 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BookCheck } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { TestCountdownTimer } from '@/components/test-countdown-timer';
 import { testSchedule } from '@/lib/data';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -95,6 +98,15 @@ export default function HomePage() {
             <div className="w-full max-w-xs">
                 <TestCountdownTimer tests={testSchedule} />
             </div>
+        </div>
+
+        <div className="mt-8">
+            <Button asChild>
+                <Link href="/nlm-practice-questions">
+                    <BookCheck className="mr-2 h-4 w-4" />
+                    Practice NLM Questions
+                </Link>
+            </Button>
         </div>
 
       </motion.main>
