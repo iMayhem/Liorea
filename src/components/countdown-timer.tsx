@@ -59,7 +59,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       <div className="grid grid-cols-4 gap-2 text-center">
         <Card className="bg-secondary/50">
           <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-2xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent className="p-2 pt-0">
             <p className="text-xs text-muted-foreground">Days</p>
@@ -67,7 +67,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         </Card>
         <Card className="bg-secondary/50">
           <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-2xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent className="p-2 pt-0">
             <p className="text-xs text-muted-foreground">Hours</p>
@@ -75,7 +75,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         </Card>
         <Card className="bg-secondary/50">
           <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-2xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
           </CardHeader>
           <CardContent className="p-2 pt-0">
             <p className="text-xs text-muted-foreground">Minutes</p>
@@ -83,7 +83,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         </Card>
         <Card className="bg-secondary/50">
           <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-2xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
+            <CardTitle className="text-xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
 
           </CardHeader>
           <CardContent className="p-2 pt-0">
