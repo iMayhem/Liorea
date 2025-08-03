@@ -101,6 +101,7 @@ export async function updateScore(
  * @param userId - The ID of the user.
  * @param subjectSlug - The slug of the subject.
  * @param chapterSlug - The slug of the chapter.
+ * @param quizType - The type of quiz (e.g., 'topic-wise-questions').
  * @param questionNumber - The number of the question.
  * @param selectedOption - The option selected by the user.
  * @param isCorrect - Whether the selected option was correct.
@@ -109,11 +110,12 @@ export async function saveQuizAttempt(
   userId: string,
   subjectSlug: string,
   chapterSlug: string,
+  quizType: string,
   questionNumber: number,
   selectedOption: string,
   isCorrect: boolean
 ): Promise<void> {
-  const docRef = doc(db, 'quiz_progress', userId);
+  const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
 
   const fieldPath = `${subjectSlug}.${chapterSlug}.${questionNumber}`;
 
@@ -135,12 +137,13 @@ export async function saveQuizAttempt(
 
 
 /**
- * Retrieves a user's entire quiz progress.
+ * Retrieves a user's entire quiz progress for a specific quiz type.
  * @param userId - The ID of the user.
+ * @param quizType - The type of quiz.
  * @returns The user's quiz progress, or an empty object if none exists.
  */
-export async function getQuizProgress(userId: string): Promise<UserQuizProgress> {
-    const docRef = doc(db, 'quiz_progress', userId);
+export async function getQuizProgress(userId: string, quizType: string): Promise<UserQuizProgress> {
+    const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {

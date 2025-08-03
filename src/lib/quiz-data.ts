@@ -1448,3 +1448,409 @@ export const nlmQuestions: Question[] = [
     subject: 'Physics',
   },
 ];
+
+export const nlmRankersQuestions: Question[] = [
+    {
+        "questionNumber": 1,
+        "questionText": "A particle of mass m, initially at rest, is acted upon by a variable force F for a brief interval of time T. It begins to move with a velocity u after the force stops acting. F is shown in the graph as a function of time. The curve is a semicircle.",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q1.png?alt=media",
+        "options": {
+            "A": "u = (π * F₀²)/m",
+            "B": "u = (π * T²)/(8*m)",
+            "C": "u = (π * F₀ * T)/(2*m)",
+            "D": "u = (F₀ * T)/(2*m)"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 2,
+        "questionText": "Calculate the acceleration of the mass 12 kg shown in the set up of fig. Also calculate the tension in the string connecting the 12 kg mass. The string are weightless and inextensible, the pulleys are weightless and frictionless-",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q2.png?alt=media",
+        "options": {
+            "A": "(g/10), (56g/5) N",
+            "B": "(2g/7), (60g/7) N",
+            "C": "(10/g), (5/56g) N",
+            "D": "(g/14), (5/56g) N"
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 3,
+        "questionText": "A body kept on a smooth inclined plane of inclination 1 in x will remain stationary relative to the inclined plane if the plane is given a horizontal acceleration equal to :-",
+        "questionImageURL": "",
+        "options": {
+            "A": "√(x²-1)g",
+            "B": "(√(x²-1)/x)g",
+            "C": "(gx)/√(x²-1)",
+            "D": "g/√(x²-1)"
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 4,
+        "questionText": "A ball of mass m moves with speed v and it strikes normally with a wall and reflected back normally, if its time of contact with wall is t then find force exerted by ball on wall",
+        "questionImageURL": "",
+        "options": {
+            "A": "mv",
+            "B": "(2mv)/t",
+            "C": "mv/t",
+            "D": "mv/(2t)"
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 5,
+        "questionText": "What is the velocity of block A (VA) in the figure as shown above.",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q5.png?alt=media",
+        "options": {
+            "A": "10",
+            "B": "5",
+            "C": "6",
+            "D": "None"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 6,
+        "questionText": "A satellite in force free space sweeps stationary interplanetary dust at a rate (dM/dt) = +αv. The acceleration of satellite of mass M is :-",
+        "questionImageURL": "",
+        "options": {
+            "A": "-4αv²/M",
+            "B": "-2αv²/M",
+            "C": "-αv²/M",
+            "D": "-αv²"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 7,
+        "questionText": "For a Rocket propulsion velocity of exhaust gasses relative to rocket is 2 km/s. If mass of rocket system is 1000 kg, then the rate of fuel consumption for a rocket to rise up with acceleration 4.9 m/s² will be",
+        "questionImageURL": "",
+        "options": {
+            "A": "12.25 kg/s",
+            "B": "17.5 kg/s",
+            "C": "7.35 kg/s",
+            "D": "5.2 kg/s"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 8,
+        "questionText": "A trolley of mass 5 kg on a horizontal smooth surface is pulled by a load of mass 2 kg by means of uniform rope ABC of length 2 m and mass 1 kg. As the load falls from BC = 0 to BC = 2m its acceleration in m/s² changes-",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q8.png?alt=media",
+        "options": {
+            "A": "20/6 to 30/8",
+            "B": "20/8 to 30/8",
+            "C": "20/5 to 30/6",
+            "D": "None of the above"
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 9,
+        "questionText": "Two fixed frictionless inclined planes making an angle 30° and 60° with the vertical are shown in the figure. Two blocks A and B are placed on the two planes. What is the relative vertical acceleration of A with respect to B?",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q9.png?alt=media",
+        "options": {
+            "A": "4.9 ms⁻² in vertical direction.",
+            "B": "4.9 ms⁻² in horizontal direction",
+            "C": "9.8 ms⁻² in vertical direction",
+            "D": "Zero"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 10,
+        "questionText": "A particle of mass m is at rest at the origin at time t=0. It is subjected to a force F(t) = F₀e⁻ᵇᵗ in the x-direction. Its speed v(t) is depicted by which of the following curves?",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q10.png?alt=media",
+        "options": {
+            "A": "Curve 1",
+            "B": "Curve 2",
+            "C": "Curve 3",
+            "D": "Curve 4"
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 11,
+        "questionText": "A block is kept on a smooth inclined plane of angle of inclination 30° that moves with a constant acceleration so that the block does not slide relative to the inclined plane. Let F₁ be the contact force between the block and the plane. Now the inclined plane stops and let F₂ be the contact force between the two in this case. Then F₁/F₂ is",
+        "questionImageURL": "",
+        "options": {
+            "A": "1",
+            "B": "4/3",
+            "C": "2",
+            "D": "3/2"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 12,
+        "questionText": "Two blocks A and B of masses m & 2m respectively are held at rest such that the spring is in natural length. What is the acceleration of both the blocks just after release?",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q12.png?alt=media",
+        "options": {
+            "A": "g↓, g↓",
+            "B": "g/3↓, g/3↑",
+            "C": "0, 0",
+            "D": "g↓, 0"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 13,
+        "questionText": "A string of negligible mass going over a clamped pulley of mass m supports a block of mass M as shown in the figure. The force on the pulley by the clamp is given by :-",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q13.png?alt=media",
+        "options": {
+            "A": "√2 * Mg",
+            "B": "√2 * mg",
+            "C": "√((M+m)² + m²) * g",
+            "D": "√((M+m)² + M²) * g"
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 14,
+        "questionText": "A block is placed on an inclined plane moving towards right horizontally with an acceleration a₀ = g. The length of the plane AC = 1m. Friction is absent everywhere. The time taken by the block to reach from C to A is (g=10 m/s²)",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q14.png?alt=media",
+        "options": {
+            "A": "1.2 s",
+            "B": "0.74 s",
+            "C": "2.56 s",
+            "D": "0.42 s"
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 15,
+        "questionText": "A light string fixed at one end to a clamp on ground passes over a fixed pulley and hangs at the other side. It makes an angle of 30° with the ground. A monkey of mass 5 kg climbs up the rope. The clamp can tolerate a vertical force of 40 N only. The maximum acceleration in upward direction with which the monkey can climb safely is (neglect friction and take g=10 m/s²):",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q15.png?alt=media",
+        "options": {
+            "A": "2 m/s²",
+            "B": "4 m/s²",
+            "C": "6 m/s²",
+            "D": "8 m/s²"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 16,
+        "questionText": "Two block (A) 2 kg and (B) 5 kg rest one over the other on a smooth horizontal plane. The coefficient of static and dynamic friction between (A) and (B) is the same and equal to 0.60. The maximum horizontal force that can be applied to (B) in order that both (A) and (B) do not have any relative motion:",
+        "questionImageURL": "",
+        "options": {
+            "A": "42 N",
+            "B": "42 kgf",
+            "C": "5.4 kgf",
+            "D": "1.2 N"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 17,
+        "questionText": "A block of mass m lying on a rough horizontal plane is acted upon by a horizontal force P and another force Q inclined at an angle θ to the vertical. The block will remain in equilibrium if the coefficient of friction between it and the surface is :-",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q17.png?alt=media",
+        "options": {
+            "A": "(P + Qsinθ)/(mg + Qcosθ)",
+            "B": "(Pcosθ + Q)/(mg - Qsinθ)",
+            "C": "(P + Qcosθ)/(mg + Qsinθ)",
+            "D": "(Psinθ + Q)/(mg - Qcosθ)"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 18,
+        "questionText": "A 40 kg slab rests on a frictionless floor as shown in the figure. A 10 kg block rests on the top of the slab. The static coefficient of friction between the block and slab is 0.60 while the kinetic friction is 0.40. The 10 kg block is acted upon by a horizontal force 100 N. If g = 9.8 m/s², the resulting acceleration of the slab will be:",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q18.png?alt=media",
+        "options": {
+            "A": "0.98 m/s²",
+            "B": "1.47 m/s²",
+            "C": "1.52 m/s²",
+            "D": "6.1 m/s²"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 19,
+        "questionText": "Two block A and B placed on a plane surface as shown in the figure. The mass of block A is 100 kg and that of block B is 200 kg. Block A is tied to a stand and block B is pulled by a force F. If the coefficient of friction between the surfaces of A and B is 0.2 and the coefficient of friction between B and the plane is 0.3 then for the motion of B the minimum value of F will be-",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q19.png?alt=media",
+        "options": {
+            "A": "700 N",
+            "B": "1050 N",
+            "C": "900 N",
+            "D": "1100 N"
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 20,
+        "questionText": "In the arrangement shown in figure, coefficient of friction between the two blocks is μ = 1/2. The force of friction acting between the two blocks is",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q20.png?alt=media",
+        "options": {
+            "A": "8 N",
+            "B": "10 N",
+            "C": "6 N",
+            "D": "4 N"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 21,
+        "questionText": "A block A of mass m is placed over a plank B of mass 2m. Plank B is placed over a smooth horizontal surface. The coefficient of friction between A and B is 0.5. Block A is given a velocity v₀ towards right. Acceleration of B relative to A is",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q21.png?alt=media",
+        "options": {
+            "A": "g/2",
+            "B": "g",
+            "C": "3g/4",
+            "D": "zero"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 22,
+        "questionText": "In the figure shown if friction coefficient of block 1kg and 2kg with inclined plane is μ₁ = 0.5 and μ₂ = 0.4 respectively, then",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q22.png?alt=media",
+        "options": {
+            "A": "both block will move together",
+            "B": "both block will move separately",
+            "C": "there is a non zero contact force between two blocks",
+            "D": "None of these"
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 23,
+        "questionText": "A smooth block is released at rest on a 45° incline and then slides a distance d. The time taken to slide is n times as much to slide on rough incline than on a smooth incline. The coefficient of friction is-",
+        "questionImageURL": "",
+        "options": {
+            "A": "μₖ = 1 - 1/n²",
+            "B": "μₖ = √(1 - 1/n²)",
+            "C": "μₛ = 1 - 1/n²",
+            "D": "μₛ = √(1 - 1/n²)"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 24,
+        "questionText": "A uniform rope of length L and mass M is placed on a smooth fixed wedge as shown. Both ends of rope are at same horizontal level. The rope is initially released from rest, then the magnitude of initial acceleration of rope is",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q24.png?alt=media",
+        "options": {
+            "A": "Zero",
+            "B": "M(cosα - cosβ)g",
+            "C": "M(tanα - tanβ)g",
+            "D": "None of these"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 25,
+        "questionText": "If the net force acting on a system is represented by F and its momentum is p, then match the entries of column-I with the entries of column-II",
+        "questionImageURL": "",
+        "options": {
+            "A": "(a)->(p,q,r), (b)->(p,q.r), (c)->(q), (d)->(s)",
+            "B": "(a)->(p,q,r), (b)->(q,r), (c)->(q), (d)->(s)",
+            "C": "(a)->(p,q,s), (b)->(p,q.p), (c)->(q), (d)->(s)",
+            "D": "(a)->(p,q,r), (b)->(p,q.s), (c)->(p), (d)->(s)"
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 26,
+        "questionText": "Angle θ is gradually increased as shown in figure. For the given situation match the following two columns. (g=10 ms⁻²)",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q26.png?alt=media",
+        "options": {
+            "A": "(a)->(r), (b)->(r), (c)->(s), (d)->(q)",
+            "B": "(a)->(s), (b)->(s), (c)->(p), (d)->(p)",
+            "C": "(a)->(s), (b)->(s), (c)->(q), (d)->(q)",
+            "D": "(a)->(p), (b)->(p), (c)->(r), (d)->(s)"
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 27,
+        "questionText": "Match the following two columns regarding fundamental forces of nature.",
+        "questionImageURL": "",
+        "options": {
+            "A": "(a)->(p,r), (b)->(q,r), (c)->(s), (d)->(p,s)",
+            "B": "(a)->(s,r), (b)->(p,r), (c)->(s), (d)->(p,q)",
+            "C": "(a)->(q,r), (b)->(q,r), (c)->(s), (d)->(p,s)",
+            "D": "(a)->(p,r), (b)->(q,r), (c)->(s,r), (d)->(p,s)"
+        },
+        "correctAnswer": "C"
+    },
+    {
+        "questionNumber": 28,
+        "questionText": "Assertion: Two frames S₁ and S₂ are non-inertial. Then frame S₂ when observed from S₁ is inertial. Reason: A frame in motion is not necessarily a non-inertial frame.",
+        "questionImageURL": "",
+        "options": {
+            "A": "Both Assertion and Reason are true and the Reason is correct explanation of the Assertion.",
+            "B": "Both Assertion and Reason are true but Reason is not the correct explanation of Assertion.",
+            "C": "Assertion is true, but the Reason is false.",
+            "D": "If Assertion is false but the Reason is true."
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 29,
+        "questionText": "Assertion: If net force on a rigid body in zero, it is either at rest or moving with a constant linear velocity. Nothing else can happen. Reason: Constant velocity means linear acceleration is zero.",
+        "questionImageURL": "",
+        "options": {
+            "A": "Both Assertion and Reason are true and the Reason is correct explanation of the Assertion.",
+            "B": "Both Assertion and Reason are true but Reason is not the correct explanation of Assertion.",
+            "C": "Assertion is true, but the Reason is false.",
+            "D": "If Assertion is false but the Reason is true."
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 30,
+        "questionText": "Assertion: Moment of concurrent forces about any point is constant. Reason: If vector sum of all the concurrent forces is zero, then moment of all the forces about any point is also zero.",
+        "questionImageURL": "",
+        "options": {
+            "A": "Both Assertion and Reason are true and the Reason is correct explanation of the Assertion.",
+            "B": "Both Assertion and Reason are true but Reason is not the correct explanation of Assertion.",
+            "C": "Assertion is true, but the Reason is false.",
+            "D": "If Assertion is false but the Reason is true."
+        },
+        "correctAnswer": "D"
+    },
+    {
+        "questionNumber": 31,
+        "questionText": "Assertion: Three concurrent forces are F₁, F₂ and F₃. Angle between F₁ and F₂ is 30°, between F₁ and F₃ is 120°. Under these conditions, forces cannot remain in equilibrium. Reason: At least one angle should be greater than 180°.",
+        "questionImageURL": "",
+        "options": {
+            "A": "Both Assertion and Reason are true and the Reason is correct explanation of the Assertion.",
+            "B": "Both Assertion and Reason are true but Reason is not the correct explanation of Assertion.",
+            "C": "Assertion is true, but the Reason is false.",
+            "D": "If Assertion is false but the Reason is true."
+        },
+        "correctAnswer": "A"
+    },
+    {
+        "questionNumber": 32,
+        "questionText": "Assertion: Minimum force is needed to move a block on rough surface, if θ = angle of friction. Reason: Angle of friction and angle of repose are numerically same.",
+        "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/neet_ranker_q32.png?alt=media",
+        "options": {
+            "A": "Both Assertion and Reason are true and the Reason is correct explanation of the Assertion.",
+            "B": "Both Assertion and Reason are true but Reason is not the correct explanation of Assertion.",
+            "C": "Assertion is true, but the Reason is false.",
+            "D": "If Assertion is false but the Reason is true."
+        },
+        "correctAnswer": "B"
+    },
+    {
+        "questionNumber": 33,
+        "questionText": "Assertion: When a person walks on a rough surface, the frictional force exerted by surface on the person is opposite to the direction of his motion. Reason: It is the force exerted by the road on the person that causes the motion.",
+        "questionImageURL": "",
+        "options": {
+            "A": "Both Assertion and Reason are true and the Reason is correct explanation of the Assertion.",
+            "B": "Both Assertion and Reason are true but Reason is not the correct explanation of Assertion.",
+            "C": "Assertion is true, but the Reason is false.",
+            "D": "If Assertion is false but the Reason is true."
+        },
+        "correctAnswer": "D"
+    }
+];
+
+// Combine the two sets of questions to be used in the page component.
+// This is not ideal as we might want to separate them later, but for now this will do.
+export const allNlmQuestions = {
+    'topic-wise-questions': nlmQuestions,
+    'neet-rankers-stuff': nlmRankersQuestions
+}

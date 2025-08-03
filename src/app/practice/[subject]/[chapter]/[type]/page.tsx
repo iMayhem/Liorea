@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { nlmQuestions } from '@/lib/quiz-data';
+import { nlmQuestions, nlmRankersQuestions } from '@/lib/quiz-data';
 import type { Question, QuizProgress } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
 import Link from 'next/link';
@@ -33,35 +33,46 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
     const [answered, setAnswered] = React.useState(false);
     const [progress, setProgress] = React.useState<QuizProgress | null>(null);
-    
+    const quizType = params.type as 'topic-wise-questions' | 'neet-rankers-stuff';
+
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
         if (!user) return;
 
         async function loadData() {
             setLoading(true);
+            
+            let questionSet: Question[] = [];
+            
             // This condition ensures we only load NLM questions for now
-            if (params.subject === 'physics' && params.chapter === 'newtons-laws-of-motion' && params.type === 'topic-wise-questions') {
-                setQuestions(nlmQuestions);
+            if (params.subject === 'physics' && params.chapter === 'newtons-laws-of-motion') {
+                if (quizType === 'topic-wise-questions') {
+                    questionSet = nlmQuestions;
+                } else if (quizType === 'neet-rankers-stuff') {
+                    questionSet = nlmRankersQuestions;
+                }
+            }
+            
+            setQuestions(questionSet);
+
+            if (questionSet.length > 0) {
                 try {
-                    const userProgress = await getQuizProgress(user.username);
+                    const userProgress = await getQuizProgress(user.username, params.type);
                     setProgress(userProgress[params.subject]?.[params.chapter] || {});
                 } catch (error) {
                     console.error("Failed to fetch quiz progress:", error);
                     toast({ title: "Error", description: "Could not load your progress." });
                 }
-            } else {
-                 setQuestions([]); // No questions for other sections yet
             }
             setLoading(false);
         }
 
         loadData();
-    }, [user, params.subject, params.chapter, params.type, toast]);
+    }, [user, params.subject, params.chapter, quizType, toast]);
     
     // This effect updates the UI state based on loaded progress for the current question
     React.useEffect(() => {
-        if (!progress || !questions.length) return;
+        if (!progress || !questions.length || currentQuestionIndex >= questions.length) return;
         
         const currentQuestion = questions[currentQuestionIndex];
         const savedAttempt = progress[currentQuestion.questionNumber];
@@ -76,7 +87,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     }, [currentQuestionIndex, progress, questions]);
 
 
-    if (!subject || !chapter || params.type !== 'topic-wise-questions' || chapter.slug !== 'newtons-laws-of-motion') {
+    if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff'].includes(params.type))) {
          return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
     }
 
@@ -92,7 +103,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     setAnswered(true);
 
     try {
-        await saveQuizAttempt(user.username, params.subject, params.chapter, currentQuestion.questionNumber, optionKey, isCorrect);
+        await saveQuizAttempt(user.username, params.subject, params.chapter, params.type, currentQuestion.questionNumber, optionKey, isCorrect);
         // Also update local progress state to re-render immediately
         setProgress(prev => ({
             ...prev,
@@ -160,7 +171,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="font-heading text-2xl">
-                {chapter.name} - Practice
+                {chapter.name} - {params.type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </CardTitle>
               <CardDescription>
                 Select the correct answer from the options below.
