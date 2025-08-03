@@ -12,12 +12,17 @@ import {
 } from '@/components/ui/card';
 import {Checkbox} from '@/components/ui/checkbox';
 import {BookOpen, ClipboardList, Pencil, RefreshCw, CheckSquare, Trophy as TrophyIcon, FilePlus } from 'lucide-react';
-import {Progress} from './ui/progress';
 import {motion} from 'framer-motion';
 import {RewardDialog} from './reward-dialog';
 import {ScoreDialog} from './score-dialog';
 import { testSchedule } from '@/lib/data';
 import { Button } from './ui/button';
+import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+
 
 interface TimeTableViewProps {
   day: string;
@@ -143,6 +148,13 @@ export function TimeTableView({
       },
     },
   };
+  
+  const chartData = [{ name: 'progress', value: completionPercentage, fill: 'hsl(var(--primary))' }];
+  const chartConfig = {
+      progress: {
+        label: "Progress",
+      },
+  };
 
   return (
     <>
@@ -156,18 +168,45 @@ export function TimeTableView({
         />
     )}
     <Card className="shadow-lg bg-card">
-      <CardHeader>
-        <CardTitle className="font-heading">Today's Schedule ({day})</CardTitle>
-        <CardDescription>
-          Check off your tasks as you complete them.
-        </CardDescription>
-        <div className="pt-2">
-          <Progress value={completionPercentage} className="w-full" />
-          <p className="text-right text-sm text-muted-foreground mt-1">
-            {Math.round(completionPercentage)}% Complete
-          </p>
-        </div>
-      </CardHeader>
+       <CardHeader className="flex flex-row items-center justify-between">
+            <div className="grid gap-2">
+                <CardTitle className="font-heading">Today's Schedule ({day})</CardTitle>
+                <CardDescription>
+                Check off your tasks as you complete them.
+                </CardDescription>
+            </div>
+            <div className="flex items-center justify-center">
+                 <ChartContainer
+                    config={chartConfig}
+                    className="mx-auto aspect-square h-24"
+                >
+                    <RadialBarChart
+                        data={chartData}
+                        startAngle={-90}
+                        endAngle={270}
+                        innerRadius="70%"
+                        outerRadius="100%"
+                        barSize={10}
+                    >
+                        <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                        <RadialBar
+                            dataKey="value"
+                            background={{ fill: 'hsl(var(--muted))' }}
+                            cornerRadius={5}
+                        />
+                         <text
+                            x="50%"
+                            y="50%"
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            className="fill-current text-lg font-bold text-foreground"
+                            >
+                            {Math.round(completionPercentage)}%
+                        </text>
+                    </RadialBarChart>
+                </ChartContainer>
+            </div>
+        </CardHeader>
       <CardContent>
         {subjects && subjects.length > 0 ? (
           <motion.div
