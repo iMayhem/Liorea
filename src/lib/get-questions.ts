@@ -2,19 +2,12 @@
 import type { Question } from './types';
 
 export async function getQuestions(subject: string, chapter: string, type: string): Promise<Question[]> {
-  let fileName = type;
-  
-  // This logic correctly maps the URL slug to the corresponding file name.
-  if (type === 'topic-wise-questions') {
-      fileName = 'topic-wise';
-  } else if (type === 'neet-rankers-stuff') {
-      fileName = 'neet-rankers';
-  } else if (type === 'neet-flashback') {
-      fileName = 'neet-flashback';
-  }
+  // This function now uses the 'type' parameter directly from the URL slug
+  // to construct the path to the question file. This avoids previous errors
+  // caused by incorrect string manipulation.
+  const fileName = type;
 
   try {
-    // Dynamically import the question module based on the path from the URL slugs.
     const questionModule = await import(`@/lib/questions/${subject}/${chapter}/${fileName}.ts`);
     return questionModule.default || [];
   } catch (error) {
