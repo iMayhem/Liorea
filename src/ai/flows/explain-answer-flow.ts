@@ -41,11 +41,6 @@ const explanationPrompt = ai.definePrompt({
 
     Question: {{{questionText}}}
 
-    Options:
-    {{#each options}}
-    - {{this}}
-    {{/each}}
-
     Student's Incorrect Answer: {{{selectedAnswer}}}
     Correct Answer: {{{correctAnswer}}}
 
