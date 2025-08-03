@@ -11,10 +11,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {Checkbox} from '@/components/ui/checkbox';
-import {BookOpen, ClipboardList, Pencil, RefreshCw, CheckSquare} from 'lucide-react';
+import {BookOpen, ClipboardList, Pencil, RefreshCw, CheckSquare, Trophy as TrophyIcon} from 'lucide-react';
 import {Progress} from './ui/progress';
 import {motion} from 'framer-motion';
 import {RewardDialog} from './reward-dialog';
+import { testSchedule } from '@/lib/data';
 
 interface TimeTableViewProps {
   day: string;
@@ -37,11 +38,15 @@ const defaultTasks: Task[] = [
 ];
 
 const getTasksForSubject = (subjectName: string): Task[] => {
+    if (testSchedule.some(test => test.name === subjectName)) {
+        return [{ id: 'attempted', label: 'Attempted', icon: <TrophyIcon className="h-4 w-4" /> }];
+    }
+
     switch (subjectName) {
         case 'Short Notes':
-            return [{ id: 'completed', label: 'completed', icon: <CheckSquare className="h-4 w-4" /> }];
+            return [{ id: 'completed', label: 'Completed', icon: <CheckSquare className="h-4 w-4" /> }];
         case 'Full Week Revision':
-            return [{ id: 'did_revise', label: 'did revise', icon: <CheckSquare className="h-4 w-4" /> }];
+            return [{ id: 'did_revise', label: 'Did Revise', icon: <CheckSquare className="h-4 w-4" /> }];
         default:
             return defaultTasks;
     }

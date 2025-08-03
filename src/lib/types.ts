@@ -8,6 +8,11 @@ export interface Subject {
   name: string;
 }
 
+export interface Test {
+    name: string;
+    date: string;
+}
+
 export type DaySchedule = Subject[];
 
 export interface TimeTableData {

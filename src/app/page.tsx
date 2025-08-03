@@ -10,6 +10,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
+import { TestCountdownTimer } from '@/components/test-countdown-timer';
+import { testSchedule } from '@/lib/data';
 import { motion } from 'framer-motion';
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -64,8 +66,9 @@ export default function HomePage() {
             Select a date to see the schedule and track your progress.
           </p>
         </div>
-        <div className="max-w-md w-full mx-auto mb-8">
+        <div className="max-w-md w-full mx-auto mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
          <CountdownTimer targetDate={neet2026ExamDate} />
+         <TestCountdownTimer tests={testSchedule} />
         </div>
         <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card">
           <CardContent className="flex justify-center p-0">
@@ -74,9 +77,9 @@ export default function HomePage() {
               selected={date}
               onSelect={handleDateSelect}
               className="rounded-md"
-              fromDate={new Date('2025-08-03')}
+              fromDate={new Date('2025-07-01')}
               toDate={new Date('2026-05-05')}
-              defaultMonth={new Date('2025-08-01')}
+              defaultMonth={new Date('2025-07-01')}
             />
           </CardContent>
         </Card>
