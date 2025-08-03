@@ -152,3 +152,4 @@ const questions: Question[] = [
   {"questionNumber": 148, "questionText": "Match List I with List II: A. Alfred Hershey and Martha Chase, B. Euchromatin, C. Frederick Griffith, D. Heterochromatin; I. Streptococcus pneumoniae, II. Densely packed and dark-stained, III. Loosely packed and light-stained, IV. DNA as genetic material confirmation", "questionImageURL": "", "options": {"A": "A-III, B-II, C-IV, D-I", "B": "A-II, B-IV C-I, D-III", "C": "A-IV, B-II, C-I, D-III", "D": "A-IV, B-III, C-I, D-II"}, "correctAnswer": "D"},
   {"questionNumber": 149, "questionText": "Which chromosome in the human genome has the highest number of genes?", "questionImageURL": "", "options": {"A": "Chromosome 10", "B": "Chromosome X", "C": "Chromosome Y", "D": "Chromosome 1"}, "correctAnswer": "D"}
 ]
+export default questions;

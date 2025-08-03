@@ -152,3 +152,4 @@ const questions: Question[] = [
   {"questionNumber": 148, "questionText": "If three sphere A, B and C of radius in the ratio 1:3:5 carry charge 10C, -30C, 50C respectively. If these spheres are connected by a conducting wire then what will be the new charge on sphere B.", "questionImageURL": "", "options": {"A": "-10C", "B": "+10C", "C": "+20C", "D": "-20C"}, "correctAnswer": "B"},
   {"questionNumber": 149, "questionText": "Charge on the outer sphere is q, and the inner sphere is grounded. Then the charge on the inner sphere is q', for (r₂ > r₁)", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q149.png?alt=media", "options": {"A": "Zero", "B": "q' = q", "C": "q' = -(r₁/r₂)q", "D": "q' = (r₁/r₂)q"}, "correctAnswer": "D"}
 ]
+export default questions;
