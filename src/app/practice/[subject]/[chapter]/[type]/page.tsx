@@ -56,7 +56,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                     setProgress(userProgress[subjectSlug]?.[chapterSlug] || {});
                 } catch (error) {
                     console.error("Failed to fetch quiz progress:", error);
-                    toast({ title: "Error", description: "Could not load your progress." });
+                    toast({ title: "Error", description: "Could not load your progress.", variant: "destructive" });
                 }
             }
             setLoading(false);
@@ -109,7 +109,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         }));
     } catch (error) {
         console.error("Failed to save attempt:", error);
-        toast({ title: "Error", description: "Could not save your answer. Please try again." });
+        toast({ title: "Error", description: "Could not save your answer. Please try again.", variant: "destructive" });
          // Revert optimistic UI updates
         setSelectedAnswer(null);
         setAnswered(false);
@@ -138,7 +138,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         }));
     } catch (error) {
         console.error("Failed to toggle bookmark:", error);
-        toast({ title: "Error", description: "Could not update bookmark." });
+        toast({ title: "Error", description: "Could not update bookmark.", variant: "destructive" });
     }
   };
 
@@ -195,17 +195,19 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                                     size="icon"
                                     onClick={() => handleJumpToQuestion(index)}
                                     className={cn(
-                                        "h-10 w-10",
+                                        "h-10 w-10 relative",
                                         {
                                             "border-primary text-primary": index === currentQuestionIndex,
-                                            "bg-green-700 text-white hover:bg-green-800": isAnswered && isCorrect,
-                                            "bg-red-700 text-white hover:bg-red-800": isAnswered && !isCorrect,
-                                            "bg-blue-600 text-white hover:bg-blue-700": isBookmarked && !(isAnswered && isCorrect) && !(isAnswered && !isCorrect),
-                                            "bg-white text-black hover:bg-gray-200": isAnswered && !isCorrect && !isBookmarked, // Attempted but not bookmarked/correct/incorrect - might not be needed with current logic but good for fallback.
+                                            "bg-green-700 text-white hover:bg-green-800": isAnswered && isCorrect && !isBookmarked,
+                                            "bg-red-700 text-white hover:bg-red-800": isAnswered && !isCorrect && !isBookmarked,
+                                            "bg-blue-600 text-white hover:bg-blue-700": isBookmarked,
                                         }
                                     )}
                                 >
                                     {q.questionNumber}
+                                    {isBookmarked && (
+                                        <Bookmark className="absolute -top-1 -right-1 h-4 w-4 fill-white text-white" />
+                                    )}
                                 </Button>
                             );
                         })}
