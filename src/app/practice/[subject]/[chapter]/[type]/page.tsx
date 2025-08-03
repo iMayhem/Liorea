@@ -10,7 +10,7 @@ import { Loader2, Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { nlmQuestions, nlmRankersQuestions, electrostaticsQuestions, nlmNeetFlashbackQuestions } from '@/lib/quiz-data';
+import { getQuestions } from '@/lib/get-questions';
 import type { Question, QuizProgress } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
 import Link from 'next/link';
@@ -43,23 +43,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
         async function loadData() {
             setLoading(true);
             
-            let questionSet: Question[] = [];
-            
-            if (subjectSlug === 'physics') {
-                if (chapterSlug === 'newtons-laws-of-motion') {
-                    if (quizType === 'topic-wise-questions') {
-                        questionSet = nlmQuestions;
-                    } else if (quizType === 'neet-rankers-stuff') {
-                        questionSet = nlmRankersQuestions;
-                    } else if (quizType === 'neet-flashback') {
-                        questionSet = nlmNeetFlashbackQuestions;
-                    }
-                } else if (chapterSlug === 'electrostatics') {
-                    if (quizType === 'topic-wise-questions') {
-                        questionSet = electrostaticsQuestions;
-                    }
-                }
-            }
+            const questionSet = await getQuestions(subjectSlug, chapterSlug, quizType);
             
             setQuestions(questionSet);
 
@@ -98,7 +82,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
         setCurrentQuestionIndex(index);
     };
 
-    if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff', 'neet-flashback'].includes(quizType)) || (chapter.slug === 'electrostatics' && quizType !== 'topic-wise-questions')) {
+    if (!subject || !chapter) {
          return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
     }
 
