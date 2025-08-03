@@ -24,8 +24,9 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     const { toast } = useToast();
     const router = useRouter();
 
-    const subject = practiceData.find((s) => s.slug === params.subject);
-    const chapter = subject?.chapters.find((c) => c.slug === params.chapter);
+    const { subject: subjectSlug, chapter: chapterSlug, type: quizType } = params;
+    const subject = practiceData.find((s) => s.slug === subjectSlug);
+    const chapter = subject?.chapters.find((c) => c.slug === chapterSlug);
 
     const [questions, setQuestions] = React.useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
@@ -33,7 +34,6 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
     const [answered, setAnswered] = React.useState(false);
     const [progress, setProgress] = React.useState<QuizProgress | null>(null);
-    const quizType = params.type as 'topic-wise-questions' | 'neet-rankers-stuff';
 
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
@@ -45,7 +45,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
             let questionSet: Question[] = [];
             
             // This condition ensures we only load NLM questions for now
-            if (params.subject === 'physics' && params.chapter === 'newtons-laws-of-motion') {
+            if (subjectSlug === 'physics' && chapterSlug === 'newtons-laws-of-motion') {
                 if (quizType === 'topic-wise-questions') {
                     questionSet = nlmQuestions;
                 } else if (quizType === 'neet-rankers-stuff') {
@@ -57,8 +57,8 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
 
             if (questionSet.length > 0) {
                 try {
-                    const userProgress = await getQuizProgress(user.username, params.type);
-                    setProgress(userProgress[params.subject]?.[params.chapter] || {});
+                    const userProgress = await getQuizProgress(user.username, quizType);
+                    setProgress(userProgress[subjectSlug]?.[chapterSlug] || {});
                 } catch (error) {
                     console.error("Failed to fetch quiz progress:", error);
                     toast({ title: "Error", description: "Could not load your progress." });
@@ -68,7 +68,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
         }
 
         loadData();
-    }, [user, params.subject, params.chapter, quizType, toast]);
+    }, [user, subjectSlug, chapterSlug, quizType, toast]);
     
     // This effect updates the UI state based on loaded progress for the current question
     React.useEffect(() => {
@@ -87,7 +87,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     }, [currentQuestionIndex, progress, questions]);
 
 
-    if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff'].includes(params.type))) {
+    if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff'].includes(quizType))) {
          return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
     }
 
@@ -103,7 +103,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     setAnswered(true);
 
     try {
-        await saveQuizAttempt(user.username, params.subject, params.chapter, params.type, currentQuestion.questionNumber, optionKey, isCorrect);
+        await saveQuizAttempt(user.username, subjectSlug, chapterSlug, quizType, currentQuestion.questionNumber, optionKey, isCorrect);
         // Also update local progress state to re-render immediately
         setProgress(prev => ({
             ...prev,
@@ -125,7 +125,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
 
   const handleNextQuestion = () => {
     if (isLastQuestion) {
-      router.push(`/practice/${params.subject}/${params.chapter}`);
+      router.push(`/practice/${subjectSlug}/${chapterSlug}`);
       return;
     }
     setCurrentQuestionIndex(prevIndex => prevIndex + 1);
@@ -171,7 +171,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="font-heading text-2xl">
-                {chapter.name} - {params.type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                {chapter.name} - {quizType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </CardTitle>
               <CardDescription>
                 Select the correct answer from the options below.
