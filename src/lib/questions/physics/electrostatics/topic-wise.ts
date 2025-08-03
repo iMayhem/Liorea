@@ -2,186 +2,153 @@
 import type { Question } from '@/lib/types';
 
 const questions: Question[] = [
-  {
-    "questionNumber": 1,
-    "questionText": "The law that governs the force between electric charges is known as",
-    "questionImageURL": "",
-    "options": {
-      "A": "Ampere's law",
-      "B": "Coulomb's law",
-      "C": "Faraday's law",
-      "D": "Ohm's law"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 2,
-    "questionText": "What is the S.I. unit of electric charge?",
-    "questionImageURL": "",
-    "options": {
-      "A": "Volt (V)",
-      "B": "Ampere (A)",
-      "C": "Coulomb (C)",
-      "D": "Ohm (Ω)"
-    },
-    "correctAnswer": "C"
-  },
-  {
-    "questionNumber": 3,
-    "questionText": "An electric field is a region of space where",
-    "questionImageURL": "",
-    "options": {
-      "A": "A magnetic force is experienced",
-      "B": "An electric charge experiences a force",
-      "C": "There is no force",
-      "D": "The gravitational force is strongest"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 4,
-    "questionText": "The direction of the electric field due to a positive point charge is",
-    "questionImageURL": "",
-    "options": {
-      "A": "Radially inwards",
-      "B": "Radially outwards",
-      "C": "Circular",
-      "D": "Parallel to the charge"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 5,
-    "questionText": "What is an equipotential surface?",
-    "questionImageURL": "",
-    "options": {
-      "A": "A surface with varying potential",
-      "B": "A surface where the electric field is zero",
-      "C": "A surface over which the electric potential is constant",
-      "D": "A surface where charge is uniformly distributed"
-    },
-    "correctAnswer": "C"
-  },
-  {
-    "questionNumber": 6,
-    "questionText": "Work done in moving a unit positive charge between two points on an equipotential surface is",
-    "questionImageURL": "",
-    "options": {
-      "A": "Infinite",
-      "B": "Positive",
-      "C": "Negative",
-      "D": "Zero"
-    },
-    "correctAnswer": "D"
-  },
-  {
-    "questionNumber": 7,
-    "questionText": "The electric potential inside a hollow charged conducting sphere is",
-    "questionImageURL": "",
-    "options": {
-      "A": "Zero",
-      "B": "Constant and same as on the surface",
-      "C": "Varies with distance from the center",
-      "D": "Infinite"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 8,
-    "questionText": "A device used to store electric charge is called a",
-    "questionImageURL": "",
-    "options": {
-      "A": "Resistor",
-      "B": "Inductor",
-      "C": "Capacitor",
-      "D": "Transistor"
-    },
-    "correctAnswer": "C"
-  },
-  {
-    "questionNumber": 9,
-    "questionText": "The unit of capacitance is",
-    "questionImageURL": "",
-    "options": {
-      "A": "Henry (H)",
-      "B": "Farad (F)",
-      "C": "Tesla (T)",
-      "D": "Weber (Wb)"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 10,
-    "questionText": "According to Gauss's law, the total electric flux through a closed surface is equal to",
-    "questionImageURL": "",
-    "options": {
-      "A": "The total charge enclosed by the surface",
-      "B": "(1/ε₀) times the total charge enclosed by the surface",
-      "C": "ε₀ times the total charge enclosed by the surface",
-      "D": "Zero"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 11,
-    "questionText": "An electric dipole consists of",
-    "questionImageURL": "",
-    "options": {
-      "A": "Two equal and similar charges",
-      "B": "Two equal and opposite charges separated by a small distance",
-      "C": "A single positive charge",
-      "D": "A single negative charge"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 12,
-    "questionText": "The net force on an electric dipole placed in a uniform electric field is",
-    "questionImageURL": "",
-    "options": {
-      "A": "Infinite",
-      "B": "Depends on the dipole moment",
-      "C": "Zero",
-      "D": "Depends on the orientation of the dipole"
-    },
-    "correctAnswer": "C"
-  },
-  {
-    "questionNumber": 13,
-    "questionText": "The phenomenon of a dielectric material becoming a conductor in a strong electric field is called",
-    "questionImageURL": "",
-    "options": {
-      "A": "Polarization",
-      "B": "Dielectric breakdown",
-      "C": "Capacitance",
-      "D": "Induction"
-    },
-    "correctAnswer": "B"
-  },
-  {
-    "questionNumber": 14,
-    "questionText": "Two point charges +3μC and +8μC repel each other with a force of 40 N. If a charge of -5μC is added to each of them, then the force between them will become",
-    "questionImageURL": "",
-    "options": {
-      "A": "-10 N",
-      "B": "+10 N",
-      "C": "+20 N",
-      "D": "-20 N"
-    },
-    "correctAnswer": "A"
-  },
-  {
-    "questionNumber": 15,
-    "questionText": "The electric field lines for a uniform electric field are",
-    "questionImageURL": "",
-    "options": {
-      "A": "Curved",
-      "B": "Circular",
-      "C": "Parallel and equally spaced",
-      "D": "Converging at a point"
-    },
-    "correctAnswer": "C"
-  }
-];
-
-export default questions;
+  {"questionNumber": 1, "questionText": "One quantum of charge should be at least be equal to the charge in coloumb:", "questionImageURL": "", "options": {"A": "1.6 x 10⁻¹⁷ C", "B": "1.6 x 10⁻¹⁹ C", "C": "1.6 x 10⁻¹⁰ C", "D": "4.8 x 10⁻¹⁰ C"}, "correctAnswer": "B"},
+  {"questionNumber": 2, "questionText": "If a body is charged by rubbing it, its weight -", "questionImageURL": "", "options": {"A": "always decreases slightly", "B": "always increases slightly", "C": "may increase slightly or may decrease slightly", "D": "remains precisely the same"}, "correctAnswer": "C"},
+  {"questionNumber": 3, "questionText": "An accelerated or deaccelerated charge produces-", "questionImageURL": "", "options": {"A": "Electric field only", "B": "Magnetic field only", "C": "Localised electric and magnetic fields", "D": "Electric and magnetic fields that are radiated"}, "correctAnswer": "D"},
+  {"questionNumber": 4, "questionText": "A stationary electric charge produces-", "questionImageURL": "", "options": {"A": "Only electric fields", "B": "Only magnetic field", "C": "Both electric as magnetic field", "D": "Neither electric Nor magnetic field"}, "correctAnswer": "A"},
+  {"questionNumber": 5, "questionText": "When a piece of polythene is rubbed with wool, a charge of -2 x 10⁻⁷ C is developed on polythene. What is the amount of mass, which is transferred to polythene.", "questionImageURL": "", "options": {"A": "11.38 x 10⁻²⁹ kg", "B": "11.38 x 10²⁹ kg", "C": "11.38 x 10⁻¹⁹ kg", "D": "11.38 x 10⁻³⁹ kg"}, "correctAnswer": "C"},
+  {"questionNumber": 6, "questionText": "Two identical metallic sphere are given equal amount of positive and negative charges so that their mass become m₁ and m₂ respectively. Compare their masses.", "questionImageURL": "", "options": {"A": "m₁ > m₂", "B": "m₁ < m₂", "C": "m₁ = m₂", "D": "None of these"}, "correctAnswer": "B"},
+  {"questionNumber": 7, "questionText": "Which of the following charge can not present on oil drop in Millikan's experiment :-", "questionImageURL": "", "options": {"A": "4.0 x 10⁻¹⁹ C", "B": "6.0 x 10⁻¹⁹ C", "C": "10.0 x 10⁻¹⁹ C", "D": "all of them"}, "correctAnswer": "D"},
+  {"questionNumber": 8, "questionText": "In 1 g of a solid, there are 5 x 10²¹ atoms. If one electron is removed from everyone of 0.01% atoms of the solid, the charge gained by the solid is: (electronic charge is 1.6 x 10⁻¹⁹ C)", "questionImageURL": "", "options": {"A": "+0.08 C", "B": "+0.8 C", "C": "-0.08 C", "D": "-0.8 C"}, "correctAnswer": "A"},
+  {"questionNumber": 9, "questionText": "If in Millikan's oil drop experiment charges on drops are found to be 8µC, 12µC, 20µC, then quanta of charge is:", "questionImageURL": "", "options": {"A": "8µC", "B": "4µC", "C": "20µC", "D": "12µC"}, "correctAnswer": "B"},
+  {"questionNumber": 10, "questionText": "What equal charges would to be placed on earth and moon to neutralize their gravitational attraction (Use mass of earth = 10²⁵ kg, mass of moon = 10²³ kg)", "questionImageURL": "", "options": {"A": "8.6 x 10¹³ C", "B": "6.8 x 10²⁶ C", "C": "8.6 x 10³ C", "D": "9 x 10⁶ C"}, "correctAnswer": "A"},
+  {"questionNumber": 11, "questionText": "When the distance between two charged particle is halved, the force between them becomes -", "questionImageURL": "", "options": {"A": "One fourth", "B": "One half", "C": "Double", "D": "Four times"}, "correctAnswer": "D"},
+  {"questionNumber": 12, "questionText": "1 esu charge is placed in vacuum at 1 cm from an equal charge of the same kind. Force between them is", "questionImageURL": "", "options": {"A": "1 Newton", "B": "1 dyne", "C": "2 dyne", "D": "4 dyne"}, "correctAnswer": "B"},
+  {"questionNumber": 13, "questionText": "Coulomb's law for the force between electric charges most closely resembles with:", "questionImageURL": "", "options": {"A": "Law of conservation of energy", "B": "Newton's law of gravitation", "C": "Newton's 2nd law of motion", "D": "The law of conservation of charge"}, "correctAnswer": "B"},
+  {"questionNumber": 14, "questionText": "A point charge q₁ exerts a force F upon another point charge q₂. If a third charge q₃ be placed quite near the charge q₂ then the force that charge q₁ exerts on the charge q₂ will be :", "questionImageURL": "", "options": {"A": "F", "B": ">F", "C": "<F", "D": "zero"}, "correctAnswer": "A"},
+  {"questionNumber": 15, "questionText": "A charge Q is divided in two parts Q₁ and Q₂ and these charges are placed at a distance R. There will be maximum repulsion between them when", "questionImageURL": "", "options": {"A": "Q₂ = Q/R, Q₁ = Q - Q₂", "B": "Q₂ = Q/3, Q₁ = 2Q/3", "C": "Q₂ = Q/4, Q₁ = 3Q/4", "D": "Q₁ = Q₂ = Q/2"}, "correctAnswer": "D"},
+  {"questionNumber": 16, "questionText": "The force of repulsion between two point charges is F, when these are at a distance of 0.1 m apart. Now the point charges are replaced by conducting spheres of diameter 5cm having the charge same as that of point charges. The distance between their centre is 0.1 m, then the force of repulsion will :", "questionImageURL": "", "options": {"A": "increases", "B": "decreases", "C": "remains same", "D": "4 F"}, "correctAnswer": "B"},
+  {"questionNumber": 17, "questionText": "Five balls, numbered 1 to 5, are suspended using separate threads. Pairs (1, 2), (2, 4), (4, 1) show electrostatic attraction, while pairs (2, 3) and (4, 5) show repulsion. Therefore ball 1:", "questionImageURL": "", "options": {"A": "Must be positively charged.", "B": "Must be negatively charged.", "C": "Must be neutral.", "D": "May be neutral."}, "correctAnswer": "C"},
+  {"questionNumber": 18, "questionText": "Two charges 4q and q are placed at a distance l apart. An another charged particle Q is placed in between them (at mid point). If resultant force on q is zero then the value of Q is:", "questionImageURL": "", "options": {"A": "q", "B": "-q", "C": "2q", "D": "-2q"}, "correctAnswer": "B"},
+  {"questionNumber": 19, "questionText": "Two similar charge of +Q, as shown in figure are placed at A and B. -q charge is placed at point C midway between A and B. -q charge will oscillate if", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q19.png?alt=media", "options": {"A": "It is moved towards A.", "B": "It is moved towards B.", "C": "It is moved upwards AB.", "D": "Distance between A and B is reduced."}, "correctAnswer": "C"},
+  {"questionNumber": 20, "questionText": "Two equal charges are separated by a distance d. A third charge placed on a perpendicular bisector at x distance will experience maximum coulomb force when:", "questionImageURL": "", "options": {"A": "x = d/√2", "B": "x = d/2", "C": "x = d/(2√2)", "D": "x = d/(2√3)"}, "correctAnswer": "C"},
+  {"questionNumber": 21, "questionText": "Two identical small spheres carry charge of Q₁ and Q₂ with Q₁ >> Q₂. The charges are d distance apart. The force they exert on one another is F₁. The spheres are made to touch one another and then separated to distance d apart. The force they exert on one another now is F₂. Then F₁/F₂ is:", "questionImageURL": "", "options": {"A": "4Q₁/Q₂", "B": "Q₁/4Q₂", "C": "4Q₂/Q₁", "D": "Q₂/4Q₁"}, "correctAnswer": "C"},
+  {"questionNumber": 22, "questionText": "Two point charges placed at a distance r in air exert a force F on each other. The value of distance R at which they experience force 4F when placed in a medium of dielectric constant K = 16 is:", "questionImageURL": "", "options": {"A": "r", "B": "r/4", "C": "r/8", "D": "2r"}, "correctAnswer": "C"},
+  {"questionNumber": 23, "questionText": "Two point charges of +2 µC and +6 µC repel each other with a force of 12 N. If each is given an additional charge of -4 µC, then force will become:", "questionImageURL": "", "options": {"A": "4N (attractive)", "B": "60 N (attractive)", "C": "4 N (Repulsive)", "D": "12 N (attractive)"}, "correctAnswer": "A"},
+  {"questionNumber": 24, "questionText": "A negative charge is placed at some point on the line joining the two +Q charges at rest. The direction of motion of negative charge will depend upon the :", "questionImageURL": "", "options": {"A": "position of negative charge alone.", "B": "magnitude of negative charge alone.", "C": "both on the magnitude and position of negative charge.", "D": "magnitude of positive charge."}, "correctAnswer": "A"},
+  {"questionNumber": 25, "questionText": "Five point charges, each of value +q coulomb, are placed on five vertices of a regular hexagon of side L metre. The magnitude of the force on a point charge of value -q coulomb placed at the centre of the hexagon is -", "questionImageURL": "", "options": {"A": "kq²/L²", "B": "√5 * kq²/L²", "C": "√3 * kq²/L²", "D": "zero"}, "correctAnswer": "A"},
+  {"questionNumber": 26, "questionText": "Force between two identical spheres charged with same charge is F. If 50% charge of one sphere is transferred to second sphere then new force will be:", "questionImageURL": "", "options": {"A": "(3/4)F", "B": "(3/8)F", "C": "(3/2)F", "D": "none"}, "correctAnswer": "A"},
+  {"questionNumber": 27, "questionText": "Three equal charges (q) are placed at the corners of an equilateral triangle of side a. The force on any charge is- (K = 1/(4πε₀))", "questionImageURL": "", "options": {"A": "Zero", "B": "√3 * kq²/a²", "C": "kq²/(√3 * a²)", "D": "3√3 * kq²/a²"}, "correctAnswer": "B"},
+  {"questionNumber": 28, "questionText": "Two identical metallic sphere are charged with 10 and -20 units of charge. If both the spheres are first brought into contact with each other and then are placed to their previous positions, then the ratio of the force in the two situations will be:", "questionImageURL": "", "options": {"A": "-8:1", "B": "1:8", "C": "-2:1", "D": "1:2"}, "correctAnswer": "A"},
+  {"questionNumber": 29, "questionText": "The electric field in a certain region is given by E = (K/x³)i. The dimensions of K are :", "questionImageURL": "", "options": {"A": "MLT⁻³A⁻¹", "B": "ML⁻²T⁻³A⁻¹", "C": "ML⁴T⁻³A⁻¹", "D": "dimensionless"}, "correctAnswer": "C"},
+  {"questionNumber": 30, "questionText": "Two point charges (+Q) and (-Q) are placed at (0, 2)m and (0, -2)m respectively. The direction of electric field on any point on X-axis is along.", "questionImageURL": "", "options": {"A": "+y axis", "B": "-y axis", "C": "+x axis", "D": "-x axis"}, "correctAnswer": "B"},
+  {"questionNumber": 31, "questionText": "Two charges 9e and 3e are placed at a distance r. The distance of the point where the electric field intensity will be zero, is :", "questionImageURL": "", "options": {"A": "r/(1+√3) from 9e charge", "B": "r/(1+√(1/3)) from 9e charge", "C": "r/(1-√3) from 3e charge", "D": "r/(1-√(1/3)) from 3e charge"}, "correctAnswer": "B"},
+  {"questionNumber": 32, "questionText": "Two point charges a & b, whose magnitudes are same are positioned at a certain distance from each other with a at origin. Graph is drawn between electric field strength at points between a & b and distance x from a. E is taken positive if it is along the line joining from a to b. From the graph, it can be decided that", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q32.png?alt=media", "options": {"A": "a is positive, b is negative", "B": "a and b both are positive", "C": "a and b both are negative", "D": "a is negative, b is positive"}, "correctAnswer": "A"},
+  {"questionNumber": 33, "questionText": "Two charges are placed as shown in fig. Where should be a third charge be placed so that it remains in rest condition :-", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q33.png?alt=media", "options": {"A": "30cm from 9e", "B": "40cm from 16e", "C": "40cm from 9e", "D": "(1) or (2)"}, "correctAnswer": "D"},
+  {"questionNumber": 34, "questionText": "Charges 2Q and -Q are placed as shown in figure. The point at which electric field intensity is zero will be:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q34.png?alt=media", "options": {"A": "Somewhere between -Q and 2Q.", "B": "Somewhere on the left of -Q.", "C": "Somewhere on the right of 2Q.", "D": "Somewhere on the right bisector of line joining -Q and 2Q."}, "correctAnswer": "B"},
+  {"questionNumber": 35, "questionText": "The rupture of air medium occurs at E = 3 x 10⁶ V/m. The maximum charge that can be given to a sphere of diameter 5 m. will be (in coulomb):", "questionImageURL": "", "options": {"A": "2 x 10⁻²", "B": "2 x 10⁻³", "C": "2 x 10⁻⁴", "D": "2 x 10⁻⁵"}, "correctAnswer": "B"},
+  {"questionNumber": 36, "questionText": "The linear charge density on upper half of a segment of ring is λ and at lower half, it is -λ. The direction of electric field at centre O of ring is :", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q36.png?alt=media", "options": {"A": "along OA", "B": "along OB", "C": "along OC", "D": "along OD"}, "correctAnswer": "C"},
+  {"questionNumber": 37, "questionText": "A ring of radius R is charged uniformly with a charge +Q. The electric field at any point on its axis at a distance r from the circumference of the ring will be:", "questionImageURL": "", "options": {"A": "KQ/r", "B": "KQ/r²", "C": "(KQ/r³)(r²-R²)¹/²", "D": "KQr/R³"}, "correctAnswer": "C"},
+  {"questionNumber": 38, "questionText": "Semicircular ring of radius 0.5 m. is uniformly charged with a total charge of 1.4 x 10⁻⁹ C. The electric field intensity at centre of this ring is :", "questionImageURL": "", "options": {"A": "zero", "B": "320 V/m", "C": "64 V/m", "D": "32 V/m"}, "correctAnswer": "D"},
+  {"questionNumber": 39, "questionText": "Two infinite linear charges are placed parallel at 0.1 m apart. If each has charge density of 5µC/m, then the force per unit length of one of linear charges in N/m is :", "questionImageURL": "", "options": {"A": "2.5", "B": "3.25", "C": "4.5", "D": "7.5"}, "correctAnswer": "C"},
+  {"questionNumber": 40, "questionText": "There is a uniform electric field in x-direction. If the work done by external agent in moving a charge of 0.2 C through a distance of 2 metre slowly along the line making an angle of 60° with x direction is 4 joule, then the magnitude of E is:", "questionImageURL": "", "options": {"A": "√3 N/C", "B": "4 N/C", "C": "5 N/C", "D": "20 N/C"}, "correctAnswer": "D"},
+  {"questionNumber": 41, "questionText": "The maximum electric field intensity on the axis of a uniformly charged ring of charge q and radius R will be :", "questionImageURL": "", "options": {"A": "(1/(4πε₀)) * (q/(3√3 R²))", "B": "(1/(4πε₀)) * (2q/(3R²))", "C": "(1/(4πε₀)) * (2q/(3√3 R²))", "D": "(1/(4πε₀)) * (3q/(2√3 R²))"}, "correctAnswer": "C"},
+  {"questionNumber": 42, "questionText": "A charged particle of charge q and mass m is released from rest in an uniform electric field E. Neglecting the effect of gravity, the kinetic energy of the charged particle after time 't' seconds is:", "questionImageURL": "", "options": {"A": "Eqm/t", "B": "(E²q²t²)/(2m)", "C": "(2E²t²)/(mq)", "D": "(Eq²m)/(2t²)"}, "correctAnswer": "B"},
+  {"questionNumber": 43, "questionText": "A charged water drop of radius 0.1 µm is under equilibrium in some electric field. The charge on the drop is equivalent to electronic charge. The intensity of electric field is (g = 10 m/s²)", "questionImageURL": "", "options": {"A": "1.61 NC⁻¹", "B": "26.2 NC⁻¹", "C": "262 NC⁻¹", "D": "1610 NC⁻¹"}, "correctAnswer": "C"},
+  {"questionNumber": 44, "questionText": "A proton of mass 'm' charge 'e' is released from rest in a uniform electric field of strength 'E'. The time taken by it to travel a distance 'd' in the field is", "questionImageURL": "", "options": {"A": "√(2de/mE)", "B": "√(2dm/Ee)", "C": "√(2dE/me)", "D": "√(2Ee/dm)"}, "correctAnswer": "B"},
+  {"questionNumber": 45, "questionText": "A particle of mass m and charge q is thrown at a speed u against a uniform electric field E. How much distance will it travel before coming to rest?", "questionImageURL": "", "options": {"A": "mu²/(2qE)", "B": "2mu²/qE", "C": "mqE/(2u²)", "D": "mu/qE"}, "correctAnswer": "A"},
+  {"questionNumber": 46, "questionText": "Two equal and opposite charges of masses m₁ & m₂ are accelerated in a uniform electric field through the same distance. What is the ratio of magnitudes of their accelerations if their ratio of masses is m₁/m₂ = 0.5.", "questionImageURL": "", "options": {"A": "a₁/a₂ = 0.5", "B": "a₁/a₂ = 1", "C": "a₁/a₂ = 2", "D": "a₁/a₂ = 3"}, "correctAnswer": "C"},
+  {"questionNumber": 47, "questionText": "A charged oil drop is suspended in uniform field of 3 x 10⁴ V/m. So that it neither falls nor rises. The charge on the drop will be (m = 9.9 x 10⁻¹⁵ kg) (g = 10 m/s²)", "questionImageURL": "", "options": {"A": "3.3 x 10⁻¹⁸ C", "B": "3.2 x 10⁻¹⁸ C", "C": "1.6 x 10⁻¹⁸ C", "D": "4.8 x 10⁻¹⁸ C"}, "correctAnswer": "A"},
+  {"questionNumber": 48, "questionText": "A copper ball of density 8.6 g cm⁻³, 1 cm in diameter is immersed in oil of density 0.8 g cm⁻³. If the ball remains suspended in oil in a uniform electric field of intensity 36000 NC⁻¹ acting in upward direction, what is the charge on the ball ?", "questionImageURL": "", "options": {"A": "1.1 µC", "B": "4.2 µC", "C": "2.4 µC", "D": "3.7 µC"}, "correctAnswer": "A"},
+  {"questionNumber": 49, "questionText": "If an electron is placed in a uniform electric field, then the electron will:", "questionImageURL": "", "options": {"A": "experience no force.", "B": "moving with constant velocity in the direction of the field.", "C": "move with constant velocity in the direction opposite to the field.", "D": "Accelerate in direction opposite to field."}, "correctAnswer": "D"},
+  {"questionNumber": 50, "questionText": "The total flux associated with given cube will be where 'a' is side of cube: (1/ε₀ = 4π x 9 x 10⁹)", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q50.png?alt=media", "options": {"A": "162π x 10⁴ Nm²/C", "B": "162π x 10³ Nm²/C", "C": "162π x 10⁵ Nm²/C", "D": "162π x 10⁶ Nm²/C"}, "correctAnswer": "B"},
+  {"questionNumber": 51, "questionText": "A point charge is placed at a distance a/2 perpendicular to the plane and above the centre of a square of side a. The electric flux through the square is :-", "questionImageURL": "", "options": {"A": "q/ε₀", "B": "q/(π ε₀)", "C": "q/(4 ε₀)", "D": "q/(6 ε₀)"}, "correctAnswer": "D"},
+  {"questionNumber": 52, "questionText": "A charge q is placed at the centre of the cubical vessel (with one face open) as shown in figure. The flux of the electric field through the surface of the vessel is:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q52.png?alt=media", "options": {"A": "zero", "B": "q/ε₀", "C": "q/(4ε₀)", "D": "5q/(6ε₀)"}, "correctAnswer": "D"},
+  {"questionNumber": 53, "questionText": "Eight charges, 1µC, -7µC, -4µC, 10µC, 2µC, -5µC, -3µC and 6µC are situated at the eight corners of a cube of side 20 cm. A spherical surface of radius 80 cm encloses this cube. The centre of the sphere coincides with the centre of the cube. Then the total outgoing flux from the spherical surface (in unit of volt meter) is :", "questionImageURL": "", "options": {"A": "36π x 10³", "B": "684π x 10³", "C": "zero", "D": "none of the above"}, "correctAnswer": "C"},
+  {"questionNumber": 54, "questionText": "Which of the following represents the correct graph for electric field intensity and the distance r from the centre of a hollow charged metal sphere or solid metallic conductor of radius R:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q54.png?alt=media", "options": {"A": "Graph 1", "B": "Graph 2", "C": "Graph 3", "D": "Graph 4"}, "correctAnswer": "D"},
+  {"questionNumber": 55, "questionText": "A sphere of radius R and charge Q is placed inside an imaginary sphere of radius 2R whose centre coincides with the given sphere. The flux related to imaginary sphere is :", "questionImageURL": "", "options": {"A": "Q/ε₀", "B": "Q/(2ε₀)", "C": "4Q/ε₀", "D": "2Q/ε₀"}, "correctAnswer": "A"},
+  {"questionNumber": 56, "questionText": "The intensity of an electric field at some point distant r from the axis of infinite long pipe having charges per unit length as q will be :", "questionImageURL": "", "options": {"A": "proportional to r²", "B": "proportional to r³", "C": "inversely proportional to r", "D": "inversely proportional to r²"}, "correctAnswer": "C"},
+  {"questionNumber": 57, "questionText": "A closed cylinder of radius R and length L is placed in a uniform electric field E, parallel to the axis of the cylinder. Then the electric flux through the cylinder must be -", "questionImageURL": "", "options": {"A": "2πR²E", "B": "(2πR² + 2πRL)E", "C": "2πRLE", "D": "zero"}, "correctAnswer": "D"},
+  {"questionNumber": 58, "questionText": "In a region of space the electric field is given by E = 8i + 4j + 3k. The electric flux through a surface of area of 100 units in x-y plane is:", "questionImageURL": "", "options": {"A": "800 units", "B": "300 units", "C": "400 units", "D": "1500 units"}, "correctAnswer": "B"},
+  {"questionNumber": 59, "questionText": "An electric field given by E = 4i + 3(y²+2)j places Gaussian cube of side 1m placed at origin such that its three sides represents x, y and z axes. The net charges enclosed within the cube is:", "questionImageURL": "", "options": {"A": "4ε₀", "B": "3ε₀", "C": "5ε₀", "D": "Zero"}, "correctAnswer": "B"},
+  {"questionNumber": 60, "questionText": "Which one of the following pattern of electrostatics line of force can't possible : -", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q60.png?alt=media", "options": {"A": "Pattern 1", "B": "Pattern 2", "C": "Pattern 3", "D": "Pattern 4"}, "correctAnswer": "C"},
+  {"questionNumber": 61, "questionText": "The lines of force of the electric field due to two charges q and Q are sketched in the figure then :", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q61.png?alt=media", "options": {"A": "Q is positive and |Q| > |q|", "B": "Q is negative and |Q| > |q|", "C": "q is positive and |Q| < |q|", "D": "q is negative and |Q| < |q|"}, "correctAnswer": "C"},
+  {"questionNumber": 62, "questionText": "The given figure gives electric lines of force due to two charges q₁ and q₂. What are the signs of the two charges ?", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q62.png?alt=media", "options": {"A": "Both are negative", "B": "Both are positive", "C": "q₁ is positive but q₂ is negative", "D": "q₁ is negative but q₂ is positive"}, "correctAnswer": "A"},
+  {"questionNumber": 63, "questionText": "Two large sized charged plates have a charge density of +σ and -σ. The resultant force on the proton located midway between them will be :", "questionImageURL": "", "options": {"A": "σe/ε₀", "B": "σe/(2ε₀)", "C": "2σe/ε₀", "D": "zero"}, "correctAnswer": "A"},
+  {"questionNumber": 64, "questionText": "An infinitely large non-conducting plane of uniform surface charge density σ has circular aperture of certain radius curved out from it. The electric field at a point which is at a distance 'a' from the centre of the aperture (perpendicular to the plane) is σ/(2√2 ε₀). Find the radius of aperture?", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q64.png?alt=media", "options": {"A": "√2 a", "B": "3a", "C": "2a", "D": "a"}, "correctAnswer": "D"},
+  {"questionNumber": 65, "questionText": "A charge 'q' is placed at the centre of a conducting spherical shell of radius R, having charge Q. An external charge Q' is also present at distance R' (R' > R) from 'q'. The resultant field will be best represented for region r < R by: [where r is the distance of the point from q]", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q65.png?alt=media", "options": {"A": "Graph 1", "B": "Graph 2", "C": "Graph 3", "D": "Graph 4"}, "correctAnswer": "A"},
+  {"questionNumber": 66, "questionText": "In the above question, if Q' is removed then which option is correct:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q66.png?alt=media", "options": {"A": "Graph 1", "B": "Graph 2", "C": "Graph 3", "D": "Graph 4"}, "correctAnswer": "A"},
+  {"questionNumber": 67, "questionText": "A nonconducting solid sphere of radius R is uniformly charged. The magnitude of the electric field due to the sphere at a distance r from its centre:", "questionImageURL": "", "options": {"A": "a, c", "B": "c, d", "C": "a, b", "D": "b, d"}, "correctAnswer": "A"},
+  {"questionNumber": 68, "questionText": "A solid metallic sphere has a charge +3Q. Concentric with this sphere is a conducting spherical shell having charge -Q. The radius of the sphere is a and that of the spherical shell is b (>a). What is the electric field at a distance r (a < r < b) from the centre?", "questionImageURL": "", "options": {"A": "(1/(4πε₀)) * (3Q/r)", "B": "(1/(4πε₀)) * (3Q/r²)", "C": "(1/(4πε₀)) * (3Q/r³)", "D": "(1/(4πε₀)) * (Q/r²)"}, "correctAnswer": "B"},
+  {"questionNumber": 69, "questionText": "Total charge on a sphere of radii 10 cm is 1 µC. The maximum electric field due to the sphere in N/C will be:", "questionImageURL": "", "options": {"A": "9 x 10⁻⁵", "B": "9 x 10³", "C": "9 x 10⁵", "D": "9 x 10¹⁵"}, "correctAnswer": "C"},
+  {"questionNumber": 70, "questionText": "Two charged spheres having radii a and b are joined with a wire then the ratio of electric field Eₐ/Eₑ on their surface is :", "questionImageURL": "", "options": {"A": "a/b", "B": "b/a", "C": "a²/b²", "D": "b²/a²"}, "correctAnswer": "B"},
+  {"questionNumber": 71, "questionText": "Which statement is true : (i) A ring of radius R carries a uniformly distributed charge +Q. A point charge -q is placed on the axis of the ring at a distance 2R from the centre of the ring and released from rest. The particle executes a simple harmonic motion along the axis of the ring. (ii) Electrons move from a region of higher potential to that of lower potential.", "questionImageURL": "", "options": {"A": "only (i)", "B": "only (ii)", "C": "(i), (ii)", "D": "none of them"}, "correctAnswer": "D"},
+  {"questionNumber": 72, "questionText": "A particle A has charge +q and particle B has charge +4q with each of them having the same mass m. When allowed to fall from rest through same electrical potential difference, the ratio of their speed vₐ:vₑ will be :", "questionImageURL": "", "options": {"A": "2:1", "B": "1:2", "C": "4:1", "D": "1:4"}, "correctAnswer": "B"},
+  {"questionNumber": 73, "questionText": "As shown in figure, on bringing a charge Q from point A to B and from B to C, the work done are 2 joule and -3 joule respectively. The work done in bringing the charge from C to A will be:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q73.png?alt=media", "options": {"A": "-1 joule", "B": "1 joule", "C": "2 joule", "D": "5 joule"}, "correctAnswer": "B"},
+  {"questionNumber": 74, "questionText": "In an electron gun, electrons are accelerated through a potential difference of V volt. Taking electronic charge and mass to be respectively e and m, the maximum velocity attained by them is:", "questionImageURL": "", "options": {"A": "2eV/m", "B": "√(2eV/m)", "C": "2m/eV", "D": "V²/(2em)"}, "correctAnswer": "B"},
+  {"questionNumber": 75, "questionText": "In a cathode ray tube, if V is the potential difference between the cathode and anode, the speed of the electrons, when they reach the anode is proportional to: (Assume initial velocity = 0)", "questionImageURL": "", "options": {"A": "V", "B": "1/V", "C": "√V", "D": "V²/ (2em)"}, "correctAnswer": "C"},
+  {"questionNumber": 76, "questionText": "An electron moving in a electric potential field V₁ enters a higher electric potential field V₂, then the change in kinetic energy of the electron is proportional to:", "questionImageURL": "", "options": {"A": "(V₂-V₁)¹/²", "B": "V₂-V₁", "C": "(V₂-V₁)²", "D": "(V₂-V₁)/V₂"}, "correctAnswer": "B"},
+  {"questionNumber": 77, "questionText": "If a charge is shifted from a low potential region to high potential region. The electrical potential energy:", "questionImageURL": "", "options": {"A": "Increases", "B": "Decreases", "C": "Remains constant", "D": "May increase or decrease."}, "correctAnswer": "D"},
+  {"questionNumber": 78, "questionText": "You are given an arrangement of three point charges q, 2q and xq separated by equal finite distances so that electric potential energy of the system is zero. Then the value of x is:", "questionImageURL": "", "options": {"A": "-2/3", "B": "-1/3", "C": "2/3", "D": "3/2"}, "correctAnswer": "A"},
+  {"questionNumber": 79, "questionText": "A charge q = 10⁻⁶ C of mass 2 g (fig.) is free to move then calculate its speed, when it is at a distance of b. [Assume a = 1m, b = 10m, Q = 10⁻³ C]", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q79.png?alt=media", "options": {"A": "90 m/s.", "B": "9 m/s.", "C": "900 m/s.", "D": "none of these"}, "correctAnswer": "A"},
+  {"questionNumber": 80, "questionText": "A sphere of radius 1 cm has potential of 8000 V. The energy density near the surface of sphere will be:", "questionImageURL": "", "options": {"A": "64 x 10⁵ J/m³", "B": "8 x 10³ J/m³", "C": "32 J/m³", "D": "2.83 J/m³"}, "correctAnswer": "D"},
+  {"questionNumber": 81, "questionText": "Two spheres of radii 2 cm and 4 cm are charged equally, then the ratio of charge density on the surfaces of the spheres will be :", "questionImageURL": "", "options": {"A": "1:2", "B": "4:1", "C": "8:1", "D": "1:4"}, "correctAnswer": "B"},
+  {"questionNumber": 82, "questionText": "Three charges are placed as shown in fig. If the electric potential energy of system is zero, then Q:q is-", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q82.png?alt=media", "options": {"A": "Q/q = -2/1", "B": "Q/q = 2/1", "C": "Q/q = -1/2", "D": "Q/q = 1/4"}, "correctAnswer": "A"},
+  {"questionNumber": 83, "questionText": "A point positive charge of Q' units is moved round another point positive charge of Q units in circular path. If the radius of the circle is r. The work done on the charge Q' in making one complete revolution is -", "questionImageURL": "", "options": {"A": "Q/(4πε₀r)", "B": "QQ'/(4πε₀r)", "C": "Q'/(4πε₀r)", "D": "Zero"}, "correctAnswer": "D"},
+  {"questionNumber": 84, "questionText": "Two equal charges q are placed at a distance of 2a and a third charge -2q is placed at the midpoint. The potential energy of the system is", "questionImageURL": "", "options": {"A": "(8q²)/(7πε₀a)", "B": "(7q²)/(8πε₀a)", "C": "(-7q²)/(8πε₀a)", "D": "None of these"}, "correctAnswer": "C"},
+  {"questionNumber": 85, "questionText": "The electrostatic potential energy between proton and a α-particle separated by a distance 2 Å is:", "questionImageURL": "", "options": {"A": "20 x 10⁻¹⁸ J", "B": "2.3 x 10⁻¹⁸ J", "C": "34 x 10⁻¹⁹ J", "D": "None of these"}, "correctAnswer": "B"},
+  {"questionNumber": 86, "questionText": "If identical charges (-q) are placed at each corner of a cube of side b, then electric potential energy of charge (+q) which is placed at centre of the cube will be", "questionImageURL": "", "options": {"A": "(8√2 q²)/(4πε₀b)", "B": "(-8√2 q²)/(πε₀b)", "C": "(-4√2 q²)/(πε₀b)", "D": "(-4q²)/(√3 πε₀b)"}, "correctAnswer": "D"},
+  {"questionNumber": 87, "questionText": "At distance 'r' from a point charge, the ratio U/V² (where 'U' is energy density and 'V' is potential) is best represented by:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q87.png?alt=media", "options": {"A": "Graph 1", "B": "Graph 2", "C": "Graph 3", "D": "Graph 4"}, "correctAnswer": "B"},
+  {"questionNumber": 88, "questionText": "Under the influence of charge, a point charge q is carried along different paths from a point A to point B, then work done will be:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q88.png?alt=media", "options": {"A": "maximum for path four", "B": "maximum for path one", "C": "equal for all paths", "D": "minimum for path three"}, "correctAnswer": "C"},
+  {"questionNumber": 89, "questionText": "A particle of charge Q and mass m travels through a potential difference V from rest. The final momentum of the particle is:", "questionImageURL": "", "options": {"A": "mV/Q", "B": "2Q√(mV)", "C": "√(2mQV)", "D": "√(2QV/m)"}, "correctAnswer": "C"},
+  {"questionNumber": 90, "questionText": "A 5C charge experiences a force of 2000 N when moved between two points separated by a distance of 2 cm in a uniform electric field. The potential difference between the two points is:", "questionImageURL": "", "options": {"A": "8 volt", "B": "80 volt", "C": "800 volt", "D": "8000 volt"}, "correctAnswer": "A"},
+  {"questionNumber": 91, "questionText": "The work done to take an electron from rest where potential is 60 volt to another point where potential is -20 volt is given by :", "questionImageURL": "", "options": {"A": "40 eV", "B": "-40 eV", "C": "60 eV", "D": "-60eV"}, "correctAnswer": "B"},
+  {"questionNumber": 92, "questionText": "Work done in carrying an electric charge Q₁ once round a circle of radius R with a charge Q₂ at the center of the circle is", "questionImageURL": "", "options": {"A": "Q₁Q₂/(4πε₀R)", "B": "infinity", "C": "Q₁/(4πε₀R)", "D": "Zero"}, "correctAnswer": "D"},
+  {"questionNumber": 93, "questionText": "If 20 J of work has to be done to move an electric charge of 4C from a point where potential is 10 V to another point where potential is V volt find the value of V:", "questionImageURL": "", "options": {"A": "2 V", "B": "70 V", "C": "5 V", "D": "15 V"}, "correctAnswer": "D"},
+  {"questionNumber": 94, "questionText": "Two points A and B are maintained at the potentials of 18 V and -5V respectively. What will be the work done in moving 150 α-particles from B to A?", "questionImageURL": "", "options": {"A": "4 x 10⁻¹² J", "B": "8 x 10⁻⁸ J", "C": "2 x 10⁻¹⁵ J", "D": "1.1 x 10⁻¹⁵ J"}, "correctAnswer": "D"},
+  {"questionNumber": 95, "questionText": "15 joule of work has to be done against an existing electric field to take a charge of 0.01 C from A to B. Then the potential difference (Vₑ - Vₐ) is:", "questionImageURL": "", "options": {"A": "1500 volt", "B": "-1500 volt", "C": "0.15 volt", "D": "none of these"}, "correctAnswer": "A"},
+  {"questionNumber": 96, "questionText": "In H atom, an electron is rotating around the proton in an orbit of radius r. Work done by an electron in moving once around the proton along the orbit will be :", "questionImageURL": "", "options": {"A": "ke/r", "B": "ke²/r²", "C": "2πre", "D": "zero"}, "correctAnswer": "D"},
+  {"questionNumber": 97, "questionText": "Choose the incorrect statement:", "questionImageURL": "", "options": {"A": "The potential energy per unit positive charge in an electric field at some point is called the electric potential.", "B": "The work required to be done to move a point charge from one point to another in an electric field depends on the position of the points.", "C": "The potential energy of the system will increase if a positive charge is moved against of Coulombian force.", "D": "The value of fundamental charge is not equivalent to the electronic charge."}, "correctAnswer": "D"},
+  {"questionNumber": 98, "questionText": "The dimensions of potential difference are :", "questionImageURL": "", "options": {"A": "ML²T⁻²Q⁻¹", "B": "MLT⁻²Q⁻¹", "C": "MT⁻²Q⁻²", "D": "ML²T⁻¹Q⁻¹"}, "correctAnswer": "A"},
+  {"questionNumber": 99, "questionText": "An object is charged with positive charge. The potential at that object will be :", "questionImageURL": "", "options": {"A": "positive only", "B": "negative only", "C": "zero always", "D": "may be positive, negative or zero."}, "correctAnswer": "D"},
+  {"questionNumber": 100, "questionText": "Two points (0, a) and (0, -a) have charges q and -q respectively then the electrical potential at origin will be-", "questionImageURL": "", "options": {"A": "zero", "B": "kq/a", "C": "kq/2a", "D": "kq/4a²"}, "correctAnswer": "A"},
+  {"questionNumber": 101, "questionText": "The charges of same magnitude q are placed at four corners of a square of side a. The value of potential at the centre of square will be :", "questionImageURL": "", "options": {"A": "4kq/a", "B": "4√2 kq/a", "C": "4kq√2a", "D": "kq/a√2"}, "correctAnswer": "B"},
+  {"questionNumber": 102, "questionText": "A circle of radius R is drawn in a uniform electric field E as shown in the fig. Vₐ, Vₑ, Vₒ and Vₐ are respectively the potential of point A, B, C and D at the periphery of the circle then", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q102.png?alt=media", "options": {"A": "Vₐ > Vₒ, Vₑ = Vₐ", "B": "Vₐ < Vₒ, Vₑ = Vₐ", "C": "Vₐ = Vₒ, Vₑ < Vₐ", "D": "Vₐ = Vₒ, Vₑ > Vₐ"}, "correctAnswer": "C"},
+  {"questionNumber": 103, "questionText": "Figure represents a square carrying charges +q, +q, -q, -q at its four corners as shown. Then the potential will be zero at points:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q103.png?alt=media", "options": {"A": "A, B, C, P and Q", "B": "A, B and C", "C": "A, P, C and Q", "D": "P, B and Q"}, "correctAnswer": "B"},
+  {"questionNumber": 104, "questionText": "Two equal positive charges are kept at points A and B. The electric potential at the points between A and B (excluding these points) is studied while moving from A to B. The potential:", "questionImageURL": "", "options": {"A": "continuously increases", "B": "continuously decreases", "C": "increases then decreases", "D": "decreases then increases"}, "correctAnswer": "D"},
+  {"questionNumber": 105, "questionText": "An infinite number of charges of equal magnitude q, but alternate charge of opposite sign are placed along the x-axis at x = 1m, x = 2m, x = 4m, x = 8m,.. and so on. The electric potential at the point x = 0 due to all these charges will be:", "questionImageURL": "", "options": {"A": "kq/2", "B": "kq/3", "C": "2kq/3", "D": "3kq/2"}, "correctAnswer": "C"},
+  {"questionNumber": 106, "questionText": "A semicircular ring of radius 0.5 m is uniformly charged with a total charge of 1.5 x 10⁻⁹. The electric potential at the centre of this ring is :", "questionImageURL": "", "options": {"A": "27 V", "B": "13.5 V", "C": "54 V", "D": "45.5 V"}, "correctAnswer": "A"},
+  {"questionNumber": 107, "questionText": "A wire of 5 m length carries a steady current. If it has an electric field of 0.2 V/m. the potential difference across the wire in volt will be :", "questionImageURL": "", "options": {"A": "25", "B": "0.04", "C": "1.0", "D": "none of the above"}, "correctAnswer": "C"},
+  {"questionNumber": 108, "questionText": "The fig. shows lines of constant potential in a region in which an electric field is present. The value of the potential are given. The magnitude of the electric field is greatest at the point:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q108.png?alt=media", "options": {"A": "A", "B": "B", "C": "C", "D": "A & C"}, "correctAnswer": "B"},
+  {"questionNumber": 109, "questionText": "Three equal charges are placed at the three corners of an equilateral triangle as shown in the figure. The statement which is true for electric potential V and the field intensity E at the centre of the triangle:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q109.png?alt=media", "options": {"A": "V = 0, E = 0", "B": "V = 0, E ≠ 0", "C": "V ≠ 0, E = 0", "D": "V ≠ 0, E ≠ 0"}, "correctAnswer": "C"},
+  {"questionNumber": 110, "questionText": "Electric field at a distance x from origin is given as E = 100/x². then potential difference between points situated at x = 10 m and x = 20 m :", "questionImageURL": "", "options": {"A": "5 V", "B": "10 V", "C": "15 V", "D": "4V"}, "correctAnswer": "A"},
+  {"questionNumber": 111, "questionText": "The electric potential V is given as a function of distance x (metre) by V = (5x² - 10x - 9) volt. Value of electric field at x = 1 m is :-", "questionImageURL": "", "options": {"A": "20 V/m", "B": "6 V/m", "C": "11 V/m", "D": "zero"}, "correctAnswer": "D"},
+  {"questionNumber": 112, "questionText": "The variation of potential with distance r from a fixed point is shown in Figure. The electric field at r = 5 cm, is:", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q112.png?alt=media", "options": {"A": "(2.5) V/cm", "B": "(-2.5) V/cm", "C": "-2/5 V/cm", "D": "2/5 V/cm"}, "correctAnswer": "A"},
+  {"questionNumber": 113, "questionText": "The electric potential and electric field at any given position due to a point charge are 600 V and 200 N/C respectively. Then magnitude of point charge would be :", "questionImageURL": "", "options": {"A": "3 µC", "B": "30 µC", "C": "0.2 µC", "D": "0.5 µC"}, "correctAnswer": "C"},
+  {"questionNumber": 114, "questionText": "Four charges 2C, -3C, -4C and 5C respectively are placed at all the corners of a square. Which of the following statements is true for the point of intersection of the diagonals:", "questionImageURL": "", "options": {"A": "E = 0, V = 0", "B": "E ≠ 0, V = 0", "C": "E = 0, V ≠ 0", "D": "E ≠ 0, V ≠ 0"}, "correctAnswer": "B"},
+  {"questionNumber": 115, "questionText": "Electric potential at any point is V = -5x + 3y + √15 z then the magnitude of the electric field is-", "questionImageURL": "", "options": {"A": "3√2", "B": "4√2", "C": "5√2", "D": "7"}, "correctAnswer": "D"},
+  {"questionNumber": 116, "questionText": "The electric field in a region is directed outward and is proportional to the distance r from the origin. Taking the electric potential at the origin to be zero, the electric potential at a distance r:", "questionImageURL": "", "options": {"A": "is uniform in the region", "B": "is proportional to r", "C": "is proportional to r²", "D": "increases as one goes away from the origin"}, "correctAnswer": "C"},
+  {"questionNumber": 117, "questionText": "The electric field and the electric potential at a point are E and V respectively", "questionImageURL": "", "options": {"A": "If E = 0, V must be zero.", "B": "If V = 0, E must be zero.", "C": "If E ≠ 0, V cannot be zero.", "D": "None of these"}, "correctAnswer": "D"},
+  {"questionNumber": 118, "questionText": "For the given figure the direction of electric field at A will be :", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q118.png?alt=media", "options": {"A": "towards AL", "B": "towards AY", "C": "towards AX", "D": "towards AZ"}, "correctAnswer": "B"},
+  {"questionNumber": 119, "questionText": "An electric dipole is placed in an electric field generated by a point charge :", "questionImageURL": "", "options": {"A": "The net electric force on the dipole must be zero.", "B": "The net electric force on the dipole may be zero.", "C": "The torque on the dipole due to the field must be zero.", "D": "The torque on the dipole due to the field may be zero."}, "correctAnswer": "D"},
+  {"questionNumber": 120, "questionText": "The force on a charge situated on the axis of a dipole is F. If the charge is shifted to double the distance, the acting force will be:", "questionImageURL": "", "options": {"A": "4F", "B": "F/2", "C": "F/4", "D": "F/8"}, "correctAnswer": "D"},
+  {"questionNumber": 121, "questionText": "The electric potential at a point due to an electric dipole will be:", "questionImageURL": "", "options": {"A": "k(P.r)/r³", "B": "k(P.r)/r²", "C": "k(P x r)/r³", "D": "k(P x r)/r²"}, "correctAnswer": "A"},
+  {"questionNumber": 122, "questionText": "A small electric dipole is of dipole moment p. The electric potential at a distance 'r' from its centre and making an angle θ from the axis of dipole will be:", "questionImageURL": "", "options": {"A": "(kp sinθ)/r²", "B": "(kp cosθ)/r²", "C": "(kp/r³)√(1+3cos²θ)", "D": "(kp/r³)√(1+3sin²θ)"}, "correctAnswer": "B"},
+  {"questionNumber": 123, "questionText": "At any point on the right bisector of line joining two equal and opposite charges :", "questionImageURL": "", "options": {"A": "the electric field is zero.", "B": "the electric potential is zero.", "C": "the electric potential decreases with increasing distance from centre.", "D": "the electric field is perpendicular to the line joining the charges."}, "correctAnswer": "B"},
+  {"questionNumber": 124, "questionText": "The region surrounding a stationary electric dipole has-", "questionImageURL": "", "options": {"A": "electric field only", "B": "magnetic field only", "C": "both electric and magnetic fields", "D": "neither electric nor magnetic field"}, "correctAnswer": "A"},
+  {"questionNumber": 125, "questionText": "An electric dipole is made up of two equal and opposite charges of 2 x 10⁻⁶ coulomb at a distance of 3 cm. This is kept in an electric field of 2 x 10⁵ N/C, then the maximum torque acting on the dipole :", "questionImageURL": "", "options": {"A": "12 x 10⁻¹ Nm", "B": "12 x 10⁻³ Nm", "C": "24 x 10⁻³ Nm", "D": "24 x 10⁻¹ Nm"}, "correctAnswer": "B"},
+  {"questionNumber": 126, "questionText": "The electric potential in volt due to an electric dipole of dipole moment 2 x 10⁻⁸ C-m at a distance of 3m on a line making an angle of 60° with the axis of the dipole is:", "questionImageURL": "", "options": {"A": "0", "B": "10", "C": "20", "D": "40"}, "correctAnswer": "B"},
+  {"questionNumber": 127, "questionText": "If an electric dipole is kept in a non-uniform electric field, then it will experience :", "questionImageURL": "", "options": {"A": "only torque", "B": "no torque", "C": "a resultant force and a torque", "D": "only a force"}, "correctAnswer": "C"},
+  {"questionNumber": 128, "questionText": "What is the magnitude of electric field intensity due to a dipole of moment 4 x 10⁻⁸ C-m at a point distant 0.5m from the center of dipole when line joining the point to the center of dipole makes an angle of 60° with dipole axis?", "questionImageURL": "", "options": {"A": "4 x 10⁻⁵ N/C", "B": "5 x 10⁻¹¹ N/C", "C": "2 x 10⁷ N/C", "D": "3.8 x 10³ N/C"}, "correctAnswer": "D"},
+  {"questionNumber": 129, "questionText": "A water molecule has an electric dipole moment 7 x 10⁻³⁰ C-m when it is in vapour state. The distance between the center of positive and negative charge of the molecule is", "questionImageURL": "", "options": {"A": "5 x 10⁻¹¹ m", "B": "2 x 10⁻¹¹ m", "C": "4.1 x 10⁻¹ m", "D": "4.375 x 10⁻¹¹ m"}, "correctAnswer": "D"},
+  {"questionNumber": 130, "questionText": "Three point charges -Q, +Q and +Q are placed on a straight line with distance d between charges as shown. Find the magnitude of the electric field at the point P in the configuration shown which is at a distance a from middle charge Q in the system provided that a >> d. Take 2Qd = p.", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q130.png?alt=media", "options": {"A": "(1/(4πε₀a²))√(Q²a²+p²)", "B": "(1/(4πε₀a³))√(Q²a²+p²)", "C": "(1/(4πε₀a³))√(Q²a²+p)", "D": "(1/(4πε₀a))√(Q²a²+p²)"}, "correctAnswer": "B"},
+  {"questionNumber": 131, "questionText": "An electric dipole of dipole moment 2 x 10⁻¹² C-m is oriented at an angle of 60° with electric field of intensity 3NC⁻¹. What work need to be done to turn the dipole so that it becomes anti-parallel to the field?", "questionImageURL": "", "options": {"A": "12 x 10⁻¹² J", "B": "-9 x 10⁻¹² J", "C": "9 x 10⁻¹² J", "D": "-12 x 10⁻¹² J"}, "correctAnswer": "C"},
+  {"questionNumber": 132, "questionText": "An electric dipole is along a uniform electric field. If it is deflected by 60°, work done by an agent is 2 x 10⁻¹⁹ J. Then the work done by an agent if it is deflected by 30° further is", "questionImageURL": "", "options": {"A": "2.5 x 10⁻¹⁹ J", "B": "2 x 10⁻¹⁹ J", "C": "4 x 10⁻¹⁹ J", "D": "2 x 10⁻¹⁶ J"}, "correctAnswer": "B"},
+  {"questionNumber": 133, "questionText": "The dipole moment of the given system is", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q133.png?alt=media", "options": {"A": "√3 ql along perpendicular bisector of q-q line", "B": "2ql along perpendicular bisector of q-q line", "C": "ql√2 along perpendicular bisector of q-q line", "D": "0"}, "correctAnswer": "A"},
+  {"questionNumber": 134, "questionText": "If 'n' identical water drops assumed spherical each charged to a potential energy U coalesce to a single drop, the potential energy of the single drop is (Assume that drops are uniformly charged):", "questionImageURL": "", "options": {"A": "n¹/³ U", "B": "n²/³ U", "C": "n⁴/³ U", "D": "n⁵/³ U"}, "correctAnswer": "D"},
+  {"questionNumber": 135, "questionText": "64 charged drops coalesce to from a bigger charged drop. The potential of bigger drop will be ____ times that of smaller drop :", "questionImageURL": "", "options": {"A": "4", "B": "16", "C": "64", "D": "8"}, "correctAnswer": "B"},
+  {"questionNumber": 136, "questionText": "A spherical droplet having a potential of 2.5 volt is obtained as a result of merging of 125 identical droplets. Find the potential of the constituent droplet :", "questionImageURL": "", "options": {"A": "0.4 V", "B": "0.5 V", "C": "0.1 V", "D": "62.5 V"}, "correctAnswer": "C"},
+  {"questionNumber": 137, "questionText": "27 smaller drop combine to form a bigger drop if potential on smaller drop is V then potential on bigger drop will be-", "questionImageURL": "", "options": {"A": "9V", "B": "3V", "C": "27V", "D": "1/3 V"}, "correctAnswer": "A"},
+  {"questionNumber": 138, "questionText": "For an electrostatic system which of the statement is always true: (a) electric lines are parallel to metallic surface. (b) electric field inside a metallic surface is zero. (c) electric lines of force are perpendicular to equi-potential surface.", "questionImageURL": "", "options": {"A": "(a) and (b) only", "B": "(b) and (c) only", "C": "(a) and (c) only", "D": "(a), (b) and (c)"}, "correctAnswer": "B"},
+  {"questionNumber": 139, "questionText": "The dielectric constant of a metal is:", "questionImageURL": "", "options": {"A": "infinity", "B": "0", "C": "1", "D": "none of these"}, "correctAnswer": "A"},
+  {"questionNumber": 140, "questionText": "You are travelling in a car during a thunder storm, in order to protect yourself from lightening would you prefer to :", "questionImageURL": "", "options": {"A": "Remain in the car.", "B": "Take shelter under a tree.", "C": "Get out and be flat on the ground.", "D": "Touch the nearest electrical pole."}, "correctAnswer": "A"},
+  {"questionNumber": 141, "questionText": "Two conductors of the same shape and size. One of copper and the other of aluminium (less conducting) are placed in an uniform electric field. The charge induced in aluminium", "questionImageURL": "", "options": {"A": "will be less than in copper.", "B": "will be more than in copper.", "C": "will be equal to that in copper.", "D": "will not be connected with copper."}, "correctAnswer": "C"},
+  {"questionNumber": 142, "questionText": "The electric field near the conducting surface of a uniform charge density σ will be -", "questionImageURL": "", "options": {"A": "σ/ε₀ and parallel to surface.", "B": "2σ/ε₀ and parallel to surface.", "C": "σ/ε₀ and perpendicular to surface.", "D": "2σ/ε₀ and perpendicular to surface."}, "correctAnswer": "C"},
+  {"questionNumber": 143, "questionText": "A conducting sphere of radius 10 cm is charged with 10 µC. another uncharged sphere of radius 20 cm is allowed to touch it for some time after two spheres are separated, then surface density of the charge on the sphere will be in the ratio of:", "questionImageURL": "", "options": {"A": "2:1", "B": "1:1", "C": "3:1", "D": "4:1"}, "correctAnswer": "A"},
+  {"questionNumber": 144, "questionText": "An uncharged conductor A is brought close to another positive charged conductor B, then the charge on B:", "questionImageURL": "", "options": {"A": "will increase", "B": "will decrease.", "C": "will be constant", "D": "none of these"}, "correctAnswer": "C"},
+  {"questionNumber": 145, "questionText": "A neutral metallic object is placed near a finite metal plate carrying a positive charge. The electric force on the object will be:", "questionImageURL": "", "options": {"A": "towards the plate", "B": "away from the plate", "C": "parallel to the plate", "D": "zero"}, "correctAnswer": "A"},
+  {"questionNumber": 146, "questionText": "The net charge given to an isolated conducting solid sphere:", "questionImageURL": "", "options": {"A": "must be distributed uniformly on surface.", "B": "may be distributed uniformly on the surface.", "C": "must be distributed uniformly in the volume.", "D": "may be distributed uniformly in the volume."}, "correctAnswer": "A"},
+  {"questionNumber": 147, "questionText": "A conducting shell of radius 10 cm is charged with 3.2 x 10⁻¹⁹ C. The electric potential at a distance 4cm from its centre in volt be -", "questionImageURL": "", "options": {"A": "9 x 10⁻⁹", "B": "2.88 x 10⁻⁸", "C": "288 x 10⁻⁸", "D": "zero"}, "correctAnswer": "B"},
+  {"questionNumber": 148, "questionText": "If three sphere A, B and C of radius in the ratio 1:3:5 carry charge 10C, -30C, 50C respectively. If these spheres are connected by a conducting wire then what will be the new charge on sphere B.", "questionImageURL": "", "options": {"A": "-10C", "B": "+10C", "C": "+20C", "D": "-20C"}, "correctAnswer": "B"},
+  {"questionNumber": 149, "questionText": "Charge on the outer sphere is q, and the inner sphere is grounded. Then the charge on the inner sphere is q', for (r₂ > r₁)", "questionImageURL": "https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/topicwise_q149.png?alt=media", "options": {"A": "Zero", "B": "q' = q", "C": "q' = -(r₁/r₂)q", "D": "q' = (r₁/r₂)q"}, "correctAnswer": "D"}
+]
