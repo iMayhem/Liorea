@@ -1210,5 +1210,4 @@ const questions: Question[] = [
     correctAnswer: 'C',
   },
 ]
-
 add this to topic wise in nlm
