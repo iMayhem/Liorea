@@ -8,6 +8,7 @@ const dailySchedule: Subject[] = [
   {name: 'Organic Chemistry'},
   {name: 'Inorganic Chemistry'},
   {name: 'Physical Chemistry'},
+  {name: 'Backlog'},
 ];
 
 export const generateTimeTableForDate = (dateKey: string): TimeTableData => {
