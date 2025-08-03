@@ -46,20 +46,18 @@ export default function ChapterPage({ params }: { params: { subject: string; cha
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
-                <Link href={`/practice/${subject.slug}/${chapter.slug}/${type.slug}`} legacyBehavior>
-                  <a className="block">
-                    <Card className="h-full hover:border-primary transition-colors duration-300">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          {type.name}
-                          <ArrowRight className="h-5 w-5 text-primary" />
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                          <CardDescription>{type.description}</CardDescription>
-                      </CardContent>
-                    </Card>
-                  </a>
+                <Link href={`/practice/${subject.slug}/${chapter.slug}/${type.slug}`} className="block">
+                  <Card className="h-full hover:border-primary transition-colors duration-300">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        {type.name}
+                        <ArrowRight className="h-5 w-5 text-primary" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <CardDescription>{type.description}</CardDescription>
+                    </CardContent>
+                  </Card>
                 </Link>
               </motion.div>
             ))}

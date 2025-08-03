@@ -43,11 +43,9 @@ export default function SubjectPage({ params }: { params: { subject: string } })
                     <ul className="space-y-2 p-4 pt-0">
                         {subject.chapters.map((chapter) => (
                         <li key={chapter.slug}>
-                            <Link href={`/practice/${subject.slug}/${chapter.slug}`} legacyBehavior>
-                            <a className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors duration-200">
+                            <Link href={`/practice/${subject.slug}/${chapter.slug}`} className="flex items-center justify-between p-3 rounded-md hover:bg-accent transition-colors duration-200">
                                 <span className="font-medium">{chapter.name}</span>
                                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                            </a>
                             </Link>
                         </li>
                         ))}

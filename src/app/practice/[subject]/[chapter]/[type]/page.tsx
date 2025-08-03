@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { nlmQuestions } from '@/lib/quiz-data';
 import type { Question } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
+import Link from 'next/link';
 
 
 export default function PracticeQuestionPage({ params }: { params: { subject: string; chapter: string; type: string } }) {

@@ -32,20 +32,18 @@ export default function PracticePage() {
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
-                <Link href={`/practice/${subject.slug}`} legacyBehavior>
-                  <a className="block">
-                    <Card className="h-full hover:border-primary transition-colors duration-300">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          {subject.name}
-                          <ArrowRight className="h-5 w-5 text-primary" />
-                        </CardTitle>
-                        <CardDescription>
-                          {subject.chapters.length} chapters
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </a>
+                <Link href={`/practice/${subject.slug}`} className="block">
+                  <Card className="h-full hover:border-primary transition-colors duration-300">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        {subject.name}
+                        <ArrowRight className="h-5 w-5 text-primary" />
+                      </CardTitle>
+                      <CardDescription>
+                        {subject.chapters.length} chapters
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
                 </Link>
               </motion.div>
             ))}
