@@ -136,9 +136,6 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
             ...prev,
             [currentQuestion.questionNumber]: { ...prev?.[currentQuestion.questionNumber], bookmarked: newBookmarkState }
         }));
-        toast({
-            title: newBookmarkState ? "Bookmarked!" : "Bookmark Removed",
-        });
     } catch (error) {
         console.error("Failed to toggle bookmark:", error);
         toast({ title: "Error", description: "Could not update bookmark." });
