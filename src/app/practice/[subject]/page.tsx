@@ -11,8 +11,7 @@ import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-export default function SubjectPage({ params }: { params: { subject: string } }) {
-  const { subject: subjectSlug } = params;
+export default function SubjectPage({ params: { subject: subjectSlug } }: { params: { subject: string } }) {
   const subject = practiceData.find((s) => s.slug === subjectSlug);
 
   if (!subject) {

@@ -10,8 +10,7 @@ import { practiceData } from '@/lib/practice-data';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function ChapterPage({ params }: { params: { subject: string; chapter: string } }) {
-  const { subject: subjectSlug, chapter: chapterSlug } = params;
+export default function ChapterPage({ params: { subject: subjectSlug, chapter: chapterSlug } }: { params: { subject: string; chapter: string } }) {
   const subject = practiceData.find((s) => s.slug === subjectSlug);
   const chapter = subject?.chapters.find((c) => c.slug === chapterSlug);
 
