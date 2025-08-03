@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Bookmark } from 'lucide-react';
+import { Loader2, Bookmark, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -18,6 +18,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { getQuizProgress, saveQuizAttempt, toggleBookmark } from '@/lib/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { explainAnswer } from '@/ai/flows/explain-answer-flow';
 
 
 export default function PracticeQuestionPage({ params: paramsProp }: { params: { subject: string; chapter: string; type: string } }) {
@@ -38,6 +40,8 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
     const [answered, setAnswered] = React.useState(false);
     const [progress, setProgress] = React.useState<QuizProgress | null>(null);
+    const [explanation, setExplanation] = React.useState<string | null>(null);
+    const [isExplanationLoading, setIsExplanationLoading] = React.useState(false);
     
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
@@ -71,6 +75,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         
         const currentQuestion = questions[currentQuestionIndex];
         const savedAttempt = progress[currentQuestion.questionNumber];
+        setExplanation(null);
 
         if (savedAttempt?.selected) {
             setSelectedAnswer(savedAttempt.selected);
@@ -141,6 +146,28 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         toast({ title: "Error", description: "Could not update bookmark.", variant: "destructive" });
     }
   };
+  
+  const handleExplain = async () => {
+    if (!currentQuestion || !selectedAnswer) return;
+
+    setIsExplanationLoading(true);
+    setExplanation(null);
+
+    try {
+      const result = await explainAnswer({
+        questionText: currentQuestion.questionText,
+        options: currentQuestion.options,
+        selectedAnswer: currentQuestion.options[selectedAnswer],
+        correctAnswer: currentQuestion.options[currentQuestion.correctAnswer],
+      });
+      setExplanation(result);
+    } catch (error) {
+      console.error("Failed to get explanation:", error);
+      toast({ title: "AI Error", description: "Could not get an explanation. Please try again.", variant: "destructive" });
+    } finally {
+      setIsExplanationLoading(false);
+    }
+  };
 
 
   if (authLoading || loading) {
@@ -169,6 +196,8 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       </>
     )
   }
+  
+  const isAnswerIncorrect = answered && selectedAnswer !== currentQuestion.correctAnswer;
 
   return (
     <>
@@ -273,6 +302,33 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                     }
                   )}
                 </div>
+
+                {isAnswerIncorrect && (
+                  <div className="mt-4">
+                    <Button onClick={handleExplain} disabled={isExplanationLoading}>
+                      {isExplanationLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-2 h-4 w-4" />
+                      )}
+                      Explain with AI
+                    </Button>
+                  </div>
+                )}
+                
+                {explanation && (
+                    <motion.div initial={{opacity:0, y: 10}} animate={{opacity: 1, y: 0}} className="mt-4">
+                        <Alert>
+                            <Sparkles className="h-4 w-4" />
+                            <AlertTitle>AI Explanation</AlertTitle>
+                            <AlertDescription className="whitespace-pre-line">
+                                {explanation}
+                            </AlertDescription>
+                        </Alert>
+                    </motion.div>
+                )}
+
+
                 <div className="mt-6 flex justify-between items-center">
                     <Button
                         onClick={handleBookmark}
