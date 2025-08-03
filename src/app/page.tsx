@@ -26,6 +26,12 @@ export default function HomePage() {
   const { user, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
+  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+
+  React.useEffect(() => {
+    // This effect runs on the client, so `new Date()` will be the user's current date.
+    setCurrentMonth(new Date());
+  }, []);
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -81,7 +87,7 @@ export default function HomePage() {
                     className="rounded-md"
                     fromDate={new Date('2025-07-01')}
                     toDate={new Date('2026-05-05')}
-                    defaultMonth={new Date('2025-07-01')}
+                    defaultMonth={currentMonth}
                     />
                 </CardContent>
             </Card>
