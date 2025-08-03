@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { nlmQuestions, nlmRankersQuestions, electrostaticsQuestions } from '@/lib/quiz-data';
+import { nlmQuestions, nlmRankersQuestions, electrostaticsQuestions, nlmNeetFlashbackQuestions } from '@/lib/quiz-data';
 import type { Question, QuizProgress } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
 import Link from 'next/link';
@@ -50,6 +50,8 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
                         questionSet = nlmQuestions;
                     } else if (quizType === 'neet-rankers-stuff') {
                         questionSet = nlmRankersQuestions;
+                    } else if (quizType === 'neet-flashback') {
+                        questionSet = nlmNeetFlashbackQuestions;
                     }
                 } else if (chapterSlug === 'electrostatics') {
                     if (quizType === 'topic-wise-questions') {
@@ -92,7 +94,7 @@ export default function PracticeQuestionPage({ params }: { params: { subject: st
     }, [currentQuestionIndex, progress, questions]);
 
 
-    if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff'].includes(quizType)) || (chapter.slug === 'electrostatics' && quizType !== 'topic-wise-questions')) {
+    if (!subject || !chapter || (chapter.slug === 'newtons-laws-of-motion' && !['topic-wise-questions', 'neet-rankers-stuff', 'neet-flashback'].includes(quizType)) || (chapter.slug === 'electrostatics' && quizType !== 'topic-wise-questions')) {
          return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
     }
 
