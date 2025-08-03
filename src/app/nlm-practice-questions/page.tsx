@@ -45,22 +45,21 @@ export default function NlmPracticePage() {
             const doc = querySnapshot.docs[0];
             const questionData = { id: doc.id, ...doc.data() } as Question;
             setCurrentQuestion(questionData);
+            
+            // A more robust way to check if it's the last question
+            const nextQ = query(
+                collection(db, 'nlm_questions'),
+                where('questionNumber', '==', questionNumber + 1),
+                limit(1)
+            );
+            const nextSnapshot = await getDocs(nextQ);
+            setIsLastQuestion(nextSnapshot.empty);
+            
 
-            // Check if this is the last question (assuming 119 questions)
-            if (questionNumber === 119) {
-              setIsLastQuestion(true);
-            } else {
-               // A more robust way to check if it's the last question
-                const nextQ = query(
-                    collection(db, 'nlm_questions'),
-                    where('questionNumber', '==', questionNumber + 1),
-                    limit(1)
-                );
-                const nextSnapshot = await getDocs(nextQ);
-                setIsLastQuestion(nextSnapshot.empty);
-            }
-
-        } else if (questionNumber === 1) { 
+        } else if (questionNumber > 1) { // If we can't find the *next* question
+            setIsLastQuestion(true);
+            setCurrentQuestion(prev => prev); // Keep the last question displayed
+        } else { // If we can't even find question 1
             setCurrentQuestion(null);
         }
     } catch (error) {
@@ -84,7 +83,7 @@ export default function NlmPracticePage() {
   };
 
   const handleNextQuestion = () => {
-    if (isLastQuestion) {
+    if (isLastQuestion && answered) {
         router.push('/');
         return;
     }
@@ -97,9 +96,12 @@ export default function NlmPracticePage() {
 
   if (loading && !currentQuestion) {
     return (
+      <>
+      <AppHeader />
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
+      </>
     );
   }
 
