@@ -66,23 +66,31 @@ export default function HomePage() {
             Select a date to see the schedule and track your progress.
           </p>
         </div>
-        <div className="max-w-md w-full mx-auto mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-         <CountdownTimer targetDate={neet2026ExamDate} />
-         <TestCountdownTimer tests={testSchedule} />
+        
+        <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
+            <div className="w-full max-w-xs">
+                 <CountdownTimer targetDate={neet2026ExamDate} />
+            </div>
+
+            <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card order-first lg:order-none">
+                <CardContent className="flex justify-center p-0">
+                    <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    className="rounded-md"
+                    fromDate={new Date('2025-07-01')}
+                    toDate={new Date('2026-05-05')}
+                    defaultMonth={new Date('2025-07-01')}
+                    />
+                </CardContent>
+            </Card>
+
+            <div className="w-full max-w-xs">
+                <TestCountdownTimer tests={testSchedule} />
+            </div>
         </div>
-        <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card">
-          <CardContent className="flex justify-center p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={handleDateSelect}
-              className="rounded-md"
-              fromDate={new Date('2025-07-01')}
-              toDate={new Date('2026-05-05')}
-              defaultMonth={new Date('2025-07-01')}
-            />
-          </CardContent>
-        </Card>
+
       </motion.main>
       <footer className="mt-auto p-4 text-center text-sm text-muted-foreground">
         <p>Built to help you succeed.</p>
