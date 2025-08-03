@@ -5,9 +5,9 @@ import * as React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AppHeader } from '@/components/header';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { practiceData } from '@/lib/practice-data';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -40,7 +40,7 @@ export default function SubjectPage({ params }: { params: { subject: string } })
             </CardHeader>
             <ScrollArea className="h-96">
                 <CardContent>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2 p-4 pt-0">
                         {subject.chapters.map((chapter) => (
                         <li key={chapter.slug}>
                             <Link href={`/practice/${subject.slug}/${chapter.slug}`} legacyBehavior>
@@ -60,8 +60,3 @@ export default function SubjectPage({ params }: { params: { subject: string } })
     </>
   );
 }
-
-// Dummy CardContent for ScrollArea to work
-const CardContent = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div {...props}>{children}</div>
-);
