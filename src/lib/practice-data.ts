@@ -34,3 +34,5 @@ export const practiceData: Subject[] = [
         chapters: [
             { name: 'Molecular Basis of Inheritance', slug: 'molecular-basis-of-inheritance' },
         ],
+    },
+];
