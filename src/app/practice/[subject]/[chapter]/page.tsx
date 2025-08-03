@@ -13,9 +13,11 @@ import { motion } from 'framer-motion';
 export default function ChapterPage({ params: paramsProp }: { params: { subject: string; chapter: string } }) {
   const params = React.use(paramsProp as any);
   const { subject: subjectSlug, chapter: chapterSlug } = params;
+  
   const subject = practiceData.find((s) => s.slug === subjectSlug);
   const chapter = subject?.chapters.find((c) => c.slug === chapterSlug);
 
+  // If the subject or chapter doesn't exist, render a 404 page.
   if (!subject || !chapter) {
     notFound();
   }

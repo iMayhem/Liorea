@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
 import { AppHeader } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,15 +22,41 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { explainAnswer } from '@/ai/flows/explain-answer-flow';
 
 
+function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapterName?: string}) {
+    return (
+        <>
+            <AppHeader />
+            <main className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
+                 <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <h1 className="text-4xl font-bold font-heading mt-12">Coming Soon!</h1>
+                    <p className="text-muted-foreground mt-4 text-lg">
+                        Practice questions for <span className="font-semibold text-primary">{chapterName || 'this chapter'}</span> in <span className="font-semibold text-primary">{subjectName || 'this subject'}</span> are being prepared.
+                    </p>
+                    <p className="mt-2 text-muted-foreground">Please check back later.</p>
+                     <Button asChild className="mt-8">
+                        <Link href="/practice">
+                            Back to Practice Module
+                        </Link>
+                    </Button>
+                </motion.div>
+            </main>
+        </>
+    )
+}
+
 export default function PracticeQuestionPage({ params: paramsProp }: { params: { subject: string; chapter: string; type: string } }) {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     
-    // In recent Next.js versions, params can be a promise. We use `React.use` to unwrap it.
     const params = React.use(paramsProp as any);
 
     const { subject: subjectSlug, chapter: chapterSlug, type: quizType } = params;
+    
     const subject = practiceData.find((s) => s.slug === subjectSlug);
     const chapter = subject?.chapters.find((c) => c.slug === chapterSlug);
 
@@ -43,6 +69,11 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     const [explanation, setExplanation] = React.useState<string | null>(null);
     const [isExplanationLoading, setIsExplanationLoading] = React.useState(false);
     
+    // Add a check here. If subject or chapter is not found, render the fallback page.
+    if (!subject || !chapter) {
+      return <ComingSoonPage subjectName={subject?.name} chapterName={chapter?.name} />;
+    }
+
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
         if (!user || !subject || !chapter) return;
@@ -89,10 +120,6 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
      const handleJumpToQuestion = (index: number) => {
         setCurrentQuestionIndex(index);
     };
-
-    if (!subject || !chapter) {
-         return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
-    }
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -182,7 +209,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
   }
 
   if (!questions.length) {
-     return <ComingSoonPage subject={subject?.name} chapter={chapter?.name} />;
+     return <ComingSoonPage subjectName={subject?.name} chapterName={chapter?.name} />;
   }
 
   if (!currentQuestion) {
@@ -355,30 +382,4 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       </main>
     </>
   );
-}
-
-function ComingSoonPage({subject, chapter}: {subject?: string, chapter?: string}) {
-    return (
-        <>
-            <AppHeader />
-            <main className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
-                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <h1 className="text-4xl font-bold font-heading mt-12">Coming Soon!</h1>
-                    <p className="text-muted-foreground mt-4 text-lg">
-                        Practice questions for <span className="font-semibold text-primary">{chapter || 'this chapter'}</span> in <span className="font-semibold text-primary">{subject || 'this subject'}</span> are being prepared.
-                    </p>
-                    <p className="mt-2 text-muted-foreground">Please check back later.</p>
-                     <Button asChild className="mt-8">
-                        <Link href="/practice">
-                            Back to Practice Module
-                        </Link>
-                    </Button>
-                </motion.div>
-            </main>
-        </>
-    )
 }

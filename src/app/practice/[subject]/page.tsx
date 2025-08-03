@@ -16,6 +16,7 @@ export default function SubjectPage({ params: paramsProp }: { params: { subject:
   const { subject: subjectSlug } = params;
   const subject = practiceData.find((s) => s.slug === subjectSlug);
 
+  // If the subject doesn't exist, render a 404 page.
   if (!subject) {
     notFound();
   }
