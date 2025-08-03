@@ -2,6 +2,7 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
 import { ArrowLeft, LogOut } from "lucide-react";
@@ -9,6 +10,12 @@ import { useAuth } from "@/hooks/use-auth";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleBack = () => {
+    router.back();
+  };
+  
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -20,11 +27,9 @@ export function AppHeader() {
         </div>
         {user && <p className="text-sm text-muted-foreground">Signed in as {user.username}</p>}
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <Button asChild variant="ghost" size="sm">
-             <Link href="/">
+           <Button onClick={handleBack} variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Calendar
-             </Link>
+                Back
            </Button>
            {user && (
               <Button onClick={logout} variant="outline" size="sm">
