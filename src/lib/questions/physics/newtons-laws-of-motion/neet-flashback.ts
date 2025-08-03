@@ -25,4 +25,6 @@ const questions: Question[] = [
   {"questionNumber": 21, "questionText": "There are two inclined surface of equal length (L) and same angle of inclination 45° with the horizontal. One of them is rough and the other is perfectly smooth. A given body takes 2 times as much time to slide down on rough surface than on the smooth surface. The coefficient of kinetic friction (µₖ) between the object and the rough surface is close to:", "questionImageURL": "", "options": {"A": "0.25", "B": "0.40", "C": "0.5", "D": "0.75"}, "correctAnswer": "D"},
   {"questionNumber": 22, "questionText": "A ball of mass 0.5 kg is dropped from a height of 40 m. The ball hits the ground and rises to a height of 10 m. The impulse imparted to the ball during its collision with the ground is (Take g = 9.8 m/s²)", "questionImageURL": "", "options": {"A": "21 Ns", "B": "7 Ns", "C": "0", "D": "84 Ns"}, "correctAnswer": "A"},
   {"questionNumber": 23, "questionText": "A uniform rod of mass 20 kg and length 5 m leans against a smooth vertical wall making an angle of 60° with it. The other end rests on a rough horizontal floor. The friction force that the floor exerts on the rod is (take g = 10 m/s²)", "questionImageURL": "", "options": {"A": "100 N", "B": "100√3 N", "C": "200 N", "D": "200√3 N"}, "correctAnswer": "B"}
-]
+];
+
+export default questions;

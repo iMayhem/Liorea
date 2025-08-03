@@ -5,7 +5,7 @@ export async function getQuestions(subject: string, chapter: string, type: strin
   let questionModule;
   try {
     // Dynamically import the question module based on the path
-    // The path is normalized to match the file names (e.g., 'neet-rankers-stuff' -> 'neet-rankers')
+    // The path is normalized to match the file names (e.g., 'topic-wise-questions' -> 'topic-wise')
     const normalizedType = type.replace('-stuff', '').replace('-questions', '');
     questionModule = await import(`@/lib/questions/${subject}/${chapter}/${normalizedType}.ts`);
     return questionModule.default || [];

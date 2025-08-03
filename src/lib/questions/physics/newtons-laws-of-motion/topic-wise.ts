@@ -1209,4 +1209,6 @@ const questions: Question[] = [
     },
     correctAnswer: 'C',
   },
-]
+];
+
+export default questions;
