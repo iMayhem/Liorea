@@ -60,12 +60,24 @@ export const generateInitialProgressForDate = (
   Object.keys(timetable).forEach(day => {
     progress[day] = {};
     timetable[day].forEach(subject => {
-      progress[day][subject.name] = {
-        lecture: false,
-        notes: false,
-        homework: false,
-        revision: false,
-      };
+      progress[day][subject.name] = {};
+      
+      switch (subject.name) {
+        case 'Short Notes':
+          progress[day][subject.name]['completed'] = false;
+          break;
+        case 'Full Week Revision':
+          progress[day][subject.name]['did_revise'] = false;
+          break;
+        default:
+          progress[day][subject.name] = {
+            lecture: false,
+            notes: false,
+            homework: false,
+            revision: false,
+          };
+          break;
+      }
     });
   });
   return progress;

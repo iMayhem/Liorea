@@ -1,8 +1,7 @@
 export interface Task {
-  lecture: boolean;
-  notes: boolean;
-  homework: boolean;
-  revision: boolean;
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
 }
 
 export interface Subject {
@@ -17,6 +16,8 @@ export interface TimeTableData {
 
 export interface UserProgress {
   [day: string]: {
-    [subject: string]: Task;
+    [subject: string]: {
+      [taskId: string]: boolean;
+    };
   };
 }

@@ -2,7 +2,7 @@
 'use client';
 
 import React, {useMemo, useState, useEffect} from 'react';
-import type {UserProgress, Subject} from '@/lib/types';
+import type {UserProgress, Subject, Task} from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {Checkbox} from '@/components/ui/checkbox';
-import {BookOpen, ClipboardList, Pencil, RefreshCw} from 'lucide-react';
+import {BookOpen, ClipboardList, Pencil, RefreshCw, CheckSquare} from 'lucide-react';
 import {Progress} from './ui/progress';
 import {motion} from 'framer-motion';
 import {RewardDialog} from './reward-dialog';
@@ -29,12 +29,23 @@ interface TimeTableViewProps {
   isReadOnly: boolean;
 }
 
-const tasks = [
+const defaultTasks: Task[] = [
   {id: 'lecture', label: 'Attend Lecture', icon: <BookOpen className="h-4 w-4" />},
   {id: 'notes', label: 'Make Notes', icon: <Pencil className="h-4 w-4" />},
   {id: 'homework', label: 'Complete Homework', icon: <ClipboardList className="h-4 w-4" />},
   {id: 'revision', label: 'Revise', icon: <RefreshCw className="h-4 w-4" />},
 ];
+
+const getTasksForSubject = (subjectName: string): Task[] => {
+    switch (subjectName) {
+        case 'Short Notes':
+            return [{ id: 'completed', label: 'completed', icon: <CheckSquare className="h-4 w-4" /> }];
+        case 'Full Week Revision':
+            return [{ id: 'did_revise', label: 'did revise', icon: <CheckSquare className="h-4 w-4" /> }];
+        default:
+            return defaultTasks;
+    }
+};
 
 function calculateCompletionPercentage(
   subjects: Subject[],
@@ -48,8 +59,8 @@ function calculateCompletionPercentage(
   let completedTasks = 0;
 
   subjects.forEach(subject => {
-    // Each subject has a fixed number of tasks
-    totalTasks += tasks.length;
+    const tasksForSubject = getTasksForSubject(subject.name);
+    totalTasks += tasksForSubject.length;
     const subjectProgress = progress[day]?.[subject.name];
     if (subjectProgress) {
       completedTasks += Object.values(subjectProgress).filter(Boolean).length;
@@ -144,7 +155,7 @@ export function TimeTableView({
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 pl-2">
-                      {tasks.map(task => (
+                      {getTasksForSubject(subject.name).map(task => (
                         <div
                           key={task.id}
                           className="flex items-center space-x-3"
