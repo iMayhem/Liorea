@@ -45,7 +45,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
-        if (!user) return;
+        if (!user || !subject || !chapter) return;
 
         async function loadData() {
             setLoading(true);
@@ -67,7 +67,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         }
 
         loadData();
-    }, [user, subjectSlug, chapterSlug, quizType, toast]);
+    }, [user, subject, chapter, subjectSlug, chapterSlug, quizType, toast]);
     
     // This effect updates the UI state based on loaded progress for the current question
     React.useEffect(() => {
