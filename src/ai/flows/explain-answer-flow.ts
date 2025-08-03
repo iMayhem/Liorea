@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
+import {googleAI} from '@genkit-ai/googleai';
 
 // Define the schema for the input data.
 const ExplainAnswerInputSchema = z.object({
@@ -33,6 +34,7 @@ const explanationPrompt = ai.definePrompt({
   output: {
     schema: ExplainAnswerOutputSchema,
   },
+  model: googleAI('gemini-1.5-flash-latest'),
   prompt: `
     You are an expert tutor for the NEET exam. A student has answered a question incorrectly.
     Your task is to provide a clear, concise explanation for why their answer is wrong and why the correct answer is right.
