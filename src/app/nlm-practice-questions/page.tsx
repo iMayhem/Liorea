@@ -4,7 +4,7 @@
 import * as React from 'react';
 import {useRouter} from 'next/navigation';
 import {db} from '@/lib/firebase';
-import {collection, getDocs, query, where, orderBy, limit, startAfter, doc, getDoc, DocumentData} from 'firebase/firestore';
+import {collection, getDocs, query, where, limit} from 'firebase/firestore';
 import {AppHeader} from '@/components/header';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
@@ -13,7 +13,7 @@ import {motion} from 'framer-motion';
 import {cn} from '@/lib/utils';
 import Image from 'next/image';
 
-interface Question extends DocumentData {
+interface Question {
   id: string;
   question: number;
   questionText: string;
@@ -35,9 +35,8 @@ export default function NlmPracticePage() {
     setLoading(true);
     try {
         const q = query(
-            collection(db, 'quiz_questions'), 
-            where('chapter', '==', 'NLM'),
-            where('question', '==', questionNumber),
+            collection(db, 'nlm_questions'), 
+            where('questionNumber', '==', questionNumber),
             limit(1)
         );
         const querySnapshot = await getDocs(q);
@@ -45,19 +44,20 @@ export default function NlmPracticePage() {
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
             const questionData = { id: doc.id, ...doc.data() } as Question;
+            // The document field is questionNumber, but our component state uses question
+            questionData.question = doc.data().questionNumber;
             setCurrentQuestion(questionData);
 
             // Check if this is the last question
             const nextQ = query(
-                collection(db, 'quiz_questions'),
-                where('chapter', '==', 'NLM'),
-                where('question', '==', questionNumber + 1),
+                collection(db, 'nlm_questions'),
+                where('questionNumber', '==', questionNumber + 1),
                 limit(1)
             );
             const nextSnapshot = await getDocs(nextQ);
             setIsLastQuestion(nextSnapshot.empty);
 
-        } else if (questionNumber === 1) { // Only set to null if the very first question isn't found
+        } else if (questionNumber === 1) { 
             setCurrentQuestion(null);
         }
     } catch (error) {
@@ -106,7 +106,7 @@ export default function NlmPracticePage() {
         <AppHeader />
         <div className="container mx-auto p-4 text-center">
             <h1 className="text-2xl font-bold mt-8">No Questions Found</h1>
-            <p className="text-muted-foreground">Could not find any practice questions for NLM.</p>
+            <p className="text-muted-foreground">Could not find any practice questions for NLM in the 'nlm_questions' collection.</p>
         </div>
       </>
     );
@@ -125,7 +125,7 @@ export default function NlmPracticePage() {
             <CardContent className="space-y-6">
               <div>
                   <h2 className="text-xl font-bold mb-2">Question #{currentQuestion.question}</h2>
-                  <p className="text-lg font-semibold mb-4">{currentQuestion.questionText}</p>
+                  <p className="text-lg font-semibold mb-4 whitespace-pre-line">{currentQuestion.questionText}</p>
                   {currentQuestion.questionImageURL && (
                     <div className="mb-4 relative w-full h-64">
                          <Image src={currentQuestion.questionImageURL} alt="Question diagram" layout="fill" objectFit="contain" />
