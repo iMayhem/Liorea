@@ -93,5 +93,3 @@ const questions: Question[] = [
   {"questionNumber": 89, "questionText": "Which of the following bones is not included in axial skeleton of human ?", "questionImageURL": "", "options": {"A": "Stapes", "B": "Sphenoid", "C": "Sternum", "D": "Scapula"}, "correctAnswer": "D"},
   {"questionNumber": 90, "questionText": "Age related disorder characterized by decreased bone mass and increased chances of fractures. Its common cause is :", "questionImageURL": "", "options": {"A": "Auto immune disorder", "B": "Accumulation of uric acid crystal", "C": "Deficiency of oestrogen in women", "D": "Genetic disorder"}, "correctAnswer": "C"}
 ]
-
-update in neet flashback in locomotion
