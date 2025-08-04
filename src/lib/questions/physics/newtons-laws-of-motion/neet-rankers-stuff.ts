@@ -1,4 +1,4 @@
-// src/lib/questions/physics/newtons-laws-of-motion/neet-rankers.ts
+// src/lib/questions/physics/newtons-laws-of-motion/neet-rankers-stuff.ts
 import type { Question } from '@/lib/types';
 
 const questions: Question[] = [
