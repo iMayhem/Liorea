@@ -34,7 +34,7 @@ function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapt
                 >
                     <h1 className="text-4xl font-bold font-heading mt-12">Coming Soon!</h1>
                     <p className="text-muted-foreground mt-4 text-lg">
-                        Practice questions for <span className="font-semibold text-primary">{chapterName || 'this chapter'}</span> in <span className="font-semibold text-primary">{subjectName || 'this subject'}</span> are being prepared.
+                        Practice questions for {chapterName ? <span className="font-semibold text-primary">{chapterName}</span> : 'this chapter'} in {subjectName ? <span className="font-semibold text-primary">{subjectName}</span> : 'this subject'} are being prepared.
                     </p>
                     <p className="mt-2 text-muted-foreground">Please check back later.</p>
                      <Button asChild className="mt-8">
