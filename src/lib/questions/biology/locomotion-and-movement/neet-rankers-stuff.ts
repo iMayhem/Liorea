@@ -40,4 +40,7 @@ const questions: Question[] = [
   {"questionNumber": 36, "questionText": "Statement I: Fibrous joint do not allow any movement. Statement II: Arthritis causes inflammation of joints", "questionImageURL": "", "options": {"A": "Statement I is correct but statement II is incorrect", "B": "Statement II is correct but statement I is incorrect", "C": "Both statements I and II are correct", "D": "Both statements I and II are incorrect"}, "correctAnswer": "C"},
   {"questionNumber": 37, "questionText": "Statement I: The muscle bundles are bound together by a common collagenous sheath of connective tissue called fascia. Statement II: Muscle fibre is a syncytium as the sarcoplasm contains many nuclei.", "questionImageURL": "", "options": {"A": "Statement I is correct but statement II is incorrect", "B": "Statement II is correct but statement I is incorrect", "C": "Both statements I and II are correct", "D": "Both statements I and II are incorrect"}, "correctAnswer": "C"},
   {"questionNumber": 38, "questionText": "Statement I: Rapid spasms (wild contractions) in muscle due to deficiency of Ca⁺⁺ in body fluid is called tetany. Statement II: Muscular dystrophy is an auto-immune disorder affecting neuromuscular junction leading to fatigue, weakening and paralysis of skeletal muscles.", "questionImageURL": "", "options": {"A": "Statement I is correct but statement II is incorrect", "B": "Statement II is correct but statement I is incorrect", "C": "Both statements I and II are correct", "D": "Both statements I and II are incorrect"}, "correctAnswer": "A"}
-]
+];
+export default questions;
+
+    
