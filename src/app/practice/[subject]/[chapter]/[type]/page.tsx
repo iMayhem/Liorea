@@ -57,8 +57,9 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
 
     const { subject: subjectSlug, chapter: chapterSlug, type: quizType } = params;
     
-    const subject = practiceData.find((s) => s.slug === subjectSlug);
-    const chapter = subject?.chapters.find((c) => c.slug === chapterSlug);
+    const subject = React.useMemo(() => practiceData.find((s) => s.slug === subjectSlug), [subjectSlug]);
+    const chapter = React.useMemo(() => subject?.chapters.find((c) => c.slug === chapterSlug), [subject, chapterSlug]);
+
 
     const [questions, setQuestions] = React.useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
@@ -74,31 +75,29 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       return <ComingSoonPage subjectName={subject?.name} chapterName={chapter?.name} />;
     }
 
+    const loadData = React.useCallback(async () => {
+        if (!user || !subject || !chapter) return;
+        setLoading(true);
+        
+        const questionSet = await getQuestions(subjectSlug, chapterSlug, quizType);
+        setQuestions(questionSet);
+
+        if (questionSet.length > 0) {
+            try {
+                const userProgress = await getQuizProgress(user.username, quizType);
+                setProgress(userProgress[subjectSlug]?.[chapterSlug] || {});
+            } catch (error) {
+                console.error("Failed to fetch quiz progress:", error);
+                toast({ title: "Error", description: "Could not load your progress.", variant: "destructive" });
+            }
+        }
+        setLoading(false);
+    }, [user, subject, chapter, subjectSlug, chapterSlug, quizType, toast]);
+
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
-        if (!user || !subject || !chapter) return;
-
-        async function loadData() {
-            setLoading(true);
-            
-            const questionSet = await getQuestions(subjectSlug, chapterSlug, quizType);
-            
-            setQuestions(questionSet);
-
-            if (questionSet.length > 0) {
-                try {
-                    const userProgress = await getQuizProgress(user.username, quizType);
-                    setProgress(userProgress[subjectSlug]?.[chapterSlug] || {});
-                } catch (error) {
-                    console.error("Failed to fetch quiz progress:", error);
-                    toast({ title: "Error", description: "Could not load your progress.", variant: "destructive" });
-                }
-            }
-            setLoading(false);
-        }
-
         loadData();
-    }, [user, subject, chapter, subjectSlug, chapterSlug, quizType, toast]);
+    }, [loadData]);
     
     // This effect updates the UI state based on loaded progress for the current question
     React.useEffect(() => {
@@ -122,7 +121,8 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     };
 
   const currentQuestion = questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const isLastQuestion = React.useMemo(() => currentQuestionIndex === questions.length - 1, [currentQuestionIndex, questions.length]);
+
 
   const handleAnswer = async (optionKey: string) => {
     if (answered || !user) return;

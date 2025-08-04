@@ -33,6 +33,16 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
     }
   }, [user, authLoading, router]);
 
+  const formattedDate = React.useMemo(() => {
+    return parsedDate ? format(parsedDate, 'MMMM d, yyyy') : '';
+  }, [parsedDate]);
+
+  const timetable = React.useMemo(() => {
+      if (!formattedDate) return {};
+      return generateTimeTableForDate(formattedDate);
+  }, [formattedDate]);
+
+
   if (authLoading || !user) {
     // Render a loading state or nothing while we validate the date on the client.
     return (
@@ -68,10 +78,6 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       </div>
     );
   }
-
-  const formattedDate = format(parsedDate, 'MMMM d, yyyy');
-
-  const timetable = generateTimeTableForDate(formattedDate);
 
   return (
     <Dashboard

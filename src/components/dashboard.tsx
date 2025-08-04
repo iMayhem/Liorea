@@ -25,10 +25,11 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (!user) return;
+    if (!user || !date) return;
     
     setLoading(true);
-    setMyProgress(null);
+    // Setting progress to null ensures we show a loading state for the new date
+    setMyProgress(null); 
 
     const docId = getDocId(user.username, date);
     const docRef = doc(db, 'progress', docId);
@@ -37,13 +38,25 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
       if (snapshot.exists()) {
         setMyProgress(snapshot.data() as UserProgress);
       } else {
-        // If no data exists, create it based on the timetable
-        getProgressForUser(user.username, date, timetable).then(setMyProgress);
+        // If no data exists, create it based on the timetable for the specific date.
+        // Check if timetable has data for the date to avoid errors.
+        if (timetable && timetable[date]) {
+          const initialProgress = {[date]: timetable[date]};
+          getProgressForUser(user.username, date, initialProgress).then(setMyProgress);
+        } else {
+            // Handle case where timetable for date is not available
+             setMyProgress({}); // Set to empty or some default state
+        }
       }
        setLoading(false); 
+    }, (error) => {
+        // Handle snapshot errors
+        console.error("Error fetching progress:", error);
+        setLoading(false);
     });
 
 
+    // Cleanup subscription on component unmount or when date/user changes
     return () => {
       unsubscribe();
     };
@@ -163,7 +176,7 @@ function DashboardContent({
     <div className="grid gap-6 mt-4">
       <TimeTableView
         day={date}
-        subjects={timetable[date]}
+        subjects={timetable[date] || []}
         progress={progress}
         onTaskToggle={handleTaskToggle}
         onScoreSave={handleScoreSave}
