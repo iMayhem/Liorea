@@ -9,7 +9,7 @@ export async function getQuestions(subject: string, chapter: string, type: strin
   if (type === 'topic-wise-questions') {
       fileName = 'topic-wise';
   } else if (type === 'neet-rankers-stuff') {
-      fileName = 'neet-rankers';
+      fileName = 'neet-rankers-stuff';
   }
   // 'neet-flashback' slug already matches its filename.
 
