@@ -2,7 +2,7 @@
 'use client';
 
 import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
-import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut, getRedirectResult, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
@@ -41,15 +41,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
       setLoading(false);
     });
 
-    // Handle the redirect result
-    getRedirectResult(auth)
-      .catch((error) => {
-        console.error("Error during redirect result:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
@@ -57,9 +48,10 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error during sign-in:", error);
+    } finally {
       setLoading(false);
     }
   };
