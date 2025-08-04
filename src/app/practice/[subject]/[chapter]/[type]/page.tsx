@@ -307,7 +307,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                 <CardTitle className="font-heading text-2xl">
                     {chapter.name}
                 </CardTitle>
-                 <div className="flex items-center text-lg font-mono bg-muted px-3 py-1 rounded-md">
+                 <div className="flex items-center text-lg font-mono bg-muted px-4 py-2 rounded-full">
                      <Timer className="mr-2 h-5 w-5"/>
                      <span>{formatTime(time)}</span>
                 </div>
