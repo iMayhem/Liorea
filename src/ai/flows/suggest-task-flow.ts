@@ -24,7 +24,7 @@ export async function suggestTask(): Promise<string> {
 const prompt = ai.definePrompt({
   name: 'suggestTaskPrompt',
   // Use the model name as a string; Genkit will use the configured Google AI plugin.
-  model: 'googleAI/gemini-1.5-flash-latest',
+  model: 'googleAI/gemini-1.5-flash',
   output: {schema: TaskSuggestionOutputSchema},
   prompt: `You are a friendly and encouraging study coach. Suggest a short, actionable study task for a student to add to their to-do list. The task should be something that can be accomplished in a single study session. Keep it concise and motivating.`,
 });
