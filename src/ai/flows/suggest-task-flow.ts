@@ -15,7 +15,8 @@ const TaskSuggestionOutputSchema = z.object({
 });
 
 export async function suggestTask(): Promise<string> {
-  return suggestTaskFlow();
+  const result = await suggestTaskFlow();
+  return result.task;
 }
 
 const prompt = ai.definePrompt({
@@ -28,10 +29,10 @@ const prompt = ai.definePrompt({
 const suggestTaskFlow = ai.defineFlow(
   {
     name: 'suggestTaskFlow',
-    outputSchema: z.string(),
+    outputSchema: TaskSuggestionOutputSchema,
   },
   async () => {
     const {output} = await prompt({});
-    return output?.task!;
+    return output!;
   }
 );
