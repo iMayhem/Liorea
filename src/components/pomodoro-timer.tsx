@@ -3,16 +3,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Play, Pause, RefreshCcw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Play, Pause, RefreshCcw, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { addStudySession } from '@/lib/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
 
 type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak';
 
@@ -29,11 +29,12 @@ export function PomodoroTimer() {
   const [isActive, setIsActive] = useState(false);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
 
-  const getDuration = useCallback((mode: TimerMode) => {
-    switch (mode) {
+  const getDuration = useCallback((currentMode: TimerMode) => {
+    switch (currentMode) {
       case 'pomodoro': return pomodoroTime * 60;
       case 'shortBreak': return shortBreakTime * 60;
       case 'longBreak': return longBreakTime * 60;
+      default: return pomodoroTime * 60;
     }
   }, [pomodoroTime, shortBreakTime, longBreakTime]);
 
@@ -103,23 +104,39 @@ export function PomodoroTimer() {
 
   return (
     <Card className="w-full max-w-md p-6 shadow-lg bg-card border-border/50">
+       <CardHeader className="p-0 mb-6 flex flex-row justify-between items-center">
+        <CardTitle>Pomodoro Timer</CardTitle>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Timer Settings</DialogTitle>
+              <DialogDescription>
+                Customize your Pomodoro session durations here.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+               <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="pomodoro" className="text-right">Pomodoro</Label>
+                  <Input id="pomodoro" type="number" value={pomodoroTime} onChange={e => setPomodoroTime(Math.max(1, Number(e.target.value)))} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="shortBreak" className="text-right">Short Break</Label>
+                  <Input id="shortBreak" type="number" value={shortBreakTime} onChange={e => setShortBreakTime(Math.max(1, Number(e.target.value)))} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="longBreak" className="text-right">Long Break</Label>
+                  <Input id="longBreak" type="number" value={longBreakTime} onChange={e => setLongBreakTime(Math.max(1, Number(e.target.value)))} className="col-span-3" />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
       <CardContent className="flex flex-col items-center justify-center p-0">
-
-        <div className="grid grid-cols-3 gap-4 mb-6 w-full">
-            <div className="space-y-2">
-                <Label htmlFor="pomodoro">Pomodoro (min)</Label>
-                <Input id="pomodoro" type="number" value={pomodoroTime} onChange={e => setPomodoroTime(Number(e.target.value))} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="shortBreak">Short Break (min)</Label>
-                <Input id="shortBreak" type="number" value={shortBreakTime} onChange={e => setShortBreakTime(Number(e.target.value))} />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="longBreak">Long Break (min)</Label>
-                <Input id="longBreak" type="number" value={longBreakTime} onChange={e => setLongBreakTime(Number(e.target.value))} />
-            </div>
-        </div>
-
 
         <div className="w-64 h-64 mb-6">
             <CircularProgressbar
