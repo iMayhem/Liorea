@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, Timer } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export function AppHeader() {
@@ -31,6 +31,12 @@ export function AppHeader() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
            </Button>
+            <Button asChild variant="secondary" size="sm">
+                <Link href="/study">
+                    <Timer className="mr-2 h-4 w-4" />
+                    Study Space
+                </Link>
+            </Button>
            {user && (
               <Button onClick={logout} variant="outline" size="sm">
                 <LogOut className="mr-2 h-4 w-4" />
