@@ -21,16 +21,30 @@ export function TodoList() {
     const [inputValue, setInputValue] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const handleAddTask = async () => {
-        setIsLoading(true);
-        try {
-            const suggestedTaskText = await suggestTask();
+    const handleAddTask = () => {
+        if (inputValue.trim()) {
             const newTask: Task = {
                 id: Date.now(),
-                text: suggestedTaskText,
+                text: inputValue,
                 completed: false,
             };
             setTasks([...tasks, newTask]);
+            setInputValue('');
+        }
+    };
+
+    const handleSuggestTask = async () => {
+        setIsLoading(true);
+        try {
+            const suggestedTaskText = await suggestTask();
+            if (suggestedTaskText) {
+                const newTask: Task = {
+                    id: Date.now(),
+                    text: suggestedTaskText,
+                    completed: false,
+                };
+                setTasks([...tasks, newTask]);
+            }
         } catch (error) {
             console.error("Failed to get suggestion from AI", error);
             // Optionally, show an error toast to the user
@@ -64,21 +78,16 @@ export function TodoList() {
                 <div className="flex w-full items-center space-x-2 mb-4">
                     <Input 
                         type="text" 
-                        placeholder="Let Gemini suggest a task..."
+                        placeholder="Add a task or let Gemini suggest..."
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyPress={(e) => {
                              if (e.key === 'Enter') {
-                                if (inputValue.trim()) {
-                                    setTasks([...tasks, { id: Date.now(), text: inputValue, completed: false }]);
-                                    setInputValue('');
-                                } else {
-                                    handleAddTask();
-                                }
+                                handleAddTask();
                             }
                         }}
                     />
-                    <Button onClick={handleAddTask} disabled={isLoading}>
+                    <Button onClick={handleSuggestTask} disabled={isLoading}>
                          {isLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
