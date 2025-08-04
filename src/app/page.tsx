@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BookCheck, BrainCircuit } from 'lucide-react';
+import { Loader2, BookCheck, BrainCircuit, Timer } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { TestCountdownTimer } from '@/components/test-countdown-timer';
@@ -105,6 +105,12 @@ export default function HomePage() {
                 <Link href="/practice">
                     <BrainCircuit className="mr-2 h-4 w-4" />
                     Practice Module
+                </Link>
+            </Button>
+             <Button asChild variant="secondary">
+                <Link href="/study">
+                    <Timer className="mr-2 h-4 w-4" />
+                    Study Space
                 </Link>
             </Button>
         </div>

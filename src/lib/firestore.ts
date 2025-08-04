@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import type { UserProgress, TimeTableData, UserQuizProgress } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
@@ -235,4 +235,23 @@ export async function resetQuizProgress(
     await setDoc(docRef, fullProgress);
 
     return fullProgress;
+}
+
+
+/**
+ * Adds a completed study session to Firestore.
+ * @param userId - The ID of the user.
+ * @param completedAt - The timestamp when the session was completed.
+ */
+export async function addStudySession(userId: string, completedAt: Date): Promise<void> {
+    try {
+        const studySessionsCollection = collection(db, 'users', userId, 'study_sessions');
+        await addDoc(studySessionsCollection, {
+            completedAt: completedAt,
+            duration: 25 // Assuming a standard 25-minute Pomodoro session
+        });
+    } catch (error) {
+        console.error("Error adding study session:", error);
+        throw new Error("Could not log study session.");
+    }
 }
