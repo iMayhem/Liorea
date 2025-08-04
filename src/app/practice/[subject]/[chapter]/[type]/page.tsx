@@ -305,7 +305,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="font-heading text-2xl">
-                    {chapter.name} - {quizType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    {chapter.name}
                 </CardTitle>
                  <div className="flex items-center text-lg font-mono bg-muted px-3 py-1 rounded-md">
                      <Timer className="mr-2 h-5 w-5"/>
