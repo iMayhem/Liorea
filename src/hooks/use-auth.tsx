@@ -74,18 +74,14 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
     }
   };
-  
-    if (loading) {
-     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={{user, loading, signInWithGoogle, logout}}>
-      {children}
+      {loading ? (
+         <div className="flex items-center justify-center min-h-screen bg-background">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 }
