@@ -195,7 +195,6 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         const newProgress = await resetQuizProgress(user.username, subjectSlug, chapterSlug, quizType);
         setProgress(newProgress[subjectSlug]?.[chapterSlug] || {});
         setCurrentQuestionIndex(0); // Go back to the first question
-        toast({ title: "Success", description: "Quiz has been reset." });
     } catch (error) {
         console.error("Failed to reset quiz:", error);
         toast({ title: "Error", description: "Could not reset your progress.", variant: "destructive" });
