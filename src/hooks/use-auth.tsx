@@ -2,8 +2,9 @@
 'use client';
 
 import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut, getRedirectResult, User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import { Loader2 } from 'lucide-react';
 
 interface User {
   uid: string;
@@ -34,13 +35,20 @@ export function AuthProvider({children}: {children: ReactNode}) {
         const { uid, displayName, email, photoURL } = firebaseUser;
         const appUser: User = { uid, username: displayName, email, photoURL };
         setUser(appUser);
-        localStorage.setItem('user', JSON.stringify(appUser));
       } else {
         setUser(null);
-        localStorage.removeItem('user');
       }
       setLoading(false);
     });
+
+    // Handle the redirect result
+    getRedirectResult(auth)
+      .catch((error) => {
+        console.error("Error during redirect result:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
@@ -49,8 +57,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
-      await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle setting the user state
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error("Error during sign-in:", error);
       setLoading(false);
@@ -67,10 +74,18 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
     }
   };
+  
+    if (loading) {
+     return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{user, loading, signInWithGoogle, logout}}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
