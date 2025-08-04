@@ -185,7 +185,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         questionText: currentQuestion.questionText,
         options: currentQuestion.options,
       });
-      setExplanation(result);
+      setExplanation(result.explanation);
     } catch (error) {
       console.error("Failed to get explanation:", error);
       toast({ title: "AI Error", description: "Could not get an explanation. Please try again.", variant: "destructive" });

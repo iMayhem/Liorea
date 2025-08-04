@@ -5,6 +5,7 @@
  *
  * - explainAnswer - A function that provides an explanation for a question.
  * - ExplainAnswerInput - The input type for the explainAnswer function.
+ * - ExplainAnswerOutput - The output type for the explainAnswer function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -26,6 +27,8 @@ const ExplainAnswerOutputSchema = z.object({
       'A clear and concise explanation that first states the correct option and then explains the reasoning.'
     ),
 });
+export type ExplainAnswerOutput = z.infer<typeof ExplainAnswerOutputSchema>;
+
 
 // Define the Genkit prompt for the AI model.
 const explanationPrompt = ai.definePrompt({
@@ -71,7 +74,7 @@ const explainAnswerFlow = ai.defineFlow(
 // Define the exported wrapper function to be called from the client.
 export async function explainAnswer(
   input: ExplainAnswerInput
-): Promise<string> {
+): Promise<ExplainAnswerOutput> {
   const result = await explainAnswerFlow(input);
-  return result.explanation;
+  return result;
 }
