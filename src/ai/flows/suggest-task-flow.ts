@@ -6,6 +6,7 @@
  */
 
 import {ai} from '@/ai/genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'zod';
 
 const TaskSuggestionOutputSchema = z.string().describe('A short, actionable study task.');
@@ -16,6 +17,7 @@ export async function suggestTask(): Promise<string> {
 
 const prompt = ai.definePrompt({
   name: 'suggestTaskPrompt',
+  model: googleAI('gemini-1.5-flash-latest'),
   output: {schema: TaskSuggestionOutputSchema},
   prompt: `You are a friendly and encouraging study coach. Suggest a short, actionable study task for a student to add to their to-do list. The task should be something that can be accomplished in a single study session. Keep it concise and motivating.`,
 });
