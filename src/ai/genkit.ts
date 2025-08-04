@@ -6,9 +6,7 @@ import {googleAI} from '@genkit-ai/googleai';
 // The plugin uses the GOOGLE_API_KEY environment variable.
 export const ai = genkit({
   plugins: [
-    googleAI({
-      apiVersion: ['v1beta'],
-    }),
+    googleAI(),
   ],
   // Log errors to the console.
   logSinks: [

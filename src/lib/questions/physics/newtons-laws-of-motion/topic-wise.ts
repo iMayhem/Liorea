@@ -143,7 +143,7 @@ const questions: Question[] = [
     questionText:
       'A body of 2 kg has an initial speed 5 ms⁻¹. A force acts on it for some time in the direction of motion. The force time graph is shown in figure. The final speed of the body.',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q13_image.png?alt=media&token=3b5b293e-25c2-4a41-863a-23d9b4184617',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F13.png?alt=media&token=01a74573-a706-4623-bcb4-5dc618270e36',
     options: { A: '9.8 ms⁻¹', B: '5 ms⁻¹', C: '14.31 ms⁻¹', D: '4.25 ms⁻¹' },
     correctAnswer: 'C',
   },
@@ -152,7 +152,7 @@ const questions: Question[] = [
     questionText:
       'A body of mass 3 kg is acted on by a force which varies as shown in the graph below. The momentum acquired is given by:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q14_image.png?alt=media&token=30b80e5b-21d3-4f93-9562-1b1513253b75',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F14.png?alt=media&token=7ea18875-689a-48c4-96de-49d364210e8f.com/v0/b/neet-trackr.appspot.com/o/q14_image.png?alt=media&token=30b80e5b-21d3-4f93-9562-1b1513253b75',
     options: { A: 'Zero', B: '5 N-s', C: '30 N-s', D: '50 N-s' },
     correctAnswer: 'D',
   },
@@ -160,7 +160,7 @@ const questions: Question[] = [
     questionNumber: 15,
     questionText:
       'A disc of mass 1.0 kg kept floating horizontally in air by firing bullets of mass 0.05 kg each vertically at it, at the rate of 10 per second. If the bullets rebound with the same speed, the speed with which these are fired will be-',
-    questionImageURL: '',
+    questionImageURL: 'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F15.png?alt=media&token=04f37da3-2351-4d02-aade-fd8934e7e1c5',
     options: { A: '0.098 m/s', B: '0.98 m/s', C: '9.8 m/s', D: '98.0 m/s' },
     correctAnswer: 'C',
   },
@@ -198,7 +198,7 @@ const questions: Question[] = [
     questionText:
       'Two blocks are in contact on a frictionless table. One has mass m and the other 2m. A force F is applied on 2m as shown in the figure. Now the same force F is applied from the right on m. In the two cases respectively, the ratio of force of contact between the two blocks will be:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q19_image.png?alt=media&token=8544c688-3c81-423c-974a-471d87e07a34',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F19.png?alt=media&token=4d17547d-6a51-4e09-a6eb-6756be085419',
     options: { A: 'same', B: '1:2', C: '2:1', D: '1:3' },
     correctAnswer: 'B',
   },
@@ -207,7 +207,7 @@ const questions: Question[] = [
     questionText:
       'Two forces of 6N and 3N are acting on the two blocks of 2kg and 1kg kept on frictionless floor. What is the force exerted on 2kg block by 1kg block?',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q20_image.png?alt=media&token=96357067-17de-49c2-9014-41d5083a2164',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F20.png?alt=media&token=012d4944-771f-4346-9af0-26f59fa9e2c5',
     options: { A: '1N', B: '2N', C: '4N', D: '5N' },
     correctAnswer: 'C',
   },
@@ -245,7 +245,7 @@ const questions: Question[] = [
     questionText:
       'Three blocks are connected as shown in fig., on a horizontal frictionless table and pulled to the right with a force T₃ = 60 N. If m₁=10 kg, m₂=20 kg, and m₃=30 kg, the tension T₂ is-',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q24_image.png?alt=media&token=c1935665-27a9-467a-8d19-21b369527e0c',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F24.png?alt=media&token=db23a4b2-abfc-4dc6-b2b4-81b9255bffe9',
     options: { A: '10 N', B: '20 N', C: '30 N', D: '60 N' },
     correctAnswer: 'C',
   },
@@ -307,7 +307,7 @@ const questions: Question[] = [
     questionText:
       'A light string passes over a frictionless pulley. To one of its ends a mass of 6 kg is attached and to its other end a mass of 10 kg is attached. The tension in the string will be -',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q31_image.png?alt=media&token=c2c1a84f-e22a-4a25-a131-7e8c75ab8b18',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F31.png?alt=media&token=9ff1dc32-526f-4569-a0d2-c81c32af6fcc',
     options: { A: '50 N', B: '75 N', C: '100 N', D: '150 N' },
     correctAnswer: 'B',
   },
@@ -328,7 +328,7 @@ const questions: Question[] = [
     questionText:
       'A mass M is suspended by a rope from a rigid support at A as shown in figure. Another rope is tied at the end B, and it is pulled horizontally with a force F. If the rope AB makes an angle θ with the vertical in equilibrium, then the tension in the string AB is:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q33_image.png?alt=media&token=b736b761-0b5c-44c1-8404-58a25c156f70',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F33.png?alt=media&token=358a3438-cf6d-47e7-9d80-b5e3f2c42501',
     options: { A: 'F sinθ', B: 'F/sinθ', C: 'F cosθ', D: 'F/cosθ' },
     correctAnswer: 'B',
   },
@@ -416,7 +416,7 @@ const questions: Question[] = [
     questionText:
       'Two masses of 5 kg and 10 kg are connected to a pulley as shown. What will be the acceleration if the pulley is set free? [g = acceleration due to gravity]',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q42_image.png?alt=media&token=c41f92e5-4f47-4a7b-a012-70b97931c3e3',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F42.png?alt=media&token=5e915875-438d-4f09-9fa6-8cf1ef9b2f3d',
     options: { A: 'g', B: 'g/2', C: 'g/3', D: 'g/4' },
     correctAnswer: 'C',
   },
@@ -425,7 +425,7 @@ const questions: Question[] = [
     questionText:
       'Two bodies of 5 kg and 4 kg are tied to a string as shown in the fig. If the table and pulley both are smooth, acceleration of 5 kg body will be equal to-',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q43_image.png?alt=media&token=6f212264-b05c-43f6-8051-512599763784',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F43.png?alt=media&token=87e51e6f-f101-4c34-970e-2350c1b34541',
     options: { A: 'g', B: 'g/4', C: '4g/9', D: '5g/9' },
     correctAnswer: 'D',
   },
@@ -455,7 +455,7 @@ const questions: Question[] = [
     questionText:
       'Figure shows a uniform rod of mass 3 kg and of length 30 cm. The strings shown in figure are pulled by constant forces of 20 N and 32 N. The acceleration of the rod is-',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q46_image.png?alt=media&token=f0d7e7e5-1a2c-473c-905c-1c5c06439b1c',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F46.png?alt=media&token=77c53ba5-7276-4f0a-9533-b41e927f11de',
     options: { A: '2 m/s²', B: '3 m/s²', C: '4 m/s²', D: '6 m/s²' },
     correctAnswer: 'C',
   },
@@ -546,7 +546,7 @@ const questions: Question[] = [
     questionText:
       'A sphere of mass m is kept in equilibrium with the help of several springs as shown in the figure. Measurement shows that one of the springs applies a force F on the sphere. With what acceleration the sphere will move immediately after this particular spring is cut?',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q56_image.png?alt=media&token=e907d4b4-d563-47d0-8f96-48c081e7d825',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F56.png?alt=media&token=dae73151-2ee7-48cb-b579-baf89d9d10a1',
     options: {
       A: 'zero',
       B: 'F/m',
@@ -560,7 +560,7 @@ const questions: Question[] = [
     questionText:
       'A block of weight W is suspended by a string of fixed length. The ends of the string are held at various positions as shown in the figures below. In which case, if any, is the magnitude of the tension along the string largest?',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q57_image.png?alt=media&token=8f8303f2-1a73-45a8-9d41-3b7c0627d3b0',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F57.png?alt=media&token=e8e076cb-58a5-447e-a1df-0d671f328b29',
     options: { A: 'Case (1)', B: 'Case (2)', C: 'Case (3)', D: 'Case (4)' },
     correctAnswer: 'A',
   },
@@ -577,7 +577,7 @@ const questions: Question[] = [
     questionText:
       'Two blocks of 7 kg and 5 kg are connected by a heavy rope of mass 4 kg. An upward force of 200N is applied as shown in the diagram. The tension at the top of heavy rope at point P is- (g=10 m/s²)',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q59_image.png?alt=media&token=b7c25143-6cd3-47a3-ab8c-5221051515f4',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F59.png?alt=media&token=cca101b1-ea52-4f5d-be33-423a89666324',
     options: { A: '2.27 N', B: '112.5 N', C: '87.5 N', D: '360 N' },
     correctAnswer: 'B',
   },
@@ -649,7 +649,7 @@ const questions: Question[] = [
     questionText:
       'The elevator shown in figure is descending, with an acceleration of 2 ms⁻². The mass of the block A is 0.5 kg. The force exerted by the block A on the block B is:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q66_image.png?alt=media&token=c1935824-c146-4e58-9a3b-240182ec74f5',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F59.png?alt=media&token=cca101b1-ea52-4f5d-be33-423a89666324',
     options: { A: '2 N', B: '4 N', C: '6 N', D: '8 N' },
     correctAnswer: 'B',
   },
@@ -674,7 +674,7 @@ const questions: Question[] = [
     questionText:
       'Two blocks of masses M₁ and M₂ are connected to each other through a light spring as shown in figure. If we push mass M₁ with force F and cause acceleration a in mass M₁, what will be the magnitude of acceleration in M₂?',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q69_image.png?alt=media&token=25a4d6ef-4613-43a5-b153-f7259074b12c',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F69.png?alt=media&token=4fb552d4-04c2-48c9-8cfe-6afb1fc02761',
     options: { A: 'F/M₂', B: 'F/(M₁+M₂)', C: 'a₁', D: '(F-M₁a₁)/M₂' },
     correctAnswer: 'D',
   },
@@ -683,7 +683,7 @@ const questions: Question[] = [
     questionText:
       'A block of mass 4 kg is suspended through two light spring balances A and B. Then A and B will read respectively:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q70_image.png?alt=media&token=a7c1b52a-3b5a-4b0d-9b16-568850684f85',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F70.png?alt=media&token=d11b7407-0b30-4b2b-b8e8-1fa8b762e6b3',
     options: {
       A: '4 kg and zero kg',
       B: 'Zero kg and 4 kg',
@@ -697,7 +697,7 @@ const questions: Question[] = [
     questionText:
       'A body of mass 5kg is suspended by a spring balance on an inclined plane as shown in figure. The spring balance measure:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q71_image.png?alt=media&token=87799532-a5f1-4b15-9279-4d622ca849ca',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F71.png?alt=media&token=80427d78-d8a8-4adb-a07d-af6d590d74af',
     options: { A: '50 N', B: '25 N', C: '500 N', D: '10 N' },
     correctAnswer: 'B',
   },
@@ -706,7 +706,7 @@ const questions: Question[] = [
     questionText:
       'As shown in figure, two equal masses each of 2 kg are suspended from a spring balance. The reading of the spring balance will be:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q72_image.png?alt=media&token=f6c2d99d-8c5c-4d57-817a-563d76e25713',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F72.png?alt=media&token=9c85bb93-c88f-4d46-bc8a-1d11fad680b6',
     options: {
       A: 'Zero',
       B: '2 kg',
@@ -720,14 +720,14 @@ const questions: Question[] = [
     questionText:
       'A dynamometer D, is connected with to bodies of mass M = 6 kg and m = 4 kg. If two forces F=20 N & F=10 N are applied on masses according to figure then reading of the dynamometer will be -',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q73_image.png?alt=media&token=5a570020-f5a6-429a-8a71-a83d37a85d38',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F73.png?alt=media&token=b7367dd4-fdc6-49b8-ad8e-f8b9a9ab3882',
     options: { A: '10 N', B: '20 N', C: '6 N', D: '14 N' },
     correctAnswer: 'D',
   },
   {
     questionNumber: 74,
     questionText:
-      'A block of mass m is at rest with respect to a rough incline kept in elevator moving up with acceleration a. Which of following statements is correct?',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F74.png?alt=media&token=67eadb4e-9ec6-4c16-a814-4afe94ddbe21',
     questionImageURL: '',
     options: {
       A: 'The contact force between block and incline is of the magnitude m(g+a).',
@@ -742,7 +742,7 @@ const questions: Question[] = [
     questionText:
       'Two masses of 10 kg and 20 kg respectively are connected by a massless spring as shown in figure. A force of 200 N acts on the 20 kg mass at the instant when the 10 kg mass has an acceleration of 12 ms⁻² towards right, the acceleration of the 20 kg mass is:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q75_image.png?alt=media&token=8ff35ca2-2432-4751-acb8-9366115993b4',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F75.png?alt=media&token=513592ff-956c-436d-9e59-c285bc61e1be',
     options: { A: '2 ms⁻²', B: '4 ms⁻²', C: '10 ms⁻²', D: '20 ms⁻²' },
     correctAnswer: 'B',
   },
@@ -905,7 +905,7 @@ const questions: Question[] = [
     questionNumber: 90,
     questionText:
       'Two carts of masses 200 kg and 300 kg on horizontal rails imparted with same speed in opposite direction. Suppose the coefficient of friction between the carts and the rails are same. If the 200 kg cart travels a distance of 36 m and stops, then the distance travelled by the cart weighing 300 kg is:',
-    questionImageURL: '',
+    questionImageURL: 'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F90.png?alt=media&token=e0ee42d7-d34d-46d1-bc47-429bc2585dba',
     options: { A: '32 m', B: '24 m', C: '36 m', D: '12 m' },
     correctAnswer: 'C',
   },
@@ -929,7 +929,7 @@ const questions: Question[] = [
     questionText:
       'Adjoining figure shows two blocks A and B pushed against the wall with the force F. The wall is smooth but the surfaces in contact of A and B are rough. Which of the following is true for the system of blocks to be at rest against the wall',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q93_image.png?alt=media&token=c1901a1d-b8cb-4654-9721-3957262ac0a1',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F93.png?alt=media&token=4e8148d7-50d9-4155-86fd-877647117076',
     options: {
       A: 'F should be more than the weight of A and B.',
       B: 'F should be equal to the weight of A and B.',
@@ -942,7 +942,7 @@ const questions: Question[] = [
     questionNumber: 94,
     questionText:
       'In the figure shown, a block of weight 10 N resting on a horizontal surface. The coefficient of static friction between the block and the surface μs = 0.4. A force of 3.5 N will keep the block in uniform motion, once it has been set in motion. A horizontal force of 3 N is applied to the block, then the block will:',
-    questionImageURL: '',
+    questionImageURL: 'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F94.png?alt=media&token=8071ee1f-ab8f-406e-b8a3-938c40a70a16',
     options: {
       A: 'Move over the surface with constant velocity.',
       B: 'Move having accelerated motion over the surface.',
@@ -956,7 +956,7 @@ const questions: Question[] = [
     questionText:
       "A rough vertical board has an acceleration 'a' so that a 2 kg block pressing against it does not fall. The coefficient of friction between the block and the board should be:",
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q95_image.png?alt=media&token=df4f4948-c89b-449b-8ca0-323a63df440d',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F95.png?alt=media&token=307a2507-c7b0-4856-a056-bd6570140b79',
     options: { A: '≥ g/a', B: '< g/a', C: '= g/a', D: '> a/g' },
     correctAnswer: 'A',
   },
@@ -1028,7 +1028,7 @@ const questions: Question[] = [
     questionText:
       "A box 'A' is lying on the horizontal floor of the compartment of a train running along horizontal rails from left to right. At time 't', it decelerates. Then the reaction R by the floor on the box is given best by:",
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q102_image.png?alt=media&token=d324838b-d779-4a94-817a-8f74e6490c68',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F102.png?alt=media&token=ea838664-158f-4ef4-8063-5fdc95b10f22',
     options: {
       A: 'Diagram A',
       B: 'Diagram B',
@@ -1063,7 +1063,7 @@ const questions: Question[] = [
     questionText:
       'The blocks A and B are arranged as shown in the figure. The pulley is frictionless. The mass of A is 10 kg. The coefficient of friction between block A and horizontal surface is 0.20. The minimum mass of B to start the motion will be-',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q105_image.png?alt=media&token=362d2948-7389-40ed-a162-8179471d2b86',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F105.png?alt=media&token=097188e9-73fb-474a-a230-8955df6b01a0',
     options: { A: '2 kg', B: '0.2 kg', C: '5 kg', D: '10 kg' },
     correctAnswer: 'A',
   },
@@ -1143,7 +1143,7 @@ const questions: Question[] = [
     questionText:
       'A block of mass m=2 kg is resting on a rough inclined plane of inclination 30° as shown in figure. The coefficient of friction between the block and the plane is μ=0.5. What minimum force F should be applied perpendicular to the plane on the block, so that block does not slip on the plane (g=10m/s²)',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q113_image.png?alt=media&token=c1901a1d-b8cb-4654-9721-3957262ac0a1',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F113.png?alt=media&token=c0f1b926-17cf-4fad-a4ce-db01cba49fc4',
     options: { A: 'zero', B: '6.24 N', C: '2.68 N', D: '4.34 N' },
     correctAnswer: 'C',
   },
@@ -1168,7 +1168,7 @@ const questions: Question[] = [
     questionText:
       'A block is dragged on smooth plane with the help of a rope which moves with velocity v. The horizontal velocity of the block is:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q116_image.png?alt=media&token=c1901a1d-b8cb-4654-9721-3957262ac0a1',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F116.png?alt=media&token=3679470c-c702-4c50-997e-665e65d15b74',
     options: { A: 'v', B: 'v/sinθ', C: 'v sinθ', D: 'v/cosθ' },
     correctAnswer: 'B',
   },
@@ -1177,7 +1177,7 @@ const questions: Question[] = [
     questionText:
       'In the figure shown, blocks A and B move with velocities v₁ and v₂ along horizontal direction. The ratio of v₁/v₂ is',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q117_image.png?alt=media&token=c1901a1d-b8cb-4654-9721-3957262ac0a1',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F117.png?alt=media&token=ca38bb82-69f6-4619-9bde-8d80975e9f1c',
     options: {
       A: 'sinθ₂/sinθ₁',
       B: 'sinθ₁/sinθ₂',
@@ -1191,7 +1191,7 @@ const questions: Question[] = [
     questionText:
       'In the figure shown, the pulley is moving with velocity u. The velocity of the block attached with string:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q118_image.png?alt=media&token=c1901a1d-b8cb-4654-9721-3957262ac0a1',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F118.png?alt=media&token=f368627e-7995-4608-95d1-99ae6a55631d',
     options: { A: '4u', B: '3u', C: 'u', D: '2u' },
     correctAnswer: 'D',
   },
@@ -1200,7 +1200,7 @@ const questions: Question[] = [
     questionText:
       'Two masses are connected by a string which passes over a pulley accelerating upward at a rate A as shown. If a₁ and a₂ be the acceleration of bodies 1 and 2 respectively then:',
     questionImageURL:
-      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/q119_image.png?alt=media&token=c1901a1d-b8cb-4654-9721-3957262ac0a1',
+      'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/quiz_images%2FNLM_TOPIC_WISE%2F119.png?alt=media&token=d78a7432-be77-42a9-b8f7-e77616697d57',
     options: {
       A: 'A = a₁-a₂',
       B: 'A = a₁+a₂',
