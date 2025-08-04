@@ -28,7 +28,7 @@ const suggestTaskFlow = ai.defineFlow(
     outputSchema: TaskSuggestionOutputSchema,
   },
   async () => {
-    const {output} = await prompt();
+    const {output} = await prompt({});
     return output!;
   }
 );
