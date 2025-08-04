@@ -1,3 +1,4 @@
+// src/ai/flows/suggest-task-flow.ts
 'use server';
 /**
  * @fileOverview A flow for suggesting a study task.
@@ -9,7 +10,9 @@ import {ai} from '@/ai/genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'zod';
 
-const TaskSuggestionOutputSchema = z.string().describe('A short, actionable study task.');
+const TaskSuggestionOutputSchema = z.object({
+  task: z.string().describe('A short, actionable study task.'),
+});
 
 export async function suggestTask(): Promise<string> {
   return suggestTaskFlow();
@@ -25,10 +28,10 @@ const prompt = ai.definePrompt({
 const suggestTaskFlow = ai.defineFlow(
   {
     name: 'suggestTaskFlow',
-    outputSchema: TaskSuggestionOutputSchema,
+    outputSchema: z.string(),
   },
   async () => {
     const {output} = await prompt({});
-    return output!;
+    return output?.task!;
   }
 );
