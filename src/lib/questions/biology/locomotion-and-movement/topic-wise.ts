@@ -94,4 +94,4 @@ const questions: Question[] = [
   {"questionNumber": 90, "questionText": "Age related disorder characterized by decreased bone mass and increased chances of fractures. Its common cause is :", "questionImageURL": "", "options": {"A": "Auto immune disorder", "B": "Accumulation of uric acid crystal", "C": "Deficiency of oestrogen in women", "D": "Genetic disorder"}, "correctAnswer": "C"}
 ]
 
-update in neet flashback in locomotion
+update in topic wise questions in locomoation
