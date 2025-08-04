@@ -235,8 +235,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="max-w-2xl mx-auto mb-6">
             <CardContent className="p-4">
-                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Question Navigator</h3>
+                 <div className="flex justify-end items-center mb-4">
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm">
