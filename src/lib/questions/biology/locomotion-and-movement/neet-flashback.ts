@@ -34,4 +34,7 @@ const questions: Question[] = [
   {"questionNumber": 30, "questionText": "Match List-I with List-II: List-I (Location of joint): A. Joint between humerus and pectoral girdle, B. Knee joint, C. Joint between atlas and axis, D. Joint between carpals; List-II (Type of Joint): I. Gliding joint, II. Ball and Socket joint, III. Hinge joint, IV. Pivot joint", "questionImageURL": "", "options": {"A": "A-II, B-III, C-IV, D-I", "B": "A-III, B-II, C-I, D-IV", "C": "A-I, B-IV, C-III, D-II", "D": "A-II, B-I, C-III, D-IV"}, "correctAnswer": "A"},
   {"questionNumber": 31, "questionText": "Select the correct statements regarding mechanism of muscle contraction. A. It is initiated by a signal sent by CNS via sensory neuron. B. Neurotransmitter generates action potential in the sarcolemma. C. Increases Ca⁺⁺ level leads to the binding of calcium with troponin on actin filaments. D. Masking of active site for actin is activated. E. Utilising the energy from ATP hydrolysis to form cross bridge.", "questionImageURL": "", "options": {"A": "B, C and E only", "B": "C, D and E only", "C": "A and D only", "D": "B, D and E only"}, "correctAnswer": "A"},
   {"questionNumber": 32, "questionText": "Match List - I with List II. List-I: A. Emphysema, B. Angina Pectoris, C. Glomerulo-Nephritis, D. Tetany; List-II: I. Rapid spasms in muscle due to low Ca⁺⁺ in body fluid, II. Damaged alveolar walls and decreased respiratory surface, III. Acute chest pain when not enough oxygen is reaching to heart muscle, IV. Inflammation of glomeruli of kidney", "questionImageURL": "", "options": {"A": "A-II, B-III, C-IV, D-I", "B": "A-III, B-I, C-IV, D-II", "C": "A-III, B-I, C-II, D-IV", "D": "A-II, B-IV, C-III, D-I"}, "correctAnswer": "A"}
-]
+];
+export default questions;
+
+    
