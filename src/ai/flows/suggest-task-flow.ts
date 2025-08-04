@@ -7,21 +7,24 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'zod';
 
 const TaskSuggestionOutputSchema = z.object({
   task: z.string().describe('A short, actionable study task.'),
 });
+export type TaskSuggestionOutput = z.infer<typeof TaskSuggestionOutputSchema>;
+
 
 export async function suggestTask(): Promise<string> {
   const result = await suggestTaskFlow();
-  return result.task;
+  // Add a defensive check to prevent crashes if the AI response is unexpected.
+  return result?.task || '';
 }
 
 const prompt = ai.definePrompt({
   name: 'suggestTaskPrompt',
-  model: googleAI('gemini-pro'),
+  // Use the model name as a string; Genkit will use the configured Google AI plugin.
+  model: 'gemini-pro',
   output: {schema: TaskSuggestionOutputSchema},
   prompt: `You are a friendly and encouraging study coach. Suggest a short, actionable study task for a student to add to their to-do list. The task should be something that can be accomplished in a single study session. Keep it concise and motivating.`,
 });
@@ -33,6 +36,6 @@ const suggestTaskFlow = ai.defineFlow(
   },
   async () => {
     const {output} = await prompt({});
-    return output!;
+    return output || { task: '' };
   }
 );
