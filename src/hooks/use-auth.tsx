@@ -2,53 +2,75 @@
 'use client';
 
 import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 interface User {
-  username: string;
+  uid: string;
+  username: string | null;
+  email: string | null;
+  photoURL: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (username: string) => void;
+  signInWithGoogle: () => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 export function AuthProvider({children}: {children: ReactNode}) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage for a saved user session
-    try {
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      }
-    } catch (error) {
-        console.error("Failed to parse user from localStorage", error)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const { uid, displayName, email, photoURL } = firebaseUser;
+        const appUser: User = { uid, username: displayName, email, photoURL };
+        setUser(appUser);
+        localStorage.setItem('user', JSON.stringify(appUser));
+      } else {
+        setUser(null);
         localStorage.removeItem('user');
-    }
-    setLoading(false);
+      }
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const login = (username: string) => {
-    // For this simple auth, we just create the user object
-    const newUser: User = { username };
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setUser(newUser);
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle setting the user state
+    } catch (error) {
+      console.error("Error during sign-in:", error);
+      setLoading(false);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const logout = async () => {
+    setLoading(true);
+    try {
+        await signOut(auth);
+    } catch (error) {
+        console.error("Error during sign-out:", error);
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{user, loading, login, logout}}>
-      {children}
+    <AuthContext.Provider value={{user, loading, signInWithGoogle, logout}}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
