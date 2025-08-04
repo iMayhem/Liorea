@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import type { UserProgress, TimeTableData, UserQuizProgress } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
@@ -34,6 +34,31 @@ export async function getProgressForUser(
     return initialProgress;
   }
 }
+
+/**
+ * Retrieves all progress documents for a given user.
+ * @param userId - The ID of the user.
+ * @returns An object containing all the user's progress, keyed by date.
+ */
+export async function getAllProgressForUser(userId: string): Promise<UserProgress> {
+  const progressCollection = collection(db, 'progress');
+  // Firestore doesn't support wildcard searches in document IDs directly.
+  // A common pattern is to have a `userId` field in each document.
+  // Since our doc ID is formatted as `userId-date`, we can leverage that.
+  const userProgressQuery = query(progressCollection, where('__name__', '>=', `${userId}-`), where('__name__', '<', `${userId}-\uf8ff`));
+
+  const querySnapshot = await getDocs(userProgressQuery);
+  const allProgress: UserProgress = {};
+
+  querySnapshot.forEach((doc) => {
+    // The document's data is the progress for a specific date.
+    // We merge it into our allProgress object.
+    Object.assign(allProgress, doc.data());
+  });
+
+  return allProgress;
+}
+
 
 /**
  * Updates a specific task's completion status in Firestore.
