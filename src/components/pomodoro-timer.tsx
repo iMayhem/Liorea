@@ -11,36 +11,38 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-
-const POMODORO_TIME = 25 * 60; // 25 minutes
-const SHORT_BREAK_TIME = 5 * 60; // 5 minutes
-const LONG_BREAK_TIME = 15 * 60; // 15 minutes
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak';
 
 export function PomodoroTimer() {
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  const [pomodoroTime, setPomodoroTime] = useState(25);
+  const [shortBreakTime, setShortBreakTime] = useState(5);
+  const [longBreakTime, setLongBreakTime] = useState(15);
+  
   const [mode, setMode] = useState<TimerMode>('pomodoro');
-  const [time, setTime] = useState(POMODORO_TIME);
+  const [time, setTime] = useState(pomodoroTime * 60);
   const [isActive, setIsActive] = useState(false);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
+
+  const getDuration = useCallback((mode: TimerMode) => {
+    switch (mode) {
+      case 'pomodoro': return pomodoroTime * 60;
+      case 'shortBreak': return shortBreakTime * 60;
+      case 'longBreak': return longBreakTime * 60;
+    }
+  }, [pomodoroTime, shortBreakTime, longBreakTime]);
+
 
   const switchMode = useCallback((newMode: TimerMode) => {
     setIsActive(false);
     setMode(newMode);
-    switch (newMode) {
-      case 'pomodoro':
-        setTime(POMODORO_TIME);
-        break;
-      case 'shortBreak':
-        setTime(SHORT_BREAK_TIME);
-        break;
-      case 'longBreak':
-        setTime(LONG_BREAK_TIME);
-        break;
-    }
-  }, []);
+    setTime(getDuration(newMode));
+  }, [getDuration]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -49,7 +51,6 @@ export function PomodoroTimer() {
         setTime((prevTime) => prevTime - 1);
       }, 1000);
     } else if (isActive && time === 0) {
-        // When timer finishes
         if(mode === 'pomodoro' && user) {
             addStudySession(user.username, new Date())
                 .then(() => {
@@ -60,14 +61,12 @@ export function PomodoroTimer() {
                     toast({title: "Error", description: "Could not save study session.", variant: "destructive"});
                 });
             
-             // Automatically switch to break
             if ((completedPomodoros + 1) % 4 === 0) {
                 switchMode('longBreak');
             } else {
                 switchMode('shortBreak');
             }
         } else {
-            // Switch back to pomodoro after a break
             switchMode('pomodoro');
         }
     }
@@ -79,21 +78,19 @@ export function PomodoroTimer() {
     };
   }, [isActive, time, mode, user, toast, switchMode, completedPomodoros]);
 
+  // Update timer if the duration for the current mode changes
+  useEffect(() => {
+    if (!isActive) {
+        setTime(getDuration(mode));
+    }
+  }, [pomodoroTime, shortBreakTime, longBreakTime, mode, isActive, getDuration]);
+
+
   const toggleTimer = () => setIsActive(!isActive);
 
   const resetTimer = () => {
     setIsActive(false);
-    switch (mode) {
-      case 'pomodoro':
-        setTime(POMODORO_TIME);
-        break;
-      case 'shortBreak':
-        setTime(SHORT_BREAK_TIME);
-        break;
-      case 'longBreak':
-        setTime(LONG_BREAK_TIME);
-        break;
-    }
+    setTime(getDuration(mode));
   };
 
   const formatTime = (seconds: number) => {
@@ -101,20 +98,29 @@ export function PomodoroTimer() {
     const secs = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const getTotalTime = () => {
-    switch(mode){
-        case 'pomodoro': return POMODORO_TIME;
-        case 'shortBreak': return SHORT_BREAK_TIME;
-        case 'longBreak': return LONG_BREAK_TIME;
-    }
-  }
-
-  const percentage = (time / getTotalTime()) * 100;
+  
+  const percentage = (time / getDuration(mode)) * 100;
 
   return (
     <Card className="w-full max-w-md p-6 shadow-lg bg-card border-border/50">
       <CardContent className="flex flex-col items-center justify-center p-0">
+
+        <div className="grid grid-cols-3 gap-4 mb-6 w-full">
+            <div className="space-y-2">
+                <Label htmlFor="pomodoro">Pomodoro (min)</Label>
+                <Input id="pomodoro" type="number" value={pomodoroTime} onChange={e => setPomodoroTime(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="shortBreak">Short Break (min)</Label>
+                <Input id="shortBreak" type="number" value={shortBreakTime} onChange={e => setShortBreakTime(Number(e.target.value))} />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="longBreak">Long Break (min)</Label>
+                <Input id="longBreak" type="number" value={longBreakTime} onChange={e => setLongBreakTime(Number(e.target.value))} />
+            </div>
+        </div>
+
+
         <div className="w-64 h-64 mb-6">
             <CircularProgressbar
                 value={percentage}
