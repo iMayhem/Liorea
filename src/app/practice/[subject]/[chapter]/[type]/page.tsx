@@ -304,17 +304,14 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="font-heading text-2xl">
-                    {chapter.name}
-                </CardTitle>
-                 <div className="flex items-center text-lg font-mono bg-muted px-4 py-2 rounded-full">
+                 <CardDescription>
+                    Question {currentQuestion.questionNumber} of {questions.length}
+                </CardDescription>
+                 <div className="flex items-center text-lg font-mono bg-muted h-10 w-24 rounded-full justify-center">
                      <Timer className="mr-2 h-5 w-5"/>
                      <span>{formatTime(time)}</span>
                 </div>
               </div>
-              <CardDescription>
-                Question {currentQuestion.questionNumber} of {questions.length}
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
