@@ -24,7 +24,6 @@ export const practiceData: Subject[] = [
         name: 'Chemistry',
         slug: 'chemistry',
         chapters: [
-            { name: 'Periodic Table', slug: 'periodic-table' },
             { name: 'Isomerism', slug: 'isomerism' },
         ],
     },
