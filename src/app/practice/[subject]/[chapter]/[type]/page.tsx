@@ -19,6 +19,8 @@ import { getQuizProgress, saveQuizAttempt, toggleBookmark, resetQuizProgress } f
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { RadialBar, RadialBarChart } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
 
 
 function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapterName?: string}) {
@@ -47,10 +49,13 @@ function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapt
     )
 }
 
+const TIME_LIMIT_SECONDS = 60; // 60 seconds per question
+
 function formatTime(seconds: number) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const remainingSeconds = TIME_LIMIT_SECONDS - seconds;
+    const minutes = Math.floor(remainingSeconds / 60);
+    const secs = remainingSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 
@@ -84,7 +89,13 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     React.useEffect(() => {
         setTime(0); // Reset timer on question change
         const timerId = setInterval(() => {
-            setTime(prevTime => prevTime + 1);
+            setTime(prevTime => {
+                if (prevTime >= TIME_LIMIT_SECONDS) {
+                    clearInterval(timerId);
+                    return TIME_LIMIT_SECONDS;
+                }
+                return prevTime + 1
+            });
         }, 1000);
 
         return () => clearInterval(timerId); // Cleanup on component unmount or question change
@@ -201,6 +212,8 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     }
   };
 
+    const chartData = [{ name: 'time', value: (time / TIME_LIMIT_SECONDS) * 100, fill: 'hsl(var(--primary))' }];
+    const chartConfig = { time: { label: "Time" } };
 
   if (authLoading || loading) {
     return (
@@ -235,7 +248,8 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="max-w-2xl mx-auto mb-6">
             <CardContent className="p-4">
-                 <div className="flex justify-end items-center mb-4">
+                 <div className="flex justify-between items-center mb-4">
+                     <p className="text-sm font-medium text-muted-foreground">Question Navigator</p>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm">
@@ -306,11 +320,40 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                  <CardDescription>
                     Question {currentQuestion.questionNumber} of {questions.length}
                 </CardDescription>
-                 <div className="flex items-center text-lg font-mono bg-muted h-10 w-24 rounded-full justify-center">
-                     <Timer className="mr-2 h-5 w-5"/>
-                     <span>{formatTime(time)}</span>
+                <div className="flex items-center justify-center">
+                    <ChartContainer
+                        config={chartConfig}
+                        className="mx-auto aspect-square h-20"
+                    >
+                        <RadialBarChart
+                            data={chartData}
+                            startAngle={90}
+                            endAngle={-270}
+                            innerRadius="70%"
+                            outerRadius="100%"
+                            barSize={8}
+                        >
+                            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                            <RadialBar
+                                dataKey="value"
+                                background={{ fill: 'hsl(var(--muted))' }}
+                                cornerRadius={5}
+                                className={cn({'fill-destructive': time > TIME_LIMIT_SECONDS * 0.8})}
+                            />
+                            <text
+                                x="50%"
+                                y="50%"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="fill-current text-sm font-mono text-foreground"
+                            >
+                                {formatTime(time)}
+                            </text>
+                        </RadialBarChart>
+                    </ChartContainer>
                 </div>
               </div>
+               <CardTitle>{chapter?.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
