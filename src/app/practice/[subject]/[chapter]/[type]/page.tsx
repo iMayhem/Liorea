@@ -19,7 +19,7 @@ import { getQuizProgress, saveQuizAttempt, toggleBookmark, resetQuizProgress } f
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { RadialBar, RadialBarChart } from 'recharts';
+import { RadialBar, RadialBarChart, PolarAngleAxis } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
 
 
