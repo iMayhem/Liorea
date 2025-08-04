@@ -1,9 +1,9 @@
 // src/ai/flows/explain-answer-flow.ts
 'use server';
 /**
- * @fileOverview An AI flow to explain why a quiz answer is incorrect.
+ * @fileOverview An AI flow to solve and explain a quiz question.
  *
- * - explainAnswer - A function that provides an explanation for a wrong answer.
+ * - explainAnswer - A function that provides an explanation for a question.
  * - ExplainAnswerInput - The input type for the explainAnswer function.
  */
 
@@ -15,14 +15,16 @@ import {googleAI} from '@genkit-ai/googleai';
 const ExplainAnswerInputSchema = z.object({
   questionText: z.string().describe('The text of the question.'),
   options: z.any().describe('The available options for the question.'),
-  selectedAnswer: z.string().describe("The user's selected (incorrect) answer."),
-  correctAnswer: z.string().describe('The correct answer.'),
 });
 export type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 
 // Define the schema for the output data.
 const ExplainAnswerOutputSchema = z.object({
-  explanation: z.string().describe('A clear and concise explanation.'),
+  explanation: z
+    .string()
+    .describe(
+      'A clear and concise explanation that first states the correct option and then explains the reasoning.'
+    ),
 });
 
 // Define the Genkit prompt for the AI model.
@@ -36,15 +38,17 @@ const explanationPrompt = ai.definePrompt({
   },
   model: googleAI('gemini-1.5-flash-latest'),
   prompt: `
-    You are an expert tutor for the NEET exam. A student has answered a question incorrectly.
-    Your task is to provide a clear, concise explanation for why their answer is wrong and why the correct answer is right.
+    You are an expert tutor for the NEET exam.
+    Your task is to read the following question and options, determine the correct answer, and provide a clear, concise explanation.
 
     Question: {{{questionText}}}
 
-    Student's Incorrect Answer: {{{selectedAnswer}}}
-    Correct Answer: {{{correctAnswer}}}
+    Options:
+    {{#each options}}
+    - {{@key}}: {{{this}}}
+    {{/each}}
 
-    Please provide a helpful explanation. Be encouraging and focus on the core concepts.
+    First, state the correct option key (e.g., "A", "B", "C", or "D"). Then, provide a helpful explanation for why that answer is correct. Focus on the core concepts.
   `,
 });
 
@@ -57,6 +61,7 @@ const explainAnswerFlow = ai.defineFlow(
     outputSchema: ExplainAnswerOutputSchema,
   },
   async (input) => {
+    // Convert options object to a more parsable format for the prompt if needed
     const {output} = await explanationPrompt(input);
     return output!;
   }

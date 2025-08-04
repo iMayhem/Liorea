@@ -175,7 +175,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
   };
   
   const handleExplain = async () => {
-    if (!currentQuestion || !selectedAnswer) return;
+    if (!currentQuestion) return;
 
     setIsExplanationLoading(true);
     setExplanation(null);
@@ -184,8 +184,6 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       const result = await explainAnswer({
         questionText: currentQuestion.questionText,
         options: currentQuestion.options,
-        selectedAnswer: currentQuestion.options[selectedAnswer],
-        correctAnswer: currentQuestion.options[currentQuestion.correctAnswer],
       });
       setExplanation(result);
     } catch (error) {
@@ -223,8 +221,6 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       </>
     )
   }
-  
-  const isAnswerIncorrect = answered && selectedAnswer !== currentQuestion.correctAnswer;
 
   return (
     <>
@@ -330,18 +326,16 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                   )}
                 </div>
 
-                {isAnswerIncorrect && (
-                  <div className="mt-4">
-                    <Button onClick={handleExplain} disabled={isExplanationLoading}>
-                      {isExplanationLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="mr-2 h-4 w-4" />
-                      )}
-                      Explain with AI
-                    </Button>
-                  </div>
-                )}
+                <div className="mt-4">
+                  <Button onClick={handleExplain} disabled={isExplanationLoading}>
+                    {isExplanationLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    Explain with AI
+                  </Button>
+                </div>
                 
                 {explanation && (
                     <motion.div initial={{opacity:0, y: 10}} animate={{opacity: 1, y: 0}} className="mt-4">
