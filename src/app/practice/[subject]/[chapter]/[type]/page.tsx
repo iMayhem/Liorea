@@ -249,7 +249,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         <Card className="max-w-2xl mx-auto mb-6">
             <CardContent className="p-4">
                  <div className="flex justify-between items-center mb-4">
-                     <p className="text-sm font-medium text-muted-foreground">Question Navigator</p>
+                     <p className="text-sm font-medium text-muted-foreground"></p>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm">
@@ -323,7 +323,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                 <div className="flex items-center justify-center">
                     <ChartContainer
                         config={chartConfig}
-                        className="mx-auto aspect-square h-20"
+                        className="mx-auto aspect-square h-24"
                     >
                         <RadialBarChart
                             data={chartData}
