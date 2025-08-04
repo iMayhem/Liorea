@@ -187,3 +187,52 @@ export async function toggleBookmark(
         { merge: true }
     );
 }
+
+
+/**
+ * Resets a user's quiz progress for a specific chapter, preserving bookmarks.
+ * @param userId - The ID of the user.
+ * @param subjectSlug - The slug of the subject.
+ * @param chapterSlug - The slug of the chapter.
+ * @param quizType - The type of quiz.
+ * @returns The updated quiz progress for the entire quiz type.
+ */
+export async function resetQuizProgress(
+    userId: string,
+    subjectSlug: string,
+    chapterSlug: string,
+    quizType: string
+): Promise<UserQuizProgress> {
+    const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+        return {}; // No progress to reset
+    }
+
+    const fullProgress = docSnap.data() as UserQuizProgress;
+    const chapterProgress = fullProgress?.[subjectSlug]?.[chapterSlug];
+
+    if (!chapterProgress) {
+        return fullProgress; // No progress for this specific chapter
+    }
+    
+    // Iterate over questions and remove 'selected' and 'isCorrect' fields
+    Object.keys(chapterProgress).forEach(questionNumberStr => {
+        const questionNumber = parseInt(questionNumberStr, 10);
+        const attempt = chapterProgress[questionNumber];
+        if (attempt) {
+            delete attempt.selected;
+            delete attempt.isCorrect;
+            // If the question only had non-bookmark data, remove it entirely
+            if (Object.keys(attempt).length === 0) {
+                 delete chapterProgress[questionNumber];
+            }
+        }
+    });
+
+    // Update the document in Firestore
+    await setDoc(docRef, fullProgress);
+
+    return fullProgress;
+}

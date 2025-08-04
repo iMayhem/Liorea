@@ -6,7 +6,7 @@ import { useRouter, notFound } from 'next/navigation';
 import { AppHeader } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Bookmark } from 'lucide-react';
+import { Loader2, Bookmark, RefreshCcw, Timer } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -15,9 +15,11 @@ import type { Question, QuizProgress } from '@/lib/types';
 import { practiceData } from '@/lib/practice-data';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { getQuizProgress, saveQuizAttempt, toggleBookmark } from '@/lib/firestore';
+import { getQuizProgress, saveQuizAttempt, toggleBookmark, resetQuizProgress } from '@/lib/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapterName?: string}) {
     return (
@@ -45,6 +47,13 @@ function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapt
     )
 }
 
+function formatTime(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+
 export default function PracticeQuestionPage({ params: paramsProp }: { params: { subject: string; chapter: string; type: string } }) {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
@@ -64,11 +73,23 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     const [selectedAnswer, setSelectedAnswer] = React.useState<string | null>(null);
     const [answered, setAnswered] = React.useState(false);
     const [progress, setProgress] = React.useState<QuizProgress | null>(null);
+    const [time, setTime] = React.useState(0);
     
     // Add a check here. If subject or chapter is not found, render the fallback page.
     if (!subject || !chapter) {
       return <ComingSoonPage subjectName={subject?.name} chapterName={chapter?.name} />;
     }
+
+    // Timer logic
+    React.useEffect(() => {
+        setTime(0); // Reset timer on question change
+        const timerId = setInterval(() => {
+            setTime(prevTime => prevTime + 1);
+        }, 1000);
+
+        return () => clearInterval(timerId); // Cleanup on component unmount or question change
+    }, [currentQuestionIndex]);
+
 
     const loadData = React.useCallback(async () => {
         if (!user || !subject || !chapter) return;
@@ -168,6 +189,19 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     }
   };
 
+  const handleReset = async () => {
+    if (!user || !subject || !chapter) return;
+    try {
+        const newProgress = await resetQuizProgress(user.username, subjectSlug, chapterSlug, quizType);
+        setProgress(newProgress[subjectSlug]?.[chapterSlug] || {});
+        setCurrentQuestionIndex(0); // Go back to the first question
+        toast({ title: "Success", description: "Quiz has been reset." });
+    } catch (error) {
+        console.error("Failed to reset quiz:", error);
+        toast({ title: "Error", description: "Could not reset your progress.", variant: "destructive" });
+    }
+  };
+
 
   if (authLoading || loading) {
     return (
@@ -202,6 +236,28 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
         <Card className="max-w-2xl mx-auto mb-6">
             <CardContent className="p-4">
+                 <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Question Navigator</h3>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                <RefreshCcw className="mr-2 h-4 w-4" /> Reset
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                This will reset all your answers for this quiz. Bookmarks will not be affected. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleReset}>Reset Quiz</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
                 <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex space-x-2 pb-4">
                         {questions.map((q, index) => {
@@ -220,15 +276,16 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
                                         "h-10 w-10 relative",
                                         {
                                             "border-primary text-primary": index === currentQuestionIndex,
-                                            "bg-green-700 text-white hover:bg-green-800": isAnswered && isCorrect && !isBookmarked,
-                                            "bg-red-700 text-white hover:bg-red-800": isAnswered && !isCorrect && !isBookmarked,
-                                            "bg-blue-600 text-white hover:bg-blue-700": isBookmarked,
+                                            "bg-green-700 text-white hover:bg-green-800": isAnswered && isCorrect,
+                                            "bg-red-700 text-white hover:bg-red-800": isAnswered && !isCorrect,
+                                            "border-blue-500 border-2": isBookmarked && index !== currentQuestionIndex,
+                                            "border-primary text-primary border-blue-500 border-2": isBookmarked && index === currentQuestionIndex,
                                         }
                                     )}
                                 >
                                     {q.questionNumber}
-                                    {isBookmarked && (
-                                        <Bookmark className="absolute -top-1 -right-1 h-4 w-4 fill-white text-white" />
+                                     {isBookmarked && (
+                                        <Bookmark className="absolute -top-1.5 -right-1.5 h-4 w-4 fill-blue-500 text-blue-500" />
                                     )}
                                 </Button>
                             );
@@ -247,9 +304,15 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
         >
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle className="font-heading text-2xl">
-                {chapter.name} - {quizType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="font-heading text-2xl">
+                    {chapter.name} - {quizType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                </CardTitle>
+                 <div className="flex items-center text-lg font-mono bg-muted px-3 py-1 rounded-md">
+                     <Timer className="mr-2 h-5 w-5"/>
+                     <span>{formatTime(time)}</span>
+                </div>
+              </div>
               <CardDescription>
                 Question {currentQuestion.questionNumber} of {questions.length}
               </CardDescription>
