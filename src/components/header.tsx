@@ -31,11 +31,19 @@ export function AppHeader() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
            </Button>
-           {user && (
-              <Button onClick={logout} variant="outline" size="sm">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
+            {user && (
+              <>
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/study">
+                        <Timer className="mr-2 h-4 w-4" />
+                        Study Space
+                    </Link>
+                </Button>
+                <Button onClick={logout} variant="outline" size="sm">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              </>
            )}
         </div>
       </div>
