@@ -36,37 +36,38 @@ export default function ChapterPage({ params: paramsProp }: { params: { subject:
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="text-center mb-8"
         >
-          <div className="text-center mb-8">
             <h1 className="text-4xl font-bold font-heading">{chapter.name}</h1>
             <p className="text-muted-foreground mt-2">
               Select a practice type.
             </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {practiceTypes.map((type) => (
-              <motion.div
-                key={type.slug}
-                whileHover={{ scale: 1.03, y: -5 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-              >
-                <Link href={`/practice/${subject.slug}/${chapter.slug}/${type.slug}`} className="block">
-                  <Card className="h-full hover:border-primary transition-colors duration-300">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        {type.name}
-                        <ArrowRight className="h-5 w-5 text-primary" />
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>{type.description}</CardDescription>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
         </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {practiceTypes.map((type) => (
+            <motion.div
+              key={type.slug}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 * practiceTypes.indexOf(type) }}
+              whileHover={{ scale: 1.03, y: -5 }}
+            >
+              <Link href={`/practice/${subject.slug}/${chapter.slug}/${type.slug}`} className="block">
+                <Card className="h-full hover:border-primary transition-colors duration-300">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      {type.name}
+                      <ArrowRight className="h-5 w-5 text-primary" />
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <CardDescription>{type.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       </main>
     </>
   );
