@@ -26,14 +26,15 @@ export function RewardDialog({isOpen, onOpenChange}: RewardDialogProps) {
           <div className="flex justify-center">
             <motion.div
               animate={{
-                rotate: [0, 10, -10, 10, -10, 0],
-                scale: [1, 1.1, 1.2, 1.1, 1],
+                rotate: [0, 10, -10, 5, -5, 0],
+                scale: [1, 1.1, 1, 1.1, 1],
+                y: [0, -10, 0]
               }}
               transition={{
                 duration: 1,
                 ease: 'easeInOut',
                 repeat: Infinity,
-                repeatDelay: 2,
+                repeatDelay: 1,
               }}
             >
               <Trophy className="h-16 w-16 text-yellow-400" />

@@ -143,7 +143,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
       <CardContent className="flex-1 overflow-hidden p-2">
         <ScrollArea className="h-full" viewportRef={viewportRef}>
           <div className="pr-4 space-y-4">
-             <AnimatePresence>
+             <AnimatePresence initial={false}>
                 {messages.map((msg) => {
                     const isCurrentUser = msg.senderId === currentUserId;
                     const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
@@ -151,10 +151,10 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                     <motion.div
                         key={msg.id}
                         layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "circOut" }}
                         className={cn(
                             'flex flex-col gap-1 group',
                             isCurrentUser ? 'items-end' : 'items-start'

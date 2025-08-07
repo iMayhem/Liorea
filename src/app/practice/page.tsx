@@ -15,7 +15,7 @@ export default function PracticePage() {
       <AppHeader />
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
@@ -29,8 +29,8 @@ export default function PracticePage() {
             {practiceData.map((subject) => (
               <motion.div
                 key={subject.slug}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                whileHover={{ scale: 1.03, y: -5 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
               >
                 <Link href={`/practice/${subject.slug}`} className="block">
                   <Card className="h-full hover:border-primary transition-colors duration-300">

@@ -121,7 +121,7 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
       <motion.main
-        initial={{opacity: 0, y: 20}}
+        initial={{opacity: 0, y: 15}}
         animate={{opacity: 1, y: 0}}
         transition={{duration: 0.5}}
         className="flex-1 container mx-auto p-4 md:p-6 lg:p-8"

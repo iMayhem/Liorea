@@ -39,9 +39,9 @@ export default function LoginPage() {
 
   return (
     <motion.div
-      initial={{opacity: 0, scale: 0.95}}
-      animate={{opacity: 1, scale: 1}}
-      transition={{duration: 0.3}}
+      initial={{opacity: 0, y: 15}}
+      animate={{opacity: 1, y: 0}}
+      transition={{duration: 0.5}}
       className="flex items-center justify-center min-h-screen bg-background p-4"
     >
       <Card className="w-full max-w-sm">
