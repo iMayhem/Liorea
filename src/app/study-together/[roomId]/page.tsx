@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
@@ -43,51 +43,70 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     if (!user || !roomId) return;
 
     const roomRef = doc(db, 'studyRooms', roomId);
-    const unsubscribeRoom = onSnapshot(roomRef, async (docSnap) => {
-      if (docSnap.exists()) {
-        setRoomExists(true);
-        const data = docSnap.data();
-        setTimerState(data.timerState);
-        setNotepadContent(data.notepadContent);
-        setParticipants(data.participants || []);
 
-        // Add user to participants if not already there
-        const userIsParticipant = (data.participants || []).some((p: any) => p.uid === user.uid);
-        if (!userIsParticipant) {
-          await updateDoc(roomRef, {
-            participants: arrayUnion({ uid: user.uid, username: user.username, photoURL: user.photoURL })
-          });
+    const joinRoomAndSubscribe = async () => {
+        const docSnap = await getDoc(roomRef);
+
+        if (docSnap.exists()) {
+            setRoomExists(true);
+            // Add user to participants list upon joining
+            await updateDoc(roomRef, {
+                participants: arrayUnion({ uid: user.uid, username: user.username, photoURL: user.photoURL })
+            });
+
+            // Now, set up the listeners
+            const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
+                const data = snap.data();
+                if (data) {
+                    setTimerState(data.timerState);
+                    setNotepadContent(data.notepadContent);
+                    setParticipants(data.participants || []);
+                }
+            });
+
+            const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
+            const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
+                const messages: ChatMessage[] = [];
+                querySnapshot.forEach((doc) => {
+                    messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+                });
+                setChatMessages(messages);
+            });
+            
+            setLoading(false);
+
+            // Cleanup function to be returned
+            return () => {
+                updateDoc(roomRef, {
+                    participants: arrayRemove({ uid: user.uid, username: user.username, photoURL: user.photoURL })
+                });
+                unsubscribeRoom();
+                unsubscribeChat();
+            };
+
+        } else {
+            setRoomExists(false);
+            setLoading(false);
+            toast({
+                title: "Room not found",
+                description: "This study room does not exist.",
+                variant: "destructive"
+            });
+            router.push('/study-together');
+            return () => {}; // Return empty cleanup
         }
+    };
 
-      } else {
-        setRoomExists(false);
-        toast({
-          title: "Room not found",
-          description: "This study room does not exist.",
-          variant: "destructive"
-        });
-        router.push('/study-together');
-      }
-      setLoading(false);
+    let cleanup = () => {};
+    joinRoomAndSubscribe().then(cleanupFn => {
+        if (cleanupFn) {
+            cleanup = cleanupFn;
+        }
     });
 
-    const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
-    const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
-      const messages: ChatMessage[] = [];
-      querySnapshot.forEach((doc) => {
-        messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
-      });
-      setChatMessages(messages);
-    });
-    
-    // Cleanup on unmount or user change
+    // Final cleanup on component unmount
     return () => {
-      const roomRef = doc(db, 'studyRooms', roomId);
-       updateDoc(roomRef, {
-          participants: arrayRemove({ uid: user.uid, username: user.username, photoURL: user.photoURL })
-        });
-      unsubscribeRoom();
-      unsubscribeChat();
+        cleanup();
     };
 
   }, [roomId, user, router, toast]);
@@ -153,7 +172,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
                       <Tooltip key={p.uid}>
                         <TooltipTrigger asChild>
                             <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                              <AvatarImage src={p.photoURL} alt={p.username}/>
+                              <AvatarImage src={p.photoURL || `https://placehold.co/40x40.png`} alt={p.username}/>
                               <AvatarFallback>{p.username?.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </TooltipTrigger>

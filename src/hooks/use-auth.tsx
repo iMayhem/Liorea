@@ -63,6 +63,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
     } catch (error) {
         console.error("Error during sign-out:", error);
     } finally {
+        setUser(null);
         setLoading(false);
     }
   };
