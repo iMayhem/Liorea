@@ -74,8 +74,8 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <AppHeader />
       <motion.main
-        initial={{opacity: 0, y: 15}}
-        animate={{opacity: 1, y: 0}}
+        initial={{opacity: 0}}
+        animate={{opacity: 1}}
         transition={{duration: 0.5}}
         className="flex-1 container mx-auto flex flex-col items-center justify-center p-4 text-center"
       >

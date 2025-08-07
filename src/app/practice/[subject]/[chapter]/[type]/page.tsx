@@ -29,8 +29,8 @@ function ComingSoonPage({subjectName, chapterName}: {subjectName?: string, chapt
             <AppHeader />
             <main className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                 >
                     <h1 className="text-4xl font-bold font-heading mt-12">Coming Soon!</h1>
@@ -310,8 +310,8 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
 
         <motion.div
           key={currentQuestionIndex}
-          initial={{opacity: 0, y: 20}}
-          animate={{opacity: 1, y: 0}}
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
           transition={{duration: 0.5}}
         >
           <Card className="max-w-2xl mx-auto">

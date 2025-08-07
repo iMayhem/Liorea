@@ -32,8 +32,8 @@ export default function StudyPage() {
       <AppHeader />
       <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center justify-center gap-8"
         >

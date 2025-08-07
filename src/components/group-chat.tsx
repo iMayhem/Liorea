@@ -151,9 +151,9 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                     <motion.div
                         key={msg.id}
                         layout
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "circOut" }}
                         className={cn(
                             'flex flex-col gap-1 group',

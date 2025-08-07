@@ -102,8 +102,8 @@ export default function StudyTogetherPage() {
       <AppHeader />
       <main className="flex-1 container mx-auto flex items-center justify-center p-4">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >

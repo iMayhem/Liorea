@@ -26,8 +26,8 @@ export default function SubjectPage({ params: paramsProp }: { params: { subject:
       <AppHeader />
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
           <div className="text-center mb-8">
