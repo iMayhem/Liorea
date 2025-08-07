@@ -37,7 +37,7 @@ export default function StudyTogetherPage() {
       const newRoomRef = doc(collection(db, 'studyRooms'));
       await setDoc(newRoomRef, {
         createdAt: serverTimestamp(),
-        notepadContent: '## Welcome to your collaborative notepad!\n\nStart typing here...',
+        notepadContent: '',
         timerState: {
           mode: 'study',
           time: 25 * 60,
