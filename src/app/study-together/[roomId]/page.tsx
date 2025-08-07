@@ -3,13 +3,13 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
 import { Loader2, Users, Clipboard } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { TimerState, ChatMessage } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SharedPomodoroTimer } from '@/components/shared-pomodoro-timer';
@@ -26,7 +26,7 @@ import { SyncedAnimation } from '@/components/synced-animation';
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
-  const params = React.use(paramsProp);
+  const params = React.use(paramsProp as any);
   const { roomId } = params;
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -35,77 +35,95 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   const [loading, setLoading] = React.useState(true);
   const [roomData, setRoomData] = React.useState<DocumentData | null>(null);
   const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
-  const [participants, setParticipants] = React.useState<any[]>([]);
+  const [participants, setParticipants] = React.useState<Participant[]>([]);
+  const userHasLeftRef = React.useRef(false);
 
-  // Subscribe to room data
   React.useEffect(() => {
-    if (!user || !roomId) return;
-
+    if (authLoading || !user) return;
+  
     const roomRef = doc(db, 'studyRooms', roomId);
-
-    const joinRoomAndSubscribe = async () => {
-        const docSnap = await getDoc(roomRef);
-
-        if (docSnap.exists()) {
-            // Add user to participants list upon joining
-            await updateDoc(roomRef, {
-                participants: arrayUnion({ uid: user.uid, username: user.username, photoURL: user.photoURL })
-            });
-
-            // Now, set up the listeners
-            const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
-                const data = snap.data();
-                if (data) {
-                    setRoomData(data);
-                    setParticipants(data.participants || []);
-                }
-            });
-
-            const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
-            const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
-                const messages: ChatMessage[] = [];
-                querySnapshot.forEach((doc) => {
-                    messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
-                });
-                setChatMessages(messages);
-            });
-            
-            setLoading(false);
-
-            // Cleanup function to be returned
-            return () => {
-                updateDoc(roomRef, {
-                    participants: arrayRemove({ uid: user.uid, username: user.username, photoURL: user.photoURL })
-                });
-                unsubscribeRoom();
-                unsubscribeChat();
-            };
-
+  
+    const joinAndSubscribe = async () => {
+      const docSnap = await getDoc(roomRef);
+  
+      if (!docSnap.exists()) {
+        toast({
+          title: "Room not found",
+          description: "This study room does not exist.",
+          variant: "destructive"
+        });
+        router.push('/study-together');
+        return;
+      }
+      
+      const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
+      await updateDoc(roomRef, {
+        participants: arrayUnion(newParticipant)
+      });
+  
+      const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setRoomData(data);
+          setParticipants(data.participants || []);
         } else {
-            setLoading(false);
-            toast({
-                title: "Room not found",
-                description: "This study room does not exist.",
-                variant: "destructive"
-            });
+           if (!userHasLeftRef.current) {
+            toast({ title: "Room Closed", description: "The study room was deleted.", variant: "destructive" });
             router.push('/study-together');
-            return () => {}; // Return empty cleanup
+           }
         }
+      });
+  
+      const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
+      const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
+        const messages: ChatMessage[] = [];
+        querySnapshot.forEach((doc) => {
+          messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+        });
+        setChatMessages(messages);
+      });
+  
+      setLoading(false);
+  
+      return () => {
+        unsubscribeRoom();
+        unsubscribeChat();
+      };
     };
-
-    let cleanup = () => {};
-    joinRoomAndSubscribe().then(cleanupFn => {
-        if (cleanupFn) {
-            cleanup = cleanupFn;
-        }
-    });
-
-    // Final cleanup on component unmount
+  
+    let cleanupPromise = joinAndSubscribe();
+  
     return () => {
-        cleanup();
-    };
+        if (user && !userHasLeftRef.current) {
+            userHasLeftRef.current = true;
+            const roomRef = doc(db, 'studyRooms', roomId);
+            const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
+             
+             // Check if user is the last one
+            if(participants.length <= 1 && participants[0]?.uid === user.uid) {
+                // Delete subcollections and then the room document
+                const deleteRoom = async () => {
+                    const chatRef = collection(db, 'studyRooms', roomId, 'chats');
+                    const chatSnapshot = await getDocs(chatRef);
+                    const batch = writeBatch(db);
+                    chatSnapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    batch.delete(roomRef);
+                    await batch.commit();
+                }
+                deleteRoom();
 
-  }, [roomId, user, router, toast]);
+            } else {
+                 updateDoc(roomRef, {
+                    participants: arrayRemove(userParticipant)
+                });
+            }
+        }
+        cleanupPromise.then(cleanup => cleanup && cleanup());
+    };
+  }, [roomId, user, authLoading, router, toast, participants]);
+  
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
@@ -224,7 +242,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column: Timer */}
             <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center">
-                {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} />}
+                {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} participants={participants} />}
             </motion.div>
             
             {/* Middle Column: Notepad */}

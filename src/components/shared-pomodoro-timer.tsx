@@ -9,6 +9,8 @@ import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import type { TimerState } from '@/lib/types';
 import { serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '@/hooks/use-auth';
+import { logStudySession } from '@/lib/firestore';
 
 
 const STUDY_TIME = 25 * 60;
@@ -18,11 +20,13 @@ const LONG_BREAK_TIME = 15 * 60;
 interface SharedPomodoroTimerProps {
   timerState: TimerState;
   onUpdate: (newState: Partial<TimerState>) => void;
+  participants: {uid: string}[];
 }
 
-export function SharedPomodoroTimer({ timerState, onUpdate }: SharedPomodoroTimerProps) {
+export function SharedPomodoroTimer({ timerState, onUpdate, participants }: SharedPomodoroTimerProps) {
   const { mode, isActive, time, startTime } = timerState;
   const [displayTime, setDisplayTime] = React.useState(time);
+  const { user } = useAuth();
   
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -49,6 +53,9 @@ export function SharedPomodoroTimer({ timerState, onUpdate }: SharedPomodoroTime
      // A more robust solution might involve a server-side function
      // For now, any client can trigger the next state
     if (mode === 'study') {
+       if (user) {
+         logStudySession(participants.map(p => p.uid), time);
+       }
        switchMode('shortBreak');
     } else {
        switchMode('study');

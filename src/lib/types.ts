@@ -63,6 +63,12 @@ export interface TimerState {
     startTime: any; // Can be Firebase ServerTimestamp
 }
 
+export interface Participant {
+  uid: string;
+  username: string | null;
+  photoURL: string | null;
+}
+
 export interface ChatMessage {
     id: string;
     text: string;

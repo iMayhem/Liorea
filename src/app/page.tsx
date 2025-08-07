@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
@@ -15,6 +15,8 @@ import { testSchedule } from '@/lib/data';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getStudyLogsForUser } from '@/lib/firestore';
+import { cn } from '@/lib/utils';
 
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -29,13 +31,19 @@ export default function HomePage() {
   const { user, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
-  const [currentMonth, setCurrentMonth] = React.useState<Date | undefined>(undefined);
+  const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
+  const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
 
   React.useEffect(() => {
-    // This effect runs on the client, so `new Date()` will be the user's current date.
-    // This prevents a hydration mismatch.
-    setCurrentMonth(new Date());
-  }, []);
+    if (loading || !user) return;
+
+    const fetchStudyLogs = async () => {
+        const logs = await getStudyLogsForUser(user.uid);
+        setStudyLogs(logs || {});
+    };
+
+    fetchStudyLogs();
+  }, [user, loading, currentMonth]);
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -59,6 +67,8 @@ export default function HomePage() {
       </div>
     );
   }
+  
+  const maxStudyTime = Math.max(1, ...Object.values(studyLogs));
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -85,14 +95,34 @@ export default function HomePage() {
             <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card order-first lg:order-none">
                 <CardContent className="flex justify-center p-0">
                     <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                    className="rounded-md"
-                    fromDate={new Date('2025-07-01')}
-                    toDate={new Date('2026-05-05')}
-                    month={currentMonth}
-                    onMonthChange={setCurrentMonth}
+                        mode="single"
+                        selected={date}
+                        onSelect={handleDateSelect}
+                        className="rounded-md"
+                        fromDate={new Date('2025-07-01')}
+                        toDate={new Date('2026-05-05')}
+                        month={currentMonth}
+                        onMonthChange={setCurrentMonth}
+                        modifiers={{
+                           studyDay: (day) => {
+                                const dateKey = format(day, 'yyyy-MM-dd');
+                                return studyLogs[dateKey] > 0;
+                           }
+                        }}
+                         modifiersClassNames={{
+                            studyDay: 'study-day-modifier'
+                        }}
+                        modifiersStyles={{
+                            studyDay: (day: Date) => {
+                                const dateKey = format(day, 'yyyy-MM-dd');
+                                const studyTime = studyLogs[dateKey] || 0;
+                                const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
+                                return { 
+                                    backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
+                                    color: 'hsl(var(--primary-foreground))'
+                                };
+                            }
+                        }}
                     />
                 </CardContent>
             </Card>

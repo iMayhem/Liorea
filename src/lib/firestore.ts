@@ -2,10 +2,11 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment } from 'firebase/firestore';
 import type { UserProgress, TimeTableData, UserQuizProgress } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
+import { format } from 'date-fns';
 
 
 /**
@@ -236,3 +237,40 @@ export async function resetQuizProgress(
 
     return fullProgress;
 }
+
+
+/**
+ * Logs a completed study session for all participants in a room.
+ * @param participantUids - An array of user UIDs who were in the room.
+ * @param durationInSeconds - The duration of the study session in seconds.
+ */
+export async function logStudySession(participantUids: string[], durationInSeconds: number) {
+  if (durationInSeconds <= 0) return;
+  const today = format(new Date(), 'yyyy-MM-dd');
+  
+  for (const uid of participantUids) {
+    const docRef = doc(db, 'studyLogs', uid);
+    // Use dot notation to increment a field within a map
+    const fieldPath = `daily[${today}]`;
+    await setDoc(docRef, { 
+      daily: {
+        [today]: increment(durationInSeconds) 
+      }
+    }, { merge: true });
+  }
+}
+
+/**
+ * Retrieves all study logs for a specific user.
+ * @param userId - The ID of the user.
+ * @returns An object mapping date strings to total study seconds.
+ */
+export async function getStudyLogsForUser(userId: string): Promise<Record<string, number>> {
+  const docRef = doc(db, 'studyLogs', userId);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data().daily || {};
+  }
+  return {};
+}
+
