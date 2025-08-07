@@ -56,6 +56,8 @@ export interface UserQuizProgress {
 }
 
 // Types for "Study Together" feature
+export type AnimationType = 'rain' | 'fire' | 'snow' | 'confetti' | 'stars';
+
 export interface TimerState {
     mode: 'study' | 'shortBreak' | 'longBreak';
     time: number;

@@ -2,10 +2,11 @@
 'use client';
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { AnimationType } from '@/lib/types';
 
 interface SyncedAnimationProps {
     animation: {
-        type: '🌧️' | '🔥' | '❄️' | null;
+        type: AnimationType | null;
         timestamp: any; // Firebase timestamp
     } | null;
 }
@@ -49,9 +50,40 @@ const Snowflake = () => (
     </motion.div>
 );
 
+const ConfettiParticle = () => {
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const x = Math.random() * 100;
+    const y = Math.random() * 100;
+    const rotate = Math.random() * 360;
+    return (
+        <motion.div
+            className="absolute"
+            initial={{ opacity: 1, y: '0vh', x: `${x}vw`, rotate }}
+            animate={{ opacity: 0, y: '100vh', rotate: rotate + Math.random() * 360 }}
+            transition={{ duration: Math.random() * 3 + 2, ease: "easeOut" }}
+            style={{ 
+                width: '10px',
+                height: '20px',
+                backgroundColor: color,
+             }}
+        />
+    )
+};
+
+const StarParticle = () => (
+    <motion.div
+        className="absolute text-yellow-300"
+        initial={{ opacity: 0, scale: 0, top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }}
+        animate={{ opacity: [0, 1, 0], scale: [0, Math.random() * 1.5, 0]}}
+        transition={{ duration: Math.random() * 2 + 1, repeat: Infinity, ease: 'easeInOut' }}
+    >
+        ★
+    </motion.div>
+)
 
 export function SyncedAnimation({ animation }: SyncedAnimationProps) {
-    const [currentAnimation, setCurrentAnimation] = React.useState<'🌧️' | '🔥' | '❄️' | null>(null);
+    const [currentAnimation, setCurrentAnimation] = React.useState<AnimationType | null>(null);
 
     React.useEffect(() => {
         if (animation?.type) {
@@ -66,12 +98,16 @@ export function SyncedAnimation({ animation }: SyncedAnimationProps) {
     const renderAnimation = () => {
         const count = 50; // Number of particles
         switch (currentAnimation) {
-            case '🌧️':
+            case 'rain':
                 return Array.from({ length: count }).map((_, i) => <RainDrop key={i} />);
-            case '🔥':
+            case 'fire':
                 return Array.from({ length: count }).map((_, i) => <FireParticle key={i} />);
-            case '❄️':
+            case 'snow':
                 return Array.from({ length: count }).map((_, i) => <Snowflake key={i} />);
+            case 'confetti':
+                return Array.from({ length: 100 }).map((_, i) => <ConfettiParticle key={i} />);
+            case 'stars':
+                return Array.from({ length: 70 }).map((_, i) => <StarParticle key={i} />);
             default:
                 return null;
         }

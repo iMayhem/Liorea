@@ -20,7 +20,14 @@ interface GroupChatProps {
   onReaction: (messageId: string, emoji: string) => void;
 }
 
-const EMOJIS = ['👍', '😂', '❤️', '🤔', '😢', '🔥', '🌧️', '❄️'];
+const EMOJIS = ['👍', '😂', '❤️', '🤔', '🎉', '✨', '😢', '🔥', '🌧️', '❄️', '🤯', '🙏'];
+const ANIMATION_MAP: Record<string, string> = {
+    '🌧️': 'rain', '😢': 'rain', '😭': 'rain',
+    '🔥': 'fire', '❤️‍🔥': 'fire', '🥵': 'fire',
+    '❄️': 'snow', '🥶': 'snow', '☃️': 'snow',
+    '🎉': 'confetti', '🥳': 'confetti', '🎊': 'confetti',
+    '✨': 'stars', '⭐': 'stars', '🌟': 'stars',
+};
 
 export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }: GroupChatProps) {
   const [newMessage, setNewMessage] = React.useState('');
@@ -107,7 +114,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }
                                         <Button size="icon" variant="ghost" className="h-6 w-6"><SmilePlus className="h-4 w-4"/></Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-1">
-                                        <div className="flex gap-1">
+                                        <div className="grid grid-cols-6 gap-1">
                                             {EMOJIS.map(emoji => (
                                                 <Button key={emoji} variant="ghost" size="icon" className="h-8 w-8 text-lg" onClick={() => onReaction(msg.id, emoji)}>{emoji}</Button>
                                             ))}
@@ -118,7 +125,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }
                             </div>
                             
                             {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                                <div className="flex gap-1 mt-1">
+                                <div className="flex gap-1 mt-1 flex-wrap">
                                     {Object.entries(msg.reactions).map(([emoji, users]) => users.length > 0 && (
                                         <div key={emoji} className={cn("px-1.5 py-0.5 rounded-full text-xs flex items-center gap-1 cursor-pointer", users.includes(currentUserId) ? 'bg-blue-500/50' : 'bg-muted/50')} onClick={() => onReaction(msg.id, emoji)}>
                                             <span>{emoji}</span>

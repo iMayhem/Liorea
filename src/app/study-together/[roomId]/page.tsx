@@ -3,13 +3,13 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp, writeBatch } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp, writeBatch, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
 import { Loader2, Users, Clipboard } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { TimerState, ChatMessage, Participant } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant, AnimationType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SharedPomodoroTimer } from '@/components/shared-pomodoro-timer';
@@ -23,6 +23,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { SyncedAnimation } from '@/components/synced-animation';
+
+const ANIMATION_MAP: Record<string, AnimationType> = {
+    '🌧️': 'rain', '😢': 'rain', '😭': 'rain',
+    '🔥': 'fire', '❤️‍🔥': 'fire', '🥵': 'fire',
+    '❄️': 'snow', '🥶': 'snow', '☃️': 'snow',
+    '🎉': 'confetti', '🥳': 'confetti', '🎊': 'confetti',
+    '✨': 'stars', '⭐': 'stars', '🌟': 'stars',
+};
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
@@ -39,56 +47,66 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   const userHasLeftRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading) return;
+    if (!user) {
+        router.push('/login');
+        return;
+    }
   
     const roomRef = doc(db, 'studyRooms', roomId);
   
     const joinAndSubscribe = async () => {
-      const docSnap = await getDoc(roomRef);
-  
-      if (!docSnap.exists()) {
-        toast({
-          title: "Room not found",
-          description: "This study room does not exist.",
-          variant: "destructive"
-        });
-        router.push('/study-together');
-        return;
-      }
-      
-      const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-      await updateDoc(roomRef, {
-        participants: arrayUnion(newParticipant)
-      });
-  
-      const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          setRoomData(data);
-          setParticipants(data.participants || []);
-        } else {
-           if (!userHasLeftRef.current) {
-            toast({ title: "Room Closed", description: "The study room was deleted.", variant: "destructive" });
-            router.push('/study-together');
-           }
+      try {
+        const docSnap = await getDoc(roomRef);
+    
+        if (!docSnap.exists()) {
+          toast({
+            title: "Room not found",
+            description: "This study room does not exist.",
+            variant: "destructive"
+          });
+          router.push('/study-together');
+          return;
         }
-      });
-  
-      const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
-      const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
-        const messages: ChatMessage[] = [];
-        querySnapshot.forEach((doc) => {
-          messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+        
+        const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
+        await updateDoc(roomRef, {
+          participants: arrayUnion(newParticipant)
         });
-        setChatMessages(messages);
-      });
-  
-      setLoading(false);
-  
-      return () => {
-        unsubscribeRoom();
-        unsubscribeChat();
-      };
+    
+        const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            setRoomData(data);
+            setParticipants(data.participants || []);
+          } else {
+             if (!userHasLeftRef.current) {
+              toast({ title: "Room Closed", description: "The study room was deleted.", variant: "destructive" });
+              router.push('/study-together');
+             }
+          }
+        });
+    
+        const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
+        const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
+          const messages: ChatMessage[] = [];
+          querySnapshot.forEach((doc) => {
+            messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+          });
+          setChatMessages(messages);
+        });
+    
+        setLoading(false);
+    
+        return () => {
+          unsubscribeRoom();
+          unsubscribeChat();
+        };
+      } catch (error) {
+          console.error("Failed to join room:", error);
+          toast({ title: "Error", description: "Could not join the study room.", variant: "destructive" });
+          router.push('/study-together');
+      }
     };
   
     let cleanupPromise = joinAndSubscribe();
@@ -97,7 +115,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
         if (user && !userHasLeftRef.current) {
             userHasLeftRef.current = true;
             const roomRef = doc(db, 'studyRooms', roomId);
-            const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
              
              // Check if user is the last one
             if(participants.length <= 1 && participants[0]?.uid === user.uid) {
@@ -115,14 +132,15 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
                 deleteRoom();
 
             } else {
+                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
                  updateDoc(roomRef, {
                     participants: arrayRemove(userParticipant)
-                });
+                }).catch(err => console.error("Error removing participant:", err));
             }
         }
         cleanupPromise.then(cleanup => cleanup && cleanup());
     };
-  }, [roomId, user, authLoading, router, toast, participants]);
+  }, [roomId, user, authLoading, router, toast]);
   
 
   const handleCopyRoomId = () => {
@@ -184,11 +202,12 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
           await updateDoc(messageRef, { reactions });
           
           // Trigger synced animation for special emojis
-          if (['🌧️', '🔥', '❄️'].includes(emoji)) {
+          const animationType = ANIMATION_MAP[emoji];
+          if (animationType) {
               const roomRef = doc(db, 'studyRooms', roomId);
               await updateDoc(roomRef, {
                   currentAnimation: {
-                      type: emoji,
+                      type: animationType,
                       timestamp: serverTimestamp()
                   }
               });
@@ -220,8 +239,8 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
                       <Tooltip key={p.uid}>
                         <TooltipTrigger asChild>
                             <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                              <AvatarImage src={p.photoURL || `https://placehold.co/40x40.png`} alt={p.username}/>
-                              <AvatarFallback>{p.username?.charAt(0)}</AvatarFallback>
+                              <AvatarImage src={p.photoURL || `https://placehold.co/40x40.png`} alt={p.username || 'User'}/>
+                              <AvatarFallback>{p.username?.charAt(0).toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </TooltipTrigger>
                         <TooltipContent>
