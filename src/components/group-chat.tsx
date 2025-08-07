@@ -115,6 +115,25 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
     }
   };
 
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if(file){
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setImage(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            }
+            event.preventDefault();
+            return;
+        }
+    }
+  };
+
+
   const typingIndicatorText = React.useMemo(() => {
     if (activeTypers.length === 0) return null;
     if (activeTypers.length === 1) return `${activeTypers[0]} is typing...`;
@@ -224,6 +243,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
             ref={inputRef}
             value={newMessage}
             onChange={handleInputChange}
+            onPaste={handlePaste}
             placeholder="Type your message..."
             autoComplete="off"
           />
