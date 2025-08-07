@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
-import { ArrowLeft, LogOut, Timer } from "lucide-react";
+import { ArrowLeft, LogOut, Timer, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export function AppHeader() {
@@ -33,6 +33,12 @@ export function AppHeader() {
            </Button>
             {user && (
               <>
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/study-together">
+                        <Users className="mr-2 h-4 w-4" />
+                        Study Together
+                    </Link>
+                </Button>
                 <Button asChild variant="outline" size="sm">
                     <Link href="/study">
                         <Timer className="mr-2 h-4 w-4" />

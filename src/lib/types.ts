@@ -54,3 +54,19 @@ export interface UserQuizProgress {
         [chapter: string]: QuizProgress
     }
 }
+
+// Types for "Study Together" feature
+export interface TimerState {
+    mode: 'study' | 'shortBreak' | 'longBreak';
+    time: number;
+    isActive: boolean;
+    startTime: any; // Can be Firebase ServerTimestamp
+}
+
+export interface ChatMessage {
+    id: string;
+    text: string;
+    senderId: string;
+    senderName: string;
+    timestamp: any; // Can be Firebase ServerTimestamp
+}
