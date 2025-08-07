@@ -24,7 +24,8 @@ import {
 } from "@/components/ui/tooltip"
 
 
-export default function StudyRoomPage({ params }: { params: { roomId: string } }) {
+export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
+  const params = React.use(paramsProp as any);
   const { roomId } = params;
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
