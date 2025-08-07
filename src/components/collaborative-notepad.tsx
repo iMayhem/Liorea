@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { useDebouncedCallback } from 'use-debounce';
 import { FileText } from 'lucide-react';
 
 interface CollaborativeNotepadProps {
@@ -20,12 +19,10 @@ export function CollaborativeNotepad({ content, onContentChange }: Collaborative
     setLocalContent(content);
   }, [content]);
 
-  // Debounce the callback to Firestore to avoid excessive writes
-  const debouncedOnContentChange = useDebouncedCallback(onContentChange, 500);
-
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalContent(e.target.value);
-    debouncedOnContentChange(e.target.value);
+    // Call onContentChange directly on every keystroke for real-time updates.
+    onContentChange(e.target.value);
   };
 
   return (
