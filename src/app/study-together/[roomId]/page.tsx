@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, writeBatch, getDocs, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, writeBatch, getDocs, setDoc, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
@@ -108,11 +108,8 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             const roomRef = doc(db, 'studyRooms', roomId);
 
             // Remove user from typing list on leave
-            const currentTypingUsers = roomData?.typingUsers || {};
-            if (currentTypingUsers[user.uid]) {
-                delete currentTypingUsers[user.uid];
-                await updateDoc(roomRef, { typingUsers: currentTypingUsers });
-            }
+            const typingField = `typingUsers.${user.uid}`;
+            await updateDoc(roomRef, { [typingField]: deleteField() }).catch(err => console.error("Error removing typing indicator:", err));
 
             // Check if user is the last one
             const currentParticipants = (await getDoc(roomRef)).data()?.participants || [];
@@ -144,8 +141,11 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     }
 
 
+    window.addEventListener('beforeunload', handleLeave);
+
     return () => {
       handleLeave();
+      window.removeEventListener('beforeunload', handleLeave);
     };
   }, [roomId, user, authLoading, router, toast]);
   
@@ -193,7 +193,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   };
   
   const handleTyping = async (isTyping: boolean) => {
-    if (!user) return;
+    if (!user || !user.username) return;
     const roomRef = doc(db, 'studyRooms', roomId);
     const typingField = `typingUsers.${user.uid}`;
 
@@ -202,11 +202,9 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             [typingField]: user.username
         });
     } else {
-        const currentTypingUsers = roomData?.typingUsers || {};
-        if (currentTypingUsers[user.uid]) {
-            delete currentTypingUsers[user.uid];
-            await updateDoc(roomRef, { typingUsers: currentTypingUsers });
-        }
+        await updateDoc(roomRef, {
+            [typingField]: deleteField()
+        });
     }
   };
 

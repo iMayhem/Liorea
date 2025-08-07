@@ -45,7 +45,7 @@ export default function StudyTogetherPage() {
           startTime: null,
         },
         participants: [], // Start with an empty participants list
-        typingUsers: {}, // Add typing users map
+        typingUsers: {},
       });
       router.push(`/study-together/${newRoomRef.id}`);
     } catch (error) {

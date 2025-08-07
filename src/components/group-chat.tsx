@@ -19,8 +19,8 @@ interface GroupChatProps {
   messages: ChatMessage[];
   onSendMessage: (message: { text: string; imageUrl?: string | null }, replyTo: { id: string, text: string } | null) => void;
   currentUserId: string;
-  onTyping: (isTyping: boolean, text: string) => void;
-  typingUsers: { [uid: string]: { username: string, text: string } };
+  onTyping: (isTyping: boolean) => void;
+  typingUsers: { [uid: string]: string };
 }
 
 export function GroupChat({ messages: initialMessages, onSendMessage, currentUserId, onTyping, typingUsers }: GroupChatProps) {
@@ -43,10 +43,10 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
       viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
     }
   }, [messages, typingUsers]);
-
+  
   const debouncedStopTyping = useDebouncedCallback(
     () => {
-      onTyping(false, '');
+      onTyping(false);
     },
     2000, // 2 second delay after user stops typing
   );
@@ -55,10 +55,10 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
     const text = e.target.value;
     setNewMessage(text);
     if (text) {
-        onTyping(true, text);
+        onTyping(true);
         debouncedStopTyping();
     } else {
-        onTyping(false, '');
+        onTyping(false);
         debouncedStopTyping.cancel();
     }
   };
@@ -80,10 +80,9 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
       // Optimistic UI update
       setMessages(prev => [...prev, optimisticMessage]);
-
       onSendMessage({ text: newMessage.trim(), imageUrl: image }, replyTo);
       debouncedStopTyping.cancel();
-      onTyping(false, ''); // Immediately clear typing indicator on send
+      onTyping(false); // Immediately clear typing indicator on send
       setNewMessage('');
       setReplyTo(null);
       setImage(null);
@@ -91,7 +90,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   };
 
   const handleReplyClick = (message: ChatMessage) => {
-    setReplyTo({id: message.id, text: message.text});
+    setReplyTo({id: message.id, text: message.text || 'Image'});
     inputRef.current?.focus();
   }
 
@@ -100,7 +99,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const activeTypers = React.useMemo(() => 
     Object.entries(typingUsers)
     .filter(([uid]) => uid !== currentUserId)
-    .map(([, data]) => ({ username: data.username, text: data.text })),
+    .map(([, username]) => username),
   [typingUsers, currentUserId]);
 
 
@@ -176,7 +175,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                             {originalMessage && (
                                 <div className="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1">
                                     <p className="font-bold">{originalMessage.senderName}</p>
-                                    <p className="truncate">{originalMessage.text}</p>
+                                    <p className="truncate">{originalMessage.text || 'Image'}</p>
                                 </div>
                             )}
 
@@ -188,8 +187,8 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="p-0 border-0 max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
+                                         <DialogHeader>
+                                             <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
                                         </DialogHeader>
                                         <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
                                     </DialogContent>
@@ -214,7 +213,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
          <div className="h-6 text-sm text-muted-foreground italic w-full overflow-hidden">
              {activeTypers.length > 0 && (
                 <p className="truncate">
-                    {activeTypers.map(typer => `${typer.username}: ${typer.text}`).join(', ')}
+                    {activeTypers.join(', ')} {activeTypers.length === 1 ? 'is' : 'are'} typing...
                 </p>
             )}
         </div>
