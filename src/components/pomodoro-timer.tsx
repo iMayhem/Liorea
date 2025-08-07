@@ -24,7 +24,17 @@ export function PomodoroTimer() {
   const [longBreakDuration, setLongBreakDuration] = React.useState(defaultLongBreakTime);
 
   const [mode, setMode] = React.useState<TimerMode>('study');
-  const [time, setTime] = React.useState(studyDuration * 60);
+  
+  const getInitialTime = (currentMode: TimerMode) => {
+    switch (currentMode) {
+      case 'study': return studyDuration * 60;
+      case 'shortBreak': return shortBreakDuration * 60;
+      case 'longBreak': return longBreakDuration * 60;
+      default: return studyDuration * 60;
+    }
+  };
+
+  const [time, setTime] = React.useState(getInitialTime(mode));
   const [isActive, setIsActive] = React.useState(false);
   const [studySessions, setStudySessions] = React.useState(0);
   
@@ -45,10 +55,12 @@ export function PomodoroTimer() {
     return () => {
       if (interval) clearInterval(interval);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, time]);
   
   React.useEffect(() => {
     resetTimer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyDuration, shortBreakDuration, longBreakDuration]);
 
 
@@ -73,33 +85,13 @@ export function PomodoroTimer() {
 
   const resetTimer = () => {
     setIsActive(false);
-    switch (mode) {
-      case 'study':
-        setTime(studyDuration * 60);
-        break;
-      case 'shortBreak':
-        setTime(shortBreakDuration * 60);
-        break;
-      case 'longBreak':
-        setTime(longBreakDuration * 60);
-        break;
-    }
+    setTime(getInitialTime(mode));
   };
 
   const switchMode = (newMode: TimerMode) => {
     setMode(newMode);
     setIsActive(false);
-    switch (newMode) {
-      case 'study':
-        setTime(studyDuration * 60);
-        break;
-      case 'shortBreak':
-        setTime(shortBreakDuration * 60);
-        break;
-      case 'longBreak':
-        setTime(longBreakDuration * 60);
-        break;
-    }
+    setTime(getInitialTime(newMode));
   };
 
   const formatTime = (seconds: number) => {
@@ -109,14 +101,7 @@ export function PomodoroTimer() {
   };
 
   const getTotalTime = () => {
-    switch (mode) {
-      case 'study':
-        return studyDuration * 60;
-      case 'shortBreak':
-        return shortBreakDuration * 60;
-      case 'longBreak':
-        return longBreakDuration * 60;
-    }
+    return getInitialTime(mode);
   };
   
   const percentage = (time / getTotalTime()) * 100;

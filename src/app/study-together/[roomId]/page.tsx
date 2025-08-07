@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
@@ -22,19 +22,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { SyncedAnimation } from '@/components/synced-animation';
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
-  const params = React.use(paramsProp as any);
+  const params = React.use(paramsProp);
   const { roomId } = params;
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [loading, setLoading] = React.useState(true);
-  const [roomExists, setRoomExists] = React.useState<boolean | null>(null);
-  const [timerState, setTimerState] = React.useState<TimerState | null>(null);
-  const [notepadContent, setNotepadContent] = React.useState('');
+  const [roomData, setRoomData] = React.useState<DocumentData | null>(null);
   const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
   const [participants, setParticipants] = React.useState<any[]>([]);
 
@@ -48,7 +47,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
         const docSnap = await getDoc(roomRef);
 
         if (docSnap.exists()) {
-            setRoomExists(true);
             // Add user to participants list upon joining
             await updateDoc(roomRef, {
                 participants: arrayUnion({ uid: user.uid, username: user.username, photoURL: user.photoURL })
@@ -58,8 +56,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
                 const data = snap.data();
                 if (data) {
-                    setTimerState(data.timerState);
-                    setNotepadContent(data.notepadContent);
+                    setRoomData(data);
                     setParticipants(data.participants || []);
                 }
             });
@@ -85,7 +82,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             };
 
         } else {
-            setRoomExists(false);
             setLoading(false);
             toast({
                 title: "Room not found",
@@ -120,8 +116,9 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   };
 
   const handleTimerUpdate = async (newState: Partial<TimerState>) => {
+    if (!roomData) return;
     const roomRef = doc(db, 'studyRooms', roomId);
-    await updateDoc(roomRef, { timerState: { ...timerState, ...newState } });
+    await updateDoc(roomRef, { timerState: { ...roomData.timerState, ...newState } });
   };
   
   const handleNotepadChange = async (content: string) => {
@@ -129,18 +126,60 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     await updateDoc(roomRef, { notepadContent: content });
   };
   
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, replyTo: { id: string, text: string } | null) => {
     if (!user) return;
     const chatCollectionRef = collection(db, 'studyRooms', roomId, 'chats');
-    await addDoc(chatCollectionRef, {
+    const messageData: any = {
       text: message,
       senderId: user.uid,
       senderName: user.username,
       timestamp: serverTimestamp(),
-    });
+      reactions: {},
+    };
+
+    if (replyTo) {
+      messageData.replyToId = replyTo.id;
+      messageData.replyToText = replyTo.text;
+    }
+    
+    await addDoc(chatCollectionRef, messageData);
+  };
+  
+  const handleReaction = async (messageId: string, emoji: string) => {
+      if (!user) return;
+      const messageRef = doc(db, 'studyRooms', roomId, 'chats', messageId);
+      const messageDoc = await getDoc(messageRef);
+
+      if (messageDoc.exists()) {
+          const messageData = messageDoc.data();
+          const reactions = messageData.reactions || {};
+          const usersForEmoji = reactions[emoji] || [];
+
+          if (usersForEmoji.includes(user.uid)) {
+              // User has already reacted with this emoji, so remove reaction
+              reactions[emoji] = usersForEmoji.filter((id: string) => id !== user.uid);
+              if(reactions[emoji].length === 0) delete reactions[emoji];
+          } else {
+              // Add new reaction
+              reactions[emoji] = [...usersForEmoji, user.uid];
+          }
+          await updateDoc(messageRef, { reactions });
+          
+          // Trigger synced animation for special emojis
+          if (['🌧️', '🔥', '❄️'].includes(emoji)) {
+              const roomRef = doc(db, 'studyRooms', roomId);
+              await updateDoc(roomRef, {
+                  currentAnimation: {
+                      type: emoji,
+                      timestamp: serverTimestamp()
+                  }
+              });
+          }
+      }
   };
 
-  if (authLoading || loading) {
+
+  if (authLoading || loading || !roomData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -148,19 +187,10 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     );
   }
   
-  if (!roomExists) {
-    // This state is handled by the redirect in the useEffect, but as a fallback:
-     return (
-       <div className="flex items-center justify-center min-h-screen bg-background">
-        <p className="text-destructive">Room not found.</p>
-      </div>
-    );
-  }
-
-
   return (
     <div className="flex flex-col h-screen bg-background">
       <AppHeader />
+      <SyncedAnimation animation={roomData.currentAnimation} />
       <header className="border-b shrink-0">
          <div className="container mx-auto py-3 px-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -194,17 +224,22 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column: Timer */}
             <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center">
-                {timerState && <SharedPomodoroTimer timerState={timerState} onUpdate={handleTimerUpdate} />}
+                {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} />}
             </motion.div>
             
             {/* Middle Column: Notepad */}
             <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="h-full flex flex-col min-h-[400px] lg:min-h-0">
-                <CollaborativeNotepad content={notepadContent} onContentChange={handleNotepadChange} />
+                <CollaborativeNotepad content={roomData.notepadContent} onContentChange={handleNotepadChange} />
             </motion.div>
 
             {/* Right Column: Chat */}
             <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }} className="h-full flex flex-col min-h-[400px] lg:min-h-0">
-                 <GroupChat messages={chatMessages} onSendMessage={handleSendMessage} currentUserId={user!.uid} />
+                 <GroupChat 
+                    messages={chatMessages} 
+                    onSendMessage={handleSendMessage} 
+                    currentUserId={user!.uid} 
+                    onReaction={handleReaction}
+                />
             </motion.div>
         </div>
       </main>

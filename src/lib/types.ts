@@ -69,4 +69,9 @@ export interface ChatMessage {
     senderId: string;
     senderName: string;
     timestamp: any; // Can be Firebase ServerTimestamp
+    replyToId?: string;
+    replyToText?: string;
+    reactions?: {
+        [emoji: string]: string[]; // emoji: list of userIds
+    }
 }

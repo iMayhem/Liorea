@@ -47,6 +47,7 @@ export default function StudyTogetherPage() {
         participants: [
           { uid: user.uid, username: user.username, photoURL: user.photoURL }
         ],
+        currentAnimation: { type: null, timestamp: null },
       });
       router.push(`/study-together/${newRoomRef.id}`);
     } catch (error) {
