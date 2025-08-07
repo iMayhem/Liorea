@@ -12,15 +12,15 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 
 interface GroupChatProps {
   messages: ChatMessage[];
-  onSendMessage: (message: { text: string; imageUrl?: string | null }, replyTo: { id: string; text: string } | null) => void;
+  onSendMessage: (message: { text: string; imageUrl?: string | null }, replyTo: { id: string, text: string } | null) => void;
   currentUserId: string;
-  onTyping: (isTyping: boolean) => void;
-  typingUsers: { [uid: string]: string };
+  onTyping: (isTyping: boolean, text: string) => void;
+  typingUsers: { [uid: string]: { username: string, text: string } };
 }
 
 export function GroupChat({ messages: initialMessages, onSendMessage, currentUserId, onTyping, typingUsers }: GroupChatProps) {
@@ -46,7 +46,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
   const debouncedStopTyping = useDebouncedCallback(
     () => {
-      onTyping(false);
+      onTyping(false, '');
     },
     2000, // 2 second delay after user stops typing
   );
@@ -55,10 +55,10 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
     const text = e.target.value;
     setNewMessage(text);
     if (text) {
-        onTyping(true);
+        onTyping(true, text);
         debouncedStopTyping();
     } else {
-        onTyping(false);
+        onTyping(false, '');
         debouncedStopTyping.cancel();
     }
   };
@@ -83,7 +83,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
       onSendMessage({ text: newMessage.trim(), imageUrl: image }, replyTo);
       debouncedStopTyping.cancel();
-      onTyping(false); // Immediately clear typing indicator on send
+      onTyping(false, ''); // Immediately clear typing indicator on send
       setNewMessage('');
       setReplyTo(null);
       setImage(null);
@@ -100,7 +100,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const activeTypers = React.useMemo(() => 
     Object.entries(typingUsers)
     .filter(([uid]) => uid !== currentUserId)
-    .map(([, username]) => username),
+    .map(([, data]) => ({ username: data.username, text: data.text })),
   [typingUsers, currentUserId]);
 
 
@@ -132,15 +132,6 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
         }
     }
   };
-
-
-  const typingIndicatorText = React.useMemo(() => {
-    if (activeTypers.length === 0) return null;
-    if (activeTypers.length === 1) return `${activeTypers[0]} is typing...`;
-    if (activeTypers.length === 2) return `${activeTypers[0]} and ${activeTypers[1]} are typing...`;
-    return `${activeTypers.slice(0, 2).join(', ')} and others are typing...`;
-  }, [activeTypers]);
-
 
   return (
     <Card className="h-full flex flex-col">
@@ -197,6 +188,9 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="p-0 border-0 max-w-4xl">
+                                        <DialogHeader>
+                                            <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
+                                        </DialogHeader>
                                         <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
                                     </DialogContent>
                                 </Dialog>
@@ -218,7 +212,11 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
       </CardContent>
       <CardFooter className="shrink-0 pt-2 flex-col items-start gap-1">
          <div className="h-6 text-sm text-muted-foreground italic w-full overflow-hidden">
-            {typingIndicatorText && <p className="truncate">{typingIndicatorText}</p>}
+             {activeTypers.length > 0 && (
+                <p className="truncate">
+                    {activeTypers.map(typer => `${typer.username}: ${typer.text}`).join(', ')}
+                </p>
+            )}
         </div>
          {replyTo && (
             <div className="text-xs p-2 rounded-md bg-muted w-full flex justify-between items-center">
