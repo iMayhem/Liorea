@@ -74,6 +74,7 @@ export interface Participant {
 export interface ChatMessage {
     id: string;
     text: string;
+    imageUrl?: string | null; // Optional field for image data URI
     senderId: string;
     senderName: string;
     timestamp: any; // Can be Firebase ServerTimestamp

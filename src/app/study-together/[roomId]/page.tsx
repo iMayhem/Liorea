@@ -178,12 +178,16 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     await updateDoc(roomRef, { notepadContent: content });
   };
   
-  const handleSendMessage = async (message: string, replyTo: { id: string, text: string } | null) => {
+  const handleSendMessage = async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
     if (!user) return;
     const roomRef = doc(db, 'studyRooms', roomId);
     const chatCollectionRef = collection(roomRef, 'chats');
+    
+    if(!message.text && !message.imageUrl) return;
+
     const messageData: any = {
-      text: message,
+      text: message.text,
+      imageUrl: message.imageUrl || null,
       senderId: user.uid,
       senderName: user.username,
       timestamp: serverTimestamp(),

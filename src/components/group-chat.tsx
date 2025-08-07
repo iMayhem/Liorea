@@ -6,17 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, MessageSquare, CornerDownLeft, X, SmilePlus } from 'lucide-react';
+import { Send, MessageSquare, CornerDownLeft, X, SmilePlus, Image as ImageIcon } from 'lucide-react';
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { useDebouncedCallback } from 'use-debounce';
+import Image from 'next/image';
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 
 
 interface GroupChatProps {
   messages: ChatMessage[];
-  onSendMessage: (message: string, replyTo: { id: string; text: string } | null) => void;
+  onSendMessage: (message: { text: string; imageUrl?: string | null }, replyTo: { id: string; text: string } | null) => void;
   currentUserId: string;
   onReaction: (messageId: string, emoji: string) => void;
   onTyping: (text: string) => void;
@@ -24,19 +26,15 @@ interface GroupChatProps {
 }
 
 const EMOJIS = ['👍', '😂', '❤️', '🤔', '🎉', '✨', '😢', '🔥', '🌧️', '❄️', '🤯', '🙏'];
-const ANIMATION_MAP: Record<string, string> = {
-    '🌧️': 'rain', '😢': 'rain', '😭': 'rain',
-    '🔥': 'fire', '❤️‍🔥': 'fire', '🥵': 'fire',
-    '❄️': 'snow', '🥶': 'snow', '☃️': 'snow',
-    '🎉': 'confetti', '🥳': 'confetti', '🎊': 'confetti',
-    '✨': 'stars', '⭐': 'stars', '🌟': 'stars',
-};
 
 export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, onTyping, typingUsers }: GroupChatProps) {
   const [newMessage, setNewMessage] = React.useState('');
   const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
+  const [image, setImage] = React.useState<string | null>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   React.useEffect(() => {
     // Scroll to the bottom whenever messages change
@@ -62,12 +60,13 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim()) {
-      onSendMessage(newMessage.trim(), replyTo);
+    if (newMessage.trim() || image) {
+      onSendMessage({ text: newMessage.trim(), imageUrl: image }, replyTo);
       debouncedStopTyping.cancel();
       onTyping(''); // Immediately clear typing indicator on send
       setNewMessage('');
       setReplyTo(null);
+      setImage(null);
     }
   };
 
@@ -83,6 +82,17 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
     .filter(([uid, { text }]) => uid !== currentUserId && text.trim() !== '')
     .map(([uid, { username, text }]) => ({ uid, username, text })),
   [typingUsers, currentUserId]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
 
   return (
@@ -132,7 +142,20 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
                                 </div>
                             )}
 
-                            <p className="text-sm">{msg.text}</p>
+                             {msg.imageUrl && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
+                                            <Image src={msg.imageUrl} alt="chat image" layout="fill" objectFit="cover" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="p-0 border-0 max-w-4xl">
+                                        <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                            
+                            {msg.text && <p className="text-sm">{msg.text}</p>}
 
                             <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 backdrop-blur-sm -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
                                 <Popover>
@@ -169,7 +192,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
         </ScrollArea>
       </CardContent>
       <CardFooter className="shrink-0 pt-2 flex-col items-start gap-1">
-         <div className="h-12 text-sm text-muted-foreground italic w-full overflow-y-auto">
+         <div className="h-6 text-sm text-muted-foreground italic w-full overflow-y-auto">
             {activeTypers.map(({ uid, username, text }) => (
                 <div key={uid} className="truncate">
                     <span className="font-semibold">{username}:</span> {text}
@@ -185,6 +208,15 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)}><X className="h-4 w-4"/></Button>
             </div>
          )}
+        {image && (
+          <div className="relative p-2 rounded-md bg-muted w-full">
+            <div className="relative w-24 h-24 rounded-md overflow-hidden">
+                <Image src={image} alt="preview" layout="fill" objectFit="cover" />
+            </div>
+            <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => setImage(null)}><X className="h-4 w-4"/></Button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="w-full flex items-center gap-2">
           <Input
             ref={inputRef}
@@ -193,6 +225,17 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
             placeholder="Type your message..."
             autoComplete="off"
           />
+           <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageSelect}
+            accept="image/*"
+            className="hidden"
+          />
+          <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
+            <ImageIcon className="h-4 w-4" />
+            <span className="sr-only">Add Image</span>
+          </Button>
           <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
             <span className="sr-only">Send</span>
