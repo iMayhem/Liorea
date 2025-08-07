@@ -43,6 +43,9 @@ export default function StudyTogetherPage() {
           time: 25 * 60,
           isActive: false,
           startTime: null,
+          studyDuration: 25,
+          shortBreakDuration: 5,
+          longBreakDuration: 15,
         },
         participants: [], // Start with an empty participants list
         typingUsers: {},

@@ -63,6 +63,9 @@ export interface TimerState {
     time: number;
     isActive: boolean;
     startTime: any; // Can be Firebase ServerTimestamp
+    studyDuration?: number;
+    shortBreakDuration?: number;
+    longBreakDuration?: number;
 }
 
 export interface Participant {
