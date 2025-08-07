@@ -23,7 +23,8 @@ interface GroupChatProps {
   typingUsers: { [uid: string]: string };
 }
 
-export function GroupChat({ messages, onSendMessage, currentUserId, onTyping, typingUsers }: GroupChatProps) {
+export function GroupChat({ messages: initialMessages, onSendMessage, currentUserId, onTyping, typingUsers }: GroupChatProps) {
+  const [messages, setMessages] = React.useState<ChatMessage[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
   const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
   const [image, setImage] = React.useState<string | null>(null);
@@ -31,6 +32,10 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onTyping, ty
   const inputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  React.useEffect(() => {
+    // Sync with external messages, but prioritize local state for smooth updates
+    setMessages(initialMessages);
+  }, [initialMessages]);
 
   React.useEffect(() => {
     // Scroll to the bottom whenever messages change
@@ -62,6 +67,20 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onTyping, ty
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() || image) {
+      const tempId = `temp_${Date.now()}`;
+      const optimisticMessage: ChatMessage = {
+        id: tempId,
+        text: newMessage.trim(),
+        imageUrl: image,
+        senderId: currentUserId,
+        senderName: 'You', 
+        timestamp: new Date(),
+        ...(replyTo && { replyToId: replyTo.id, replyToText: replyTo.text }),
+      };
+
+      // Optimistic UI update
+      setMessages(prev => [...prev, optimisticMessage]);
+
       onSendMessage({ text: newMessage.trim(), imageUrl: image }, replyTo);
       debouncedStopTyping.cancel();
       onTyping(false); // Immediately clear typing indicator on send
