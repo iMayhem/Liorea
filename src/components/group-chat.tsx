@@ -11,6 +11,7 @@ import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { useDebouncedCallback } from 'use-debounce';
 
 
 interface GroupChatProps {
@@ -18,6 +19,8 @@ interface GroupChatProps {
   onSendMessage: (message: string, replyTo: { id: string; text: string } | null) => void;
   currentUserId: string;
   onReaction: (messageId: string, emoji: string) => void;
+  onTyping: (isTyping: boolean) => void;
+  typingUsers: { [uid: string]: string };
 }
 
 const EMOJIS = ['👍', '😂', '❤️', '🤔', '🎉', '✨', '😢', '🔥', '🌧️', '❄️', '🤯', '🙏'];
@@ -29,7 +32,7 @@ const ANIMATION_MAP: Record<string, string> = {
     '✨': 'stars', '⭐': 'stars', '🌟': 'stars',
 };
 
-export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }: GroupChatProps) {
+export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, onTyping, typingUsers }: GroupChatProps) {
   const [newMessage, setNewMessage] = React.useState('');
   const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
@@ -42,11 +45,27 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }
     }
   }, [messages]);
 
+  const debouncedOnTyping = useDebouncedCallback(
+    (isTyping: boolean) => {
+      onTyping(isTyping);
+    },
+    1500, // 1.5 second delay after user stops typing
+    { leading: true, trailing: true }
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    onTyping(true); // Indicate typing immediately
+    debouncedOnTyping.flush(); // To handle stopping typing
+    debouncedOnTyping(false); // Schedule to set typing to false
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim()) {
       onSendMessage(newMessage.trim(), replyTo);
+      debouncedOnTyping.cancel(); // Cancel any pending "stop typing" event
+      onTyping(false); // Immediately set typing to false
       setNewMessage('');
       setReplyTo(null);
     }
@@ -58,6 +77,10 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }
   }
 
   const findMessageById = (id: string) => messages.find(m => m.id === id);
+  
+  const typingNames = Object.entries(typingUsers)
+    .filter(([uid]) => uid !== currentUserId)
+    .map(([, name]) => name);
 
   return (
     <Card className="h-full flex flex-col">
@@ -142,7 +165,12 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }
           </div>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="shrink-0 pt-4 flex-col items-start gap-2">
+      <CardFooter className="shrink-0 pt-2 flex-col items-start gap-1">
+         <div className="h-5 text-xs text-muted-foreground italic">
+            {typingNames.length > 0 && (
+                `${typingNames.join(', ')} ${typingNames.length > 1 ? 'are' : 'is'} typing...`
+            )}
+        </div>
          {replyTo && (
             <div className="text-xs p-2 rounded-md bg-muted w-full flex justify-between items-center">
                 <div>
@@ -156,7 +184,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction }
           <Input
             ref={inputRef}
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Type your message..."
             autoComplete="off"
           />

@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp, writeBatch, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp, writeBatch, getDocs, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
@@ -111,13 +111,21 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   
     let cleanupPromise = joinAndSubscribe();
   
-    return () => {
+    const handleLeave = async () => {
         if (user && !userHasLeftRef.current) {
-            userHasLeftRef.current = true;
+            userHasLeftRef.current = true; // Prevent multiple leave operations
             const roomRef = doc(db, 'studyRooms', roomId);
-             
-             // Check if user is the last one
-            if(participants.length <= 1 && participants[0]?.uid === user.uid) {
+
+            // Remove user from typing list on leave
+            const currentTypingUsers = roomData?.typingUsers || {};
+            if (currentTypingUsers[user.uid]) {
+                delete currentTypingUsers[user.uid];
+                await updateDoc(roomRef, { typingUsers: currentTypingUsers });
+            }
+
+            // Check if user is the last one
+            const currentParticipants = (await getDoc(roomRef)).data()?.participants || [];
+            if(currentParticipants.length <= 1 && currentParticipants[0]?.uid === user.uid) {
                 // Delete subcollections and then the room document
                 const deleteRoom = async () => {
                     const chatRef = collection(db, 'studyRooms', roomId, 'chats');
@@ -133,12 +141,20 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
 
             } else {
                  const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-                 updateDoc(roomRef, {
+                 await updateDoc(roomRef, {
                     participants: arrayRemove(userParticipant)
                 }).catch(err => console.error("Error removing participant:", err));
             }
         }
-        cleanupPromise.then(cleanup => cleanup && cleanup());
+         if (cleanupPromise) {
+            const cleanup = await cleanupPromise;
+            if(cleanup) cleanup();
+        }
+    }
+
+
+    return () => {
+      handleLeave();
     };
   }, [roomId, user, authLoading, router, toast]);
   
@@ -164,7 +180,8 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   
   const handleSendMessage = async (message: string, replyTo: { id: string, text: string } | null) => {
     if (!user) return;
-    const chatCollectionRef = collection(db, 'studyRooms', roomId, 'chats');
+    const roomRef = doc(db, 'studyRooms', roomId);
+    const chatCollectionRef = collection(roomRef, 'chats');
     const messageData: any = {
       text: message,
       senderId: user.uid,
@@ -178,12 +195,20 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
       messageData.replyToText = replyTo.text;
     }
     
+    // Remove user from typing list when message is sent
+    const newTypingUsers = roomData?.typingUsers || {};
+    if (newTypingUsers[user.uid]) {
+        delete newTypingUsers[user.uid];
+        await updateDoc(roomRef, { typingUsers: newTypingUsers });
+    }
+    
     await addDoc(chatCollectionRef, messageData);
   };
   
   const handleReaction = async (messageId: string, emoji: string) => {
       if (!user) return;
-      const messageRef = doc(db, 'studyRooms', roomId, 'chats', messageId);
+      const roomRef = doc(db, 'studyRooms', roomId);
+      const messageRef = doc(collection(roomRef, 'chats'), messageId);
       const messageDoc = await getDoc(messageRef);
 
       if (messageDoc.exists()) {
@@ -199,12 +224,11 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
               // Add new reaction
               reactions[emoji] = [...usersForEmoji, user.uid];
           }
-          await updateDoc(messageRef, { reactions });
+          await setDoc(messageRef, { reactions }, { merge: true });
           
           // Trigger synced animation for special emojis
           const animationType = ANIMATION_MAP[emoji];
           if (animationType) {
-              const roomRef = doc(db, 'studyRooms', roomId);
               await updateDoc(roomRef, {
                   currentAnimation: {
                       type: animationType,
@@ -213,6 +237,20 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
               });
           }
       }
+  };
+
+  const handleTyping = async (isTyping: boolean) => {
+    if (!user || !roomData) return;
+    const roomRef = doc(db, 'studyRooms', roomId);
+    const currentTypingUsers = roomData.typingUsers || {};
+
+    if (isTyping && !currentTypingUsers[user.uid]) {
+      currentTypingUsers[user.uid] = user.username;
+      await updateDoc(roomRef, { typingUsers: currentTypingUsers });
+    } else if (!isTyping && currentTypingUsers[user.uid]) {
+      delete currentTypingUsers[user.uid];
+      await updateDoc(roomRef, { typingUsers: currentTypingUsers });
+    }
   };
 
 
@@ -276,6 +314,8 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
                     onSendMessage={handleSendMessage} 
                     currentUserId={user!.uid} 
                     onReaction={handleReaction}
+                    onTyping={handleTyping}
+                    typingUsers={roomData.typingUsers || {}}
                 />
             </motion.div>
         </div>
