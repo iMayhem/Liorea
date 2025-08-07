@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -33,9 +33,9 @@ export default function StudyTogetherPage() {
     if (!user) return;
     setIsCreating(true);
     try {
-      const newRoomId = doc(collection(db, 'studyRooms')).id;
-      const roomRef = doc(db, 'studyRooms', newRoomId);
-      await setDoc(roomRef, {
+      // Create a new document reference with an auto-generated ID
+      const newRoomRef = doc(collection(db, 'studyRooms'));
+      await setDoc(newRoomRef, {
         createdAt: serverTimestamp(),
         notepadContent: '## Welcome to your collaborative notepad!\n\nStart typing here...',
         timerState: {
@@ -48,7 +48,7 @@ export default function StudyTogetherPage() {
           { uid: user.uid, username: user.username, photoURL: user.photoURL }
         ],
       });
-      router.push(`/study-together/${newRoomId}`);
+      router.push(`/study-together/${newRoomRef.id}`);
     } catch (error) {
       console.error("Error creating room: ", error);
       toast({
@@ -160,10 +160,4 @@ export default function StudyTogetherPage() {
       </main>
     </div>
   );
-}
-
-// Helper to create a document reference with an ID
-function collection(db: any, path: string): any {
-    const { collection } = require("firebase/firestore");
-    return collection(db, path);
 }
