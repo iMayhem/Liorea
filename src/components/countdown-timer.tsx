@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CountdownTimerProps {
   targetDate: string;
@@ -33,8 +34,10 @@ const calculateTimeLeft = (targetDate: string): TimeLeft | null => {
 
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     // Set initial time left on client mount to avoid hydration mismatch
     setTimeLeft(calculateTimeLeft(targetDate));
 
@@ -44,6 +47,10 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
     return () => clearInterval(timer);
   }, [targetDate]);
+
+  if (!isClient) {
+    return <Skeleton className="h-[108px] w-full" />
+  }
 
   if (!timeLeft) {
     return (

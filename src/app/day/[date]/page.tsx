@@ -14,18 +14,27 @@ import {motion} from 'framer-motion';
 export default function DayTrackerPage({params}: {params: {date: string}}) {
   const {user, loading: authLoading} = useAuth();
   const router = useRouter();
-  const { date: dateString } = params;
+  
+  // The `use` hook is the recommended way to access params in a client component.
+  const routeParams = React.use(params as any);
+  const { date: dateString } = routeParams;
 
   // We'll use a state to manage the validity and parsed date to avoid issues during rendering.
-  const [parsedDate, setParsedDate] = React.useState<Date | null>(() => {
+  const [parsedDate, setParsedDate] = React.useState<Date | null>(null);
+  const [dateIsValid, setDateIsValid] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
     if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const d = parseISO(dateString);
       if (isValid(d)) {
-        return d;
+        setParsedDate(d);
+        setDateIsValid(true);
+        return;
       }
     }
-    return null;
-  });
+    setDateIsValid(false);
+  }, [dateString]);
+
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -43,7 +52,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   }, [formattedDate]);
 
 
-  if (authLoading || !user) {
+  if (authLoading || !user || dateIsValid === null) {
     // Render a loading state or nothing while we validate the date on the client.
     return (
       <div className="flex flex-col min-h-screen bg-background">
@@ -59,7 +68,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
     );
   }
   
-  if (!parsedDate) {
+  if (!dateIsValid) {
     return (
       <div>
         <AppHeader />

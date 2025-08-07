@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Test } from '@/lib/types';
 import { parse } from 'date-fns';
+import { Skeleton } from './ui/skeleton';
 
 
 interface TestCountdownTimerProps {
@@ -53,13 +54,15 @@ const findNextTest = (tests: Test[]): Test | null => {
 export function TestCountdownTimer({ tests }: TestCountdownTimerProps) {
   const [nextTest, setNextTest] = useState<Test | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
+    setIsClient(true);
     setNextTest(findNextTest(tests));
   }, [tests]);
 
   useEffect(() => {
-    if (!nextTest) return;
+    if (!nextTest || !isClient) return;
 
     const targetDate = parse(nextTest.date, 'MMMM d, yyyy', new Date()).toISOString();
     
@@ -71,11 +74,16 @@ export function TestCountdownTimer({ tests }: TestCountdownTimerProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [nextTest]);
+  }, [nextTest, isClient]);
+  
+  if (!isClient) {
+    return <Skeleton className="h-[108px] w-full" />;
+  }
+
 
   if (!nextTest) {
     return (
-      <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg flex items-center justify-center h-full">
+      <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg flex items-center justify-center h-full min-h-[108px]">
         <h2 className="text-md font-bold text-center font-heading tracking-tight">All tests are complete!</h2>
       </div>
     );
@@ -83,7 +91,7 @@ export function TestCountdownTimer({ tests }: TestCountdownTimerProps) {
 
   if (!timeLeft) {
     return (
-        <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg flex items-center justify-center h-full">
+        <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg flex items-center justify-center h-full min-h-[108px]">
             <h2 className="text-md font-bold font-heading text-center">Loading next test...</h2>
         </div>
     );

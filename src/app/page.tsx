@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BookCheck, BrainCircuit, Timer, History } from 'lucide-react';
+import { Loader2, BrainCircuit } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { TestCountdownTimer } from '@/components/test-countdown-timer';
@@ -29,10 +29,11 @@ export default function HomePage() {
   const { user, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
-  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  const [currentMonth, setCurrentMonth] = React.useState<Date | undefined>(undefined);
 
   React.useEffect(() => {
     // This effect runs on the client, so `new Date()` will be the user's current date.
+    // This prevents a hydration mismatch.
     setCurrentMonth(new Date());
   }, []);
 
@@ -90,7 +91,8 @@ export default function HomePage() {
                     className="rounded-md"
                     fromDate={new Date('2025-07-01')}
                     toDate={new Date('2026-05-05')}
-                    defaultMonth={currentMonth}
+                    month={currentMonth}
+                    onMonthChange={setCurrentMonth}
                     />
                 </CardContent>
             </Card>
