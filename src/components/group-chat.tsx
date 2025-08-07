@@ -19,8 +19,8 @@ interface GroupChatProps {
   onSendMessage: (message: string, replyTo: { id: string; text: string } | null) => void;
   currentUserId: string;
   onReaction: (messageId: string, emoji: string) => void;
-  onTyping: (isTyping: boolean) => void;
-  typingUsers: { [uid: string]: string };
+  onTyping: (text: string) => void;
+  typingUsers: { [uid: string]: { username: string; text: string } };
 }
 
 const EMOJIS = ['👍', '😂', '❤️', '🤔', '🎉', '✨', '😢', '🔥', '🌧️', '❄️', '🤯', '🙏'];
@@ -43,29 +43,29 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
     if (viewportRef.current) {
       viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, typingUsers]);
 
-  const debouncedOnTyping = useDebouncedCallback(
-    (isTyping: boolean) => {
-      onTyping(isTyping);
+  const debouncedStopTyping = useDebouncedCallback(
+    () => {
+      onTyping('');
     },
-    1500, // 1.5 second delay after user stops typing
-    { leading: true, trailing: true }
+    2000, // 2 second delay after user stops typing
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value);
-    onTyping(true); // Indicate typing immediately
-    debouncedOnTyping.flush(); // To handle stopping typing
-    debouncedOnTyping(false); // Schedule to set typing to false
+    const text = e.target.value;
+    setNewMessage(text);
+    onTyping(text); 
+    debouncedStopTyping();
   };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim()) {
       onSendMessage(newMessage.trim(), replyTo);
-      debouncedOnTyping.cancel(); // Cancel any pending "stop typing" event
-      onTyping(false); // Immediately set typing to false
+      debouncedStopTyping.cancel();
+      onTyping(''); // Immediately clear typing indicator on send
       setNewMessage('');
       setReplyTo(null);
     }
@@ -78,9 +78,12 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
 
   const findMessageById = (id: string) => messages.find(m => m.id === id);
   
-  const typingNames = Object.entries(typingUsers)
-    .filter(([uid]) => uid !== currentUserId)
-    .map(([, name]) => name);
+  const activeTypers = React.useMemo(() => 
+    Object.entries(typingUsers)
+    .filter(([uid, { text }]) => uid !== currentUserId && text.trim() !== '')
+    .map(([uid, { username, text }]) => ({ uid, username, text })),
+  [typingUsers, currentUserId]);
+
 
   return (
     <Card className="h-full flex flex-col">
@@ -166,10 +169,12 @@ export function GroupChat({ messages, onSendMessage, currentUserId, onReaction, 
         </ScrollArea>
       </CardContent>
       <CardFooter className="shrink-0 pt-2 flex-col items-start gap-1">
-         <div className="h-5 text-xs text-muted-foreground italic">
-            {typingNames.length > 0 && (
-                `${typingNames.join(', ')} ${typingNames.length > 1 ? 'are' : 'is'} typing...`
-            )}
+         <div className="h-12 text-sm text-muted-foreground italic w-full overflow-y-auto">
+            {activeTypers.map(({ uid, username, text }) => (
+                <div key={uid} className="truncate">
+                    <span className="font-semibold">{username}:</span> {text}
+                </div>
+            ))}
         </div>
          {replyTo && (
             <div className="text-xs p-2 rounded-md bg-muted w-full flex justify-between items-center">

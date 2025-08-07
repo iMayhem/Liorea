@@ -195,13 +195,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
       messageData.replyToText = replyTo.text;
     }
     
-    // Remove user from typing list when message is sent
-    const newTypingUsers = roomData?.typingUsers || {};
-    if (newTypingUsers[user.uid]) {
-        delete newTypingUsers[user.uid];
-        await updateDoc(roomRef, { typingUsers: newTypingUsers });
-    }
-    
     await addDoc(chatCollectionRef, messageData);
   };
   
@@ -239,20 +232,26 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
       }
   };
 
-  const handleTyping = async (isTyping: boolean) => {
-    if (!user || !roomData) return;
+  const handleTyping = async (text: string) => {
+    if (!user) return;
     const roomRef = doc(db, 'studyRooms', roomId);
-    const currentTypingUsers = roomData.typingUsers || {};
+    const typingField = `typingUsers.${user.uid}`;
 
-    if (isTyping && !currentTypingUsers[user.uid]) {
-      currentTypingUsers[user.uid] = user.username;
-      await updateDoc(roomRef, { typingUsers: currentTypingUsers });
-    } else if (!isTyping && currentTypingUsers[user.uid]) {
-      delete currentTypingUsers[user.uid];
-      await updateDoc(roomRef, { typingUsers: currentTypingUsers });
+    if (text.trim() !== '') {
+        await updateDoc(roomRef, {
+            [typingField]: {
+                username: user.username,
+                text: text,
+            }
+        });
+    } else {
+        const currentTypingUsers = roomData?.typingUsers || {};
+        if (currentTypingUsers[user.uid]) {
+            delete currentTypingUsers[user.uid];
+            await updateDoc(roomRef, { typingUsers: currentTypingUsers });
+        }
     }
   };
-
 
   if (authLoading || loading || !roomData) {
     return (
