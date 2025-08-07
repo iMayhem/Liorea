@@ -80,7 +80,4 @@ export interface ChatMessage {
     timestamp: any; // Can be Firebase ServerTimestamp
     replyToId?: string;
     replyToText?: string;
-    reactions?: {
-        [emoji: string]: string[]; // emoji: list of userIds
-    }
 }

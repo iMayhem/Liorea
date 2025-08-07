@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { doc, getDoc, setDoc, serverTimestamp, collection, writeBatch, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -45,7 +45,6 @@ export default function StudyTogetherPage() {
           startTime: null,
         },
         participants: [], // Start with an empty participants list
-        currentAnimation: { type: null, timestamp: null },
         typingUsers: {}, // Add typing users map
       });
       router.push(`/study-together/${newRoomRef.id}`);

@@ -3,13 +3,13 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, Timestamp, writeBatch, getDocs, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, writeBatch, getDocs, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
 import { Loader2, Users, Clipboard } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { TimerState, ChatMessage, Participant, AnimationType } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SharedPomodoroTimer } from '@/components/shared-pomodoro-timer';
@@ -22,15 +22,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { SyncedAnimation } from '@/components/synced-animation';
-
-const ANIMATION_MAP: Record<string, AnimationType> = {
-    '🌧️': 'rain', '😢': 'rain', '😭': 'rain',
-    '🔥': 'fire', '❤️‍🔥': 'fire', '🥵': 'fire',
-    '❄️': 'snow', '🥶': 'snow', '☃️': 'snow',
-    '🎉': 'confetti', '🥳': 'confetti', '🎊': 'confetti',
-    '✨': 'stars', '⭐': 'stars', '🌟': 'stars',
-};
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
@@ -191,7 +182,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
       senderId: user.uid,
       senderName: user.username,
       timestamp: serverTimestamp(),
-      reactions: {},
     };
 
     if (replyTo) {
@@ -202,51 +192,14 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     await addDoc(chatCollectionRef, messageData);
   };
   
-  const handleReaction = async (messageId: string, emoji: string) => {
-      if (!user) return;
-      const roomRef = doc(db, 'studyRooms', roomId);
-      const messageRef = doc(collection(roomRef, 'chats'), messageId);
-      const messageDoc = await getDoc(messageRef);
-
-      if (messageDoc.exists()) {
-          const messageData = messageDoc.data();
-          const reactions = messageData.reactions || {};
-          const usersForEmoji = reactions[emoji] || [];
-
-          if (usersForEmoji.includes(user.uid)) {
-              // User has already reacted with this emoji, so remove reaction
-              reactions[emoji] = usersForEmoji.filter((id: string) => id !== user.uid);
-              if(reactions[emoji].length === 0) delete reactions[emoji];
-          } else {
-              // Add new reaction
-              reactions[emoji] = [...usersForEmoji, user.uid];
-          }
-          await setDoc(messageRef, { reactions }, { merge: true });
-          
-          // Trigger synced animation for special emojis
-          const animationType = ANIMATION_MAP[emoji];
-          if (animationType) {
-              await updateDoc(roomRef, {
-                  currentAnimation: {
-                      type: animationType,
-                      timestamp: serverTimestamp()
-                  }
-              });
-          }
-      }
-  };
-
-  const handleTyping = async (text: string) => {
+  const handleTyping = async (isTyping: boolean) => {
     if (!user) return;
     const roomRef = doc(db, 'studyRooms', roomId);
     const typingField = `typingUsers.${user.uid}`;
 
-    if (text.trim() !== '') {
+    if (isTyping) {
         await updateDoc(roomRef, {
-            [typingField]: {
-                username: user.username,
-                text: text,
-            }
+            [typingField]: user.username
         });
     } else {
         const currentTypingUsers = roomData?.typingUsers || {};
@@ -256,6 +209,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
         }
     }
   };
+
 
   if (authLoading || loading || !roomData) {
     return (
@@ -268,7 +222,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   return (
     <div className="flex flex-col h-screen bg-background">
       <AppHeader />
-      <SyncedAnimation animation={roomData.currentAnimation} />
       <header className="border-b shrink-0">
          <div className="container mx-auto py-3 px-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -316,7 +269,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
                     messages={chatMessages} 
                     onSendMessage={handleSendMessage} 
                     currentUserId={user!.uid} 
-                    onReaction={handleReaction}
                     onTyping={handleTyping}
                     typingUsers={roomData.typingUsers || {}}
                 />
