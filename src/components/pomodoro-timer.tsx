@@ -4,19 +4,27 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
+import { Play, Pause, RotateCcw, Coffee, Brain, Settings } from 'lucide-react';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
-const STUDY_TIME = 25 * 60; // 25 minutes
-const SHORT_BREAK_TIME = 5 * 60; // 5 minutes
-const LONG_BREAK_TIME = 15 * 60; // 15 minutes
+
+const defaultStudyTime = 25;
+const defaultShortBreakTime = 5;
+const defaultLongBreakTime = 15;
 
 type TimerMode = 'study' | 'shortBreak' | 'longBreak';
 
 export function PomodoroTimer() {
+  const [studyDuration, setStudyDuration] = React.useState(defaultStudyTime);
+  const [shortBreakDuration, setShortBreakDuration] = React.useState(defaultShortBreakTime);
+  const [longBreakDuration, setLongBreakDuration] = React.useState(defaultLongBreakTime);
+
   const [mode, setMode] = React.useState<TimerMode>('study');
-  const [time, setTime] = React.useState(STUDY_TIME);
+  const [time, setTime] = React.useState(studyDuration * 60);
   const [isActive, setIsActive] = React.useState(false);
   const [studySessions, setStudySessions] = React.useState(0);
   
@@ -38,6 +46,11 @@ export function PomodoroTimer() {
       if (interval) clearInterval(interval);
     };
   }, [isActive, time]);
+  
+  React.useEffect(() => {
+    resetTimer();
+  }, [studyDuration, shortBreakDuration, longBreakDuration]);
+
 
   const handleTimerEnd = () => {
     setIsActive(false);
@@ -45,15 +58,12 @@ export function PomodoroTimer() {
       const newSessionCount = studySessions + 1;
       setStudySessions(newSessionCount);
       if (newSessionCount % 4 === 0) {
-        setMode('longBreak');
-        setTime(LONG_BREAK_TIME);
+        switchMode('longBreak');
       } else {
-        setMode('shortBreak');
-        setTime(SHORT_BREAK_TIME);
+        switchMode('shortBreak');
       }
     } else {
-      setMode('study');
-      setTime(STUDY_TIME);
+      switchMode('study');
     }
   };
 
@@ -65,13 +75,13 @@ export function PomodoroTimer() {
     setIsActive(false);
     switch (mode) {
       case 'study':
-        setTime(STUDY_TIME);
+        setTime(studyDuration * 60);
         break;
       case 'shortBreak':
-        setTime(SHORT_BREAK_TIME);
+        setTime(shortBreakDuration * 60);
         break;
       case 'longBreak':
-        setTime(LONG_BREAK_TIME);
+        setTime(longBreakDuration * 60);
         break;
     }
   };
@@ -81,13 +91,13 @@ export function PomodoroTimer() {
     setIsActive(false);
     switch (newMode) {
       case 'study':
-        setTime(STUDY_TIME);
+        setTime(studyDuration * 60);
         break;
       case 'shortBreak':
-        setTime(SHORT_BREAK_TIME);
+        setTime(shortBreakDuration * 60);
         break;
       case 'longBreak':
-        setTime(LONG_BREAK_TIME);
+        setTime(longBreakDuration * 60);
         break;
     }
   };
@@ -101,11 +111,11 @@ export function PomodoroTimer() {
   const getTotalTime = () => {
     switch (mode) {
       case 'study':
-        return STUDY_TIME;
+        return studyDuration * 60;
       case 'shortBreak':
-        return SHORT_BREAK_TIME;
+        return shortBreakDuration * 60;
       case 'longBreak':
-        return LONG_BREAK_TIME;
+        return longBreakDuration * 60;
     }
   };
   
@@ -125,16 +135,49 @@ export function PomodoroTimer() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader>
-        <div className="flex justify-center mb-4 gap-2">
-            <Button variant={mode === 'study' ? 'default' : 'outline'} onClick={() => switchMode('study')}>
-                Pomodoro
-            </Button>
-            <Button variant={mode === 'shortBreak' ? 'default' : 'outline'} onClick={() => switchMode('shortBreak')}>
-                Short Break
-            </Button>
-            <Button variant={mode === 'longBreak' ? 'default' : 'outline'} onClick={() => switchMode('longBreak')}>
-                Long Break
-            </Button>
+        <div className="flex justify-center items-center mb-4 gap-2">
+            <div className="flex-grow flex justify-center gap-2">
+                <Button variant={mode === 'study' ? 'default' : 'outline'} onClick={() => switchMode('study')}>
+                    Pomodoro
+                </Button>
+                <Button variant={mode === 'shortBreak' ? 'default' : 'outline'} onClick={() => switchMode('shortBreak')}>
+                    Short Break
+                </Button>
+                <Button variant={mode === 'longBreak' ? 'default' : 'outline'} onClick={() => switchMode('longBreak')}>
+                    Long Break
+                </Button>
+            </div>
+             <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Settings className="h-5 w-5" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                    <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Time settings</h4>
+                        <p className="text-sm text-muted-foreground">
+                        Set the time for your sessions (in minutes).
+                        </p>
+                    </div>
+                    <div className="grid gap-2">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="study">Pomodoro</Label>
+                            <Input id="study" type="number" value={studyDuration} onChange={(e) => setStudyDuration(Math.max(1, parseInt(e.target.value, 10)))} className="col-span-2 h-8" />
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="short">Short Break</Label>
+                            <Input id="short" type="number" value={shortBreakDuration} onChange={(e) => setShortBreakDuration(Math.max(1, parseInt(e.target.value, 10)))} className="col-span-2 h-8" />
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="long">Long Break</Label>
+                            <Input id="long" type="number" value={longBreakDuration} onChange={(e) => setLongBreakDuration(Math.max(1, parseInt(e.target.value, 10)))} className="col-span-2 h-8" />
+                        </div>
+                    </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
         </div>
         <CardTitle className="text-center text-2xl font-heading flex items-center justify-center">
             {modeIcon[mode]}
