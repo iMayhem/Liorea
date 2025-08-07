@@ -19,7 +19,6 @@ interface GroupChatProps {
 
 export function GroupChat({ messages, onSendMessage, currentUserId }: GroupChatProps) {
   const [newMessage, setNewMessage] = React.useState('');
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -47,7 +46,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId }: GroupChatP
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-2">
-        <ScrollArea className="h-full" ref={scrollAreaRef} viewportRef={viewportRef}>
+        <ScrollArea className="h-full" viewportRef={viewportRef}>
           <div className="pr-4 space-y-4">
              <AnimatePresence>
                 {messages.map((msg) => (
