@@ -9,10 +9,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, MessageSquare, CornerDownLeft, X, Image as ImageIcon } from 'lucide-react';
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 
 interface GroupChatProps {
@@ -143,69 +142,62 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
       <CardContent className="flex-1 overflow-hidden p-2">
         <ScrollArea className="h-full" viewportRef={viewportRef}>
           <div className="pr-4 space-y-4">
-             <AnimatePresence initial={false}>
-                {messages.map((msg) => {
-                    const isCurrentUser = msg.senderId === currentUserId;
-                    const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
-                    return (
-                    <motion.div
-                        key={msg.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "circOut" }}
+            {messages.map((msg) => {
+                const isCurrentUser = msg.senderId === currentUserId;
+                const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
+                return (
+                <div
+                    key={msg.id}
+                    className={cn(
+                        'flex flex-col gap-1 group',
+                        isCurrentUser ? 'items-end' : 'items-start'
+                    )}
+                >
+                    <div
                         className={cn(
-                            'flex flex-col gap-1 group',
-                            isCurrentUser ? 'items-end' : 'items-start'
+                        'rounded-lg px-3 py-2 max-w-xs break-words relative',
+                        isCurrentUser
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
                         )}
                     >
-                        <div
-                            className={cn(
-                            'rounded-lg px-3 py-2 max-w-xs break-words relative',
-                            isCurrentUser
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted'
-                            )}
-                        >
-                            <p className="text-xs font-semibold text-muted-foreground/80 mb-0.5">
-                                {isCurrentUser ? 'You' : msg.senderName}
-                            </p>
-                            
-                            {originalMessage && (
-                                <div className="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1">
-                                    <p className="font-bold">{originalMessage.senderName}</p>
-                                    <p className="truncate">{originalMessage.text || 'Image'}</p>
-                                </div>
-                            )}
-
-                             {msg.imageUrl && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
-                                            <Image src={msg.imageUrl} alt="chat image" layout="fill" objectFit="cover" />
-                                        </div>
-                                    </DialogTrigger>
-                                    <DialogContent className="p-0 border-0 max-w-4xl">
-                                         <DialogHeader>
-                                             <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
-                                        </DialogHeader>
-                                        <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                            
-                            {msg.text && <p className="text-sm">{msg.text}</p>}
-
-                            <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 backdrop-blur-sm -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
-                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleReplyClick(msg)}><CornerDownLeft className="h-4 w-4"/></Button>
+                        <p className="text-xs font-semibold text-muted-foreground/80 mb-0.5">
+                            {isCurrentUser ? 'You' : msg.senderName}
+                        </p>
+                        
+                        {originalMessage && (
+                            <div className="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1">
+                                <p className="font-bold">{originalMessage.senderName}</p>
+                                <p className="truncate">{originalMessage.text || 'Image'}</p>
                             </div>
-                            
+                        )}
+
+                         {msg.imageUrl && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
+                                        <Image src={msg.imageUrl} alt="chat image" layout="fill" objectFit="cover" />
+                                    </div>
+                                </DialogTrigger>
+                                <DialogContent className="p-0 border-0 max-w-4xl">
+                                     <DialogHeader>
+                                         <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
+                                    </DialogHeader>
+                                    <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                        
+                        {msg.text && <p className="text-sm">{msg.text}</p>}
+
+                        <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 backdrop-blur-sm -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleReplyClick(msg)}><CornerDownLeft className="h-4 w-4"/></Button>
                         </div>
-                    </motion.div>
-                    )
-                })}
-            </AnimatePresence>
+                        
+                    </div>
+                </div>
+                )
+            })}
           </div>
         </ScrollArea>
       </CardContent>
