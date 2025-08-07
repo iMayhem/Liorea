@@ -36,31 +36,6 @@ export async function getProgressForUser(
 }
 
 /**
- * Retrieves all progress documents for a given user.
- * @param userId - The ID of the user.
- * @returns An object containing all the user's progress, keyed by date.
- */
-export async function getAllProgressForUser(userId: string): Promise<UserProgress> {
-  const progressCollection = collection(db, 'progress');
-  // Firestore doesn't support wildcard searches in document IDs directly.
-  // A common pattern is to have a `userId` field in each document.
-  // Since our doc ID is formatted as `userId-date`, we can leverage that.
-  const userProgressQuery = query(progressCollection, where('__name__', '>=', `${userId}-`), where('__name__', '<', `${userId}-\uf8ff`));
-
-  const querySnapshot = await getDocs(userProgressQuery);
-  const allProgress: UserProgress = {};
-
-  querySnapshot.forEach((doc) => {
-    // The document's data is the progress for a specific date.
-    // We merge it into our allProgress object.
-    Object.assign(allProgress, doc.data());
-  });
-
-  return allProgress;
-}
-
-
-/**
  * Updates a specific task's completion status in Firestore.
  * @param userId - The ID of the user.
  * @param date - The date string.
@@ -260,23 +235,4 @@ export async function resetQuizProgress(
     await setDoc(docRef, fullProgress);
 
     return fullProgress;
-}
-
-
-/**
- * Adds a completed study session to Firestore.
- * @param userId - The ID of the user.
- * @param completedAt - The timestamp when the session was completed.
- */
-export async function addStudySession(userId: string, completedAt: Date): Promise<void> {
-    try {
-        const studySessionsCollection = collection(db, 'users', userId, 'study_sessions');
-        await addDoc(studySessionsCollection, {
-            completedAt: completedAt,
-            duration: 25 // Assuming a standard 25-minute Pomodoro session
-        });
-    } catch (error) {
-        console.error("Error adding study session:", error);
-        throw new Error("Could not log study session.");
-    }
 }

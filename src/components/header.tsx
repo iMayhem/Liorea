@@ -31,12 +31,6 @@ export function AppHeader() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
            </Button>
-            <Button asChild variant="secondary" size="sm">
-                <Link href="/study">
-                    <Timer className="mr-2 h-4 w-4" />
-                    Study Space
-                </Link>
-            </Button>
            {user && (
               <Button onClick={logout} variant="outline" size="sm">
                 <LogOut className="mr-2 h-4 w-4" />

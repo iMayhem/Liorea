@@ -107,18 +107,6 @@ export default function HomePage() {
                     Practice Module
                 </Link>
             </Button>
-             <Button asChild variant="secondary">
-                <Link href="/study">
-                    <Timer className="mr-2 h-4 w-4" />
-                    Study Space
-                </Link>
-            </Button>
-            <Button asChild variant="outline">
-                <Link href="/history">
-                    <History className="mr-2 h-4 w-4" />
-                    View History
-                </Link>
-            </Button>
         </div>
 
       </motion.main>
