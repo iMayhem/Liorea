@@ -161,7 +161,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   return (
     <div className="flex flex-col h-screen bg-background">
       <AppHeader />
-      <header className="border-b">
+      <header className="border-b shrink-0">
          <div className="container mx-auto py-3 px-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
                 <Users className="h-6 w-6 text-primary" />
@@ -190,20 +190,20 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             </Button>
          </div>
       </header>
-      <main className="flex-1 overflow-hidden">
-        <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column: Timer */}
             <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center">
                 {timerState && <SharedPomodoroTimer timerState={timerState} onUpdate={handleTimerUpdate} />}
             </motion.div>
             
             {/* Middle Column: Notepad */}
-            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="h-full flex flex-col">
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="h-full flex flex-col min-h-[400px] lg:min-h-0">
                 <CollaborativeNotepad content={notepadContent} onContentChange={handleNotepadChange} />
             </motion.div>
 
             {/* Right Column: Chat */}
-            <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }} className="h-full flex flex-col">
+            <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }} className="h-full flex flex-col min-h-[400px] lg:min-h-0">
                  <GroupChat messages={chatMessages} onSendMessage={handleSendMessage} currentUserId={user!.uid} />
             </motion.div>
         </div>

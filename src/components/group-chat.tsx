@@ -20,14 +20,12 @@ interface GroupChatProps {
 export function GroupChat({ messages, onSendMessage, currentUserId }: GroupChatProps) {
   const [newMessage, setNewMessage] = React.useState('');
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const viewportRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     // Scroll to the bottom whenever messages change
-    if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-        if (viewport) {
-            viewport.scrollTop = viewport.scrollHeight;
-        }
+    if (viewportRef.current) {
+      viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -42,14 +40,14 @@ export function GroupChat({ messages, onSendMessage, currentUserId }: GroupChatP
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader>
+      <CardHeader className="shrink-0">
         <CardTitle className="flex items-center gap-2 font-heading">
             <MessageSquare className="h-5 w-5"/>
             Group Chat
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full" ref={scrollAreaRef}>
+      <CardContent className="flex-1 overflow-hidden p-2">
+        <ScrollArea className="h-full" ref={scrollAreaRef} viewportRef={viewportRef}>
           <div className="pr-4 space-y-4">
              <AnimatePresence>
                 {messages.map((msg) => (
@@ -84,7 +82,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId }: GroupChatP
           </div>
         </ScrollArea>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="shrink-0 pt-4">
         <form onSubmit={handleSubmit} className="w-full flex items-center gap-2">
           <Input
             value={newMessage}
@@ -94,6 +92,7 @@ export function GroupChat({ messages, onSendMessage, currentUserId }: GroupChatP
           />
           <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
+            <span className="sr-only">Send</span>
           </Button>
         </form>
       </CardFooter>
