@@ -22,12 +22,17 @@ export function AmbientSoundPlayer({ activeSound, onSoundChange }: AmbientSoundP
     const playAudio = (audioRef: React.RefObject<HTMLAudioElement>) => {
       if (audioRef.current) {
         audioRef.current.loop = true;
-        audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+        audioRef.current.play().catch(e => {
+            // Ignore errors from being interrupted by a pause call.
+            if (e.name !== 'AbortError') {
+              console.error("Audio play failed:", e)
+            }
+        });
       }
     };
 
     const stopAudio = (audioRef: React.RefObject<HTMLAudioElement>) => {
-      if (audioRef.current) {
+      if (audioRef.current && !audioRef.current.paused) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
