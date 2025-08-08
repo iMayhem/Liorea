@@ -326,9 +326,12 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background transition-[margin-left]",
-        {"md:ml-[--sidebar-width]": open && state === 'expanded'},
+        {
+          "md:ml-[var(--sidebar-width)]": open && state === 'expanded',
+          "md:ml-[var(--sidebar-width-icon)]": open && state === 'collapsed',
+        },
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)] md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
-        "peer-data-[variant=floating]:ml-0",
+        "md:peer-data-[variant=floating]:ml-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]",
         className
       )}
       {...props}
@@ -522,6 +525,9 @@ const sidebarMenuButtonVariants = cva(
     variants: {
       variant: {
         default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         outline:
           "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },

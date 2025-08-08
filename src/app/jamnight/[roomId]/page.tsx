@@ -88,6 +88,16 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             if (isLocalChangeRef.current) return;
             const data = doc.data() as JamRoomState;
             setRoomState(data);
+
+            const player = playerRef.current;
+            if(!player || !data) return;
+
+            const currentPlayerState = player.getPlayerState();
+            if (data.playerState === 'PLAYING' && currentPlayerState !== 1) {
+                player.playVideo();
+            } else if (data.playerState === 'PAUSED' && currentPlayerState !== 2) {
+                player.pauseVideo();
+            }
         });
 
         const unsubscribeChat = onSnapshot(chatQuery, (snapshot) => {
@@ -112,29 +122,20 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
     }, [roomId, user, authLoading, router, toast]);
 
-    // Effect to sync local player with room state
+    // Effect to sync seek time when server time is newer
     React.useEffect(() => {
         if (!roomState || !playerRef.current) return;
-
         const player = playerRef.current;
-        const currentPlayerState = player.getPlayerState();
-
-        if (roomState.playerState === 'PLAYING' && currentPlayerState !== 1) {
-            player.playVideo();
-        } else if (roomState.playerState === 'PAUSED' && currentPlayerState !== 2) {
-            player.pauseVideo();
-        }
-
-        // Sync seek time
         const serverSeekTime = roomState.lastSeekTimeSeconds;
-        if(player.getCurrentTime) {
+        
+        if (player.getCurrentTime) {
             const localPlayerTime = player.getCurrentTime();
-            if (Math.abs(serverSeekTime - localPlayerTime) > 2) { // 2-second tolerance
+            // Only seek if the difference is significant to avoid jitter
+            if (Math.abs(serverSeekTime - localPlayerTime) > 2) { 
                 player.seekTo(serverSeekTime, true);
             }
         }
-
-    }, [roomState]);
+    }, [roomState?.lastSeekTimestamp]); // Only run when the timestamp changes
 
 
     const handleVideoUrlChange = () => {
@@ -148,12 +149,25 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     
     const onPlayerReady = (event: { target: YouTubePlayer }) => {
         playerRef.current = event.target;
+        // Sync to server state once player is ready
+        if (roomState) {
+            if (playerRef.current?.seekTo) {
+                playerRef.current.seekTo(roomState.lastSeekTimeSeconds, true);
+            }
+            if (roomState.playerState === 'PLAYING') {
+                playerRef.current?.playVideo();
+            }
+        }
     };
     
     const onPlayerStateChange = (event: { data: number }) => {
         switch (event.data) {
             case 1: // Playing
                 updateRoomState({ playerState: 'PLAYING' });
+                // When starting to play, also sync the current time
+                if(playerRef.current?.getCurrentTime) {
+                    debouncedSeekUpdate(playerRef.current.getCurrentTime());
+                }
                 break;
             case 2: // Paused
                 updateRoomState({ playerState: 'PAUSED' });
@@ -163,7 +177,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
     // This gets triggered when the user seeks manually
     const onPlayerSeek = () => {
-        if(playerRef.current) {
+        if(playerRef.current?.getCurrentTime) {
             const currentTime = playerRef.current.getCurrentTime();
             debouncedSeekUpdate(currentTime);
         }
@@ -172,7 +186,8 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     // Interval to sync seek time periodically, since there's no direct 'onSeek' event
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (playerRef.current && playerRef.current.getPlayerState && playerRef.current.getPlayerState() === 1) { // is playing
+            // Only the person playing the video should be sending seek updates
+            if (playerRef.current && playerRef.current.getPlayerState && playerRef.current.getPlayerState() === 1) { 
                 onPlayerSeek();
             }
         }, 5000); // Sync every 5 seconds
