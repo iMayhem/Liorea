@@ -14,6 +14,7 @@ const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
 
 interface StudyRoomContextType {
     currentRoomId: string | null;
+    isLeaving: boolean;
     roomData: DocumentData | null;
     chatMessages: ChatMessage[];
     participants: Participant[];
@@ -51,6 +52,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+    const [isLeaving, setIsLeaving] = useState(false);
     const [roomData, setRoomData] = useState<DocumentData | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
@@ -117,26 +119,11 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const leaveRoom = useCallback(async () => {
         if (!user || !currentRoomId) return;
 
+        setIsLeaving(true);
         userHasLeftRef.current = true;
         const leavingRoomId = currentRoomId;
         const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
-
-        // --- Start of Fix: Update UI and redirect immediately ---
-        // 1. Clean up local state and listeners FIRST.
-        cleanupListeners();
-        setCurrentRoomId(null);
-        setRoomData(null);
-        setChatMessages([]);
-        setParticipants([]);
-        setIsFocusMode(false);
         
-        // 2. Redirect if the user was on the study room page.
-        if (wasInRoomPage) {
-            router.push('/study-together');
-        }
-        // --- End of Fix ---
-
-        // 3. Perform database updates in the background.
         try {
             await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
 
@@ -155,6 +142,20 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Error during room cleanup:", error);
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
+        } finally {
+            // Clean up local state and listeners AFTER background tasks
+            cleanupListeners();
+            setCurrentRoomId(null);
+            setRoomData(null);
+            setChatMessages([]);
+            setParticipants([]);
+            setIsFocusMode(false);
+            
+            // Redirect if the user was on the study room page.
+            if (wasInRoomPage) {
+                router.push('/study-together');
+            }
+             setIsLeaving(false);
         }
 
     }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
@@ -429,6 +430,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     const value = {
         currentRoomId,
+        isLeaving,
         roomData,
         chatMessages,
         participants,

@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +26,7 @@ export function PersistentStudyRoomBar() {
   const { 
       currentRoomId, 
       leaveRoom, 
+      isLeaving,
       roomData, 
       displayTime, 
       participants, 
@@ -120,8 +121,8 @@ export function PersistentStudyRoomBar() {
                                 Open Room
                             </Link>
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={leaveRoom}>
-                            <PhoneOff className="mr-2 h-4 w-4" />
+                        <Button variant="destructive" size="sm" onClick={leaveRoom} disabled={isLeaving}>
+                            {isLeaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <PhoneOff className="mr-2 h-4 w-4" />}
                             Leave Room
                         </Button>
                     </div>
