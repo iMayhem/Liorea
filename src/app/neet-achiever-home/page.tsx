@@ -91,10 +91,9 @@ export default function NeetAchieverHomePage() {
         </div>
         
         <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-8">
-            <LiveStudyList />
-
             <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center justify-center gap-8">
-                <div className="w-full max-w-xs mx-auto">
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
+                    <LiveStudyList />
                     <CountdownTimer targetDate={neet2026ExamDate} title="NEET 2026 Countdown"/>
                 </div>
 
@@ -133,7 +132,7 @@ export default function NeetAchieverHomePage() {
                     </CardContent>
                 </Card>
 
-                <div className="w-full max-w-xs mx-auto">
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
                     <TestCountdownTimer tests={testSchedule} />
                 </div>
             </div>
