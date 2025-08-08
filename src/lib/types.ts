@@ -86,8 +86,13 @@ export interface ChatMessage {
     replyToText?: string;
 }
 
+export interface Notepad {
+  name: string;
+  content: string;
+}
+
 export interface Notepads {
-  [id: string]: string; // id can be 'collaborative' or a user's UID
+  [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...'}, notepad1: {...} }
 }
 
 // New type for user profiles

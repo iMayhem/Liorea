@@ -4,39 +4,38 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText } from 'lucide-react';
-import type { Participant } from '@/lib/types';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { FileText, RotateCw, Pencil, Check } from 'lucide-react';
+import type { Notepad } from '@/lib/types';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 
 interface CollaborativeNotepadProps {
-  content: string;
-  onContentChange: (content: string) => void;
-  participants: Participant[];
-  currentUserId: string;
-  activeNotepad: string;
-  onNotepadChange: (notepadId: string) => void;
+  activeNotepadId: string;
+  notepad: Notepad | undefined;
+  onContentChange: (newContent: string) => void;
+  onNameChange: (newName: string) => void;
+  onCycleNotepad: () => void;
 }
 
 export function CollaborativeNotepad({ 
-    content, 
+    activeNotepadId,
+    notepad, 
     onContentChange, 
-    participants, 
-    currentUserId,
-    activeNotepad,
-    onNotepadChange
+    onNameChange,
+    onCycleNotepad
 }: CollaborativeNotepadProps) {
 
-  // The content is now directly controlled by the parent hook,
-  // so local state is only needed for the textarea itself to avoid lag.
-  const [localContent, setLocalContent] = React.useState(content);
+  const [localContent, setLocalContent] = React.useState(notepad?.content || '');
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [localName, setLocalName] = React.useState(notepad?.name || '');
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Update local state immediately when the prop changes (data from Firestore)
   React.useEffect(() => {
-    setLocalContent(content);
-  }, [content]);
+    setLocalContent(notepad?.content || '');
+    setLocalName(notepad?.name || '');
+    setIsEditingName(false); // Reset editing state on notepad change
+  }, [activeNotepadId, notepad]);
   
-  // Use a debounced callback to send updates to Firestore
-  // to avoid excessive writes on every keystroke.
   const debouncedOnContentChange = React.useCallback(
     (newContent: string) => {
       onContentChange(newContent);
@@ -46,27 +45,52 @@ export function CollaborativeNotepad({
   
   React.useEffect(() => {
     const handler = setTimeout(() => {
-      // Only call the debounced function if content has actually changed
-      if (localContent !== content) {
+      if (localContent !== notepad?.content) {
         debouncedOnContentChange(localContent);
       }
-    }, 500); // 500ms debounce delay
+    }, 500); 
 
     return () => {
       clearTimeout(handler);
     };
-  }, [localContent, content, debouncedOnContentChange]);
+  }, [localContent, notepad?.content, debouncedOnContentChange]);
 
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalContent(e.target.value);
   };
   
-  const getParticipantName = (uid: string) => {
-    if (uid === currentUserId) return "My Notepad";
-    const participant = participants.find(p => p.uid === uid);
-    return participant?.username || `User ${uid.slice(0, 4)}`;
+  const handleNameEditToggle = () => {
+    if(isEditingName) {
+        // If finishing editing, save the name.
+        if (localName.trim() && localName !== notepad?.name) {
+            onNameChange(localName.trim());
+        } else {
+             // If name is empty or unchanged, revert to original name.
+            setLocalName(notepad?.name || '');
+        }
+    }
+    setIsEditingName(!isEditingName);
   }
+
+  React.useEffect(() => {
+    if(isEditingName) {
+        nameInputRef.current?.focus();
+        nameInputRef.current?.select();
+    }
+  }, [isEditingName]);
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        handleNameEditToggle();
+    } else if (e.key === 'Escape') {
+        setLocalName(notepad?.name || '');
+        setIsEditingName(false);
+    }
+  }
+  
+  const canEditName = activeNotepadId !== 'collaborative';
+
 
   return (
     <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
@@ -74,25 +98,40 @@ export function CollaborativeNotepad({
         <CardTitle className="flex items-center justify-between gap-2 font-heading">
            <div className="flex items-center gap-2">
              <FileText className="h-5 w-5" />
-             Notepads
+             {isEditingName ? (
+                <Input 
+                    ref={nameInputRef}
+                    value={localName}
+                    onChange={(e) => setLocalName(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    onBlur={handleNameEditToggle}
+                    className="h-8 text-lg font-heading"
+                />
+             ) : (
+                <span>{notepad?.name || 'Notepad'}</span>
+             )}
+           </div>
+           <div className="flex items-center gap-1">
+             {canEditName && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNameEditToggle}>
+                    {isEditingName ? <Check className="h-4 w-4"/> : <Pencil className="h-4 w-4"/>}
+                    <span className="sr-only">{isEditingName ? 'Save Name' : 'Edit Name'}</span>
+                </Button>
+             )}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onCycleNotepad}>
+                <RotateCw className="h-4 w-4" />
+                <span className="sr-only">Switch Notepad</span>
+              </Button>
            </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-2">
-         <Tabs value={activeNotepad} onValueChange={onNotepadChange} className="w-full flex flex-col flex-1">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="collaborative">Collaborative</TabsTrigger>
-                <TabsTrigger value={currentUserId}>My Notepad</TabsTrigger>
-            </TabsList>
-             <TabsContent value={activeNotepad} className="flex-1 mt-2">
-                <Textarea
-                    value={localContent}
-                    onChange={handleChange}
-                    placeholder="Type your notes here..."
-                    className="w-full h-full resize-none text-base bg-transparent border-0 focus-visible:ring-0"
-                />
-            </TabsContent>
-        </Tabs>
+          <Textarea
+              value={localContent}
+              onChange={handleChange}
+              placeholder="Type your notes here..."
+              className="w-full h-full resize-none text-base bg-transparent border-0 focus-visible:ring-0"
+          />
       </CardContent>
     </Card>
   );

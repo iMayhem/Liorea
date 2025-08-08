@@ -10,6 +10,8 @@ import { logStudySession, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 
+const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
+
 interface StudyRoomContextType {
     currentRoomId: string | null;
     roomData: DocumentData | null;
@@ -26,14 +28,15 @@ interface StudyRoomContextType {
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
-    handleNotepadChange: (content: string) => void;
+    handleNotepadChange: (newContent: string) => void;
+    handleNotepadNameChange: (newName: string) => void;
+    cycleNotepad: () => void;
     handleSendMessage: (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => void;
     handleTyping: (isTyping: boolean) => void;
     activeSound: SoundType;
     handleSoundChange: (sound: SoundType) => void;
     notepads: Notepads;
-    activeNotepad: string;
-    setActiveNotepad: React.Dispatch<React.SetStateAction<string>>;
+    activeNotepadId: string;
 }
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
@@ -56,8 +59,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [isFocusMode, setIsFocusMode] = React.useState(false);
 
     // Notepad state
-    const [notepads, setNotepads] = useState<Notepads>({ collaborative: '' });
-    const [activeNotepad, setActiveNotepad] = useState<string>('collaborative');
+    const [notepads, setNotepads] = useState<Notepads>({});
+    const [activeNotepadId, setActiveNotepadId] = useState<string>('collaborative');
 
     const activeSound = roomData?.activeSound || 'none';
 
@@ -68,14 +71,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const logTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
-
-    useEffect(() => {
-        if(user && activeNotepad === 'collaborative') {
-            setActiveNotepad(user.uid);
-        } else if(!user) {
-            setActiveNotepad('collaborative');
-        }
-    }, [user, activeNotepad]);
 
 
     // Effect to play sounds on participant changes
@@ -216,15 +211,14 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
 
         setCurrentRoomId(roomId);
-        // Set active notepad to user's own notepad upon joining a room
-        setActiveNotepad(user.uid);
+        setActiveNotepadId('collaborative');
         
         unsubscribeRoomRef.current = onSnapshot(roomRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
                 setRoomData(data);
                 setParticipants(data.participants || []);
-                setNotepads(data.notepads || { collaborative: '' });
+                setNotepads(data.notepads || {});
             } else {
                 cleanupListeners();
                 setCurrentRoomId(null);
@@ -320,20 +314,41 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     }, [roomData, user, participants, handleTimerUpdate]);
 
 
-    // Other handlers
+    // Notepad handlers
     const handleNotepadChange = useCallback(async (content: string) => {
         if (!currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
-        const fieldPath = `notepads.${activeNotepad}`;
+        const fieldPath = `notepads.${activeNotepadId}.content`;
         try {
             await updateDoc(roomRef, { [fieldPath]: content });
         } catch (error) {
              if ((error as any).code !== 'not-found') {
-                console.error("Failed to update notepad:", error);
+                console.error("Failed to update notepad content:", error);
             }
         }
-    },[currentRoomId, activeNotepad]);
+    }, [currentRoomId, activeNotepadId]);
+    
+    const handleNotepadNameChange = useCallback(async (newName: string) => {
+        if (!currentRoomId || activeNotepadId === 'collaborative') return;
+        const roomRef = doc(db, 'studyRooms', currentRoomId);
+        const fieldPath = `notepads.${activeNotepadId}.name`;
+        try {
+            await updateDoc(roomRef, { [fieldPath]: newName });
+        } catch (error) {
+             if ((error as any).code !== 'not-found') {
+                console.error("Failed to update notepad name:", error);
+            }
+        }
+    }, [currentRoomId, activeNotepadId]);
 
+    const cycleNotepad = useCallback(() => {
+        const currentIndex = NOTEPAD_IDS.indexOf(activeNotepadId);
+        const nextIndex = (currentIndex + 1) % NOTEPAD_IDS.length;
+        setActiveNotepadId(NOTEPAD_IDS[nextIndex]);
+    }, [activeNotepadId]);
+
+
+    // Other handlers
     const handleSendMessage = useCallback(async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
         if (!user || !currentRoomId) return;
         const chatCollectionRef = collection(db, 'studyRooms', currentRoomId, 'chats');
@@ -403,13 +418,14 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         leaveRoom,
         handleTimerUpdate,
         handleNotepadChange,
+        handleNotepadNameChange,
+        cycleNotepad,
         handleSendMessage,
         handleTyping,
         activeSound,
         handleSoundChange,
         notepads,
-        activeNotepad,
-        setActiveNotepad
+        activeNotepadId,
     };
 
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;

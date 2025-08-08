@@ -32,9 +32,10 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
       handleSendMessage, 
       handleTyping, 
       userHasLeftRef,
-      activeNotepad,
-      setActiveNotepad,
-      notepads
+      notepads,
+      activeNotepadId,
+      handleNotepadNameChange,
+      cycleNotepad,
   } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
@@ -126,12 +127,11 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
             {/* Middle Column: Notepad */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="h-full flex flex-col min-h-[400px] lg:min-h-0">
                  <CollaborativeNotepad 
-                    content={notepads[activeNotepad] || ''} 
+                    activeNotepadId={activeNotepadId}
+                    notepad={notepads[activeNotepadId]}
                     onContentChange={handleNotepadChange}
-                    participants={participants}
-                    currentUserId={user.uid}
-                    activeNotepad={activeNotepad}
-                    onNotepadChange={setActiveNotepad}
+                    onNameChange={handleNotepadNameChange}
+                    onCycleNotepad={cycleNotepad}
                 />
             </motion.div>
 
