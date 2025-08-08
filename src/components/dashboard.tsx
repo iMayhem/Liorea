@@ -119,7 +119,7 @@ export function Dashboard({username, date, timetable, preparationPath}: Dashboar
   };
   
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen">
       <AppHeader />
       <motion.main
         initial={{opacity: 0}}
