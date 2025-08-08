@@ -3,7 +3,7 @@ import type {Metadata} from 'next';
 import {Inter, Space_Grotesk} from 'next/font/google';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
-import {AuthProvider} from '@/hooks/use-auth';
+import {AuthProvider, StudyRoomProvider} from '@/hooks/use-auth';
 import {cn} from '@/lib/utils';
 import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
@@ -47,7 +47,8 @@ export default function RootLayout({
             disableTransitionOnChange
             themes={["light", "dark", "theme-zinc", "theme-rose"]}
         >
-            <AuthProvider>
+          <AuthProvider>
+            <StudyRoomProvider>
                 <div className="relative flex min-h-screen flex-col">
                     <div className="flex-1">
                         {children}
@@ -56,7 +57,8 @@ export default function RootLayout({
                 </div>
                 <PersistentAmbientSound />
                 <FocusModeOverlay />
-            </AuthProvider>
+            </StudyRoomProvider>
+          </AuthProvider>
             <Toaster />
             <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
             <audio id="leave-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>

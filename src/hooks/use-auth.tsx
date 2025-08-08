@@ -6,7 +6,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signO
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { upsertUserProfile } from '@/lib/firestore';
-import { useStudyRoom, StudyRoomProvider } from './use-study-room';
+import { StudyRoomProvider } from './use-study-room';
 
 
 interface User {
@@ -62,7 +62,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
   };
 
   const logout = async () => {
-    // leaveRoom is now handled by the useStudyRoom hook's own effect on user change.
     setLoading(true);
     try {
         await signOut(auth);
@@ -78,13 +77,11 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
   return (
     <AuthContext.Provider value={value}>
-        <StudyRoomProvider>
-            {loading ? (
-                <div className="flex items-center justify-center min-h-screen bg-background">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-            ) : children}
-        </StudyRoomProvider>
+        {loading ? (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        ) : children}
     </AuthContext.Provider>
   );
 }
@@ -96,3 +93,6 @@ export function useAuth() {
   }
   return context;
 }
+
+// Re-exporting StudyRoomProvider here to keep layout.tsx clean
+export { StudyRoomProvider };
