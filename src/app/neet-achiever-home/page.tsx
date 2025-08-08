@@ -133,7 +133,6 @@ export default function NeetAchieverHomePage() {
                 </Card>
 
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
-                    <LiveStudyList />
                     <TestCountdownTimer tests={testSchedule} />
                 </div>
             </div>
@@ -154,7 +153,7 @@ export default function NeetAchieverHomePage() {
             </Button>
         </div>
 
-      </main>
+      </motion.main>
       <footer className="mt-auto p-4 text-center text-sm text-muted-foreground">
         <p>specially built for achiever online batch</p>
       </footer>
