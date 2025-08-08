@@ -62,13 +62,14 @@ export function LiveStudyList() {
         {loading ? (
             <div className="text-center text-muted-foreground">Loading...</div>
         ) : liveUsers.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {studyingUsers.length > 0 && (
                   <div>
-                    <p className="text-muted-foreground mb-2 text-sm">
-                        <span className="font-bold text-primary">{studyingUsers.length}</span> {studyingUsers.length === 1 ? 'student is' : 'students are'} studying now.
-                    </p>
-                    <div className="flex flex-wrap gap-4">
+                    <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
+                        <Radio className="h-4 w-4 text-green-500" />
+                        Studying Now ({studyingUsers.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
                       <AnimatePresence>
                         {studyingUsers.map((user) => (
                           <motion.div
@@ -100,10 +101,11 @@ export function LiveStudyList() {
               )}
                {jammingUsers.length > 0 && (
                   <div>
-                    <p className="text-muted-foreground mb-2 text-sm">
-                        <span className="font-bold text-primary">{jammingUsers.length}</span> {jammingUsers.length === 1 ? 'person is' : 'people are'} in a Jamnight.
-                    </p>
-                    <div className="flex flex-wrap gap-4">
+                    <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
+                        <Music className="h-4 w-4 text-purple-500" />
+                        In a Jamnight ({jammingUsers.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
                       <AnimatePresence>
                         {jammingUsers.map((user) => (
                           <motion.div
