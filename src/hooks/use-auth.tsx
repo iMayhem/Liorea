@@ -6,6 +6,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signO
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { upsertUserProfile } from '@/lib/firestore';
+import { useStudyRoom, StudyRoomProvider } from './use-study-room';
 
 
 interface User {
@@ -72,14 +73,18 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
     }
   };
+  
+  const value = {user, loading, signInWithGoogle, logout};
 
   return (
-    <AuthContext.Provider value={{user, loading, signInWithGoogle, logout}}>
-      {loading ? (
-         <div className="flex items-center justify-center min-h-screen bg-background">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      ) : children}
+    <AuthContext.Provider value={value}>
+        <StudyRoomProvider>
+            {loading ? (
+                <div className="flex items-center justify-center min-h-screen bg-background">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            ) : children}
+        </StudyRoomProvider>
     </AuthContext.Provider>
   );
 }

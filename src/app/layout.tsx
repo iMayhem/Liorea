@@ -5,7 +5,6 @@ import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import {AuthProvider} from '@/hooks/use-auth';
 import {cn} from '@/lib/utils';
-import { StudyRoomProvider } from '@/hooks/use-study-room';
 import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
 
@@ -41,15 +40,13 @@ export default function RootLayout({
         style={{ transform: 'scale(0.8)', transformOrigin: 'top left', width: '125%', height: '125%'}}
       >
         <AuthProvider>
-            <StudyRoomProvider>
-                <div className="relative flex min-h-screen flex-col">
-                    <div className="flex-1">
-                        {children}
-                    </div>
-                    <PersistentStudyRoomBar />
+            <div className="relative flex min-h-screen flex-col">
+                <div className="flex-1">
+                    {children}
                 </div>
-                <PersistentAmbientSound />
-            </StudyRoomProvider>
+                <PersistentStudyRoomBar />
+            </div>
+            <PersistentAmbientSound />
         </AuthProvider>
         <Toaster />
         <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
