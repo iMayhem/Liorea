@@ -124,19 +124,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         // Update user status FIRST to ensure it's cleared even if other operations fail.
         await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
 
-        // Clean up local state and listeners.
-        cleanupListeners();
-        setCurrentRoomId(null);
-        setRoomData(null);
-        setChatMessages([]);
-        setParticipants([]);
-        setIsFocusMode(false);
-
-        // Redirect if the user was on the study room page.
-        if (wasInRoomPage) {
-            router.push('/study-together');
-        }
-
         const roomRef = doc(db, 'studyRooms', leavingRoomId);
         try {
             const roomSnap = await getDoc(roomRef);
@@ -153,6 +140,19 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Error during room cleanup:", error);
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
+        }
+        
+        // Clean up local state and listeners.
+        cleanupListeners();
+        setCurrentRoomId(null);
+        setRoomData(null);
+        setChatMessages([]);
+        setParticipants([]);
+        setIsFocusMode(false);
+
+        // Redirect if the user was on the study room page.
+        if (wasInRoomPage) {
+            router.push('/study-together');
         }
     }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
     
