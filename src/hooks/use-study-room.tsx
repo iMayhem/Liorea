@@ -15,6 +15,10 @@ interface StudyRoomContextType {
     chatMessages: ChatMessage[];
     participants: Participant[];
     displayTime: number;
+    volume: number;
+    setVolume: React.Dispatch<React.SetStateAction<number>>;
+    isMuted: boolean;
+    setIsMuted: React.Dispatch<React.SetStateAction<boolean>>;
     userHasLeftRef: React.MutableRefObject<boolean>;
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
@@ -37,6 +41,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [displayTime, setDisplayTime] = useState(0);
+    const [volume, setVolume] = React.useState(0.5);
+    const [isMuted, setIsMuted] = React.useState(false);
+
 
     const unsubscribeRoomRef = useRef<() => void | undefined>();
     const unsubscribeChatRef = useRef<() => void | undefined>();
@@ -350,6 +357,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         chatMessages,
         participants,
         displayTime,
+        volume,
+        setVolume,
+        isMuted,
+        setIsMuted,
         userHasLeftRef,
         joinRoom,
         leaveRoom,

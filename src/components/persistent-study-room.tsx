@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, MessageSquare, ExternalLink } from 'lucide-react';
+import { Users, PhoneOff, Clock, MessageSquare, ExternalLink, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Tooltip,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip"
 import Link from 'next/link';
 import { PersistentAmbientSound } from './persistent-ambient-sound';
+import { Slider } from './ui/slider';
 
 function formatTime(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -23,7 +24,9 @@ function formatTime(seconds: number) {
 }
 
 export function PersistentStudyRoomBar() {
-  const { currentRoomId, leaveRoom, roomData, displayTime, participants } = useStudyRoom();
+  const { currentRoomId, leaveRoom, roomData, displayTime, participants, volume, setVolume, isMuted, setIsMuted } = useStudyRoom();
+
+  const hasActiveSound = roomData?.activeSound && roomData.activeSound !== 'none';
 
   return (
     <>
@@ -57,6 +60,23 @@ export function PersistentStudyRoomBar() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {hasActiveSound && (
+                             <div className="flex items-center gap-2">
+                                <button onClick={() => setIsMuted(!isMuted)}>
+                                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                                </button>
+                                <Slider
+                                    value={[isMuted ? 0 : volume * 100]}
+                                    onValueChange={(value) => {
+                                        setIsMuted(false);
+                                        setVolume(value[0] / 100)
+                                    }}
+                                    max={100}
+                                    step={1}
+                                    className="w-24"
+                                />
+                            </div>
+                        )}
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
