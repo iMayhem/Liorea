@@ -121,11 +121,26 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const leavingRoomId = currentRoomId;
         const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
 
-        // Update user status FIRST to ensure it's cleared even if other operations fail.
-        await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
+        // --- Start of Fix: Update UI and redirect immediately ---
+        // 1. Clean up local state and listeners FIRST.
+        cleanupListeners();
+        setCurrentRoomId(null);
+        setRoomData(null);
+        setChatMessages([]);
+        setParticipants([]);
+        setIsFocusMode(false);
+        
+        // 2. Redirect if the user was on the study room page.
+        if (wasInRoomPage) {
+            router.push('/study-together');
+        }
+        // --- End of Fix ---
 
-        const roomRef = doc(db, 'studyRooms', leavingRoomId);
+        // 3. Perform database updates in the background.
         try {
+            await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
+
+            const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
@@ -141,19 +156,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
         }
-        
-        // Clean up local state and listeners.
-        cleanupListeners();
-        setCurrentRoomId(null);
-        setRoomData(null);
-        setChatMessages([]);
-        setParticipants([]);
-        setIsFocusMode(false);
 
-        // Redirect if the user was on the study room page.
-        if (wasInRoomPage) {
-            router.push('/study-together');
-        }
     }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
     
     // Effect for periodic time logging
