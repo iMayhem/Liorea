@@ -200,14 +200,14 @@ export default function StudyTogetherPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen">
       <AppHeader />
       <main className="flex-1 container mx-auto p-4 flex flex-col items-center">
         <motion.div

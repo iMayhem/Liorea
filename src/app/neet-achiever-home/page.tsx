@@ -63,7 +63,7 @@ export default function NeetAchieverHomePage() {
 
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -72,7 +72,7 @@ export default function NeetAchieverHomePage() {
   const maxStudyTime = Math.max(1, ...Object.values(studyLogs));
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <motion.main
         initial={{opacity: 0}}
@@ -95,7 +95,7 @@ export default function NeetAchieverHomePage() {
                     <CountdownTimer targetDate={neet2026ExamDate} title="NEET 2026 Countdown"/>
                 </div>
 
-                <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card order-first lg:order-none">
+                <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card">
                     <CardContent className="flex justify-center p-0">
                         <Calendar
                             mode="single"

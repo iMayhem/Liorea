@@ -236,7 +236,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
     if (authLoading || !roomState || !user) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="flex items-center justify-center min-h-screen bg-transparent">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
@@ -244,8 +244,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
     return (
         <div 
-            className="flex flex-col h-screen bg-cover bg-center" 
-            style={{backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic.jpg?alt=media&token=7860393d-c6f3-45d5-a6e9-a6ca2a4d06a7')"}}
+            className="flex flex-col h-screen" 
         >
             <AppHeader />
              <header className="border-b shrink-0 bg-background/80 backdrop-blur-sm">

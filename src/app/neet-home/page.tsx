@@ -58,7 +58,7 @@ export default function NeetHomePage() {
 
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -67,7 +67,7 @@ export default function NeetHomePage() {
   const maxStudyTime = Math.max(1, ...Object.values(studyLogs));
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <motion.main
         initial={{opacity: 0}}
