@@ -49,8 +49,8 @@ export default function RootLayout({
             </StudyRoomProvider>
         </AuthProvider>
         <Toaster />
-        <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/sounds%2Fnotification.mp3?alt=media" preload="auto"></audio>
-        <audio id="leave-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/sounds%2Fnotification.mp3?alt=media" preload="auto"></audio>
+        <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
+        <audio id="leave-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
       </body>
     </html>
   );
