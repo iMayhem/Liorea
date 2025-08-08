@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, LogIn } from 'lucide-react';
+import { Loader2, PlusCircle, LogIn, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+
+const PUBLIC_ROOM_ID = "public-study-room-v1";
 
 export default function StudyTogetherPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function StudyTogetherPage() {
   const [roomId, setRoomId] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
   const [isJoining, setIsJoining] = React.useState(false);
+  const [isJoiningPublic, setIsJoiningPublic] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -61,25 +64,42 @@ export default function StudyTogetherPage() {
       setIsCreating(false);
     }
   };
+
+  const joinRoom = async (id: string) => {
+    const roomRef = doc(db, 'studyRooms', id);
+    const roomSnap = await getDoc(roomRef);
+
+    if (roomSnap.exists()) {
+      router.push(`/study-together/${id}`);
+    } else {
+      // If public room doesn't exist, create it
+      if (id === PUBLIC_ROOM_ID) {
+          await setDoc(roomRef, {
+            createdAt: serverTimestamp(),
+            notepadContent: 'Welcome to the Public Study Room!',
+            timerState: {
+              mode: 'study', time: 25 * 60, isActive: false, startTime: null,
+              studyDuration: 25, shortBreakDuration: 5, longBreakDuration: 15,
+            },
+            participants: [], typingUsers: {},
+          });
+          router.push(`/study-together/${id}`);
+      } else {
+        toast({
+            title: 'Room Not Found',
+            description: "The Room ID you entered doesn't exist. Please check the ID and try again.",
+            variant: 'destructive',
+        });
+      }
+    }
+  }
   
   const handleJoinRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!roomId.trim() || !user) return;
-
     setIsJoining(true);
     try {
-      const roomRef = doc(db, 'studyRooms', roomId);
-      const roomSnap = await getDoc(roomRef);
-
-      if (roomSnap.exists()) {
-        router.push(`/study-together/${roomId}`);
-      } else {
-        toast({
-          title: 'Room Not Found',
-          description: "The Room ID you entered doesn't exist. Please check the ID and try again.",
-          variant: 'destructive',
-        });
-      }
+       await joinRoom(roomId.trim());
     } catch (error) {
         console.error("Error joining room: ", error);
         toast({
@@ -91,6 +111,23 @@ export default function StudyTogetherPage() {
         setIsJoining(false);
     }
   };
+
+  const handleJoinPublicRoom = async () => {
+    if (!user) return;
+    setIsJoiningPublic(true);
+     try {
+       await joinRoom(PUBLIC_ROOM_ID);
+    } catch (error) {
+        console.error("Error joining public room: ", error);
+        toast({
+            title: 'Error',
+            description: 'Could not join the public room. Please try again.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsJoiningPublic(false);
+    }
+  }
 
   if (authLoading || !user) {
     return (
@@ -105,8 +142,8 @@ export default function StudyTogetherPage() {
       <AppHeader />
       <main className="flex-1 container mx-auto flex items-center justify-center p-4">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
@@ -116,13 +153,21 @@ export default function StudyTogetherPage() {
               <CardDescription>Create a private room to study with friends or join an existing one.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Button onClick={handleCreateRoom} className="w-full" disabled={isCreating}>
+               <Button onClick={handleJoinPublicRoom} className="w-full" disabled={isJoiningPublic}>
+                {isJoiningPublic ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Globe className="mr-2 h-4 w-4" />
+                )}
+                Join Public Room
+              </Button>
+              <Button onClick={handleCreateRoom} className="w-full" variant="outline" disabled={isCreating}>
                 {isCreating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                     <PlusCircle className="mr-2 h-4 w-4" />
                 )}
-                Create New Room
+                Create Private Room
               </Button>
               
               <div className="relative">
@@ -131,7 +176,7 @@ export default function StudyTogetherPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-card px-2 text-muted-foreground">
-                    Or Join a Room
+                    Or Join a Private Room
                   </span>
                 </div>
               </div>

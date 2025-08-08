@@ -91,7 +91,7 @@ export default function LeaderboardPage() {
   const { toast } = useToast();
   const [leaderboardData, setLeaderboardData] = React.useState<LeaderboardData>([]);
   const [loading, setLoading] = React.useState(true);
-  const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-all-time');
+  const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-weekly');
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
 
   React.useEffect(() => {
@@ -176,7 +176,7 @@ export default function LeaderboardPage() {
             <CardHeader>
               <CardTitle>Rankings</CardTitle>
               <CardDescription>
-                Filter by study hours (more filters coming soon!)
+                Filter by weekly study hours (more filters coming soon!)
               </CardDescription>
             </CardHeader>
             <CardContent>
