@@ -17,9 +17,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useStudyRoom } from '@/hooks/use-study-room';
 
 
-export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
-  const params = React.use(paramsProp as any);
-  const { roomId } = params;
+export default function StudyRoomPage({ params }: { params: { roomId: string } }) {
+  const { roomId } = React.use(params as any);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -101,7 +100,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             </Button>
          </div>
       </header>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-24">
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column: Timer & Sounds */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">

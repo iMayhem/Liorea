@@ -26,6 +26,7 @@ interface StudyRoomContextType {
     handleNotepadChange: (content: string) => void;
     handleSendMessage: (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => void;
     handleTyping: (isTyping: boolean) => void;
+    activeSound: SoundType;
     handleSoundChange: (sound: SoundType) => void;
 }
 
@@ -43,6 +44,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [displayTime, setDisplayTime] = useState(0);
     const [volume, setVolume] = React.useState(0.5);
     const [isMuted, setIsMuted] = React.useState(false);
+
+    const activeSound = roomData?.activeSound || 'none';
 
 
     const unsubscribeRoomRef = useRef<() => void | undefined>();
@@ -368,6 +371,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         handleNotepadChange,
         handleSendMessage,
         handleTyping,
+        activeSound,
         handleSoundChange
     };
 

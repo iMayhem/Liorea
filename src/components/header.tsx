@@ -7,14 +7,11 @@ import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
 import { ArrowLeft, LogOut, Timer, Users, Trophy } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { SidebarTrigger } from "./ui/sidebar";
-import { useSidebar } from "./ui/sidebar";
 import { useStudyRoom } from "@/hooks/use-study-room";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { currentRoomId } = useStudyRoom();
 
   const handleBack = () => {
     router.back();
@@ -24,7 +21,6 @@ export function AppHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex items-center">
-          {currentRoomId && <SidebarTrigger />}
           <Link href="/" className="flex items-center space-x-2">
             <AppLogo />
             <span className="font-bold">Neet Tracker</span>
