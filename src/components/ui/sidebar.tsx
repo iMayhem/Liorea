@@ -572,7 +572,6 @@ const SidebarMenuButton = React.forwardRef<
         {...props}
       >
         {children}
-         <span className="group-data-[collapsible=icon]:hidden">{props.children}</span>
       </Comp>
     )
 
