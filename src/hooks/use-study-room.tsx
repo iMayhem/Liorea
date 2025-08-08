@@ -123,8 +123,24 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         userHasLeftRef.current = true;
         const leavingRoomId = currentRoomId;
         const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
+
+        // --- Start of Fix ---
+        // 1. Immediately clear the local state that controls the UI
+        setCurrentRoomId(null); 
+        setRoomData(null);
+        setChatMessages([]);
+        setParticipants([]);
+        setIsFocusMode(false);
+        cleanupListeners();
+        
+        // 2. Redirect if necessary
+        if (wasInRoomPage) {
+            router.push('/study-together');
+        }
+        // --- End of Fix ---
         
         try {
+            // 3. Perform background cleanup
             await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
@@ -143,19 +159,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
         } finally {
-            // Clean up local state and listeners AFTER background tasks
-            cleanupListeners();
-            setCurrentRoomId(null);
-            setRoomData(null);
-            setChatMessages([]);
-            setParticipants([]);
-            setIsFocusMode(false);
-            
-            // Redirect if the user was on the study room page.
-            if (wasInRoomPage) {
-                router.push('/study-together');
-            }
-             setIsLeaving(false);
+            setIsLeaving(false);
         }
 
     }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
