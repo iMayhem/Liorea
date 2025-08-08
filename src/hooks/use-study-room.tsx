@@ -125,7 +125,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const wasInRoomPage = pathname.includes(`/study-together/${currentRoomId}`);
         const leavingRoomId = currentRoomId;
 
-        // 1. Immediately update UI and redirect
+        // 1. Immediately update UI
         setCurrentRoomId(null); 
         setRoomData(null);
         setChatMessages([]);
@@ -133,7 +133,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setIsFocusMode(false);
         cleanupListeners();
         
-        router.push('/');
+        router.push('/study-together');
 
         // 2. Perform background cleanup
         try {
