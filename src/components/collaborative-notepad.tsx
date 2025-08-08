@@ -4,10 +4,11 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, RotateCw, Pencil, Check } from 'lucide-react';
+import { FileText, RotateCw, Pencil, Check, User, Users } from 'lucide-react';
 import type { Notepad } from '@/lib/types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { useAuth } from '@/hooks/use-auth';
 
 interface CollaborativeNotepadProps {
   activeNotepadId: string;
@@ -15,6 +16,7 @@ interface CollaborativeNotepadProps {
   onContentChange: (newContent: string) => void;
   onNameChange: (newName: string) => void;
   onCycleNotepad: () => void;
+  onClaimNotepad: () => void;
 }
 
 export function CollaborativeNotepad({ 
@@ -22,13 +24,20 @@ export function CollaborativeNotepad({
     notepad, 
     onContentChange, 
     onNameChange,
-    onCycleNotepad
+    onCycleNotepad,
+    onClaimNotepad,
 }: CollaborativeNotepadProps) {
-
+  const { user } = useAuth();
   const [localContent, setLocalContent] = React.useState(notepad?.content || '');
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [localName, setLocalName] = React.useState(notepad?.name || '');
   const nameInputRef = React.useRef<HTMLInputElement>(null);
+
+  const isOwner = user && notepad?.owner === user.uid;
+  const isCollaborative = activeNotepadId === 'collaborative';
+  const isUnclaimed = !notepad?.owner;
+  const canEditContent = isCollaborative || isOwner || (isUnclaimed && activeNotepadId !== 'collaborative');
+  const canEditName = activeNotepadId !== 'collaborative' && (isOwner || isUnclaimed);
 
   React.useEffect(() => {
     setLocalContent(notepad?.content || '');
@@ -44,6 +53,7 @@ export function CollaborativeNotepad({
   );
   
   React.useEffect(() => {
+    if (!canEditContent) return;
     const handler = setTimeout(() => {
       if (localContent !== notepad?.content) {
         debouncedOnContentChange(localContent);
@@ -53,20 +63,20 @@ export function CollaborativeNotepad({
     return () => {
       clearTimeout(handler);
     };
-  }, [localContent, notepad?.content, debouncedOnContentChange]);
-
+  }, [localContent, notepad?.content, debouncedOnContentChange, canEditContent]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (isUnclaimed && activeNotepadId !== 'collaborative' && !notepad?.owner) {
+        onClaimNotepad();
+    }
     setLocalContent(e.target.value);
   };
   
   const handleNameEditToggle = () => {
     if(isEditingName) {
-        // If finishing editing, save the name.
         if (localName.trim() && localName !== notepad?.name) {
             onNameChange(localName.trim());
         } else {
-             // If name is empty or unchanged, revert to original name.
             setLocalName(notepad?.name || '');
         }
     }
@@ -88,17 +98,16 @@ export function CollaborativeNotepad({
         setIsEditingName(false);
     }
   }
+
+  const NotepadIcon = isCollaborative ? Users : User;
   
-  const canEditName = activeNotepadId !== 'collaborative';
-
-
   return (
     <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-2 font-heading">
            <div className="flex items-center gap-2">
-             <FileText className="h-5 w-5" />
-             {isEditingName ? (
+             <NotepadIcon className="h-5 w-5" />
+             {isEditingName && canEditName ? (
                 <Input 
                     ref={nameInputRef}
                     value={localName}
@@ -129,8 +138,9 @@ export function CollaborativeNotepad({
           <Textarea
               value={localContent}
               onChange={handleChange}
-              placeholder="Type your notes here..."
+              placeholder={canEditContent ? "Type your notes here..." : "This notepad is read-only."}
               className="w-full h-full resize-none text-base bg-transparent border-0 focus-visible:ring-0"
+              disabled={!canEditContent}
           />
       </CardContent>
     </Card>

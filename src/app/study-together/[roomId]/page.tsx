@@ -36,6 +36,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
       activeNotepadId,
       handleNotepadNameChange,
       cycleNotepad,
+      claimNotepad,
   } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
@@ -132,6 +133,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
                     onContentChange={handleNotepadChange}
                     onNameChange={handleNotepadNameChange}
                     onCycleNotepad={cycleNotepad}
+                    onClaimNotepad={claimNotepad}
                 />
             </motion.div>
 

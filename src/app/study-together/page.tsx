@@ -44,9 +44,9 @@ export default function StudyTogetherPage() {
       await setDoc(newRoomRef, {
         createdAt: serverTimestamp(),
         notepads: {
-          collaborative: { name: 'Collaborative', content: 'Welcome to the study room!\n\nThis is a shared notepad.' },
-          notepad1: { name: 'Notepad 1', content: '' },
-          notepad2: { name: 'Notepad 2', content: '' },
+          collaborative: { name: 'Collaborative', content: 'Welcome to the study room!\n\nThis is a shared notepad.', owner: null },
+          notepad1: { name: 'Notepad 1', content: '', owner: null },
+          notepad2: { name: 'Notepad 2', content: '', owner: null },
         },
         timerState: {
           mode: 'study',
@@ -84,9 +84,9 @@ export default function StudyTogetherPage() {
           await setDoc(roomRef, {
             createdAt: serverTimestamp(),
             notepads: {
-                collaborative: { name: 'Collaborative', content: 'Welcome to the Public Study Room!' },
-                notepad1: { name: 'Notepad 1', content: '' },
-                notepad2: { name: 'Notepad 2', content: '' },
+                collaborative: { name: 'Collaborative', content: 'Welcome to the Public Study Room!', owner: null },
+                notepad1: { name: 'Notepad 1', content: '', owner: null },
+                notepad2: { name: 'Notepad 2', content: '', owner: null },
             },
             timerState: {
               mode: 'study', time: 25 * 60, isActive: false, startTime: null,

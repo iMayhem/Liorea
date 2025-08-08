@@ -37,6 +37,7 @@ interface StudyRoomContextType {
     handleSoundChange: (sound: SoundType) => void;
     notepads: Notepads;
     activeNotepadId: string;
+    claimNotepad: () => void;
 }
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
@@ -316,7 +317,14 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     // Notepad handlers
     const handleNotepadChange = useCallback(async (content: string) => {
-        if (!currentRoomId) return;
+        if (!user || !currentRoomId || !notepads[activeNotepadId]) return;
+
+        const notepad = notepads[activeNotepadId];
+        const isOwner = notepad.owner === user.uid;
+        const isCollaborative = activeNotepadId === 'collaborative';
+        
+        if (!isOwner && !isCollaborative) return; // Don't allow editing if not owner or collaborative
+
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const fieldPath = `notepads.${activeNotepadId}.content`;
         try {
@@ -326,20 +334,48 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Failed to update notepad content:", error);
             }
         }
-    }, [currentRoomId, activeNotepadId]);
+    }, [user, currentRoomId, activeNotepadId, notepads]);
     
     const handleNotepadNameChange = useCallback(async (newName: string) => {
-        if (!currentRoomId || activeNotepadId === 'collaborative') return;
+        if (!user || !currentRoomId || activeNotepadId === 'collaborative' || !notepads[activeNotepadId]) return;
+
+        const notepad = notepads[activeNotepadId];
+        const isOwner = notepad.owner === user.uid;
+        const isUnclaimed = !notepad.owner;
+
+        if (!isOwner && !isUnclaimed) return; // Only owner or claimer can change name
+
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const fieldPath = `notepads.${activeNotepadId}.name`;
         try {
-            await updateDoc(roomRef, { [fieldPath]: newName });
+            // If unclaimed, claim it while changing the name
+            if (isUnclaimed) {
+                 await updateDoc(roomRef, { 
+                     [fieldPath]: newName,
+                     [`notepads.${activeNotepadId}.owner`]: user.uid
+                 });
+            } else {
+                await updateDoc(roomRef, { [fieldPath]: newName });
+            }
         } catch (error) {
              if ((error as any).code !== 'not-found') {
                 console.error("Failed to update notepad name:", error);
             }
         }
-    }, [currentRoomId, activeNotepadId]);
+    }, [user, currentRoomId, activeNotepadId, notepads]);
+
+    const claimNotepad = useCallback(async () => {
+        if (!user || !currentRoomId || !notepads[activeNotepadId] || notepads[activeNotepadId].owner) return;
+        const roomRef = doc(db, 'studyRooms', currentRoomId);
+        const fieldPath = `notepads.${activeNotepadId}.owner`;
+        try {
+            await updateDoc(roomRef, { [fieldPath]: user.uid });
+        } catch (error) {
+            if ((error as any).code !== 'not-found') {
+                console.error("Failed to claim notepad:", error);
+            }
+        }
+    }, [user, currentRoomId, activeNotepadId, notepads]);
 
     const cycleNotepad = useCallback(() => {
         const currentIndex = NOTEPAD_IDS.indexOf(activeNotepadId);
@@ -426,6 +462,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         handleSoundChange,
         notepads,
         activeNotepadId,
+        claimNotepad,
     };
 
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;

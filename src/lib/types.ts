@@ -89,10 +89,11 @@ export interface ChatMessage {
 export interface Notepad {
   name: string;
   content: string;
+  owner: string | null; // UID of the owner, null for collaborative
 }
 
 export interface Notepads {
-  [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...'}, notepad1: {...} }
+  [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...', owner: null }, notepad1: {...} }
 }
 
 // New type for user profiles
