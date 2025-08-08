@@ -61,7 +61,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   if (authLoading || !user || dateIsValid === null || !userProfile) {
     // Render a loading state or nothing while we validate the date on the client.
     return (
-      <div className="flex flex-col min-h-screen bg-transparent">
+      <div className="flex flex-col min-h-screen">
         <AppHeader />
         <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
           <div className="space-y-4">
