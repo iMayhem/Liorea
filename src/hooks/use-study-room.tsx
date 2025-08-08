@@ -116,38 +116,31 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     const leaveRoom = useCallback(async () => {
         if (!user || !currentRoomId) return;
+
         userHasLeftRef.current = true;
-        
         const leavingRoomId = currentRoomId;
         const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
-        
-        // Update user status first
-        await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null }});
 
-        // Clean up local state and listeners *before* Firestore operations
+        // Update user status FIRST to ensure it's cleared even if other operations fail.
+        await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
+
+        // Clean up local state and listeners.
         cleanupListeners();
         setCurrentRoomId(null);
         setRoomData(null);
         setChatMessages([]);
         setParticipants([]);
-        setIsFocusMode(false); // Ensure focus mode is turned off when leaving
+        setIsFocusMode(false);
 
-         if (wasInRoomPage) {
+        // Redirect if the user was on the study room page.
+        if (wasInRoomPage) {
             router.push('/study-together');
         }
-        
+
         const roomRef = doc(db, 'studyRooms', leavingRoomId);
         try {
             const roomSnap = await getDoc(roomRef);
-            if (!roomSnap.exists()) {
-                console.log("Room already deleted, skipping cleanup.");
-                return; 
-            }
-
-            const currentParticipants = roomSnap.data()?.participants || [];
-            // Only remove the participant, don't delete the room.
-            // Room deletion is now handled by a dedicated button on the study-together page.
-            if (currentParticipants.some((p: Participant) => p.uid === user.uid)) {
+            if (roomSnap.exists()) {
                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
                 const typingField = `typingUsers.${user.uid}`;
                 await updateDoc(roomRef, {
@@ -156,9 +149,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 });
             }
         } catch (error) {
-            if ((error as any).code !== 'not-found') { 
-               console.error("Error leaving room:", error);
-                toast({ title: "Error", description: "Could not leave the room properly.", variant: "destructive" });
+            if ((error as any).code !== 'not-found') {
+                console.error("Error during room cleanup:", error);
+                toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
         }
     }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
@@ -232,21 +225,17 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         return true;
     }, [user, currentRoomId, leaveRoom, toast, cleanupListeners]);
 
+    // Effect to handle component unmount or tab close
     useEffect(() => {
-        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-            if (currentRoomId) {
-                // This is a sync call, so we can't do async cleanup here.
-                // We rely on re-joining logic or timeout for cleanup.
-            }
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
+        // This is a React effect cleanup function. It runs when the StudyRoomProvider
+        // unmounts. This happens when the user navigates away from the app,
+        // closes the tab, or the component tree changes.
         return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-            if(currentRoomId) {
+            // Check if the user is in a room before trying to leave.
+            if (currentRoomId) {
                 leaveRoom();
             }
-        }
+        };
     }, [currentRoomId, leaveRoom]);
 
 
