@@ -49,7 +49,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <StudyRoomProvider>
-                <div className="relative flex min-h-screen flex-col bg-background/60">
+                <div className="relative flex min-h-screen flex-col">
                     <div className="flex-1">
                         {children}
                     </div>
