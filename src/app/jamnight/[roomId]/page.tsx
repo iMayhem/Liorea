@@ -262,24 +262,22 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             </header>
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    <Card className="flex-grow overflow-hidden bg-background/80 backdrop-blur-sm">
-                        <div className="aspect-video w-full h-full">
-                            <YouTube
-                                videoId={roomState.currentVideoId}
-                                onReady={onPlayerReady}
-                                onStateChange={onPlayerStateChange}
-                                opts={{
-                                    height: '100%',
-                                    width: '100%',
-                                    playerVars: {
-                                        autoplay: 0,
-                                        controls: 1,
-                                    },
-                                }}
-                                className="w-full h-full"
-                            />
-                        </div>
-                    </Card>
+                     <div className="aspect-video w-full h-full">
+                        <YouTube
+                            videoId={roomState.currentVideoId}
+                            onReady={onPlayerReady}
+                            onStateChange={onPlayerStateChange}
+                            opts={{
+                                height: '100%',
+                                width: '100%',
+                                playerVars: {
+                                    autoplay: 0,
+                                    controls: 1,
+                                },
+                            }}
+                            className="w-full h-full"
+                        />
+                    </div>
                     <Card className="bg-background/80 backdrop-blur-sm">
                         <CardHeader>
                             <CardTitle>Controls</CardTitle>
@@ -304,7 +302,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     </Card>
                 </div>
                 <div className="lg:col-span-1 h-full flex flex-col min-h-0">
-                    <GroupChat
+                     <GroupChat
                         messages={chatMessages}
                         onSendMessage={handleSendMessage}
                         currentUserId={user!.uid}
