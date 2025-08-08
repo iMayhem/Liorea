@@ -96,4 +96,8 @@ export interface UserProfile {
     mockScores: number[];
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
     createdAt: string; // Changed to string to be serializable
+    status?: {
+      isStudying: boolean;
+      roomId: string | null;
+    }
 }

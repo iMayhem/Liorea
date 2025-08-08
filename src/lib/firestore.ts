@@ -300,6 +300,7 @@ export async function upsertUserProfile(user: { uid: string; username: string | 
       dailyStreak: 0,
       mockScores: [],
       createdAt: serverTimestamp(),
+      status: { isStudying: false, roomId: null },
     });
   } else {
     // Document exists, update only the fields that might change on login

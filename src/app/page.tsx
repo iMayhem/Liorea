@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getStudyLogsForUser } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
+import { LiveStudyList } from '@/components/live-study-list';
 
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -86,48 +87,52 @@ export default function HomePage() {
           </p>
         </div>
         
-        <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
-            <div className="w-full max-w-xs">
-                 <CountdownTimer targetDate={neet2026ExamDate} />
-            </div>
+        <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-8">
+            <LiveStudyList />
 
-            <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card order-first lg:order-none">
-                <CardContent className="flex justify-center p-0">
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={handleDateSelect}
-                        className="rounded-md"
-                        fromDate={new Date('2025-07-01')}
-                        toDate={new Date('2026-05-05')}
-                        month={currentMonth}
-                        onMonthChange={setCurrentMonth}
-                        modifiers={{
-                           studyDay: (day) => {
+            <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center justify-center gap-8">
+                <div className="w-full max-w-xs mx-auto">
+                    <CountdownTimer targetDate={neet2026ExamDate} />
+                </div>
+
+                <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card order-first lg:order-none">
+                    <CardContent className="flex justify-center p-0">
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={handleDateSelect}
+                            className="rounded-md"
+                            fromDate={new Date('2025-07-01')}
+                            toDate={new Date('2026-05-05')}
+                            month={currentMonth}
+                            onMonthChange={setCurrentMonth}
+                            modifiers={{
+                            studyDay: (day) => {
                                 const dateKey = format(day, 'yyyy-MM-dd');
                                 return studyLogs[dateKey] > 0;
-                           }
-                        }}
-                         modifiersClassNames={{
-                            studyDay: 'study-day-modifier'
-                        }}
-                        modifiersStyles={{
-                            studyDay: (day: Date) => {
-                                const dateKey = format(day, 'yyyy-MM-dd');
-                                const studyTime = studyLogs[dateKey] || 0;
-                                const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
-                                return { 
-                                    backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
-                                    color: 'hsl(var(--primary-foreground))'
-                                };
                             }
-                        }}
-                    />
-                </CardContent>
-            </Card>
+                            }}
+                            modifiersClassNames={{
+                                studyDay: 'study-day-modifier'
+                            }}
+                            modifiersStyles={{
+                                studyDay: (day: Date) => {
+                                    const dateKey = format(day, 'yyyy-MM-dd');
+                                    const studyTime = studyLogs[dateKey] || 0;
+                                    const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
+                                    return { 
+                                        backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
+                                        color: 'hsl(var(--primary-foreground))'
+                                    };
+                                }
+                            }}
+                        />
+                    </CardContent>
+                </Card>
 
-            <div className="w-full max-w-xs">
-                <TestCountdownTimer tests={testSchedule} />
+                <div className="w-full max-w-xs mx-auto">
+                    <TestCountdownTimer tests={testSchedule} />
+                </div>
             </div>
         </div>
 

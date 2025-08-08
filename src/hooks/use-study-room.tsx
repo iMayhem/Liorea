@@ -6,7 +6,7 @@ import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { TimerState, ChatMessage, Participant } from '@/lib/types';
-import { logStudySession } from '@/lib/firestore';
+import { logStudySession, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 
 interface StudyRoomContextType {
@@ -53,6 +53,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         userHasLeftRef.current = true;
         
         cleanupListeners();
+        
+        await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null }});
 
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         try {
@@ -96,6 +98,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         if (!docSnap.exists()) {
             return false;
         }
+        
+        await updateUserProfile(user.uid, { status: { isStudying: true, roomId: roomId }});
 
         const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
         await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
@@ -108,11 +112,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 setRoomData(data);
                 setParticipants(data.participants || []);
             } else {
-                // Room deleted by another user
                 cleanupListeners();
                 setCurrentRoomId(null);
                  if (!userHasLeftRef.current) {
-                    toast({ title: "Room Closed", description: "The study room was deleted by the host.", variant: "destructive" });
+                    toast({ title: "Room Closed", description: "The study room was deleted.", variant: "destructive" });
                  }
             }
         });
@@ -128,10 +131,28 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     }, [user, currentRoomId, leaveRoom, toast, cleanupListeners]);
 
     useEffect(() => {
-        if (!user) {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (currentRoomId) {
+                // This is a sync call, so we can't do async cleanup here.
+                // Firestore onDisconnect handles this, but it's not implemented here.
+                // We rely on re-joining logic or timeout for cleanup.
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            if(currentRoomId) {
                 leaveRoom();
             }
+        }
+    }, [currentRoomId, leaveRoom]);
+
+
+    // When user logs out or auth state changes
+    useEffect(() => {
+        if (!user && currentRoomId) {
+            leaveRoom();
         }
     }, [user, currentRoomId, leaveRoom]);
 
