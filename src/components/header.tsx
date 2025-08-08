@@ -74,25 +74,6 @@ export function AppHeader() {
                     {isChanging ? <RefreshCw className="h-[1.2rem] w-[1.2rem] animate-spin" /> : <ImageIcon className="h-[1.2rem] w-[1.2rem]" />}
                     <span className="sr-only">Change Background</span>
                 </Button>
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Palette className="h-[1.2rem] w-[1.2rem]" />
-                      <span className="sr-only">Toggle theme</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      Glassmorphic
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("theme-blue")}>
-                      Classic Blue
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
-                      Dark Glass
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <Button onClick={logout} variant="outline" size="sm">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
