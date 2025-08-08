@@ -12,10 +12,10 @@ import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { startOfDay, endOfDay } from 'date-fns';
 
 type LeaderboardData = UserProfile[];
-type LeaderboardType = 'study-hours-weekly' | 'study-hours-all-time';
+type LeaderboardType = 'study-hours-daily' | 'study-hours-all-time';
 
 export default function LeaderboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -24,7 +24,7 @@ export default function LeaderboardPage() {
   const [studyLogs, setStudyLogs] = React.useState<Record<string, Record<string, number>>>({});
   const [leaderboardData, setLeaderboardData] = React.useState<LeaderboardData>([]);
   const [loading, setLoading] = React.useState(true);
-  const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-weekly');
+  const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-daily');
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
 
   React.useEffect(() => {
@@ -73,23 +73,23 @@ export default function LeaderboardPage() {
 
     if (leaderboardType === 'study-hours-all-time') {
       processedUsers = Object.values(allUsers).sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
-    } else { // weekly
+    } else { // daily
       const now = new Date();
-      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const dayStart = startOfDay(now);
+      const dayEnd = endOfDay(now);
 
       processedUsers = Object.values(allUsers).map(userProfile => {
         const userLogs = studyLogs[userProfile.uid] || {};
-        let weeklyHours = 0;
+        let dailyHours = 0;
         for (const dateStr in userLogs) {
           const logDate = new Date(dateStr);
-          if (logDate >= weekStart && logDate <= weekEnd) {
-            weeklyHours += userLogs[dateStr];
+          if (logDate >= dayStart && logDate <= dayEnd) {
+            dailyHours += userLogs[dateStr];
           }
         }
-        return { ...userProfile, weeklyStudyHours: weeklyHours };
-      }).sort((a, b) => (b.weeklyStudyHours || 0) - (a.weeklyStudyHours || 0))
-       .map(user => ({...user, totalStudyHours: user.weeklyStudyHours || user.totalStudyHours}));
+        return { ...userProfile, dailyStudyHours: dailyHours };
+      }).sort((a, b) => (b.dailyStudyHours || 0) - (a.dailyStudyHours || 0))
+       .map(user => ({...user, totalStudyHours: user.dailyStudyHours || user.totalStudyHours}));
     }
     
     setLeaderboardData(processedUsers);
@@ -125,16 +125,16 @@ export default function LeaderboardPage() {
             <div className="text-left">
               <h1 className="text-4xl font-bold font-heading">Leaderboard</h1>
               <p className="mt-2 text-muted-foreground">
-                See who's topping the charts.
+                See who's topping the charts today.
               </p>
             </div>
           </div>
 
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Rankings</CardTitle>
+              <CardTitle>Daily Rankings</CardTitle>
               <CardDescription>
-                Filter by weekly study hours (more filters coming soon!)
+                Today's leaderboard resets at midnight.
               </CardDescription>
             </CardHeader>
             <CardContent>

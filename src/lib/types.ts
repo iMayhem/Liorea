@@ -115,7 +115,7 @@ export interface UserProfile {
     email: string | null;
     photoURL: string | null;
     totalStudyHours: number;
-    weeklyStudyHours?: number; // Optional field for weekly calculation
+    dailyStudyHours?: number; // Optional field for daily calculation
     dailyStreak: number;
     mockScores: number[];
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';

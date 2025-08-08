@@ -6,7 +6,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, whe
 import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 
 
 /**
@@ -363,17 +363,17 @@ export async function setUserPreparationPath(uid: string, path: PreparationPath)
 
 /**
  * Fetches and ranks users for the leaderboard based on study hours.
- * @param type - The type of leaderboard ('study-hours-all-time' or 'study-hours-weekly').
+ * @param type - The type of leaderboard ('study-hours-all-time' or 'study-hours-daily').
  * @returns A promise that resolves to an array of ranked UserProfile objects.
  */
-export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-hours-weekly'): Promise<UserProfile[]> {
+export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-hours-daily'): Promise<UserProfile[]> {
   const usersRef = collection(db, 'users');
   let q;
 
   if (type === 'study-hours-all-time') {
     q = query(usersRef, orderBy('totalStudyHours', 'desc'));
   } else {
-    // For weekly, we'll have to fetch all users and calculate on the client.
+    // For daily, we'll have to fetch all users and calculate on the client.
     // This is not ideal for performance with many users, but necessary without server-side aggregation.
     q = query(usersRef);
   }
@@ -385,28 +385,28 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
     users.push(toPlainObject({ ...data, uid: doc.id }) as UserProfile);
   });
 
-  if (type === 'study-hours-weekly') {
+  if (type === 'study-hours-daily') {
       const now = new Date();
-      const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
-      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const dayStart = startOfDay(now);
+      const dayEnd = endOfDay(now);
 
-      const weeklyUsers = await Promise.all(users.map(async (user) => {
+      const dailyUsers = await Promise.all(users.map(async (user) => {
           const studyLogRef = doc(db, 'studyLogs', user.uid);
           const studyLogSnap = await getDoc(studyLogRef);
-          let weeklyHours = 0;
+          let dailyHours = 0;
           if (studyLogSnap.exists()) {
               const dailyData = studyLogSnap.data().daily || {};
               for (const dateStr in dailyData) {
                   const logDate = new Date(dateStr);
-                  if (logDate >= weekStart && logDate <= weekEnd) {
-                      weeklyHours += dailyData[dateStr];
+                  if (logDate >= dayStart && logDate <= dayEnd) {
+                      dailyHours += dailyData[dateStr];
                   }
               }
           }
-          return { ...user, totalStudyHours: weeklyHours };
+          return { ...user, totalStudyHours: dailyHours };
       }));
 
-      users = weeklyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
+      users = dailyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
   }
   
   return users;
