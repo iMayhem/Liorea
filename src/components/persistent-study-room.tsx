@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import Link from 'next/link';
+import { PersistentAmbientSound } from './persistent-ambient-sound';
 
 function formatTime(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -25,6 +26,8 @@ export function PersistentStudyRoomBar() {
   const { currentRoomId, leaveRoom, roomData, displayTime, participants } = useStudyRoom();
 
   return (
+    <>
+    <PersistentAmbientSound />
     <AnimatePresence>
       {currentRoomId && roomData && (
         <motion.div
@@ -86,5 +89,6 @@ export function PersistentStudyRoomBar() {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }

@@ -24,7 +24,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping, handleSoundChange, userHasLeftRef } = useStudyRoom(roomId);
+  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping, userHasLeftRef } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
 
@@ -107,7 +107,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             {/* Left Column: Timer & Sounds */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">
                 {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} participants={participants} />}
-                <AmbientSoundPlayer activeSound={roomData.activeSound} onSoundChange={handleSoundChange} />
+                <AmbientSoundPlayer />
             </motion.div>
             
             {/* Middle Column: Notepad */}
