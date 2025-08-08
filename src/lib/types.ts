@@ -95,5 +95,5 @@ export interface UserProfile {
     dailyStreak: number;
     mockScores: number[];
     leaderboardVisibility: 'visible' | 'anonymous' | 'hidden';
-    createdAt: any; // Firebase ServerTimestamp
+    createdAt: string; // Changed to string to be serializable
 }

@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
@@ -312,6 +312,15 @@ export async function upsertUserProfile(user: { uid: string; username: string | 
   }
 }
 
+// Helper to convert Firestore data to a plain object
+const toPlainObject = (data: any) => {
+    const plainData = { ...data };
+    if (plainData.createdAt instanceof Timestamp) {
+        plainData.createdAt = plainData.createdAt.toDate().toISOString();
+    }
+    return plainData;
+}
+
 /**
  * Retrieves a user's profile from the 'users' collection.
  * @param uid - The user's ID.
@@ -321,7 +330,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     const userRef = doc(db, 'users', uid);
     const docSnap = await getDoc(userRef);
     if (docSnap.exists()) {
-        return docSnap.data() as UserProfile;
+        return toPlainObject(docSnap.data()) as UserProfile;
     }
     return null;
 }
@@ -359,7 +368,7 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
     // Filter out users who want to be hidden
     const data = doc.data() as UserProfile;
     if (data.leaderboardVisibility !== 'hidden') {
-      users.push({ ...data, uid: doc.id });
+      users.push(toPlainObject({ ...data, uid: doc.id }) as UserProfile);
     }
   });
 
