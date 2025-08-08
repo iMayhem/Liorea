@@ -50,23 +50,29 @@ export function LiveStudyList() {
   const studyingUsers = React.useMemo(() => liveUsers.filter(u => u.status?.isStudying), [liveUsers]);
   const jammingUsers = React.useMemo(() => liveUsers.filter(u => u.status?.isJamming), [liveUsers]);
 
+  if (loading) {
+    return (
+        <Card className="w-full max-w-2xl mx-auto shadow-md mb-8">
+            <CardContent className="p-4">
+                 <div className="text-center text-muted-foreground">Loading Live Activity...</div>
+            </CardContent>
+        </Card>
+    )
+  }
+
+  if (liveUsers.length === 0) {
+      return null; // Don't render anything if no one is live
+  }
+
+
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-md mb-8">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-heading text-lg">
-          <Radio className="h-5 w-5 text-primary animate-pulse" />
-          Live Activity
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-            <div className="text-center text-muted-foreground">Loading...</div>
-        ) : liveUsers.length > 0 ? (
+      <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {studyingUsers.length > 0 && (
                   <div>
                     <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
-                        <Radio className="h-4 w-4 text-green-500" />
+                        <Radio className="h-4 w-4 text-green-500 animate-pulse" />
                         Studying Now ({studyingUsers.length})
                     </h3>
                     <div className="flex flex-wrap gap-3">
@@ -136,11 +142,6 @@ export function LiveStudyList() {
                 </div>
               )}
           </div>
-        ) : (
-          <p className="text-center text-muted-foreground">
-            No one is currently in a live session. Be the first!
-          </p>
-        )}
       </CardContent>
     </Card>
   );
