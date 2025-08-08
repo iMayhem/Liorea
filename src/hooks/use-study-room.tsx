@@ -44,7 +44,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     // Effect to play sounds on participant changes
     useEffect(() => {
-        if (isInitialJoinRef.current) {
+        if (isInitialJoinRef.current || !currentRoomId) {
             isInitialJoinRef.current = false;
             return;
         }
@@ -56,15 +56,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             }
         };
 
-        const prevParticipants = JSON.parse(sessionStorage.getItem('participants') || '[]');
+        const prevParticipants = JSON.parse(sessionStorage.getItem(`participants-${currentRoomId}`) || '[]');
         if (participants.length > prevParticipants.length) {
             playSound('join-sound');
         } else if (participants.length < prevParticipants.length) {
             playSound('leave-sound');
         }
-        sessionStorage.setItem('participants', JSON.stringify(participants));
+        sessionStorage.setItem(`participants-${currentRoomId}`, JSON.stringify(participants));
 
-    }, [participants]);
+    }, [participants, currentRoomId]);
 
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
@@ -79,18 +79,23 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         if (!user || !currentRoomId || userHasLeftRef.current) return;
         userHasLeftRef.current = true;
         
+        const leavingRoomId = currentRoomId;
         cleanupListeners();
         
         await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null }});
 
-        const roomRef = doc(db, 'studyRooms', currentRoomId);
+        const roomRef = doc(db, 'studyRooms', leavingRoomId);
         try {
-            const typingField = `typingUsers.${user.uid}`;
-            await updateDoc(roomRef, { [typingField]: deleteField(), activeSound: 'none' }).catch(err => console.error("Error cleaning up room state:", err));
-
-            const currentParticipants = (await getDoc(roomRef)).data()?.participants || [];
-            if (currentParticipants.length <= 1 && currentParticipants[0]?.uid === user.uid) {
-                const chatRef = collection(db, 'studyRooms', currentRoomId, 'chats');
+            // Check if the document still exists before trying to modify it
+            const roomSnap = await getDoc(roomRef);
+            if (!roomSnap.exists()) {
+                console.log("Room already deleted, skipping cleanup.");
+                return; // Exit if the room is already gone
+            }
+            
+            const currentParticipants = roomSnap.data()?.participants || [];
+            if (currentParticipants.length <= 1 && currentParticipants.some((p: Participant) => p.uid === user.uid)) {
+                const chatRef = collection(db, 'studyRooms', leavingRoomId, 'chats');
                 const chatSnapshot = await getDocs(chatRef);
                 const batch = writeBatch(db);
                 chatSnapshot.forEach(doc => batch.delete(doc.ref));
@@ -98,11 +103,18 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 await batch.commit();
             } else {
                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-                await updateDoc(roomRef, { participants: arrayRemove(userParticipant) });
+                const typingField = `typingUsers.${user.uid}`;
+                await updateDoc(roomRef, { 
+                    participants: arrayRemove(userParticipant),
+                    [typingField]: deleteField(),
+                    activeSound: 'none' 
+                }).catch(err => console.error("Error cleaning up room state:", err));
             }
         } catch (error) {
-            console.error("Error leaving room:", error);
-            toast({ title: "Error", description: "Could not leave the room properly.", variant: "destructive" });
+            if ((error as any).code !== 'not-found') { // Ignore not-found errors during cleanup
+               console.error("Error leaving room:", error);
+                toast({ title: "Error", description: "Could not leave the room properly.", variant: "destructive" });
+            }
         } finally {
             setCurrentRoomId(null);
             setRoomData(null);
@@ -130,7 +142,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         await updateUserProfile(user.uid, { status: { isStudying: true, roomId: roomId }});
 
         const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-        await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
+        // Ensure user is not already in the participants list before adding
+        const currentParticipants = docSnap.data().participants || [];
+        if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
+             await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
+        }
+
 
         setCurrentRoomId(roomId);
         
@@ -199,7 +216,13 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const handleTimerUpdate = useCallback(async (newState: Partial<TimerState>) => {
         if (!roomData || !currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
-        await updateDoc(roomRef, { timerState: { ...roomData.timerState, ...newState } });
+        try {
+            await updateDoc(roomRef, { timerState: { ...roomData.timerState, ...newState } });
+        } catch (error) {
+            if ((error as any).code !== 'not-found') {
+                console.error("Failed to update timer state:", error);
+            }
+        }
     }, [roomData, currentRoomId]);
 
     useEffect(() => {
@@ -236,7 +259,13 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const handleNotepadChange = useCallback(async (content: string) => {
         if (!currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
-        await updateDoc(roomRef, { notepadContent: content });
+        try {
+            await updateDoc(roomRef, { notepadContent: content });
+        } catch (error) {
+             if ((error as any).code !== 'not-found') {
+                console.error("Failed to update notepad:", error);
+            }
+        }
     },[currentRoomId]);
 
     const handleSendMessage = useCallback(async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
@@ -266,17 +295,29 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const typingField = `typingUsers.${user.uid}`;
 
-        if (isTyping) {
-            await updateDoc(roomRef, { [typingField]: user.username });
-        } else {
-            await updateDoc(roomRef, { [typingField]: deleteField() });
+        try {
+            if (isTyping) {
+                await updateDoc(roomRef, { [typingField]: user.username });
+            } else {
+                await updateDoc(roomRef, { [typingField]: deleteField() });
+            }
+        } catch(error) {
+             if ((error as any).code !== 'not-found') {
+                console.error("Failed to update typing status:", error);
+            }
         }
     }, [user, currentRoomId]);
 
     const handleSoundChange = useCallback(async (sound: SoundType) => {
         if (!currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
-        await updateDoc(roomRef, { activeSound: sound });
+        try {
+            await updateDoc(roomRef, { activeSound: sound });
+        } catch(error) {
+            if ((error as any).code !== 'not-found') {
+                console.error("Failed to update sound:", error);
+            }
+        }
     }, [currentRoomId]);
 
     const value = {
