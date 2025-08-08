@@ -24,7 +24,7 @@ export function FocusModeOverlay() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           className={cn(
-            'fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm'
+            'fixed inset-0 z-[9999] flex items-center justify-center bg-black/90'
           )}
         >
           <Button

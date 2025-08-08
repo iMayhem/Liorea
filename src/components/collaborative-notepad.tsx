@@ -107,7 +107,7 @@ export function CollaborativeNotepad({
   };
   
   return (
-    <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
+    <Card className="h-full flex flex-col bg-background/80">
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-2 font-heading">
            <div className="flex items-center gap-2">

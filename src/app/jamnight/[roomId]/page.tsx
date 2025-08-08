@@ -247,7 +247,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             className="flex flex-col h-screen" 
         >
             <AppHeader />
-             <header className="border-b shrink-0 bg-background/80 backdrop-blur-sm">
+             <header className="border-b shrink-0 bg-background/80">
                 <div className="container mx-auto py-3 px-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <Music className="h-6 w-6 text-primary" />
@@ -291,7 +291,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 </div>
                 <div className="lg:grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                        <Card className="bg-background/80 backdrop-blur-sm">
+                        <Card className="bg-background/80">
                             <CardContent className="space-y-4 pt-6">
                                 <div className="flex gap-2">
                                     <Input

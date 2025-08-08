@@ -126,7 +126,7 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
   }
 
   return (
-    <Card className="w-full max-w-md shadow-lg bg-background/80 backdrop-blur-sm">
+    <Card className="w-full max-w-md shadow-lg bg-background/80">
       <CardHeader>
         <div className="flex justify-center items-center mb-4 gap-2">
             <div className="flex-grow flex justify-center gap-2">

@@ -149,7 +149,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   };
 
   return (
-    <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
+    <Card className="h-full flex flex-col bg-background/80">
       <CardHeader className="shrink-0">
         <CardTitle className="flex items-center gap-2 font-heading">
             <MessageSquare className="h-5 w-5"/>
@@ -207,7 +207,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                         
                         {msg.text && <p className="text-sm">{msg.text}</p>}
 
-                        <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 backdrop-blur-sm -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
+                        <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
                             <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleReplyClick(msg)}><CornerDownLeft className="h-4 w-4"/></Button>
                         </div>
                         

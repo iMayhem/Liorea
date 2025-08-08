@@ -88,7 +88,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
         className="flex flex-col h-screen"
     >
       <AppHeader />
-      <header className="border-b shrink-0 bg-background/80 backdrop-blur-sm">
+      <header className="border-b shrink-0 bg-background/80">
          <div className="container mx-auto py-3 px-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
                 <Users className="h-6 w-6 text-primary" />
