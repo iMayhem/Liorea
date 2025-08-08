@@ -201,6 +201,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setActiveNotepadId('collaborative');
         
         unsubscribeRoomRef.current = onSnapshot(roomRef, (snap) => {
+            if (userHasLeftRef.current && snap.id === currentRoomId) {
+                return;
+            }
             if (snap.exists()) {
                 const data = snap.data();
                 setRoomData(data);
@@ -211,19 +214,21 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 setCurrentRoomId(null);
                  if (!userHasLeftRef.current) {
                     toast({ title: "Room Closed", description: "The study room was deleted.", variant: "destructive" });
+                    router.push('/study-together');
                  }
             }
         });
 
         const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
         unsubscribeChatRef.current = onSnapshot(chatQuery, (querySnapshot) => {
+             if (userHasLeftRef.current) return;
             const messages: ChatMessage[] = [];
             querySnapshot.forEach((doc) => messages.push({ id: doc.id, ...doc.data() } as ChatMessage));
             setChatMessages(messages);
         });
         
         return true;
-    }, [user, currentRoomId, leaveRoom, toast, cleanupListeners]);
+    }, [user, currentRoomId, leaveRoom, toast, cleanupListeners, router]);
 
     // Effect to handle component unmount or tab close
     useEffect(() => {
