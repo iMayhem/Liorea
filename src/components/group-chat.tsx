@@ -30,11 +30,28 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const prevMessagesLengthRef = React.useRef(initialMessages.length);
+
 
   React.useEffect(() => {
     // Sync with external messages, but prioritize local state for smooth updates
     setMessages(initialMessages);
-  }, [initialMessages]);
+
+    // Check for new incoming messages to play notification sound
+    if (initialMessages.length > prevMessagesLengthRef.current) {
+        const lastMessage = initialMessages[initialMessages.length - 1];
+        // Play sound only for incoming messages, not for messages sent by the current user
+        if (lastMessage && lastMessage.senderId !== currentUserId) {
+            const notificationSound = document.getElementById('chat-notification-sound') as HTMLAudioElement;
+            if (notificationSound) {
+                notificationSound.play().catch(error => console.error("Error playing notification sound:", error));
+            }
+        }
+    }
+    
+    prevMessagesLengthRef.current = initialMessages.length;
+
+  }, [initialMessages, currentUserId]);
 
   React.useEffect(() => {
     // Scroll to the bottom whenever messages change
