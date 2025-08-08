@@ -31,7 +31,8 @@ interface JamRoomState {
 }
 
 export default function JamRoomPage({ params }: { params: { roomId: string } }) {
-    const { roomId } = params;
+    const routeParams = React.use(params as any);
+    const { roomId } = routeParams;
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
