@@ -8,12 +8,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Leaderboard } from '@/components/leaderboard';
-import { getUserProfile } from '@/lib/firestore';
 import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { collection, onSnapshot, query, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { startOfWeek, endOfWeek, format } from 'date-fns';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 type LeaderboardData = UserProfile[];
 type LeaderboardType = 'study-hours-weekly' | 'study-hours-all-time';
@@ -43,7 +42,6 @@ export default function LeaderboardPage() {
         usersData[doc.id] = { uid: doc.id, ...doc.data() } as UserProfile;
       });
       setAllUsers(usersData);
-      setLoading(Object.keys(usersData).length === 0);
     });
 
     return () => unsubscribeUsers();
@@ -53,21 +51,24 @@ export default function LeaderboardPage() {
   React.useEffect(() => {
     const logsQuery = query(collection(db, 'studyLogs'));
     const unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
-        const logsData: Record<string, Record<string, number>> = {};
-        snapshot.forEach((doc) => {
-            logsData[doc.id] = doc.data().daily || {};
-        });
-        setStudyLogs(logsData);
+      const logsData: Record<string, Record<string, number>> = {};
+      snapshot.forEach((doc) => {
+        logsData[doc.id] = doc.data().daily || {};
+      });
+      setStudyLogs(logsData);
     });
 
     return () => unsubscribeLogs();
   }, []);
 
-
   // Effect to process and sort leaderboard data when users or logs change
   React.useEffect(() => {
-    if (Object.keys(allUsers).length === 0) return;
+    if (Object.keys(allUsers).length === 0) {
+      setLoading(false); // If no users, stop loading
+      return;
+    };
 
+    setLoading(true);
     let processedUsers: UserProfile[];
 
     if (leaderboardType === 'study-hours-all-time') {
@@ -86,14 +87,16 @@ export default function LeaderboardPage() {
             weeklyHours += userLogs[dateStr];
           }
         }
-        return { ...userProfile, totalStudyHours: weeklyHours };
-      }).sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
+        return { ...userProfile, weeklyStudyHours: weeklyHours };
+      }).sort((a, b) => (b.weeklyStudyHours || 0) - (a.weeklyStudyHours || 0))
+       .map(user => ({...user, totalStudyHours: user.weeklyStudyHours || user.totalStudyHours}));
     }
     
     setLeaderboardData(processedUsers);
     
     if(user && allUsers[user.uid]){
-        setUserProfile(allUsers[user.uid]);
+      const currentUserData = processedUsers.find(p => p.uid === user.uid);
+      setUserProfile(currentUserData || allUsers[user.uid]);
     }
     
     setLoading(false);
