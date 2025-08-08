@@ -152,24 +152,6 @@ export default function NeetAchieverHomePage() {
                     Jamnight
                 </Link>
             </Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Change Theme
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                        Glassmorphic
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("theme-blue")}>
-                        Classic Blue
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
-                        Dark Glass
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
         </div>
 
       </motion.main>

@@ -48,29 +48,6 @@
     --ring: 217.2 91.2% 59.8%;
   }
 
-  /* The new glassmorphic design */
-  .dark {
-    --background: 222 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
-  }
-
   .theme-blue {
     --background: 222.2 47.4% 11.2%;
     --foreground: 210 40% 98%;
@@ -131,25 +108,37 @@
     background-position: center;
     background-attachment: fixed;
   }
+
+  @keyframes glassReveal {
+    0% {
+      clip-path: inset(0% 0% 100% 0%);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      opacity: 0;
+    }
+    100% {
+      clip-path: inset(0% 0% 0% 0%);
+      backdrop-filter: blur(4px) saturate(120%);
+      -webkit-backdrop-filter: blur(4px) saturate(120%);
+      opacity: 1;
+    }
+  }
   
   .dark .card {
-    background: rgba(6,6,10,0.25);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background: rgba(6,6,10,0.36);
+    animation: glassReveal 0.7s ease-in-out forwards;
     @apply border-white/10;
   }
 
   .theme-blue .card {
-    background: rgba(6,6,10,0.36);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
-    backdrop-filter: blur(14px) saturate(120%);
+    background: rgba(17,24,39,0.36);
+    animation: glassReveal 0.7s ease-in-out forwards;
     @apply border-white/10;
   }
 
   .theme-zinc .card {
     background: rgba(6,6,10,0.36);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
-    backdrop-filter: blur(14px) saturate(120%);
+    animation: glassReveal 0.7s ease-in-out forwards;
     @apply border-white/10;
   }
 }
