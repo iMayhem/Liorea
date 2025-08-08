@@ -13,7 +13,7 @@ import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { collection, onSnapshot, query, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { startOfWeek, endOfWeek, format } from 'date-fns';
 
 type LeaderboardData = UserProfile[];
 type LeaderboardType = 'study-hours-weekly' | 'study-hours-all-time';
@@ -21,6 +21,8 @@ type LeaderboardType = 'study-hours-weekly' | 'study-hours-all-time';
 export default function LeaderboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [allUsers, setAllUsers] = React.useState<Record<string, UserProfile>>({});
+  const [studyLogs, setStudyLogs] = React.useState<Record<string, Record<string, number>>>({});
   const [leaderboardData, setLeaderboardData] = React.useState<LeaderboardData>([]);
   const [loading, setLoading] = React.useState(true);
   const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-weekly');
@@ -32,66 +34,70 @@ export default function LeaderboardPage() {
     }
   }, [user, authLoading, router]);
 
+  // Effect to fetch all users and listen for updates
   React.useEffect(() => {
-    if (!user) return;
-
-    setLoading(true);
-
     const usersQuery = query(collection(db, 'users'));
-
-    const unsubscribe = onSnapshot(usersQuery, async (snapshot) => {
-        let users: UserProfile[] = [];
-        snapshot.forEach((doc) => {
-            users.push({ uid: doc.id, ...doc.data() } as UserProfile);
-        });
-
-        if (leaderboardType === 'study-hours-all-time') {
-            const sortedUsers = users.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
-            setLeaderboardData(sortedUsers);
-        } else { // weekly
-            const now = new Date();
-            const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-            const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
-            const weeklyUsers = await Promise.all(
-                users.map(async (u) => {
-                    const studyLogRef = doc(db, 'studyLogs', u.uid);
-                    let weeklyHours = 0;
-                    
-                    // This is still a one-time fetch, but it's triggered by any user change.
-                    // For a fully realtime weekly board, we'd listen to all studyLogs docs too.
-                    // This is a practical compromise for now.
-                    try {
-                        const studyLogSnap = await (await import('firebase/firestore')).getDoc(studyLogRef);
-                        if (studyLogSnap.exists()) {
-                            const dailyData = studyLogSnap.data().daily || {};
-                            for (const dateStr in dailyData) {
-                                const logDate = new Date(dateStr);
-                                if (logDate >= weekStart && logDate <= weekEnd) {
-                                    weeklyHours += dailyData[dateStr];
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error fetching weekly logs", e);
-                    }
-                    return { ...u, totalStudyHours: weeklyHours };
-                })
-            );
-            
-            const sortedWeeklyUsers = weeklyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
-            setLeaderboardData(sortedWeeklyUsers);
-        }
-
-        const profile = await getUserProfile(user.uid);
-        setUserProfile(profile);
-        setLoading(false);
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      const usersData: Record<string, UserProfile> = {};
+      snapshot.forEach((doc) => {
+        usersData[doc.id] = { uid: doc.id, ...doc.data() } as UserProfile;
+      });
+      setAllUsers(usersData);
+      setLoading(Object.keys(usersData).length === 0);
     });
 
-    // Cleanup listener on component unmount
-    return () => unsubscribe();
+    return () => unsubscribeUsers();
+  }, []);
+
+  // Effect to fetch all study logs and listen for updates
+  React.useEffect(() => {
+    const logsQuery = query(collection(db, 'studyLogs'));
+    const unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
+        const logsData: Record<string, Record<string, number>> = {};
+        snapshot.forEach((doc) => {
+            logsData[doc.id] = doc.data().daily || {};
+        });
+        setStudyLogs(logsData);
+    });
+
+    return () => unsubscribeLogs();
+  }, []);
+
+
+  // Effect to process and sort leaderboard data when users or logs change
+  React.useEffect(() => {
+    if (Object.keys(allUsers).length === 0) return;
+
+    let processedUsers: UserProfile[];
+
+    if (leaderboardType === 'study-hours-all-time') {
+      processedUsers = Object.values(allUsers).sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
+    } else { // weekly
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+      processedUsers = Object.values(allUsers).map(userProfile => {
+        const userLogs = studyLogs[userProfile.uid] || {};
+        let weeklyHours = 0;
+        for (const dateStr in userLogs) {
+          const logDate = new Date(dateStr);
+          if (logDate >= weekStart && logDate <= weekEnd) {
+            weeklyHours += userLogs[dateStr];
+          }
+        }
+        return { ...userProfile, totalStudyHours: weeklyHours };
+      }).sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
+    }
     
-  }, [user, leaderboardType]);
+    setLeaderboardData(processedUsers);
+    
+    if(user && allUsers[user.uid]){
+        setUserProfile(allUsers[user.uid]);
+    }
+    
+    setLoading(false);
+  }, [allUsers, studyLogs, leaderboardType, user]);
 
 
   if (authLoading || !user) {
