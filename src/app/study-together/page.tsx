@@ -15,6 +15,7 @@ import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/fires
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useStudyRoom } from '@/hooks/use-study-room';
+import { RoomParticipantCounter } from '@/components/room-participant-counter';
 
 
 const PUBLIC_ROOM_ID = "public-study-room-v1";
@@ -154,7 +155,8 @@ export default function StudyTogetherPage() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-heading">Study Together</CardTitle>
-              <CardDescription>Create a private room to study with friends or join an existing one.</CardDescription>
+              <CardDescription>Create a private room or join the public one to study with others.</CardDescription>
+              <RoomParticipantCounter />
             </CardHeader>
             <CardContent className="space-y-6">
                <Button onClick={handleJoinPublicRoom} className="w-full" disabled={isJoiningPublic}>
