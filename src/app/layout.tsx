@@ -49,6 +49,8 @@ export default function RootLayout({
             </StudyRoomProvider>
         </AuthProvider>
         <Toaster />
+        <audio id="join-sound" src="/notification.mp3" preload="auto"></audio>
+        <audio id="leave-sound" src="/notification.mp3" preload="auto"></audio>
       </body>
     </html>
   );

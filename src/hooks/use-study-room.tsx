@@ -38,6 +38,32 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const unsubscribeChatRef = useRef<() => void | undefined>();
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const userHasLeftRef = useRef(false);
+    const isInitialJoinRef = useRef(true);
+
+
+    // Effect to play sounds on participant changes
+    useEffect(() => {
+        if (isInitialJoinRef.current) {
+            isInitialJoinRef.current = false;
+            return;
+        }
+
+        const playSound = (soundId: string) => {
+            const sound = document.getElementById(soundId) as HTMLAudioElement;
+            if (sound) {
+                sound.play().catch(error => console.error(`Error playing ${soundId}:`, error));
+            }
+        };
+
+        const prevParticipants = JSON.parse(sessionStorage.getItem('participants') || '[]');
+        if (participants.length > prevParticipants.length) {
+            playSound('join-sound');
+        } else if (participants.length < prevParticipants.length) {
+            playSound('leave-sound');
+        }
+        sessionStorage.setItem('participants', JSON.stringify(participants));
+
+    }, [participants]);
 
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
@@ -92,6 +118,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
 
         userHasLeftRef.current = false;
+        isInitialJoinRef.current = true; // Set flag to prevent sound on initial join
         const roomRef = doc(db, 'studyRooms', roomId);
         const docSnap = await getDoc(roomRef);
 
