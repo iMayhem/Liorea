@@ -48,6 +48,30 @@
     --ring: 217.2 91.2% 59.8%;
   }
 
+  /* Classic Blue Theme */
+  .theme-blue {
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 210 40% 98%;
+  }
+  
+  /* Dark Glass Theme */
   .theme-zinc {
     --background: 240 10% 3.9%;
     --foreground: 210 40% 98%;
@@ -70,26 +94,28 @@
     --ring: 210 40% 98%;
   }
 
-  .theme-rose {
-    --background: 346.8 77.2% 4.9%;
-    --foreground: 345.6 100% 97.4%;
-    --card: 346.8 77.2% 4.9%;
-    --card-foreground: 345.6 100% 97.4%;
-    --popover: 346.8 77.2% 4.9%;
-    --popover-foreground: 345.6 100% 97.4%;
-    --primary: 346.8 77.2% 49.8%;
-    --primary-foreground: 345.6 100% 97.4%;
-    --secondary: 346.8 77.2% 17.5%;
-    --secondary-foreground: 345.6 100% 97.4%;
-    --muted: 346.8 77.2% 17.5%;
-    --muted-foreground: 345.6 100% 65.1%;
-    --accent: 346.8 77.2% 17.5%;
-    --accent-foreground: 345.6 100% 97.4%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 346.8 77.2% 17.5%;
-    --input: 346.8 77.2% 17.5%;
-    --ring: 346.8 77.2% 49.8%;
+  /* 90s Retro Theme */
+  .theme-retro {
+    --background: 192 10% 88%; /* Silver background */
+    --foreground: 0 0% 0%; /* Black text */
+    --card: 192 10% 88%;
+    --card-foreground: 0 0% 0%;
+    --popover: 192 10% 88%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 80%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 210 40% 90%;
+    --muted-foreground: 0 0% 20%;
+    --accent: 210 40% 85%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 50%;
+    --input: 0 0% 100%;
+    --ring: 0 0% 0%;
+    --radius: 0rem;
   }
 }
 
@@ -99,26 +125,44 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  .dark, .theme-zinc {
     background-image: url('https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic.jpg?alt=media&token=7860393d-c6f3-45d5-a6e9-a6ca2a4d06a7');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
   }
   
-  .card {
-     background: rgba(255,255,255,0.1);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
-    @apply border-white/20 shadow-glass;
-  }
-
-  .dark .card {
+  .dark .card, .theme-zinc .card {
     background: rgba(6,6,10,0.25);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     @apply border-white/10;
   }
-
+  
+  .theme-blue body, .theme-retro body {
+     background-image: none;
+  }
+  
+   .theme-retro body {
+      font-family: 'Times New Roman', serif;
+   }
+   .theme-retro .card,
+   .theme-retro .button,
+   .theme-retro input {
+      border: 2px outset #ccc;
+      box-shadow: none;
+      border-radius: 0;
+   }
+   .theme-retro button {
+      background-color: #ccc;
+      border-style: outset;
+      border-width: 2px;
+   }
+    .theme-retro button:active {
+      border-style: inset;
+    }
 }
 
 @layer utilities {
@@ -134,7 +178,6 @@
     border-width: 0;
   }
 }
-
 
 .study-day-modifier:not([aria-selected]) {
     font-weight: bold;

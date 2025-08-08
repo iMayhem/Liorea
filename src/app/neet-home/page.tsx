@@ -138,18 +138,17 @@ export default function NeetHomePage() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setTheme("light")}>
-                        <Sun className="mr-2 h-4 w-4" /> Light
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("dark")}>
-                        <Moon className="mr-2 h-4 w-4" /> Dark
+                        Glassmorphic
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                     <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
-                      Zinc
+                    <DropdownMenuItem onClick={() => setTheme("theme-blue")}>
+                        Classic Blue
                     </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => setTheme("theme-rose")}>
-                      Rose
+                    <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
+                        Dark Glass
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("theme-retro")}>
+                        90s Retro
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
