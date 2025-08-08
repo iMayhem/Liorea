@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { startOfDay, endOfDay } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 
 type LeaderboardData = UserProfile[];
 type LeaderboardType = 'study-hours-daily' | 'study-hours-all-time';
@@ -89,7 +91,7 @@ export default function LeaderboardPage() {
         }
         return { ...userProfile, dailyStudyHours: dailyHours };
       }).sort((a, b) => (b.dailyStudyHours || 0) - (a.dailyStudyHours || 0))
-       .map(user => ({...user, totalStudyHours: user.dailyStudyHours || user.totalStudyHours}));
+       .map(user => ({...user, totalStudyHours: user.dailyStudyHours || 0}));
     }
     
     setLeaderboardData(processedUsers);
@@ -125,30 +127,38 @@ export default function LeaderboardPage() {
             <div className="text-left">
               <h1 className="text-4xl font-bold font-heading">Leaderboard</h1>
               <p className="mt-2 text-muted-foreground">
-                See who's topping the charts today.
+                See who's topping the charts.
               </p>
             </div>
           </div>
 
           <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>Daily Rankings</CardTitle>
-              <CardDescription>
-                Today's leaderboard resets at midnight.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex h-48 items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <Leaderboard
-                  users={leaderboardData}
-                  currentUser={userProfile}
-                />
-              )}
-            </CardContent>
+              <Tabs value={leaderboardType} onValueChange={(value) => setLeaderboardType(value as LeaderboardType)} className="w-full">
+                 <CardHeader className="flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Rankings</CardTitle>
+                        <CardDescription>
+                            {leaderboardType === 'study-hours-daily' ? "Today's leaderboard resets at midnight." : "All-time study champions."}
+                        </CardDescription>
+                    </div>
+                    <TabsList>
+                        <TabsTrigger value="study-hours-daily">Daily</TabsTrigger>
+                        <TabsTrigger value="study-hours-all-time">All-Time</TabsTrigger>
+                    </TabsList>
+                 </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex h-48 items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : (
+                    <Leaderboard
+                      users={leaderboardData}
+                      currentUser={userProfile}
+                    />
+                  )}
+                </CardContent>
+              </Tabs>
           </Card>
         </motion.div>
       </main>
