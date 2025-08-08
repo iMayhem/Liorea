@@ -149,7 +149,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
       <CardHeader className="shrink-0">
         <CardTitle className="flex items-center gap-2 font-heading">
             <MessageSquare className="h-5 w-5"/>

@@ -7,6 +7,7 @@ import {AuthProvider} from '@/hooks/use-auth';
 import {cn} from '@/lib/utils';
 import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
+import { ThemeProvider } from '@/components/theme-provider';
 
 
 const fontSans = Inter({
@@ -37,22 +38,28 @@ export default function RootLayout({
           fontSans.variable,
           fontHeading.variable
         )}
-        style={{ transform: 'scale(0.8)', transformOrigin: 'top left', width: '125%', height: '125%'}}
       >
-        <AuthProvider>
-            <div className="relative flex min-h-screen flex-col">
-                <div className="flex-1">
-                    {children}
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+        >
+            <AuthProvider>
+                <div className="relative flex min-h-screen flex-col">
+                    <div className="flex-1">
+                        {children}
+                    </div>
+                    <PersistentStudyRoomBar />
                 </div>
-                <PersistentStudyRoomBar />
-            </div>
-            <PersistentAmbientSound />
-        </AuthProvider>
-        <Toaster />
-        <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
-        <audio id="leave-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
-        {/* Replace the src with the actual URL to your chat sound file */}
-        <audio id="chat-notification-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fding.mp3?alt=media&token=c71ed344-e701-4c53-8769-8d938141cadc" preload="auto"></audio>
+                <PersistentAmbientSound />
+            </AuthProvider>
+            <Toaster />
+            <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
+            <audio id="leave-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
+            {/* Replace the src with the actual URL to your chat sound file */}
+            <audio id="chat-notification-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fding.mp3?alt=media&token=c71ed344-e701-4c53-8769-8d938141cadc" preload="auto"></audio>
+        </ThemeProvider>
       </body>
     </html>
   );

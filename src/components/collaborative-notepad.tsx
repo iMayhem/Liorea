@@ -26,7 +26,7 @@ export function CollaborativeNotepad({ content, onContentChange }: Collaborative
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-heading">
             <FileText className="h-5 w-5" />
@@ -38,7 +38,7 @@ export function CollaborativeNotepad({ content, onContentChange }: Collaborative
           value={localContent}
           onChange={handleChange}
           placeholder="Type your shared notes here..."
-          className="w-full h-full resize-none text-base"
+          className="w-full h-full resize-none text-base bg-transparent"
         />
       </CardContent>
     </Card>

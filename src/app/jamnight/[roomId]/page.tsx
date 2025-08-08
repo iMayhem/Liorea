@@ -93,6 +93,12 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             if(!player || !data) return;
 
             const currentPlayerState = player.getPlayerState();
+            
+            // Only seek if the difference is significant to avoid jitter
+            if (data.lastSeekTimeSeconds && Math.abs(data.lastSeekTimeSeconds - player.getCurrentTime()) > 2) {
+                player.seekTo(data.lastSeekTimeSeconds, true);
+            }
+
             if (data.playerState === 'PLAYING' && currentPlayerState !== 1) {
                 player.playVideo();
             } else if (data.playerState === 'PAUSED' && currentPlayerState !== 2) {
@@ -121,22 +127,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         };
 
     }, [roomId, user, authLoading, router, toast]);
-
-    // Effect to sync seek time when server time is newer
-    React.useEffect(() => {
-        if (!roomState || !playerRef.current) return;
-        const player = playerRef.current;
-        const serverSeekTime = roomState.lastSeekTimeSeconds;
-        
-        if (player.getCurrentTime) {
-            const localPlayerTime = player.getCurrentTime();
-            // Only seek if the difference is significant to avoid jitter
-            if (Math.abs(serverSeekTime - localPlayerTime) > 2) { 
-                player.seekTo(serverSeekTime, true);
-            }
-        }
-    }, [roomState?.lastSeekTimestamp]); // Only run when the timestamp changes
-
 
     const handleVideoUrlChange = () => {
         const videoId = getYouTubeId(videoUrl);
@@ -174,25 +164,20 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 break;
         }
     };
-
-    // This gets triggered when the user seeks manually
-    const onPlayerSeek = () => {
-        if(playerRef.current?.getCurrentTime) {
-            const currentTime = playerRef.current.getCurrentTime();
-            debouncedSeekUpdate(currentTime);
-        }
-    }
     
     // Interval to sync seek time periodically, since there's no direct 'onSeek' event
     React.useEffect(() => {
         const interval = setInterval(() => {
             // Only the person playing the video should be sending seek updates
             if (playerRef.current && playerRef.current.getPlayerState && playerRef.current.getPlayerState() === 1) { 
-                onPlayerSeek();
+                 if(playerRef.current?.getCurrentTime) {
+                    const currentTime = playerRef.current.getCurrentTime();
+                    debouncedSeekUpdate(currentTime);
+                }
             }
         }, 5000); // Sync every 5 seconds
         return () => clearInterval(interval);
-    }, [onPlayerSeek]);
+    }, [debouncedSeekUpdate]);
 
 
     const handleCopyRoomId = () => {
@@ -253,9 +238,12 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background">
+        <div 
+            className="flex flex-col h-screen bg-cover bg-center" 
+            style={{backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic.jpg?alt=media&token=7860393d-c6f3-45d5-a6e9-a6ca2a4d06a7')"}}
+        >
             <AppHeader />
-             <header className="border-b shrink-0">
+             <header className="border-b shrink-0 bg-background/80 backdrop-blur-sm">
                 <div className="container mx-auto py-3 px-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <Music className="h-6 w-6 text-primary" />
@@ -270,7 +258,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 overflow-auto">
                 <div className="grid lg:grid-cols-3 gap-6 h-full">
                     <div className="lg:col-span-2 flex flex-col gap-6">
-                        <Card className="overflow-hidden">
+                        <Card className="overflow-hidden bg-background/80 backdrop-blur-sm">
                              <div className="aspect-video">
                                  <YouTube
                                     videoId={roomState.currentVideoId}
@@ -288,7 +276,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                                  />
                              </div>
                         </Card>
-                         <Card>
+                         <Card className="bg-background/80 backdrop-blur-sm">
                             <CardHeader>
                                 <CardTitle>Controls</CardTitle>
                             </CardHeader>

@@ -69,9 +69,12 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
   }
   
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div 
+        className="flex flex-col h-screen bg-cover bg-center" 
+        style={{backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic.jpg?alt=media&token=7860393d-c6f3-45d5-a6e9-a6ca2a4d06a7')"}}
+    >
       <AppHeader />
-      <header className="border-b shrink-0">
+      <header className="border-b shrink-0 bg-background/80 backdrop-blur-sm">
          <div className="container mx-auto py-3 px-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
                 <Users className="h-6 w-6 text-primary" />
