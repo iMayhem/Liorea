@@ -354,7 +354,7 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
   let q;
 
   if (type === 'study-hours-all-time') {
-    q = query(usersRef, orderBy('totalStudyHours', 'desc'), limit(50));
+    q = query(usersRef, orderBy('totalStudyHours', 'desc'));
   } else {
     // For weekly, we'll have to fetch all users and calculate on the client.
     // This is not ideal for performance with many users, but necessary without server-side aggregation.
@@ -389,7 +389,7 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
           return { ...user, totalStudyHours: weeklyHours };
       }));
 
-      users = weeklyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0)).slice(0, 50);
+      users = weeklyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
   }
   
   return users;
