@@ -255,7 +255,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     </Button>
                 </div>
             </header>
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 overflow-auto">
+            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 overflow-auto" style={{transform: 'scale(0.8)', transformOrigin: 'top center'}}>
                 <div className="grid lg:grid-cols-3 gap-6 h-full">
                     <div className="lg:col-span-2 flex flex-col gap-6">
                         <Card className="overflow-hidden bg-background/80 backdrop-blur-sm">

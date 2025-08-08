@@ -115,7 +115,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
             </Button>
          </div>
       </header>
-      <main className="flex-1 overflow-auto pb-24">
+      <main className="flex-1 overflow-auto pb-24" style={{transform: 'scale(0.8)', transformOrigin: 'top center'}}>
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column: Timer & Sounds */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">
