@@ -63,9 +63,7 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
   const handleTimerEnd = () => {
      // Only one client should handle the transition
     if (mode === 'study') {
-       if (user) {
-         logStudySession(participants.map(p => p.uid), getDuration('study'));
-       }
+       // Time logging is now handled by the useStudyRoom hook.
        switchMode('shortBreak');
     } else {
        switchMode('study');

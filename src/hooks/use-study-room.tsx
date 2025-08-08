@@ -27,6 +27,8 @@ interface StudyRoomContextType {
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
 
+const TIME_LOG_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
 export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -39,6 +41,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const unsubscribeRoomRef = useRef<() => void | undefined>();
     const unsubscribeChatRef = useRef<() => void | undefined>();
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const logTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
 
@@ -76,9 +79,11 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
         if (unsubscribeChatRef.current) unsubscribeChatRef.current();
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
         unsubscribeRoomRef.current = undefined;
         unsubscribeChatRef.current = undefined;
         timerIntervalRef.current = null;
+        logTimeIntervalRef.current = null;
     }, []);
 
     const leaveRoom = useCallback(async () => {
@@ -130,6 +135,22 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             }
         }
     }, [user, currentRoomId, toast, cleanupListeners]);
+    
+    // Effect for periodic time logging
+    useEffect(() => {
+        if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
+
+        if (currentRoomId && user) {
+            logTimeIntervalRef.current = setInterval(() => {
+                logStudySession([user.uid], TIME_LOG_INTERVAL_MS / 1000);
+            }, TIME_LOG_INTERVAL_MS);
+        }
+
+        return () => {
+            if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
+        }
+    }, [currentRoomId, user]);
+
 
     const joinRoom = useCallback(async (roomId: string) => {
         userHasLeftRef.current = false;
@@ -242,9 +263,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 
                 if (newTime === 0) {
                      if (roomData.timerState.mode === 'study') {
-                        if (user && participants.length > 0) {
-                            logStudySession(participants.map(p => p.uid), getDuration(roomData.timerState));
-                        }
                         handleTimerUpdate({ mode: 'shortBreak', time: getDuration({...roomData.timerState, mode: 'shortBreak'}), isActive: false, startTime: null });
                     } else {
                         handleTimerUpdate({ mode: 'study', time: getDuration({...roomData.timerState, mode: 'study'}), isActive: false, startTime: null });
