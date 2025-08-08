@@ -11,7 +11,7 @@ import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 
 interface GroupChatProps {
