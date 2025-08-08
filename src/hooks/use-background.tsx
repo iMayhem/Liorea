@@ -6,7 +6,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 const backgroundImages = [
   'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic.jpg?alt=media&token=7860393d-c6f3-45d5-a6e9-a6ca2a4d06a7',
   'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic1.jpg?alt=media&token=494ecc4e-13e6-48b1-92f6-ccf90487fc30',
-  'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic3.jpg?alt=media&token=000879b1-2fb8-45cb-a9bb-37da1969a3fd',
   'https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic4.jpg?alt=media&token=869b5209-21f9-4e5e-9caf-154e8bd24b76',
 ];
 
