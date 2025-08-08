@@ -7,6 +7,8 @@ import {AuthProvider} from '@/hooks/use-auth';
 import {cn} from '@/lib/utils';
 import { StudyRoomProvider } from '@/hooks/use-study-room';
 import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
+import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
 
 
 const fontSans = Inter({
@@ -40,12 +42,17 @@ export default function RootLayout({
       >
         <AuthProvider>
             <StudyRoomProvider>
-                <div className="relative flex min-h-screen flex-col">
-                    <div className="flex-1">
-                        {children}
+                <SidebarProvider>
+                    <div className="relative flex min-h-screen flex-col">
+                        <PersistentStudyRoomBar />
+                        <SidebarInset>
+                            <div className="flex-1">
+                                {children}
+                            </div>
+                        </SidebarInset>
                     </div>
-                    <PersistentStudyRoomBar />
-                </div>
+                    <PersistentAmbientSound />
+                </SidebarProvider>
             </StudyRoomProvider>
         </AuthProvider>
         <Toaster />

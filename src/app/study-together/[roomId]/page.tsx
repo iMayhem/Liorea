@@ -15,7 +15,6 @@ import { GroupChat } from '@/components/group-chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useStudyRoom } from '@/hooks/use-study-room';
-import { AmbientSoundPlayer } from '@/components/ambient-sound-player';
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
@@ -107,7 +106,6 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
             {/* Left Column: Timer & Sounds */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">
                 {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} participants={participants} />}
-                <AmbientSoundPlayer />
             </motion.div>
             
             {/* Middle Column: Notepad */}

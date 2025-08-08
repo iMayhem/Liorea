@@ -4,8 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, MessageSquare, ExternalLink, Volume2, VolumeX } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, MessageSquare } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -13,8 +12,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import Link from 'next/link';
-import { PersistentAmbientSound } from './persistent-ambient-sound';
 import { Slider } from './ui/slider';
+import { AnimatePresence } from 'framer-motion';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from './ui/sidebar';
+import { AppLogo } from './icons';
 
 function formatTime(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -24,44 +25,93 @@ function formatTime(seconds: number) {
 }
 
 export function PersistentStudyRoomBar() {
-  const { currentRoomId, leaveRoom, roomData, displayTime, participants, volume, setVolume, isMuted, setIsMuted } = useStudyRoom();
+  const { currentRoomId, leaveRoom, roomData, displayTime, participants, volume, setVolume, isMuted, setIsMuted, handleSoundChange, activeSound } = useStudyRoom();
+  const { setOpen } = useSidebar();
 
-  const hasActiveSound = roomData?.activeSound && roomData.activeSound !== 'none';
+  React.useEffect(() => {
+    if (currentRoomId) {
+        setOpen(true);
+    } else {
+        setOpen(false);
+    }
+  }, [currentRoomId, setOpen]);
+
+
+  const hasActiveSound = activeSound && activeSound !== 'none';
+
+  if (!currentRoomId || !roomData) {
+    return null;
+  }
 
   return (
-    <>
-    <PersistentAmbientSound />
-    <AnimatePresence>
-      {currentRoomId && roomData && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          exit={{ y: 100 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="sticky bottom-0 left-0 right-0 z-50"
-        >
-            <div className="container mx-auto p-2">
-                <div className="bg-card border border-border/50 rounded-lg shadow-lg p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div>
-                             <p className="text-sm font-bold font-heading">Study Room</p>
-                             <p className="text-xs text-muted-foreground">{currentRoomId === 'public-study-room-v1' ? 'Public Room' : 'Private Room'}</p>
-                        </div>
-                         <TooltipProvider>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                 <Users className="h-4 w-4" />
-                                 <span>{participants.length}</span>
-                            </div>
-                         </TooltipProvider>
+    <Sidebar>
+        <SidebarContent>
+            <SidebarHeader>
+                <div className="flex items-center gap-2">
+                    <AppLogo className="size-6" />
+                    <div className="flex flex-col">
+                        <span className="text-lg font-semibold tracking-tight">
+                            Study Room
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            {currentRoomId === 'public-study-room-v1' ? 'Public Room' : 'Private Room'}
+                        </span>
+                    </div>
+                </div>
+            </SidebarHeader>
 
-                         <div className="flex items-center gap-2 text-sm text-primary font-mono">
+            <SidebarMenu>
+                 <SidebarMenuItem>
+                    <div className="w-full flex flex-col gap-2 p-2 rounded-lg bg-secondary/50 text-center">
+                         <div className="flex items-center justify-center gap-2 text-sm text-primary font-mono">
                             <Clock className="h-4 w-4" />
                             <span>{formatTime(displayTime)}</span>
                         </div>
+                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                            <span>{participants.length} Participants</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {hasActiveSound && (
-                             <div className="flex items-center gap-2">
+                </SidebarMenuItem>
+
+                <SidebarGroup>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Open Chat & Notepad">
+                             <Link href={`/study-together/${currentRoomId}`}>
+                                 <MessageSquare />
+                                 <span>Room Details</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarMenuItem>
+                        <Button
+                            variant={activeSound === 'rain' ? 'secondary' : 'ghost'}
+                            onClick={() => handleSoundChange(activeSound === 'rain' ? 'none' : 'rain')}
+                            className="w-full justify-start"
+                        >
+                            <CloudRain className="mr-2 h-4 w-4" />
+                            Rain
+                        </Button>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                         <Button
+                            variant={activeSound === 'fire' ? 'secondary' : 'ghost'}
+                            onClick={() => handleSoundChange(activeSound === 'fire' ? 'none' : 'fire')}
+                            className="w-full justify-start"
+                        >
+                            <Flame className="mr-2 h-4 w-4" />
+                            Fire
+                        </Button>
+                    </SidebarMenuItem>
+                </SidebarGroup>
+                
+                {hasActiveSound && (
+                    <SidebarGroup>
+                        <SidebarMenuItem>
+                            <div className="flex items-center gap-2 w-full p-2">
                                 <button onClick={() => setIsMuted(!isMuted)}>
                                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                                 </button>
@@ -73,42 +123,23 @@ export function PersistentStudyRoomBar() {
                                     }}
                                     max={100}
                                     step={1}
-                                    className="w-24"
+                                    className="flex-1"
                                 />
                             </div>
-                        )}
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button asChild size="icon" variant="ghost">
-                                        <Link href={`/study-together/${currentRoomId}`}>
-                                             <MessageSquare className="h-5 w-5"/>
-                                        </Link>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                <p>Open Chat & Notepad</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button size="icon" variant="destructive" onClick={leaveRoom}>
-                                        <PhoneOff className="h-5 w-5"/>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                <p>Leave Room</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-    </>
+                        </SidebarMenuItem>
+                    </SidebarGroup>
+                )}
+
+
+                 <SidebarMenuItem className="mt-auto">
+                    <Button size="sm" variant="destructive" onClick={leaveRoom} className="w-full">
+                        <PhoneOff className="mr-2 h-4 w-4"/>
+                        Leave Room
+                    </Button>
+                 </SidebarMenuItem>
+
+            </SidebarMenu>
+        </SidebarContent>
+    </Sidebar>
   );
 }
