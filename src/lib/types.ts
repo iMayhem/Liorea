@@ -96,6 +96,12 @@ export interface Notepads {
   [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...', owner: null }, notepad1: {...} }
 }
 
+export interface ScreenShareStream {
+  userId: string;
+  stream: MediaStream;
+  username: string;
+}
+
 export interface StudyRoom {
     id: string;
     ownerId: string;

@@ -5,12 +5,12 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TimerState, ChatMessage, Participant, SoundType, Notepads } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant, SoundType, Notepads, ScreenShareStream } from '@/lib/types';
 import { logStudySession, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 
-const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
+const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2', 'screenshare'];
 
 interface StudyRoomContextType {
     currentRoomId: string | null;
@@ -38,6 +38,9 @@ interface StudyRoomContextType {
     notepads: Notepads;
     activeNotepadId: string;
     claimNotepad: () => void;
+    isScreenSharing: boolean;
+    toggleScreenShare: () => void;
+    localScreenStream: MediaStream | null;
 }
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
@@ -58,6 +61,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [volume, setVolume] = React.useState(0.5);
     const [isMuted, setIsMuted] = React.useState(false);
     const [isFocusMode, setIsFocusMode] = React.useState(false);
+
+    // Screen share state
+    const [localScreenStream, setLocalScreenStream] = useState<MediaStream | null>(null);
+    const isScreenSharing = localScreenStream !== null;
 
     // Notepad state
     const [notepads, setNotepads] = useState<Notepads>({});
@@ -103,6 +110,48 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     }, [participants, currentRoomId]);
 
+    const stopScreenShare = useCallback(() => {
+        if (localScreenStream) {
+            localScreenStream.getTracks().forEach(track => track.stop());
+            setLocalScreenStream(null);
+            // If the user was on the screenshare tab, switch them back to collaborative
+            if (activeNotepadId === 'screenshare') {
+                setActiveNotepadId('collaborative');
+            }
+        }
+    }, [localScreenStream, activeNotepadId]);
+    
+    const toggleScreenShare = useCallback(async () => {
+        if (isScreenSharing) {
+            stopScreenShare();
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        height: { ideal: 360 },
+                        width: { ideal: 640 }
+                    },
+                    audio: true
+                });
+                setLocalScreenStream(stream);
+                setActiveNotepadId('screenshare'); // Switch to the screenshare tab
+
+                 // Add a listener for when the user clicks the browser's "Stop sharing" button
+                stream.getVideoTracks()[0].addEventListener('ended', () => {
+                    stopScreenShare();
+                });
+            } catch (err) {
+                console.error("Error starting screen share:", err);
+                toast({
+                    title: "Screen Share Error",
+                    description: "Could not start screen sharing. Please ensure you have given the necessary permissions.",
+                    variant: "destructive"
+                });
+            }
+        }
+    }, [isScreenSharing, stopScreenShare, toast]);
+
+
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
         if (unsubscribeChatRef.current) unsubscribeChatRef.current();
@@ -118,6 +167,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         if (!user || !currentRoomId) return;
         userHasLeftRef.current = true;
         
+        stopScreenShare(); // Stop screen sharing when leaving a room
         const leavingRoomId = currentRoomId;
         const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
         
@@ -161,7 +211,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 toast({ title: "Error", description: "Could not leave the room properly.", variant: "destructive" });
             }
         }
-    }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
+    }, [user, currentRoomId, toast, cleanupListeners, pathname, router, stopScreenShare]);
     
     // Effect for periodic time logging
     useEffect(() => {
@@ -371,10 +421,11 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     }, [user, currentRoomId, activeNotepadId, notepads]);
 
     const cycleNotepad = useCallback(() => {
-        const currentIndex = NOTEPAD_IDS.indexOf(activeNotepadId);
-        const nextIndex = (currentIndex + 1) % NOTEPAD_IDS.length;
-        setActiveNotepadId(NOTEPAD_IDS[nextIndex]);
-    }, [activeNotepadId]);
+        const availableNotepads = isScreenSharing ? NOTEPAD_IDS : NOTEPAD_IDS.filter(id => id !== 'screenshare');
+        const currentIndex = availableNotepads.indexOf(activeNotepadId);
+        const nextIndex = (currentIndex + 1) % availableNotepads.length;
+        setActiveNotepadId(availableNotepads[nextIndex]);
+    }, [activeNotepadId, isScreenSharing]);
 
 
     // Other handlers
@@ -456,6 +507,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         notepads,
         activeNotepadId,
         claimNotepad,
+        isScreenSharing,
+        toggleScreenShare,
+        localScreenStream,
     };
 
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;

@@ -4,11 +4,13 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, RotateCw, Pencil, Check, User, Users } from 'lucide-react';
+import { FileText, RotateCw, Pencil, Check, User, Users, Monitor } from 'lucide-react';
 import type { Notepad } from '@/lib/types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { useAuth } from '@/hooks/use-auth';
+import { useStudyRoom } from '@/hooks/use-study-room';
+import { SharedScreen } from './shared-screen';
 
 interface CollaborativeNotepadProps {
   activeNotepadId: string;
@@ -28,20 +30,24 @@ export function CollaborativeNotepad({
     onClaimNotepad,
 }: CollaborativeNotepadProps) {
   const { user } = useAuth();
+  const { localScreenStream, isScreenSharing } = useStudyRoom();
+
   const [localContent, setLocalContent] = React.useState(notepad?.content || '');
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [localName, setLocalName] = React.useState(notepad?.name || '');
   const nameInputRef = React.useRef<HTMLInputElement>(null);
-
+  
+  const isScreenShareTab = activeNotepadId === 'screenshare';
+  
   const isOwner = user && notepad?.owner === user.uid;
   const isCollaborative = activeNotepadId === 'collaborative';
   const isUnclaimed = !notepad?.owner;
-  const canEditContent = isCollaborative || isOwner || (isUnclaimed && activeNotepadId !== 'collaborative');
-  const canEditName = activeNotepadId !== 'collaborative' && (isOwner || isUnclaimed);
+  const canEditContent = isCollaborative || isOwner || (isUnclaimed && activeNotepadId !== 'collaborative' && !isScreenShareTab);
+  const canEditName = activeNotepadId !== 'collaborative' && activeNotepadId !== 'screenshare' && (isOwner || isUnclaimed);
 
   React.useEffect(() => {
     setLocalContent(notepad?.content || '');
-    setLocalName(notepad?.name || '');
+    setLocalName(notepad?.name || 'Screen Share'); // Default name for screenshare tab
     setIsEditingName(false); // Reset editing state on notepad change
   }, [activeNotepadId, notepad]);
   
@@ -99,14 +105,20 @@ export function CollaborativeNotepad({
     }
   }
 
-  const NotepadIcon = isCollaborative ? Users : User;
+  const getNotepadIcon = () => {
+    switch(activeNotepadId) {
+        case 'collaborative': return <Users className="h-5 w-5" />;
+        case 'screenshare': return <Monitor className="h-5 w-5" />;
+        default: return <User className="h-5 w-5" />;
+    }
+  };
   
   return (
     <Card className="h-full flex flex-col bg-background/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-2 font-heading">
            <div className="flex items-center gap-2">
-             <NotepadIcon className="h-5 w-5" />
+             {getNotepadIcon()}
              {isEditingName && canEditName ? (
                 <Input 
                     ref={nameInputRef}
@@ -117,7 +129,7 @@ export function CollaborativeNotepad({
                     className="h-8 text-lg font-heading"
                 />
              ) : (
-                <span>{notepad?.name || 'Notepad'}</span>
+                <span>{isScreenShareTab ? 'Screen Share' : (notepad?.name || 'Notepad')}</span>
              )}
            </div>
            <div className="flex items-center gap-1">
@@ -135,13 +147,17 @@ export function CollaborativeNotepad({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-2">
-          <Textarea
-              value={localContent}
-              onChange={handleChange}
-              placeholder={canEditContent ? "Type your notes here..." : "This notepad is read-only."}
-              className="w-full h-full resize-none text-base bg-transparent border-0 focus-visible:ring-0"
-              disabled={!canEditContent}
-          />
+          {isScreenShareTab ? (
+              <SharedScreen stream={localScreenStream} />
+          ) : (
+            <Textarea
+                value={localContent}
+                onChange={handleChange}
+                placeholder={canEditContent ? "Type your notes here..." : "This notepad is read-only."}
+                className="w-full h-full resize-none text-base bg-transparent border-0 focus-visible:ring-0"
+                disabled={!canEditContent}
+            />
+          )}
       </CardContent>
     </Card>
   );
