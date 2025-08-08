@@ -3,25 +3,18 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, arrayUnion, arrayRemove, getDoc, DocumentData, writeBatch, getDocs, setDoc, deleteField } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
 import { Loader2, Users, Clipboard } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { TimerState, ChatMessage, Participant } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SharedPomodoroTimer } from '@/components/shared-pomodoro-timer';
 import { CollaborativeNotepad } from '@/components/collaborative-notepad';
 import { GroupChat } from '@/components/group-chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useStudyRoom } from '@/hooks/use-study-room';
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
@@ -30,12 +23,9 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-
-  const [loading, setLoading] = React.useState(true);
-  const [roomData, setRoomData] = React.useState<DocumentData | null>(null);
-  const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
-  const [participants, setParticipants] = React.useState<Participant[]>([]);
-  const userHasLeftRef = React.useRef(false);
+  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping } = useStudyRoom(roomId);
+  
+  const [isJoining, setIsJoining] = React.useState(true);
 
   React.useEffect(() => {
     if (authLoading) return;
@@ -43,112 +33,25 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
         router.push('/login');
         return;
     }
-  
-    const roomRef = doc(db, 'studyRooms', roomId);
-  
-    const joinAndSubscribe = async () => {
-      try {
-        const docSnap = await getDoc(roomRef);
-    
-        if (!docSnap.exists()) {
-          toast({
-            title: "Room not found",
-            description: "This study room does not exist.",
-            variant: "destructive"
-          });
-          router.push('/study-together');
-          return;
-        }
-        
-        const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-        await updateDoc(roomRef, {
-          participants: arrayUnion(newParticipant)
-        });
-    
-        const unsubscribeRoom = onSnapshot(roomRef, (snap) => {
-          if (snap.exists()) {
-            const data = snap.data();
-            setRoomData(data);
-            setParticipants(data.participants || []);
-          } else {
-             if (!userHasLeftRef.current) {
-              toast({ title: "Room Closed", description: "The study room was deleted.", variant: "destructive" });
-              router.push('/study-together');
-             }
-          }
-        });
-    
-        const chatQuery = query(collection(db, 'studyRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
-        const unsubscribeChat = onSnapshot(chatQuery, (querySnapshot) => {
-          const messages: ChatMessage[] = [];
-          querySnapshot.forEach((doc) => {
-            messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
-          });
-          setChatMessages(messages);
-        });
-    
-        setLoading(false);
-    
-        return () => {
-          unsubscribeRoom();
-          unsubscribeChat();
-        };
-      } catch (error) {
-          console.error("Failed to join room:", error);
-          toast({ title: "Error", description: "Could not join the study room.", variant: "destructive" });
-          router.push('/study-together');
-      }
-    };
-  
-    let cleanupPromise = joinAndSubscribe();
-  
-    const handleLeave = async () => {
-        if (user && !userHasLeftRef.current) {
-            userHasLeftRef.current = true; // Prevent multiple leave operations
-            const roomRef = doc(db, 'studyRooms', roomId);
 
-            // Remove user from typing list on leave
-            const typingField = `typingUsers.${user.uid}`;
-            await updateDoc(roomRef, { [typingField]: deleteField() }).catch(err => console.error("Error removing typing indicator:", err));
-
-            // Check if user is the last one
-            const currentParticipants = (await getDoc(roomRef)).data()?.participants || [];
-            if(currentParticipants.length <= 1 && currentParticipants[0]?.uid === user.uid) {
-                // Delete subcollections and then the room document
-                const deleteRoom = async () => {
-                    const chatRef = collection(db, 'studyRooms', roomId, 'chats');
-                    const chatSnapshot = await getDocs(chatRef);
-                    const batch = writeBatch(db);
-                    chatSnapshot.forEach(doc => {
-                        batch.delete(doc.ref);
-                    });
-                    batch.delete(roomRef);
-                    await batch.commit();
-                }
-                deleteRoom();
-
-            } else {
-                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-                 await updateDoc(roomRef, {
-                    participants: arrayRemove(userParticipant)
-                }).catch(err => console.error("Error removing participant:", err));
-            }
+    const performJoin = async () => {
+        setIsJoining(true);
+        const success = await joinRoom(roomId);
+        if (!success) {
+            toast({
+                title: "Room not found",
+                description: "This study room does not exist.",
+                variant: "destructive"
+            });
+            router.push('/study-together');
         }
-         if (cleanupPromise) {
-            const cleanup = await cleanupPromise;
-            if(cleanup) cleanup();
-        }
+        setIsJoining(false);
     }
 
+    performJoin();
 
-    window.addEventListener('beforeunload', handleLeave);
+  }, [roomId, user, authLoading, router, toast, joinRoom]);
 
-    return () => {
-      handleLeave();
-      window.removeEventListener('beforeunload', handleLeave);
-    };
-  }, [roomId, user, authLoading, router, toast]);
-  
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
@@ -158,58 +61,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     });
   };
 
-  const handleTimerUpdate = async (newState: Partial<TimerState>) => {
-    if (!roomData) return;
-    const roomRef = doc(db, 'studyRooms', roomId);
-    await updateDoc(roomRef, { timerState: { ...roomData.timerState, ...newState } });
-  };
-  
-  const handleNotepadChange = async (content: string) => {
-    const roomRef = doc(db, 'studyRooms', roomId);
-    await updateDoc(roomRef, { notepadContent: content });
-  };
-  
-  const handleSendMessage = async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
-    if (!user) return;
-    const roomRef = doc(db, 'studyRooms', roomId);
-    const chatCollectionRef = collection(roomRef, 'chats');
-    
-    if(!message.text && !message.imageUrl) return;
-
-    const messageData: any = {
-      text: message.text,
-      imageUrl: message.imageUrl || null,
-      senderId: user.uid,
-      senderName: user.username,
-      timestamp: serverTimestamp(),
-    };
-
-    if (replyTo) {
-      messageData.replyToId = replyTo.id;
-      messageData.replyToText = replyTo.text;
-    }
-    
-    await addDoc(chatCollectionRef, messageData);
-  };
-  
-  const handleTyping = async (isTyping: boolean) => {
-    if (!user || !user.username) return;
-    const roomRef = doc(db, 'studyRooms', roomId);
-    const typingField = `typingUsers.${user.uid}`;
-
-    if (isTyping) {
-        await updateDoc(roomRef, {
-            [typingField]: user.username
-        });
-    } else {
-        await updateDoc(roomRef, {
-            [typingField]: deleteField()
-        });
-    }
-  };
-
-
-  if (authLoading || loading || !roomData) {
+  if (authLoading || isJoining || !roomData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

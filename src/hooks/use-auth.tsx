@@ -61,6 +61,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
   };
 
   const logout = async () => {
+    // leaveRoom is now handled by the useStudyRoom hook's own effect on user change.
     setLoading(true);
     try {
         await signOut(auth);

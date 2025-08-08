@@ -1,9 +1,13 @@
+// src/app/layout.tsx
 import type {Metadata} from 'next';
 import {Inter, Space_Grotesk} from 'next/font/google';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import {AuthProvider} from '@/hooks/use-auth';
 import {cn} from '@/lib/utils';
+import { StudyRoomProvider } from '@/hooks/use-study-room';
+import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
+
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -35,7 +39,14 @@ export default function RootLayout({
         )}
       >
         <AuthProvider>
-          {children}
+            <StudyRoomProvider>
+                <div className="relative flex min-h-screen flex-col">
+                    <div className="flex-1">
+                        {children}
+                    </div>
+                    <PersistentStudyRoomBar />
+                </div>
+            </StudyRoomProvider>
         </AuthProvider>
         <Toaster />
       </body>

@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -14,12 +14,15 @@ import { motion } from 'framer-motion';
 import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+import { useStudyRoom } from '@/hooks/use-study-room';
+
 
 const PUBLIC_ROOM_ID = "public-study-room-v1";
 
 export default function StudyTogetherPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { joinRoom } = useStudyRoom();
   const [roomId, setRoomId] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
   const [isJoining, setIsJoining] = React.useState(false);
@@ -36,7 +39,6 @@ export default function StudyTogetherPage() {
     if (!user) return;
     setIsCreating(true);
     try {
-      // Create a new document reference with an auto-generated ID
       const newRoomRef = doc(collection(db, 'studyRooms'));
       await setDoc(newRoomRef, {
         createdAt: serverTimestamp(),
@@ -50,7 +52,7 @@ export default function StudyTogetherPage() {
           shortBreakDuration: 5,
           longBreakDuration: 15,
         },
-        participants: [], // Start with an empty participants list
+        participants: [],
         typingUsers: {},
       });
       router.push(`/study-together/${newRoomRef.id}`);
@@ -65,14 +67,13 @@ export default function StudyTogetherPage() {
     }
   };
 
-  const joinRoom = async (id: string) => {
+  const doJoinRoom = async (id: string) => {
     const roomRef = doc(db, 'studyRooms', id);
     const roomSnap = await getDoc(roomRef);
 
     if (roomSnap.exists()) {
       router.push(`/study-together/${id}`);
     } else {
-      // If public room doesn't exist, create it
       if (id === PUBLIC_ROOM_ID) {
           await setDoc(roomRef, {
             createdAt: serverTimestamp(),
@@ -99,7 +100,7 @@ export default function StudyTogetherPage() {
     if (!roomId.trim() || !user) return;
     setIsJoining(true);
     try {
-       await joinRoom(roomId.trim());
+       await doJoinRoom(roomId.trim());
     } catch (error) {
         console.error("Error joining room: ", error);
         toast({
@@ -116,7 +117,7 @@ export default function StudyTogetherPage() {
     if (!user) return;
     setIsJoiningPublic(true);
      try {
-       await joinRoom(PUBLIC_ROOM_ID);
+       await doJoinRoom(PUBLIC_ROOM_ID);
     } catch (error) {
         console.error("Error joining public room: ", error);
         toast({
@@ -142,7 +143,7 @@ export default function StudyTogetherPage() {
       <AppHeader />
       <main className="flex-1 container mx-auto flex items-center justify-center p-4">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
