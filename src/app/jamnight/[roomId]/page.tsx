@@ -7,14 +7,18 @@ import YouTube from 'react-youtube';
 import type { YouTubePlayer } from 'react-youtube';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
-import { Loader2, Music, Clipboard } from 'lucide-react';
+import { Loader2, Music, Clipboard, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { doc, onSnapshot, updateDoc, getDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc, arrayUnion, arrayRemove, serverTimestamp, collection, addDoc, query, orderBy, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useDebouncedCallback } from 'use-debounce';
+import type { ChatMessage } from '@/lib/types';
+import { GroupChat } from '@/components/group-chat';
+import { Label } from '@/components/ui/label';
+
 
 type PlayerState = 'PLAYING' | 'PAUSED' | 'BUFFERING';
 
@@ -23,6 +27,7 @@ interface JamRoomState {
     playerState: PlayerState;
     lastSeekTimestamp: any;
     lastSeekTimeSeconds: number;
+    typingUsers?: { [uid: string]: string };
 }
 
 export default function JamRoomPage({ params }: { params: { roomId: string } }) {
@@ -35,6 +40,8 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     const [videoUrl, setVideoUrl] = React.useState('');
     const playerRef = React.useRef<YouTubePlayer | null>(null);
     const isLocalChangeRef = React.useRef(false); // To prevent feedback loops
+    const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
+
 
     // Function to parse YouTube video ID from URL
     const getYouTubeId = (url: string) => {
@@ -63,6 +70,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         if (authLoading || !user) return;
 
         const roomRef = doc(db, 'jamRooms', roomId);
+        const chatQuery = query(collection(db, 'jamRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
 
         // Check if room exists
         getDoc(roomRef).then(async (docSnap) => {
@@ -75,18 +83,28 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: user.username }) });
         });
 
-        const unsubscribe = onSnapshot(roomRef, (doc) => {
+        const unsubscribeRoom = onSnapshot(roomRef, (doc) => {
             if (isLocalChangeRef.current) return;
             const data = doc.data() as JamRoomState;
             setRoomState(data);
         });
+
+        const unsubscribeChat = onSnapshot(chatQuery, (snapshot) => {
+            const messages: ChatMessage[] = [];
+            snapshot.forEach((doc) => messages.push({ id: doc.id, ...doc.data() } as ChatMessage));
+            setChatMessages(messages);
+        });
         
         // Cleanup on unmount
         return () => {
-            unsubscribe();
-             getDoc(roomRef).then(docSnap => {
+            unsubscribeRoom();
+            unsubscribeChat();
+            getDoc(roomRef).then(docSnap => {
                 if(docSnap.exists()) {
-                     updateDoc(roomRef, { participants: arrayRemove({ uid: user.uid, username: user.username }) });
+                     updateDoc(roomRef, { 
+                         participants: arrayRemove({ uid: user.uid, username: user.username }),
+                         [`typingUsers.${user.uid}`]: deleteField()
+                     });
                 }
             })
         };
@@ -108,9 +126,11 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
         // Sync seek time
         const serverSeekTime = roomState.lastSeekTimeSeconds;
-        const localPlayerTime = player.getCurrentTime();
-        if (Math.abs(serverSeekTime - localPlayerTime) > 2) { // 2-second tolerance
-            player.seekTo(serverSeekTime, true);
+        if(player.getCurrentTime) {
+            const localPlayerTime = player.getCurrentTime();
+            if (Math.abs(serverSeekTime - localPlayerTime) > 2) { // 2-second tolerance
+                player.seekTo(serverSeekTime, true);
+            }
         }
 
     }, [roomState]);
@@ -151,7 +171,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     // Interval to sync seek time periodically, since there's no direct 'onSeek' event
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (playerRef.current && playerRef.current.getPlayerState() === 1) { // is playing
+            if (playerRef.current && playerRef.current.getPlayerState && playerRef.current.getPlayerState() === 1) { // is playing
                 onPlayerSeek();
             }
         }, 5000); // Sync every 5 seconds
@@ -166,8 +186,49 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             description: "You can now share it with your friends.",
         });
     };
+    
+     const handleSendMessage = async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
+        if (!user || !roomId) return;
+        const chatCollectionRef = collection(db, 'jamRooms', roomId, 'chats');
+        
+        if(!message.text && !message.imageUrl) return;
 
-    if (authLoading || !roomState) {
+        const messageData: any = {
+          text: message.text,
+          imageUrl: message.imageUrl || null,
+          senderId: user.uid,
+          senderName: user.username,
+          timestamp: serverTimestamp(),
+        };
+
+        if (replyTo) {
+          messageData.replyToId = replyTo.id;
+          messageData.replyToText = replyTo.text;
+        }
+        
+        await addDoc(chatCollectionRef, messageData);
+    };
+
+    const handleTyping = async (isTyping: boolean) => {
+        if (!user || !user.username || !roomId) return;
+        const roomRef = doc(db, 'jamRooms', roomId);
+        const typingField = `typingUsers.${user.uid}`;
+
+        try {
+            if (isTyping) {
+                await updateDoc(roomRef, { [typingField]: user.username });
+            } else {
+                await updateDoc(roomRef, { [typingField]: deleteField() });
+            }
+        } catch(error) {
+             if ((error as any).code !== 'not-found') {
+                console.error("Failed to update typing status:", error);
+            }
+        }
+    };
+
+
+    if (authLoading || !roomState || !user) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -190,9 +251,9 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     </Button>
                 </div>
             </header>
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-                <div className="grid md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2">
+            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 overflow-auto">
+                <div className="grid lg:grid-cols-3 gap-6 h-full">
+                    <div className="lg:col-span-2 flex flex-col gap-6">
                         <Card className="overflow-hidden">
                              <div className="aspect-video">
                                  <YouTube
@@ -211,9 +272,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                                  />
                              </div>
                         </Card>
-                    </div>
-                    <div className="md:col-span-1">
-                        <Card>
+                         <Card>
                             <CardHeader>
                                 <CardTitle>Controls</CardTitle>
                             </CardHeader>
@@ -236,8 +295,18 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                             </CardContent>
                         </Card>
                     </div>
+                    <div className="lg:col-span-1 h-full flex flex-col min-h-[400px] lg:min-h-0">
+                         <GroupChat 
+                            messages={chatMessages} 
+                            onSendMessage={handleSendMessage} 
+                            currentUserId={user!.uid} 
+                            onTyping={handleTyping}
+                            typingUsers={roomState.typingUsers || {}}
+                        />
+                    </div>
                 </div>
             </main>
         </div>
     );
 }
+    

@@ -42,6 +42,7 @@ export default function JamnightPage() {
         lastSeekTimestamp: serverTimestamp(),
         lastSeekTimeSeconds: 0,
         participants: [],
+        typingUsers: {}, // Initialize for chat
       });
       router.push(`/jamnight/${newRoomRef.id}`);
     } catch (error) {
@@ -155,3 +156,4 @@ export default function JamnightPage() {
     </div>
   );
 }
+    
