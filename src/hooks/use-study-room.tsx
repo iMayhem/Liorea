@@ -121,11 +121,11 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         setIsLeaving(true);
         userHasLeftRef.current = true;
+        
+        const wasInRoomPage = pathname.includes(`/study-together/${currentRoomId}`);
         const leavingRoomId = currentRoomId;
-        const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
 
-        // --- Start of Fix ---
-        // 1. Immediately clear the local state that controls the UI
+        // 1. Immediately update UI and redirect
         setCurrentRoomId(null); 
         setRoomData(null);
         setChatMessages([]);
@@ -133,14 +133,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setIsFocusMode(false);
         cleanupListeners();
         
-        // 2. Redirect if necessary
-        if (wasInRoomPage) {
-            router.push('/study-together');
-        }
-        // --- End of Fix ---
-        
+        router.push('/');
+
+        // 2. Perform background cleanup
         try {
-            // 3. Perform background cleanup
             await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
