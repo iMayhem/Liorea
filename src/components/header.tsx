@@ -2,10 +2,10 @@
 'use client';
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
-import { ArrowLeft, LogOut, Timer, Users, Trophy, Palette, Sun, Moon } from "lucide-react";
+import { ArrowLeft, LogOut, Timer, Users, Trophy, Palette, Sun, Moon, Home } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useStudyRoom } from "@/hooks/use-study-room";
 import {
@@ -20,12 +20,14 @@ import { useTheme } from "next-themes"
 export function AppHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { setTheme } = useTheme();
+  const pathname = usePathname();
 
   const handleBack = () => {
     router.back();
   };
   
+  const isHomePage = ['/neet-achiever-home', '/neet-home', '/jee-home', '/'].includes(pathname);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -37,10 +39,18 @@ export function AppHeader() {
         </div>
         {user && <p className="text-sm text-muted-foreground">Signed in as {user.username}</p>}
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <Button onClick={handleBack} variant="ghost" size="sm">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-           </Button>
+           {!isHomePage && (
+             <Button onClick={handleBack} variant="ghost" size="sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+             </Button>
+           )}
+           <Button asChild variant="outline" size="sm">
+              <Link href="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+              </Link>
+          </Button>
             {user && (
               <>
                 <Button asChild variant="outline" size="sm">

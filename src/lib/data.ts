@@ -16,7 +16,7 @@ export const testSchedule: Test[] = [
     { name: 'Minor Test-12', date: 'March 1, 2026' },
 ];
 
-const schedule: {[key: number]: Subject[]} = {
+const achieverSchedule: {[key: number]: Subject[]} = {
   0: [{name: 'Short Notes'}, {name: 'Full Week Revision'}], // Sunday
   1: [ // Monday
     {name: '12th Physics'},
@@ -56,25 +56,49 @@ const schedule: {[key: number]: Subject[]} = {
   ],
 };
 
+const neetOtherSchedule: Subject[] = [
+    {name: 'Physics'},
+    {name: 'Chemistry'},
+    {name: 'Biology'},
+    {name: 'Backlog'},
+];
 
-export const generateTimeTableForDate = (dateKey: string): TimeTableData => {
+const jeeSchedule: Subject[] = [
+    {name: 'Physics'},
+    {name: 'Chemistry'},
+    {name: 'Maths'},
+    {name: 'Backlog'},
+];
+
+
+export const generateTimeTableForDate = (dateKey: string, path?: string): TimeTableData => {
   // The dateKey is in "MMMM d, yyyy" format. We parse it to get a Date object.
   const date = parse(dateKey, 'MMMM d, yyyy', new Date());
 
-  // Check if it's a test day
-  const testForDay = testSchedule.find(test => test.date === dateKey);
-  if (testForDay) {
-    return {
-      [dateKey]: [{name: testForDay.name}],
-    }
+  // Check if it's a test day for NEET Achiever batch
+  if (path === 'neet-achiever') {
+      const testForDay = testSchedule.find(test => test.date === dateKey);
+      if (testForDay) {
+        return {
+          [dateKey]: [{name: testForDay.name}],
+        }
+      }
+      const dayOfWeek = getDay(date);
+      return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
+  }
+  
+  if (path === 'neet-other') {
+      return { [dateKey]: neetOtherSchedule };
   }
 
-  // getDay() returns the day of the week, where Sunday is 0, Monday is 1, etc.
-  const dayOfWeek = getDay(date);
+  if (path === 'jee') {
+      return { [dateKey]: jeeSchedule };
+  }
 
-  return {
-    [dateKey]: schedule[dayOfWeek] || [],
-  };
+  // Fallback for when path is not defined or doesn't match
+  const dayOfWeek = getDay(date);
+  return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
+
 };
 
 export const generateInitialProgressForDate = (
@@ -90,7 +114,10 @@ export const generateInitialProgressForDate = (
 
       if (isTest) {
         progress[day][subject.name]['attempted'] = false;
-      } else {
+      } else if (['Short Notes', 'Full Week Revision', 'Physics', 'Chemistry', 'Biology', 'Maths', 'Backlog'].includes(subject.name)) {
+         progress[day][subject.name]['completed'] = false;
+      }
+      else {
         switch (subject.name) {
           case 'Short Notes':
             progress[day][subject.name]['completed'] = false;

@@ -2,7 +2,7 @@
 'use client';
 
 import React, {useMemo, useState, useEffect} from 'react';
-import type {UserProgress, Subject, Task} from '@/lib/types';
+import type {UserProgress, Subject, Task, PreparationPath} from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -36,6 +36,7 @@ interface TimeTableViewProps {
   ) => void;
   onScoreSave: (day: string, subject: string, score: number) => void;
   isReadOnly: boolean;
+  preparationPath?: PreparationPath | null;
 }
 
 const defaultTasks: Task[] = [
@@ -45,25 +46,28 @@ const defaultTasks: Task[] = [
   {id: 'revision', label: 'Revise', icon: <RefreshCw className="h-4 w-4" />},
 ];
 
-const getTasksForSubject = (subjectName: string): Task[] => {
-    if (testSchedule.some(test => test.name === subjectName)) {
-        return [{ id: 'attempted', label: 'Attempted', icon: <TrophyIcon className="h-4 w-4" /> }];
-    }
+const genericTask: Task[] = [{ id: 'completed', label: 'Completed', icon: <CheckSquare className="h-4 w-4" /> }];
 
-    switch (subjectName) {
-        case 'Short Notes':
-            return [{ id: 'completed', label: 'Completed', icon: <CheckSquare className="h-4 w-4" /> }];
-        case 'Full Week Revision':
-            return [{ id: 'did_revise', label: 'Did Revise', icon: <CheckSquare className="h-4 w-4" /> }];
-        default:
-            return defaultTasks;
+const getTasksForSubject = (subjectName: string, path?: PreparationPath | null): Task[] => {
+    if (path === 'neet-achiever') {
+        if (testSchedule.some(test => test.name === subjectName)) {
+            return [{ id: 'attempted', label: 'Attempted', icon: <TrophyIcon className="h-4 w-4" /> }];
+        }
+        if (subjectName === 'Short Notes' || subjectName === 'Full Week Revision') {
+            return genericTask;
+        }
+        return defaultTasks;
     }
+    
+    // For other paths ('neet-other', 'jee')
+    return genericTask;
 };
 
 function calculateCompletionPercentage(
   subjects: Subject[],
   progress: UserProgress,
-  day: string
+  day: string,
+  path?: PreparationPath | null,
 ) {
   if (!subjects || subjects.length === 0 || !progress || !progress[day]) {
     return 0;
@@ -72,7 +76,7 @@ function calculateCompletionPercentage(
   let completedTasks = 0;
 
   subjects.forEach(subject => {
-    const tasksForSubject = getTasksForSubject(subject.name);
+    const tasksForSubject = getTasksForSubject(subject.name, path);
     totalTasks += tasksForSubject.length;
     const subjectProgress = progress[day]?.[subject.name];
     if (subjectProgress) {
@@ -92,14 +96,15 @@ export function TimeTableView({
   onTaskToggle,
   onScoreSave,
   isReadOnly,
+  preparationPath
 }: TimeTableViewProps) {
   const [showReward, setShowReward] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [selectedSubjectForScore, setSelectedSubjectForScore] = useState<string | null>(null);
 
   const completionPercentage = useMemo(
-    () => calculateCompletionPercentage(subjects, progress, day),
-    [subjects, progress, day]
+    () => calculateCompletionPercentage(subjects, progress, day, preparationPath),
+    [subjects, progress, day, preparationPath]
   );
   
   const [rewardShown, setRewardShown] = useState(false);
@@ -228,7 +233,7 @@ export function TimeTableView({
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 pl-2">
-                      {getTasksForSubject(subject.name).map(task => (
+                      {getTasksForSubject(subject.name, preparationPath).map(task => (
                         <div
                           key={task.id}
                           className="flex items-center space-x-3"

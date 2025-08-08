@@ -3,7 +3,7 @@
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField } from 'firebase/firestore';
-import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile } from './types';
+import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
@@ -299,6 +299,7 @@ export async function upsertUserProfile(user: { uid: string; username: string | 
       totalStudyHours: 0,
       dailyStreak: 0,
       mockScores: [],
+      preparationPath: null,
       createdAt: serverTimestamp(),
       status: { isStudying: false, isJamming: false, roomId: null },
     });
@@ -330,7 +331,11 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     const userRef = doc(db, 'users', uid);
     const docSnap = await getDoc(userRef);
     if (docSnap.exists()) {
-        return toPlainObject(docSnap.data()) as UserProfile;
+        const userData = docSnap.data();
+        if (userData.createdAt instanceof Timestamp) {
+            userData.createdAt = userData.createdAt.toDate().toISOString();
+        }
+        return userData as UserProfile;
     }
     return null;
 }
@@ -344,6 +349,17 @@ export async function updateUserProfile(uid: string, data: Partial<UserProfile>)
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, data);
 }
+
+/**
+ * Sets the preparation path for a user.
+ * @param uid - The user's ID.
+ * @param path - The chosen preparation path.
+ */
+export async function setUserPreparationPath(uid: string, path: PreparationPath): Promise<void> {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, { preparationPath: path });
+}
+
 
 /**
  * Fetches and ranks users for the leaderboard based on study hours.

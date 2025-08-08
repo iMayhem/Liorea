@@ -2,7 +2,7 @@
 'use client';
 
 import React, {useState, useEffect} from 'react';
-import type {TimeTableData, UserProgress} from '@/lib/types';
+import type {TimeTableData, UserProgress, PreparationPath} from '@/lib/types';
 import {TimeTableView} from '@/components/timetable-view';
 import {AppHeader} from '@/components/header';
 import {getProgressForUser, updateTask, updateScore} from '@/lib/firestore';
@@ -17,9 +17,10 @@ interface DashboardProps {
   username: string;
   date: string;
   timetable: TimeTableData;
+  preparationPath?: PreparationPath | null;
 }
 
-export function Dashboard({username, date, timetable}: DashboardProps) {
+export function Dashboard({username, date, timetable, preparationPath}: DashboardProps) {
   const {user} = useAuth();
   const [myProgress, setMyProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,6 +140,7 @@ export function Dashboard({username, date, timetable}: DashboardProps) {
               date={date}
               handleTaskToggle={handleTaskToggle}
               handleScoreSave={handleScoreSave}
+              preparationPath={preparationPath}
             />
          )}
       </motion.main>
@@ -157,6 +159,7 @@ interface DashboardContentProps {
     isCompleted: boolean
   ) => void;
   handleScoreSave: (day: string, subject: string, score: number) => void;
+  preparationPath?: PreparationPath | null;
 }
 
 function DashboardContent({
@@ -165,6 +168,7 @@ function DashboardContent({
   date,
   handleTaskToggle,
   handleScoreSave,
+  preparationPath,
 }: DashboardContentProps) {
   if (!progress) {
     return  <div className="space-y-4 mt-4">
@@ -181,6 +185,7 @@ function DashboardContent({
         onTaskToggle={handleTaskToggle}
         onScoreSave={handleScoreSave}
         isReadOnly={false}
+        preparationPath={preparationPath}
       />
     </div>
   );

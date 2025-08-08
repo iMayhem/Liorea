@@ -1,3 +1,4 @@
+// src/lib/types.ts
 export interface Task {
   id: string;
   label: string;
@@ -106,6 +107,8 @@ export interface StudyRoom {
 
 
 // New type for user profiles
+export type PreparationPath = 'neet-achiever' | 'neet-other' | 'jee';
+
 export interface UserProfile {
     uid: string;
     username: string | null;
@@ -117,6 +120,7 @@ export interface UserProfile {
     mockScores: number[];
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
     createdAt: string; // Changed to string to be serializable
+    preparationPath?: PreparationPath | null;
     status?: {
       isStudying: boolean;
       isJamming?: boolean;

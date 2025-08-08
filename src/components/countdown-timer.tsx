@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface CountdownTimerProps {
   targetDate: string;
+  title: string;
 }
 
 interface TimeLeft {
@@ -32,7 +33,7 @@ const calculateTimeLeft = (targetDate: string): TimeLeft | null => {
   return timeLeft;
 };
 
-export function CountdownTimer({ targetDate }: CountdownTimerProps) {
+export function CountdownTimer({ targetDate, title }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -62,7 +63,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
   return (
     <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg">
-      <h2 className="text-md font-bold text-center mb-2 font-heading tracking-tight">NEET 2026 Countdown</h2>
+      <h2 className="text-md font-bold text-center mb-2 font-heading tracking-tight">{title}</h2>
       <div className="grid grid-cols-4 gap-2 text-center">
         <Card className="bg-secondary/50">
           <CardHeader className="p-2 pb-1">
