@@ -94,6 +94,6 @@ export interface UserProfile {
     totalStudyHours: number;
     dailyStreak: number;
     mockScores: number[];
-    leaderboardVisibility: 'visible' | 'anonymous' | 'hidden';
+    leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
     createdAt: string; // Changed to string to be serializable
 }

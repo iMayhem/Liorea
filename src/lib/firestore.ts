@@ -299,7 +299,6 @@ export async function upsertUserProfile(user: { uid: string; username: string | 
       totalStudyHours: 0,
       dailyStreak: 0,
       mockScores: [],
-      leaderboardVisibility: 'anonymous', // Default privacy setting
       createdAt: serverTimestamp(),
     });
   } else {
@@ -365,11 +364,8 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
   const querySnapshot = await getDocs(q);
   let users: UserProfile[] = [];
   querySnapshot.forEach((doc) => {
-    // Filter out users who want to be hidden
     const data = doc.data() as UserProfile;
-    if (data.leaderboardVisibility !== 'hidden') {
-      users.push(toPlainObject({ ...data, uid: doc.id }) as UserProfile);
-    }
+    users.push(toPlainObject({ ...data, uid: doc.id }) as UserProfile);
   });
 
   if (type === 'study-hours-weekly') {

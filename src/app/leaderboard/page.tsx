@@ -10,85 +10,14 @@ import { motion } from 'framer-motion';
 import { Leaderboard } from '@/components/leaderboard';
 import { getLeaderboardData, getUserProfile } from '@/lib/firestore';
 import type { UserProfile } from '@/lib/types';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { updateUserProfile } from '@/lib/firestore';
-import { useToast } from '@/hooks/use-toast';
-import { Settings } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
 
 type LeaderboardData = UserProfile[];
 type LeaderboardType = 'study-hours-weekly' | 'study-hours-all-time';
 
-function PrivacySettingsDialog({
-  currentVisibility,
-  onSave,
-}: {
-  currentVisibility: 'anonymous' | 'visible' | 'hidden';
-  onSave: (visibility: 'anonymous' | 'visible' | 'hidden') => void;
-}) {
-  const [selectedValue, setSelectedValue] = React.useState(currentVisibility);
-
-  const handleSave = () => {
-    onSave(selectedValue);
-  };
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Privacy Settings</DialogTitle>
-        <CardDescription>
-          Choose how you want to appear on the leaderboard.
-        </CardDescription>
-      </DialogHeader>
-      <CardContent className="p-0 pt-4">
-        <RadioGroup
-          defaultValue={currentVisibility}
-          onValueChange={(value) =>
-            setSelectedValue(value as 'anonymous' | 'visible' | 'hidden')
-          }
-          className="gap-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="visible" id="r1" />
-            <Label htmlFor="r1">Show my username</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="anonymous" id="r2" />
-            <Label htmlFor="r2">Appear as anonymous</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="hidden" id="r3" />
-            <Label htmlFor="r3">Hide me from the leaderboard</Label>
-          </div>
-        </RadioGroup>
-      </CardContent>
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="outline">Cancel</Button>
-        </DialogClose>
-        <DialogClose asChild>
-          <Button onClick={handleSave}>Save</Button>
-        </DialogClose>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
-
 export default function LeaderboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
   const [leaderboardData, setLeaderboardData] = React.useState<LeaderboardData>([]);
   const [loading, setLoading] = React.useState(true);
   const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-weekly');
@@ -114,22 +43,6 @@ export default function LeaderboardPage() {
     }
   }, [user, leaderboardType]);
 
-  const handleSavePrivacy = async (
-    visibility: 'anonymous' | 'visible' | 'hidden'
-  ) => {
-    if (!user) return;
-    await updateUserProfile(user.uid, { leaderboardVisibility: visibility });
-    setUserProfile((prev) =>
-      prev ? { ...prev, leaderboardVisibility: visibility } : null
-    );
-    // Refetch data to apply visibility changes
-    const data = await getLeaderboardData(leaderboardType);
-    setLeaderboardData(data);
-    toast({
-      title: 'Success',
-      description: 'Your privacy settings have been updated.',
-    });
-  };
 
   if (authLoading || !user) {
     return (
@@ -156,20 +69,6 @@ export default function LeaderboardPage() {
                 See who's topping the charts.
               </p>
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Privacy
-                </Button>
-              </DialogTrigger>
-              {userProfile && (
-                <PrivacySettingsDialog
-                  currentVisibility={userProfile.leaderboardVisibility}
-                  onSave={handleSavePrivacy}
-                />
-              )}
-            </Dialog>
           </div>
 
           <Card className="w-full max-w-2xl">

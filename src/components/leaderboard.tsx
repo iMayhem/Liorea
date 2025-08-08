@@ -47,11 +47,8 @@ export function Leaderboard({ users, currentUser }: LeaderboardProps) {
           const rank = index + 1;
           const isCurrentUser = user.uid === currentUser?.uid;
           
-          let displayName = user.username || 'Anonymous';
-          if (user.leaderboardVisibility === 'anonymous') {
-            displayName = `User#${user.uid.slice(0, 5)}`
-          }
-
+          let displayName = user.username || `User#${user.uid.slice(0, 5)}`;
+          
           return (
             <motion.div
               key={user.uid}
