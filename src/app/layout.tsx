@@ -8,6 +8,7 @@ import {cn} from '@/lib/utils';
 import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
 import { ThemeProvider } from '@/components/theme-provider';
+import { FocusModeOverlay } from '@/components/focus-mode-overlay';
 
 
 const fontSans = Inter({
@@ -53,6 +54,7 @@ export default function RootLayout({
                     <PersistentStudyRoomBar />
                 </div>
                 <PersistentAmbientSound />
+                <FocusModeOverlay />
             </AuthProvider>
             <Toaster />
             <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>

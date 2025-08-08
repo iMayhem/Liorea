@@ -21,6 +21,8 @@ interface StudyRoomContextType {
     isMuted: boolean;
     setIsMuted: React.Dispatch<React.SetStateAction<boolean>>;
     userHasLeftRef: React.MutableRefObject<boolean>;
+    isFocusMode: boolean;
+    setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
@@ -48,6 +50,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [displayTime, setDisplayTime] = useState(0);
     const [volume, setVolume] = React.useState(0.5);
     const [isMuted, setIsMuted] = React.useState(false);
+    const [isFocusMode, setIsFocusMode] = React.useState(false);
 
     const activeSound = roomData?.activeSound || 'none';
 
@@ -116,6 +119,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setRoomData(null);
         setChatMessages([]);
         setParticipants([]);
+        setIsFocusMode(false); // Ensure focus mode is turned off when leaving
 
          if (wasInRoomPage) {
             router.push('/study-together');
@@ -374,6 +378,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         isMuted,
         setIsMuted,
         userHasLeftRef,
+        isFocusMode,
+        setIsFocusMode,
         joinRoom,
         leaveRoom,
         handleTimerUpdate,

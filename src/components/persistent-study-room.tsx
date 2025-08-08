@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, MessageSquare } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +23,7 @@ function formatTime(seconds: number) {
 }
 
 export function PersistentStudyRoomBar() {
-  const { currentRoomId, leaveRoom, roomData, displayTime, participants, volume, setVolume, isMuted, setIsMuted, handleSoundChange, activeSound } = useStudyRoom();
+  const { currentRoomId, leaveRoom, roomData, displayTime, participants, volume, setVolume, isMuted, setIsMuted, handleSoundChange, activeSound, setIsFocusMode } = useStudyRoom();
 
   if (!currentRoomId || !roomData) {
     return null;
@@ -55,6 +55,14 @@ export function PersistentStudyRoomBar() {
                     
                     <div className="flex items-center gap-2">
                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsFocusMode(true)}>
+                                        <Eye className="h-5 w-5"/>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Focus Mode</p></TooltipContent>
+                            </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant={activeSound === 'rain' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'rain' ? 'none' : 'rain')}>
