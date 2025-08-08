@@ -87,8 +87,8 @@ export function AmbientSoundPlayer({ activeSound, onSoundChange }: AmbientSoundP
         </div>
       </CardContent>
       {/* Audio elements are kept here but hidden */}
-      <audio ref={rainAudioRef} src="/rain.mp3" preload="auto"></audio>
-      <audio ref={fireAudioRef} src="/fire.mp3" preload="auto"></audio>
+      <audio ref={rainAudioRef} src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/sounds%2Frain.mp3?alt=media" preload="auto"></audio>
+      <audio ref={fireAudioRef} src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.appspot.com/o/sounds%2Ffire.mp3?alt=media" preload="auto"></audio>
     </Card>
   );
 }
