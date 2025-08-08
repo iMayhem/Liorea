@@ -14,7 +14,7 @@ import {
 import Link from 'next/link';
 import { Slider } from './ui/slider';
 import { AnimatePresence } from 'framer-motion';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from './ui/sidebar';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar, SidebarTrigger } from './ui/sidebar';
 import { AppLogo } from './icons';
 
 function formatTime(seconds: number) {
@@ -26,7 +26,7 @@ function formatTime(seconds: number) {
 
 export function PersistentStudyRoomBar() {
   const { currentRoomId, leaveRoom, roomData, displayTime, participants, volume, setVolume, isMuted, setIsMuted, handleSoundChange, activeSound } = useStudyRoom();
-  const { setOpen } = useSidebar();
+  const { setOpen, state } = useSidebar();
 
   React.useEffect(() => {
     if (currentRoomId) {
@@ -44,12 +44,12 @@ export function PersistentStudyRoomBar() {
   }
 
   return (
-    <Sidebar>
+    <Sidebar variant="floating" collapsible="icon">
         <SidebarContent>
             <SidebarHeader>
-                <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                     <AppLogo className="size-6" />
-                    <div className="flex flex-col">
+                     <div className="flex flex-col">
                         <span className="text-lg font-semibold tracking-tight">
                             Study Room
                         </span>
@@ -58,6 +58,7 @@ export function PersistentStudyRoomBar() {
                         </span>
                     </div>
                 </div>
+                <SidebarTrigger className="group-data-[state=expanded]:-rotate-180" />
             </SidebarHeader>
 
             <SidebarMenu>
@@ -76,7 +77,7 @@ export function PersistentStudyRoomBar() {
 
                 <SidebarGroup>
                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Open Chat & Notepad">
+                        <SidebarMenuButton asChild tooltip={{children: "Open Chat & Notepad", side:"right"}}>
                              <Link href={`/study-together/${currentRoomId}`}>
                                  <MessageSquare />
                                  <span>Room Details</span>
@@ -87,31 +88,31 @@ export function PersistentStudyRoomBar() {
 
                 <SidebarGroup>
                     <SidebarMenuItem>
-                        <Button
+                        <SidebarMenuButton
                             variant={activeSound === 'rain' ? 'secondary' : 'ghost'}
                             onClick={() => handleSoundChange(activeSound === 'rain' ? 'none' : 'rain')}
-                            className="w-full justify-start"
+                             tooltip={{children: "Rain Sound", side:"right"}}
                         >
-                            <CloudRain className="mr-2 h-4 w-4" />
-                            Rain
-                        </Button>
+                            <CloudRain/>
+                            <span>Rain</span>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                         <Button
+                         <SidebarMenuButton
                             variant={activeSound === 'fire' ? 'secondary' : 'ghost'}
                             onClick={() => handleSoundChange(activeSound === 'fire' ? 'none' : 'fire')}
-                            className="w-full justify-start"
+                            tooltip={{children: "Fire Sound", side:"right"}}
                         >
-                            <Flame className="mr-2 h-4 w-4" />
-                            Fire
-                        </Button>
+                            <Flame />
+                            <span>Fire</span>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarGroup>
                 
                 {hasActiveSound && (
                     <SidebarGroup>
                         <SidebarMenuItem>
-                            <div className="flex items-center gap-2 w-full p-2">
+                           <div className="flex items-center gap-2 w-full p-2 group-data-[collapsible=icon]:hidden">
                                 <button onClick={() => setIsMuted(!isMuted)}>
                                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                                 </button>
@@ -132,10 +133,10 @@ export function PersistentStudyRoomBar() {
 
 
                  <SidebarMenuItem className="mt-auto">
-                    <Button size="sm" variant="destructive" onClick={leaveRoom} className="w-full">
-                        <PhoneOff className="mr-2 h-4 w-4"/>
-                        Leave Room
-                    </Button>
+                    <SidebarMenuButton onClick={leaveRoom} tooltip={{children: "Leave Room", side:"right"}}>
+                        <PhoneOff className="text-destructive"/>
+                        <span className="text-destructive">Leave Room</span>
+                    </SidebarMenuButton>
                  </SidebarMenuItem>
 
             </SidebarMenu>
