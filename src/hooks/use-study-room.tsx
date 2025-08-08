@@ -15,6 +15,7 @@ interface StudyRoomContextType {
     chatMessages: ChatMessage[];
     participants: Participant[];
     displayTime: number;
+    userHasLeftRef: React.MutableRefObject<boolean>;
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
@@ -52,7 +53,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const playSound = (soundId: string) => {
             const sound = document.getElementById(soundId) as HTMLAudioElement;
             if (sound) {
-                sound.play().catch(error => console.error(`Error playing ${soundId}:`, error));
+                sound.play().catch(error => {
+                    // Ignore errors from being interrupted by a pause call.
+                    if (error.name !== 'AbortError') {
+                        console.error(`Error playing ${soundId}:`, error)
+                    }
+                });
             }
         };
 
@@ -76,25 +82,32 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const leaveRoom = useCallback(async () => {
-        if (!user || !currentRoomId || userHasLeftRef.current) return;
+        if (!user || !currentRoomId) return;
         userHasLeftRef.current = true;
         
         const leavingRoomId = currentRoomId;
-        cleanupListeners();
         
+        // Update user status first
         await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null }});
 
+        // Clean up local state and listeners *before* Firestore operations
+        cleanupListeners();
+        setCurrentRoomId(null);
+        setRoomData(null);
+        setChatMessages([]);
+        setParticipants([]);
+        
         const roomRef = doc(db, 'studyRooms', leavingRoomId);
         try {
-            // Check if the document still exists before trying to modify it
             const roomSnap = await getDoc(roomRef);
             if (!roomSnap.exists()) {
                 console.log("Room already deleted, skipping cleanup.");
-                return; // Exit if the room is already gone
+                return; 
             }
             
             const currentParticipants = roomSnap.data()?.participants || [];
             if (currentParticipants.length <= 1 && currentParticipants.some((p: Participant) => p.uid === user.uid)) {
+                // If this is the last user, delete the room and its subcollection
                 const chatRef = collection(db, 'studyRooms', leavingRoomId, 'chats');
                 const chatSnapshot = await getDocs(chatRef);
                 const batch = writeBatch(db);
@@ -102,35 +115,30 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 batch.delete(roomRef);
                 await batch.commit();
             } else {
+                // If other users are present, just remove this user
                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
                 const typingField = `typingUsers.${user.uid}`;
                 await updateDoc(roomRef, { 
                     participants: arrayRemove(userParticipant),
                     [typingField]: deleteField(),
-                    activeSound: 'none' 
                 }).catch(err => console.error("Error cleaning up room state:", err));
             }
         } catch (error) {
-            if ((error as any).code !== 'not-found') { // Ignore not-found errors during cleanup
+            if ((error as any).code !== 'not-found') { 
                console.error("Error leaving room:", error);
                 toast({ title: "Error", description: "Could not leave the room properly.", variant: "destructive" });
             }
-        } finally {
-            setCurrentRoomId(null);
-            setRoomData(null);
-            setChatMessages([]);
-            setParticipants([]);
         }
     }, [user, currentRoomId, toast, cleanupListeners]);
 
     const joinRoom = useCallback(async (roomId: string) => {
+        userHasLeftRef.current = false;
         if (!user) return false;
         if (currentRoomId === roomId) return true;
         if (currentRoomId && currentRoomId !== roomId) {
             await leaveRoom(); // Leave current room before joining a new one
         }
 
-        userHasLeftRef.current = false;
         isInitialJoinRef.current = true; // Set flag to prevent sound on initial join
         const roomRef = doc(db, 'studyRooms', roomId);
         const docSnap = await getDoc(roomRef);
@@ -142,7 +150,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         await updateUserProfile(user.uid, { status: { isStudying: true, roomId: roomId }});
 
         const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
-        // Ensure user is not already in the participants list before adding
         const currentParticipants = docSnap.data().participants || [];
         if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
              await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
@@ -179,7 +186,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (currentRoomId) {
                 // This is a sync call, so we can't do async cleanup here.
-                // Firestore onDisconnect handles this, but it's not implemented here.
                 // We rely on re-joining logic or timeout for cleanup.
             }
         };
@@ -326,6 +332,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         chatMessages,
         participants,
         displayTime,
+        userHasLeftRef,
         joinRoom,
         leaveRoom,
         handleTimerUpdate,

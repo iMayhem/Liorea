@@ -24,7 +24,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping, handleSoundChange } = useStudyRoom(roomId);
+  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping, handleSoundChange, userHasLeftRef } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
 
@@ -38,7 +38,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
     const performJoin = async () => {
         setIsJoining(true);
         const success = await joinRoom(roomId);
-        if (!success) {
+        if (!success && !userHasLeftRef.current) {
             toast({
                 title: "Room not found",
                 description: "This study room does not exist.",
@@ -51,7 +51,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
 
     performJoin();
 
-  }, [roomId, user, authLoading, router, toast, joinRoom]);
+  }, [roomId, user, authLoading, router, toast, joinRoom, userHasLeftRef]);
 
 
   const handleCopyRoomId = () => {
