@@ -54,7 +54,7 @@ export default function RootLayout({
         <audio id="join-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
         <audio id="leave-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fnotification.mp3?alt=media&token=80d446c7-fc85-4fdc-a745-e2bd77a72e97" preload="auto"></audio>
         {/* Replace the src with the actual URL to your chat sound file */}
-        <audio id="chat-notification-sound" src="/sounds/chat-notification.mp3" preload="auto"></audio>
+        <audio id="chat-notification-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fding.mp3?alt=media&token=c71ed344-e701-4c53-8769-8d938141cadc" preload="auto"></audio>
       </body>
     </html>
   );
