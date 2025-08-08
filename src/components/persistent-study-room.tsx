@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, ScreenShare, ScreenShareOff } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -36,8 +36,6 @@ export function PersistentStudyRoomBar() {
       handleSoundChange, 
       activeSound, 
       setIsFocusMode,
-      isScreenSharing,
-      toggleScreenShare
   } = useStudyRoom();
 
   if (!currentRoomId || !roomData) {
@@ -70,14 +68,6 @@ export function PersistentStudyRoomBar() {
                     
                     <div className="flex items-center gap-2">
                         <TooltipProvider>
-                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant={isScreenSharing ? 'secondary' : 'ghost'} size="icon" onClick={toggleScreenShare}>
-                                        {isScreenSharing ? <ScreenShareOff className="h-5 w-5"/> : <ScreenShare className="h-5 w-5"/>}
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</p></TooltipContent>
-                            </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" onClick={() => setIsFocusMode(true)}>
