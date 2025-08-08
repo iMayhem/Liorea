@@ -96,6 +96,15 @@ export interface Notepads {
   [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...', owner: null }, notepad1: {...} }
 }
 
+export interface StudyRoom {
+    id: string;
+    ownerId: string;
+    createdAt: any;
+    participants: Participant[];
+    // ... other room properties
+}
+
+
 // New type for user profiles
 export interface UserProfile {
     uid: string;
