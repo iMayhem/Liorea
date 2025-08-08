@@ -22,7 +22,20 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping, userHasLeftRef } = useStudyRoom(roomId);
+  const { 
+      joinRoom, 
+      roomData, 
+      chatMessages, 
+      participants, 
+      handleTimerUpdate, 
+      handleNotepadChange, 
+      handleSendMessage, 
+      handleTyping, 
+      userHasLeftRef,
+      activeNotepad,
+      setActiveNotepad,
+      notepads
+  } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
 
@@ -112,7 +125,14 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
             
             {/* Middle Column: Notepad */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="h-full flex flex-col min-h-[400px] lg:min-h-0">
-                <CollaborativeNotepad content={roomData.notepadContent} onContentChange={handleNotepadChange} />
+                 <CollaborativeNotepad 
+                    content={notepads[activeNotepad] || ''} 
+                    onContentChange={handleNotepadChange}
+                    participants={participants}
+                    currentUserId={user.uid}
+                    activeNotepad={activeNotepad}
+                    onNotepadChange={setActiveNotepad}
+                />
             </motion.div>
 
             {/* Right Column: Chat */}

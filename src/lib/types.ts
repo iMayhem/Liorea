@@ -86,6 +86,10 @@ export interface ChatMessage {
     replyToText?: string;
 }
 
+export interface Notepads {
+  [id: string]: string; // id can be 'collaborative' or a user's UID
+}
+
 // New type for user profiles
 export interface UserProfile {
     uid: string;

@@ -43,7 +43,7 @@ export default function StudyTogetherPage() {
       const newRoomRef = doc(collection(db, 'studyRooms'));
       await setDoc(newRoomRef, {
         createdAt: serverTimestamp(),
-        notepadContent: '',
+        notepads: { collaborative: `Welcome to the study room!\n\nThis is a shared notepad.` },
         timerState: {
           mode: 'study',
           time: 25 * 60,
@@ -79,7 +79,7 @@ export default function StudyTogetherPage() {
       if (id === PUBLIC_ROOM_ID) {
           await setDoc(roomRef, {
             createdAt: serverTimestamp(),
-            notepadContent: 'Welcome to the Public Study Room!',
+            notepads: { collaborative: 'Welcome to the Public Study Room!' },
             timerState: {
               mode: 'study', time: 25 * 60, isActive: false, startTime: null,
               studyDuration: 25, shortBreakDuration: 5, longBreakDuration: 15,

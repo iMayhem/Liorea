@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TimerState, ChatMessage, Participant, SoundType } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant, SoundType, Notepads } from '@/lib/types';
 import { logStudySession, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
@@ -31,6 +31,9 @@ interface StudyRoomContextType {
     handleTyping: (isTyping: boolean) => void;
     activeSound: SoundType;
     handleSoundChange: (sound: SoundType) => void;
+    notepads: Notepads;
+    activeNotepad: string;
+    setActiveNotepad: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
@@ -52,6 +55,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [isMuted, setIsMuted] = React.useState(false);
     const [isFocusMode, setIsFocusMode] = React.useState(false);
 
+    // Notepad state
+    const [notepads, setNotepads] = useState<Notepads>({ collaborative: '' });
+    const [activeNotepad, setActiveNotepad] = useState<string>('collaborative');
+
     const activeSound = roomData?.activeSound || 'none';
 
 
@@ -61,6 +68,14 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const logTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
+
+    useEffect(() => {
+        if(user && activeNotepad === 'collaborative') {
+            setActiveNotepad(user.uid);
+        } else if(!user) {
+            setActiveNotepad('collaborative');
+        }
+    }, [user, activeNotepad]);
 
 
     // Effect to play sounds on participant changes
@@ -201,12 +216,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
 
         setCurrentRoomId(roomId);
+        // Set active notepad to user's own notepad upon joining a room
+        setActiveNotepad(user.uid);
         
         unsubscribeRoomRef.current = onSnapshot(roomRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
                 setRoomData(data);
                 setParticipants(data.participants || []);
+                setNotepads(data.notepads || { collaborative: '' });
             } else {
                 cleanupListeners();
                 setCurrentRoomId(null);
@@ -306,14 +324,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const handleNotepadChange = useCallback(async (content: string) => {
         if (!currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
+        const fieldPath = `notepads.${activeNotepad}`;
         try {
-            await updateDoc(roomRef, { notepadContent: content });
+            await updateDoc(roomRef, { [fieldPath]: content });
         } catch (error) {
              if ((error as any).code !== 'not-found') {
                 console.error("Failed to update notepad:", error);
             }
         }
-    },[currentRoomId]);
+    },[currentRoomId, activeNotepad]);
 
     const handleSendMessage = useCallback(async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
         if (!user || !currentRoomId) return;
@@ -387,7 +406,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         handleSendMessage,
         handleTyping,
         activeSound,
-        handleSoundChange
+        handleSoundChange,
+        notepads,
+        activeNotepad,
+        setActiveNotepad
     };
 
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;
