@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BrainCircuit, Music } from 'lucide-react';
+import { Loader2, BrainCircuit, Music, Sun, Moon, Palette } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { motion } from 'framer-motion';
@@ -16,6 +16,8 @@ import Link from 'next/link';
 import { getStudyLogsForUser } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
 import { LiveStudyList } from '@/components/live-study-list';
+import { useTheme } from 'next-themes';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -26,6 +28,7 @@ const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mo
 export default function NeetHomePage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { setTheme } = useTheme();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
@@ -127,6 +130,29 @@ export default function NeetHomePage() {
                     Jamnight
                 </Link>
             </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                    <Palette className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Change Theme</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                        <Sun className="mr-2 h-4 w-4" /> Light
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                        <Moon className="mr-2 h-4 w-4" /> Dark
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                     <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
+                      Zinc
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => setTheme("theme-rose")}>
+                      Rose
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
 
       </motion.main>
