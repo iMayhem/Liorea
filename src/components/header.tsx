@@ -35,7 +35,7 @@ export function AppHeader() {
         <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <AppLogo />
-            <span className="font-bold">Neet Tracker</span>
+            <span className="font-bold">Study Tracker</span>
           </Link>
         </div>
         {user && <p className="text-sm text-muted-foreground">Signed in as {user.username}</p>}
@@ -82,9 +82,6 @@ export function AppHeader() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
                       Dark Glass
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("theme-retro")}>
-                      90s Retro
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
