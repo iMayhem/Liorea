@@ -121,12 +121,6 @@ export default function JeeHomePage() {
         </div>
 
         <div className="mt-8 flex gap-4">
-            <Button asChild>
-                <Link href="/practice">
-                    <BrainCircuit className="mr-2 h-4 w-4" />
-                    Practice Module
-                </Link>
-            </Button>
             <Button asChild variant="secondary">
                 <Link href="/jamnight">
                     <Music className="mr-2 h-4 w-4" />

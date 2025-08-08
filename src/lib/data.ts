@@ -56,24 +56,51 @@ const achieverSchedule: {[key: number]: Subject[]} = {
   ],
 };
 
-const neetOtherSchedule: Subject[] = [
-    {name: 'Physics'},
-    {name: 'Chemistry'},
-    {name: 'Biology'},
-    {name: 'Backlog'},
-];
-
-const jeeSchedule: Subject[] = [
-    {name: 'Physics'},
-    {name: 'Chemistry'},
+const jeeSchedule: {[key: number]: Subject[]} = {
+  0: [{name: 'Short Notes'}, {name: 'Full Week Revision'}], // Sunday
+  1: [ // Monday
+    {name: '12th Physics'},
+    {name: 'Inorganic Chemistry'},
     {name: 'Maths'},
     {name: 'Backlog'},
-];
+  ],
+  2: [ // Tuesday
+    {name: '11th Physics'},
+    {name: 'Organic Chemistry'},
+    {name: 'Maths'},
+    {name: 'Backlog'},
+  ],
+  3: [ // Wednesday
+    {name: '12th Physics'},
+    {name: 'Inorganic Chemistry'},
+    {name: 'Maths'},
+    {name: 'Backlog'},
+  ],
+  4: [ // Thursday
+    {name: '11th Physics'},
+    {name: 'Organic Chemistry'},
+    {name: 'Maths'},
+    {name: 'Backlog'},
+  ],
+  5: [ // Friday
+    {name: '12th Physics'},
+    {name: 'Inorganic Chemistry'},
+    {name: 'Maths'},
+    {name: 'Backlog'},
+  ],
+  6: [ // Saturday
+    {name: '11th Physics'},
+    {name: 'Organic Chemistry'},
+    {name: 'Maths'},
+    {name: 'Backlog'},
+  ],
+};
 
 
 export const generateTimeTableForDate = (dateKey: string, path?: string): TimeTableData => {
   // The dateKey is in "MMMM d, yyyy" format. We parse it to get a Date object.
   const date = parse(dateKey, 'MMMM d, yyyy', new Date());
+  const dayOfWeek = getDay(date);
 
   // Check if it's a test day for NEET Achiever batch
   if (path === 'neet-achiever') {
@@ -83,20 +110,17 @@ export const generateTimeTableForDate = (dateKey: string, path?: string): TimeTa
           [dateKey]: [{name: testForDay.name}],
         }
       }
-      const dayOfWeek = getDay(date);
-      return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
   }
   
-  if (path === 'neet-other') {
-      return { [dateKey]: neetOtherSchedule };
+  if (path === 'neet-other' || path === 'neet-achiever') {
+      return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
   }
 
   if (path === 'jee') {
-      return { [dateKey]: jeeSchedule };
+      return { [dateKey]: jeeSchedule[dayOfWeek] || [] };
   }
 
   // Fallback for when path is not defined or doesn't match
-  const dayOfWeek = getDay(date);
   return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
 
 };

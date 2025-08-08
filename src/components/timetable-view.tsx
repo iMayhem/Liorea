@@ -53,14 +53,15 @@ const getTasksForSubject = (subjectName: string, path?: PreparationPath | null):
         if (testSchedule.some(test => test.name === subjectName)) {
             return [{ id: 'attempted', label: 'Attempted', icon: <TrophyIcon className="h-4 w-4" /> }];
         }
-        if (subjectName === 'Short Notes' || subjectName === 'Full Week Revision') {
-            return genericTask;
-        }
-        return defaultTasks;
     }
     
-    // For other paths ('neet-other', 'jee')
-    return genericTask;
+    // For all paths, certain subjects have specific tasks
+    if (['Short Notes', 'Full Week Revision', 'Backlog'].includes(subjectName)) {
+        return genericTask;
+    }
+
+    // Default tasks for regular subjects across all paths
+    return defaultTasks;
 };
 
 function calculateCompletionPercentage(
