@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import type { TimerState, ChatMessage, Participant, SoundType } from '@/lib/types';
 import { logStudySession, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface StudyRoomContextType {
     currentRoomId: string | null;
@@ -37,6 +38,9 @@ const TIME_LOG_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
+    const pathname = usePathname();
+
     const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
     const [roomData, setRoomData] = useState<DocumentData | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -101,6 +105,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         userHasLeftRef.current = true;
         
         const leavingRoomId = currentRoomId;
+        const wasInRoomPage = pathname.includes(`/study-together/${leavingRoomId}`);
         
         // Update user status first
         await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null }});
@@ -111,6 +116,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setRoomData(null);
         setChatMessages([]);
         setParticipants([]);
+
+         if (wasInRoomPage) {
+            router.push('/study-together');
+        }
         
         const roomRef = doc(db, 'studyRooms', leavingRoomId);
         try {
@@ -144,7 +153,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 toast({ title: "Error", description: "Could not leave the room properly.", variant: "destructive" });
             }
         }
-    }, [user, currentRoomId, toast, cleanupListeners]);
+    }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
     
     // Effect for periodic time logging
     useEffect(() => {
