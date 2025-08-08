@@ -17,17 +17,19 @@ import {
 } from "@/components/ui/tooltip"
 
 export function LiveStudyList() {
-  const [liveUsers, setLiveUsers] = React.useState<UserProfile[]>([]);
+  const [studyingUsers, setStudyingUsers] = React.useState<UserProfile[]>([]);
+  const [jammingUsers, setJammingUsers] = React.useState<UserProfile[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const q = query(collection(db, 'users'), where('status.isStudying', '==', true));
-    const unsubscribeStudy = onSnapshot(q, (querySnapshot) => {
+    setLoading(true);
+    const qStudy = query(collection(db, 'users'), where('status.isStudying', '==', true));
+    const unsubscribeStudy = onSnapshot(qStudy, (querySnapshot) => {
         const users: UserProfile[] = [];
         querySnapshot.forEach((doc) => {
             users.push({ id: doc.id, ...doc.data() } as UserProfile);
         });
-        setLiveUsers(current => [...current.filter(u => !u.status?.isStudying), ...users]);
+        setStudyingUsers(users);
         setLoading(false);
     });
 
@@ -37,7 +39,7 @@ export function LiveStudyList() {
         querySnapshot.forEach((doc) => {
             users.push({ id: doc.id, ...doc.data() } as UserProfile);
         });
-        setLiveUsers(current => [...current.filter(u => !u.status?.isJamming), ...users]);
+        setJammingUsers(users);
         setLoading(false);
     });
 
@@ -47,12 +49,9 @@ export function LiveStudyList() {
     };
   }, []);
 
-  const studyingUsers = React.useMemo(() => liveUsers.filter(u => u.status?.isStudying), [liveUsers]);
-  const jammingUsers = React.useMemo(() => liveUsers.filter(u => u.status?.isJamming), [liveUsers]);
-
   if (loading) {
     return (
-        <Card className="w-full max-w-2xl mx-auto shadow-md mb-8">
+        <Card className="w-full max-w-2xl mx-auto shadow-md">
             <CardContent className="p-4">
                  <div className="text-center text-muted-foreground">Loading Live Activity...</div>
             </CardContent>
@@ -60,13 +59,35 @@ export function LiveStudyList() {
     )
   }
 
-  if (liveUsers.length === 0) {
-      return null; // Don't render anything if no one is live
+  // If no one is doing anything, we can still show the structure.
+  if (studyingUsers.length === 0 && jammingUsers.length === 0) {
+      return (
+         <Card className="w-full max-w-2xl mx-auto shadow-md">
+             <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
+                            <Radio className="h-4 w-4 text-green-500" />
+                            Studying Now (0)
+                        </h3>
+                        <p className="text-xs text-muted-foreground">No one is studying right now.</p>
+                     </div>
+                      <div>
+                        <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
+                            <Music className="h-4 w-4 text-purple-500" />
+                            In a Jamnight (0)
+                        </h3>
+                        <p className="text-xs text-muted-foreground">No one is jamming right now.</p>
+                     </div>
+                </div>
+            </CardContent>
+        </Card>
+      )
   }
 
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-md mb-8">
+    <Card className="w-full max-w-2xl mx-auto shadow-md">
       <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {studyingUsers.length > 0 && (
@@ -105,8 +126,7 @@ export function LiveStudyList() {
                     </div>
                 </div>
               )}
-               {jammingUsers.length > 0 && (
-                  <div>
+               <div>
                     <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
                         <Music className="h-4 w-4 text-purple-500" />
                         In a Jamnight ({jammingUsers.length})
@@ -138,9 +158,11 @@ export function LiveStudyList() {
                           </motion.div>
                         ))}
                       </AnimatePresence>
+                       {jammingUsers.length === 0 && (
+                          <p className="text-xs text-muted-foreground">No one is jamming right now.</p>
+                       )}
                     </div>
                 </div>
-              )}
           </div>
       </CardContent>
     </Card>
