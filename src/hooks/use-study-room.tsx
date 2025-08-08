@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TimerState, ChatMessage, Participant } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant, SoundType } from '@/lib/types';
 import { logStudySession, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 
@@ -21,6 +21,7 @@ interface StudyRoomContextType {
     handleNotepadChange: (content: string) => void;
     handleSendMessage: (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => void;
     handleTyping: (isTyping: boolean) => void;
+    handleSoundChange: (sound: SoundType) => void;
 }
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
@@ -85,7 +86,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         try {
             const typingField = `typingUsers.${user.uid}`;
-            await updateDoc(roomRef, { [typingField]: deleteField() }).catch(err => console.error("Error removing typing indicator:", err));
+            await updateDoc(roomRef, { [typingField]: deleteField(), activeSound: 'none' }).catch(err => console.error("Error cleaning up room state:", err));
 
             const currentParticipants = (await getDoc(roomRef)).data()?.participants || [];
             if (currentParticipants.length <= 1 && currentParticipants[0]?.uid === user.uid) {
@@ -272,6 +273,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
     }, [user, currentRoomId]);
 
+    const handleSoundChange = useCallback(async (sound: SoundType) => {
+        if (!currentRoomId) return;
+        const roomRef = doc(db, 'studyRooms', currentRoomId);
+        await updateDoc(roomRef, { activeSound: sound });
+    }, [currentRoomId]);
+
     const value = {
         currentRoomId,
         roomData,
@@ -283,7 +290,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         handleTimerUpdate,
         handleNotepadChange,
         handleSendMessage,
-        handleTyping
+        handleTyping,
+        handleSoundChange
     };
 
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;

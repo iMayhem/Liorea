@@ -54,6 +54,7 @@ export default function StudyTogetherPage() {
         },
         participants: [],
         typingUsers: {},
+        activeSound: 'none',
       });
       router.push(`/study-together/${newRoomRef.id}`);
     } catch (error) {
@@ -82,7 +83,9 @@ export default function StudyTogetherPage() {
               mode: 'study', time: 25 * 60, isActive: false, startTime: null,
               studyDuration: 25, shortBreakDuration: 5, longBreakDuration: 15,
             },
-            participants: [], typingUsers: {},
+            participants: [],
+            typingUsers: {},
+            activeSound: 'none',
           });
           router.push(`/study-together/${id}`);
       } else {

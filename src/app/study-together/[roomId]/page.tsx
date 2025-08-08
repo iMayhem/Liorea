@@ -15,6 +15,7 @@ import { GroupChat } from '@/components/group-chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useStudyRoom } from '@/hooks/use-study-room';
+import { AmbientSoundPlayer } from '@/components/ambient-sound-player';
 
 
 export default function StudyRoomPage({ params: paramsProp }: { params: { roomId: string } }) {
@@ -23,7 +24,7 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping } = useStudyRoom(roomId);
+  const { joinRoom, roomData, chatMessages, participants, handleTimerUpdate, handleNotepadChange, handleSendMessage, handleTyping, handleSoundChange } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
 
@@ -103,9 +104,10 @@ export default function StudyRoomPage({ params: paramsProp }: { params: { roomId
       </header>
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* Left Column: Timer */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center">
+            {/* Left Column: Timer & Sounds */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">
                 {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} participants={participants} />}
+                <AmbientSoundPlayer activeSound={roomData.activeSound} onSoundChange={handleSoundChange} />
             </motion.div>
             
             {/* Middle Column: Notepad */}
