@@ -38,6 +38,7 @@ export default function RootLayout({
           fontSans.variable,
           fontHeading.variable
         )}
+        style={{ transform: 'scale(0.8)', transformOrigin: 'top left', width: '125%', height: '125%'}}
       >
         <AuthProvider>
             <StudyRoomProvider>
