@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
-import { ArrowLeft, LogOut, Timer, Users, Trophy, Home, RefreshCw, Image as ImageIcon, Upload } from "lucide-react";
+import { ArrowLeft, LogOut, Timer, Users, Trophy, Home, RefreshCw, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useStudyRoom } from "@/hooks/use-study-room";
 import { useBackground } from "@/hooks/use-background";
@@ -15,27 +15,10 @@ export function AppHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { changeBackground, isChanging, setCustomBackground, clearCustomBackground } = useBackground();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { changeBackground, isChanging, clearCustomBackground } = useBackground();
 
   const handleBack = () => {
     router.back();
-  };
-  
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        setCustomBackground(dataUrl);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
   };
   
   const handleBackgroundCycleClick = () => {
@@ -85,17 +68,6 @@ export function AppHeader() {
                         <Users className="mr-2 h-4 w-4" />
                         Study Together
                     </Link>
-                </Button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    accept="image/*"
-                    className="hidden"
-                />
-                <Button variant="ghost" size="icon" onClick={handleUploadClick}>
-                    <Upload className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="sr-only">Upload Custom Background</span>
                 </Button>
                 <Button variant="ghost" size="icon" onClick={handleBackgroundCycleClick} disabled={isChanging}>
                     {isChanging ? <RefreshCw className="h-[1.2rem] w-[1.2rem] animate-spin" /> : <ImageIcon className="h-[1.2rem] w-[1.2rem]" />}
