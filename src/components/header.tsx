@@ -21,6 +21,7 @@ export function AppHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { setTheme } = useTheme();
 
   const handleBack = () => {
     router.back();
