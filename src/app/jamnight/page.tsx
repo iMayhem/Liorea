@@ -144,7 +144,7 @@ export default function JamnightPage() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-heading">Jamnight</CardTitle>
-              <CardDescription>Create a private room or join the public one to listen to YouTube songs in sync with your friends.</CardDescription>
+              <CardDescription>Create a private room or join one to listen to YouTube songs in sync with your friends.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <Button onClick={handleJoinPublicRoom} className="w-full" disabled={isJoiningPublic}>
@@ -203,4 +203,3 @@ export default function JamnightPage() {
     </div>
   );
 }
-    

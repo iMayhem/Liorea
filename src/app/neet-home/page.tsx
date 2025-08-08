@@ -132,9 +132,8 @@ export default function NeetHomePage() {
             </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon">
-                    <Palette className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="sr-only">Change Theme</span>
+                    <Button variant="outline">
+                      Change Theme
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -146,9 +145,6 @@ export default function NeetHomePage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
                         Dark Glass
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("theme-retro")}>
-                        90s Retro
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

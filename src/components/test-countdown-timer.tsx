@@ -83,57 +83,41 @@ export function TestCountdownTimer({ tests }: TestCountdownTimerProps) {
 
   if (!nextTest) {
     return (
-      <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg flex items-center justify-center h-full min-h-[108px]">
+      <Card className="p-2 flex items-center justify-center h-full min-h-[108px]">
         <h2 className="text-md font-bold text-center font-heading tracking-tight">All tests are complete!</h2>
-      </div>
+      </Card>
     );
   }
 
   if (!timeLeft) {
     return (
-        <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg flex items-center justify-center h-full min-h-[108px]">
+      <Card className="p-2 flex items-center justify-center h-full min-h-[108px]">
             <h2 className="text-md font-bold font-heading text-center">Loading next test...</h2>
-        </div>
+        </Card>
     );
   }
 
   return (
-    <div className="p-2 rounded-lg bg-card border border-border/50 shadow-lg">
+    <Card className="p-2">
       <h2 className="text-md font-bold text-center mb-2 font-heading tracking-tight">{nextTest.name}</h2>
       <div className="grid grid-cols-4 gap-2 text-center">
-        <Card className="bg-secondary/50">
-          <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-xl font-bold">{String(timeLeft.days).padStart(2, '0')}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
-            <p className="text-xs text-muted-foreground">Days</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-secondary/50">
-          <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
-            <p className="text-xs text-muted-foreground">Hours</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-secondary/50">
-          <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
-            <p className="text-xs text-muted-foreground">Minutes</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-secondary/50">
-          <CardHeader className="p-2 pb-1">
-            <CardTitle className="text-xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
-            <p className="text-xs text-muted-foreground">Seconds</p>
-          </CardContent>
-        </Card>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.days).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Days</div>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Hours</div>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Minutes</div>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Seconds</div>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }

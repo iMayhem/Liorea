@@ -45,7 +45,7 @@ export default function RootLayout({
             defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
-            themes={["dark", "theme-blue", "theme-zinc", "theme-retro"]}
+            themes={["dark", "theme-blue", "theme-zinc"]}
         >
           <AuthProvider>
             <StudyRoomProvider>

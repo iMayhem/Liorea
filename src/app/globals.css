@@ -48,7 +48,29 @@
     --ring: 217.2 91.2% 59.8%;
   }
 
-  /* Classic Blue Theme now has the old glassmorphic design */
+  /* The new glassmorphic design */
+  .dark {
+    --background: 222 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
+  }
+
   .theme-blue {
     --background: 222.2 47.4% 11.2%;
     --foreground: 210 40% 98%;
@@ -71,7 +93,6 @@
     --ring: 210 40% 98%;
   }
   
-  /* Dark Glass Theme */
   .theme-zinc {
     --background: 240 10% 3.9%;
     --foreground: 210 40% 98%;
@@ -94,29 +115,6 @@
     --ring: 210 40% 98%;
   }
 
-  /* 90s Retro Theme */
-  .theme-retro {
-    --background: 192 10% 88%; /* Silver background */
-    --foreground: 0 0% 0%; /* Black text */
-    --card: 192 10% 88%;
-    --card-foreground: 0 0% 0%;
-    --popover: 192 10% 88%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 80%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 210 40% 90%;
-    --muted-foreground: 0 0% 20%;
-    --accent: 210 40% 85%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 50%;
-    --input: 0 0% 100%;
-    --ring: 0 0% 0%;
-    --radius: 0rem;
-  }
 }
 
 @layer base {
@@ -134,42 +132,26 @@
     background-attachment: fixed;
   }
   
-  .dark .card, .theme-zinc .card {
+  .dark .card {
+    background: rgba(6,6,10,0.25);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    @apply border-white/10;
+  }
+
+  .theme-blue .card {
     background: rgba(6,6,10,0.36);
     -webkit-backdrop-filter: blur(14px) saturate(120%);
     backdrop-filter: blur(14px) saturate(120%);
     @apply border-white/10;
   }
 
-  .theme-blue .card {
-    background: rgba(6,6,10,0.25);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+  .theme-zinc .card {
+    background: rgba(6,6,10,0.36);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    backdrop-filter: blur(14px) saturate(120%);
     @apply border-white/10;
   }
-  
-   .theme-retro body {
-      background-image: none;
-   }
-   
-   .theme-retro body {
-      font-family: 'Times New Roman', serif;
-   }
-   .theme-retro .card,
-   .theme-retro .button,
-   .theme-retro input {
-      border: 2px outset #ccc;
-      box-shadow: none;
-      border-radius: 0;
-   }
-   .theme-retro button {
-      background-color: #ccc;
-      border-style: outset;
-      border-width: 2px;
-   }
-    .theme-retro button:active {
-      border-style: inset;
-    }
 }
 
 @layer utilities {

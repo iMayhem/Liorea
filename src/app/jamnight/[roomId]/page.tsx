@@ -262,7 +262,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-rows-[1fr_auto] gap-6">
                 <div className="lg:grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 flex flex-col gap-6">
-                         <div className="aspect-video w-full h-full">
+                         <Card className="aspect-video w-full h-full overflow-hidden">
                             <YouTube
                                 videoId={roomState.currentVideoId}
                                 onReady={onPlayerReady}
@@ -277,7 +277,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                                 }}
                                 className="w-full h-full"
                             />
-                        </div>
+                        </Card>
                     </div>
                     <div className="lg:col-span-1 h-full flex flex-col min-h-0 mt-6 lg:mt-0">
                          <GroupChat
@@ -291,7 +291,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 </div>
                 <div className="lg:grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                        <Card className="bg-background/80">
+                        <Card>
                             <CardContent className="space-y-4 pt-6">
                                 <div className="flex gap-2">
                                     <Input
