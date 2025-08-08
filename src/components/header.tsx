@@ -5,30 +5,46 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
-import { ArrowLeft, LogOut, Timer, Users, Trophy, Palette, Sun, Moon, Home, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, LogOut, Timer, Users, Trophy, Home, RefreshCw, Image as ImageIcon, Upload } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useStudyRoom } from "@/hooks/use-study-room";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { useTheme } from "next-themes"
 import { useBackground } from "@/hooks/use-background";
+import * as React from 'react';
 
 export function AppHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { setTheme } = useTheme();
-  const { changeBackground, isChanging } = useBackground();
+  const { changeBackground, isChanging, setCustomBackground, clearCustomBackground } = useBackground();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleBack = () => {
     router.back();
   };
   
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setCustomBackground(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+  
+  const handleBackgroundCycleClick = () => {
+    // If a custom background is set, the first click clears it.
+    // Otherwise, it cycles through the default images.
+    clearCustomBackground();
+    changeBackground();
+  };
+
   const isHomePage = ['/neet-achiever-home', '/neet-home', '/jee-home', '/'].includes(pathname);
 
   return (
@@ -70,7 +86,18 @@ export function AppHeader() {
                         Study Together
                     </Link>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={changeBackground} disabled={isChanging}>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/*"
+                    className="hidden"
+                />
+                <Button variant="ghost" size="icon" onClick={handleUploadClick}>
+                    <Upload className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Upload Custom Background</span>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleBackgroundCycleClick} disabled={isChanging}>
                     {isChanging ? <RefreshCw className="h-[1.2rem] w-[1.2rem] animate-spin" /> : <ImageIcon className="h-[1.2rem] w-[1.2rem]" />}
                     <span className="sr-only">Change Background</span>
                 </Button>
