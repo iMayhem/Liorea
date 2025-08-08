@@ -72,7 +72,7 @@ export interface TimerState {
 export interface Participant {
   uid: string;
   username: string | null;
-  photoURL: string | null;
+  photoURL?: string | null;
 }
 
 export interface ChatMessage {
