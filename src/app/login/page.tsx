@@ -31,7 +31,7 @@ export default function LoginPage() {
   
   if (loading || user) {
      return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -42,7 +42,7 @@ export default function LoginPage() {
       initial={{opacity: 0}}
       animate={{opacity: 1}}
       transition={{duration: 0.5}}
-      className="flex items-center justify-center min-h-screen bg-background p-4"
+      className="flex items-center justify-center min-h-screen bg-transparent p-4"
     >
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">

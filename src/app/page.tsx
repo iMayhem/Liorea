@@ -58,7 +58,7 @@ export default function HomePage() {
 
   // Render a loading spinner while we determine where to redirect the user.
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex items-center justify-center min-h-screen bg-transparent">
       <Loader2 className="h-8 w-8 animate-spin" />
     </div>
   );
