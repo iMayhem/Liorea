@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { DropdownMenuSeparator } from "./ui/dropdown-menu";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
@@ -74,6 +75,10 @@ export function AppHeader() {
                     </DropdownMenuItem>
                      <DropdownMenuItem onClick={() => setTheme("theme-rose")}>
                       Rose
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                      Default
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("system")}>
                       System
