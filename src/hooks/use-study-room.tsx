@@ -143,24 +143,17 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.log("Room already deleted, skipping cleanup.");
                 return; 
             }
-            
+
             const currentParticipants = roomSnap.data()?.participants || [];
-            if (currentParticipants.length <= 1 && currentParticipants.some((p: Participant) => p.uid === user.uid)) {
-                // If this is the last user, delete the room and its subcollection
-                const chatRef = collection(db, 'studyRooms', leavingRoomId, 'chats');
-                const chatSnapshot = await getDocs(chatRef);
-                const batch = writeBatch(db);
-                chatSnapshot.forEach(doc => batch.delete(doc.ref));
-                batch.delete(roomRef);
-                await batch.commit();
-            } else {
-                // If other users are present, just remove this user
+            // Only remove the participant, don't delete the room.
+            // Room deletion is now handled by a dedicated button on the study-together page.
+            if (currentParticipants.some((p: Participant) => p.uid === user.uid)) {
                 const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
                 const typingField = `typingUsers.${user.uid}`;
-                await updateDoc(roomRef, { 
+                await updateDoc(roomRef, {
                     participants: arrayRemove(userParticipant),
                     [typingField]: deleteField(),
-                }).catch(err => console.error("Error cleaning up room state:", err));
+                });
             }
         } catch (error) {
             if ((error as any).code !== 'not-found') { 
