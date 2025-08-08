@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AppLogo } from "./icons";
 import { Button } from "./ui/button";
-import { ArrowLeft, LogOut, Timer, Users, Trophy, Palette, Sun, Moon, Home } from "lucide-react";
+import { ArrowLeft, LogOut, Timer, Users, Trophy, Palette, Sun, Moon, Home, RefreshCw, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useStudyRoom } from "@/hooks/use-study-room";
 import {
@@ -16,12 +16,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { useBackground } from "@/hooks/use-background";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme } = useTheme();
+  const { changeBackground, isChanging } = useBackground();
 
   const handleBack = () => {
     router.back();
@@ -67,6 +69,10 @@ export function AppHeader() {
                         <Users className="mr-2 h-4 w-4" />
                         Study Together
                     </Link>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={changeBackground} disabled={isChanging}>
+                    {isChanging ? <RefreshCw className="h-[1.2rem] w-[1.2rem] animate-spin" /> : <ImageIcon className="h-[1.2rem] w-[1.2rem]" />}
+                    <span className="sr-only">Change Background</span>
                 </Button>
                  <DropdownMenu>
                   <DropdownMenuTrigger asChild>
