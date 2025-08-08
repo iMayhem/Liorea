@@ -119,6 +119,7 @@ export interface UserProfile {
     createdAt: string; // Changed to string to be serializable
     status?: {
       isStudying: boolean;
+      isJamming?: boolean;
       roomId: string | null;
     }
 }

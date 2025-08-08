@@ -18,6 +18,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import type { ChatMessage } from '@/lib/types';
 import { GroupChat } from '@/components/group-chat';
 import { Label } from '@/components/ui/label';
+import { updateUserProfile } from '@/lib/firestore';
 
 
 type PlayerState = 'PLAYING' | 'PAUSED' | 'BUFFERING';
@@ -80,8 +81,10 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 router.push('/jamnight');
                 return;
             }
-             // Add user to participants list
-            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: user.username }) });
+            // Add user to participants list
+            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: user.username, photoURL: user.photoURL }) });
+            // Update user's status to indicate they are in a jam session
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
         });
 
         const unsubscribeRoom = onSnapshot(roomRef, (doc) => {
@@ -119,11 +122,13 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             getDoc(roomRef).then(docSnap => {
                 if(docSnap.exists()) {
                      updateDoc(roomRef, { 
-                         participants: arrayRemove({ uid: user.uid, username: user.username }),
+                         participants: arrayRemove({ uid: user.uid, username: user.username, photoURL: user.photoURL }),
                          [`typingUsers.${user.uid}`]: deleteField()
                      });
                 }
             })
+            // Reset user's status when they leave
+            updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
         };
 
     }, [roomId, user, authLoading, router, toast]);
@@ -255,62 +260,59 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     </Button>
                 </div>
             </header>
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6" style={{transform: 'scale(0.8)', transformOrigin: 'top center'}}>
-                <div className="flex-1 grid lg:grid-cols-3 gap-6 min-h-0">
-                    <div className="lg:col-span-2">
-                        <Card className="overflow-hidden bg-background/80 backdrop-blur-sm h-full">
-                             <div className="aspect-video w-full h-full">
-                                 <YouTube
-                                    videoId={roomState.currentVideoId}
-                                    onReady={onPlayerReady}
-                                    onStateChange={onPlayerStateChange}
-                                    opts={{
-                                        height: '100%',
-                                        width: '100%',
-                                        playerVars: {
-                                            autoplay: 0,
-                                            controls: 1,
-                                        },
-                                    }}
-                                    className="w-full h-full"
-                                 />
-                             </div>
-                        </Card>
-                    </div>
-                    <div className="lg:col-span-1 h-full flex flex-col min-h-0">
-                         <GroupChat 
-                            messages={chatMessages} 
-                            onSendMessage={handleSendMessage} 
-                            currentUserId={user!.uid} 
-                            onTyping={handleTyping}
-                            typingUsers={roomState.typingUsers || {}}
-                        />
-                    </div>
-                </div>
-                <Card className="bg-background/80 backdrop-blur-sm">
-                    <CardHeader>
-                        <CardTitle>Controls</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="youtube-url">YouTube URL</Label>
-                            <div className="flex gap-2">
-                                <Input 
-                                    id="youtube-url"
-                                    placeholder="Paste a YouTube URL"
-                                    value={videoUrl}
-                                    onChange={(e) => setVideoUrl(e.target.value)}
-                                />
-                                <Button onClick={handleVideoUrlChange}>Set</Button>
-                            </div>
+            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 flex flex-col gap-6">
+                    <Card className="flex-grow overflow-hidden bg-background/80 backdrop-blur-sm">
+                        <div className="aspect-video w-full h-full">
+                            <YouTube
+                                videoId={roomState.currentVideoId}
+                                onReady={onPlayerReady}
+                                onStateChange={onPlayerStateChange}
+                                opts={{
+                                    height: '100%',
+                                    width: '100%',
+                                    playerVars: {
+                                        autoplay: 0,
+                                        controls: 1,
+                                    },
+                                }}
+                                className="w-full h-full"
+                            />
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            Current Video ID: {roomState.currentVideoId}
-                        </p>
-                    </CardContent>
-                </Card>
+                    </Card>
+                    <Card className="bg-background/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle>Controls</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="youtube-url">YouTube URL</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="youtube-url"
+                                        placeholder="Paste a YouTube URL"
+                                        value={videoUrl}
+                                        onChange={(e) => setVideoUrl(e.target.value)}
+                                    />
+                                    <Button onClick={handleVideoUrlChange}>Set</Button>
+                                </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Current Video ID: {roomState.currentVideoId}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="lg:col-span-1 h-full flex flex-col min-h-0">
+                    <GroupChat
+                        messages={chatMessages}
+                        onSendMessage={handleSendMessage}
+                        currentUserId={user!.uid}
+                        onTyping={handleTyping}
+                        typingUsers={roomState.typingUsers || {}}
+                    />
+                </div>
             </main>
         </div>
     );
 }
-    

@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField } from 'firebase/firestore';
 import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
@@ -300,7 +300,7 @@ export async function upsertUserProfile(user: { uid: string; username: string | 
       dailyStreak: 0,
       mockScores: [],
       createdAt: serverTimestamp(),
-      status: { isStudying: false, roomId: null },
+      status: { isStudying: false, isJamming: false, roomId: null },
     });
   } else {
     // Document exists, update only the fields that might change on login
