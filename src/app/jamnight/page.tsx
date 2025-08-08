@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, LogIn } from 'lucide-react';
+import { Loader2, PlusCircle, LogIn, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+
+const PUBLIC_JAMNIGHT_ROOM_ID = "public-jamnight-room-v1";
 
 export default function JamnightPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function JamnightPage() {
   const [roomId, setRoomId] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
   const [isJoining, setIsJoining] = React.useState(false);
+  const [isJoiningPublic, setIsJoiningPublic] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -55,17 +58,26 @@ export default function JamnightPage() {
       setIsCreating(false);
     }
   };
-  
-  const handleJoinRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roomId.trim() || !user) return;
-    setIsJoining(true);
-    try {
-       const roomRef = doc(db, 'jamRooms', roomId.trim());
-       const roomSnap = await getDoc(roomRef);
 
-        if (roomSnap.exists()) {
-            router.push(`/jamnight/${roomId.trim()}`);
+  const doJoinRoom = async (id: string) => {
+    const roomRef = doc(db, 'jamRooms', id);
+    const roomSnap = await getDoc(roomRef);
+
+    if (roomSnap.exists()) {
+      router.push(`/jamnight/${id}`);
+    } else {
+        if (id === PUBLIC_JAMNIGHT_ROOM_ID) {
+          // If public room doesn't exist, create it
+           await setDoc(roomRef, {
+                createdAt: serverTimestamp(),
+                currentVideoId: 'jfKfPfyJRdk', // A default video
+                playerState: 'PAUSED',
+                lastSeekTimestamp: serverTimestamp(),
+                lastSeekTimeSeconds: 0,
+                participants: [],
+                typingUsers: {},
+           });
+           router.push(`/jamnight/${id}`);
         } else {
             toast({
                 title: 'Room Not Found',
@@ -73,6 +85,15 @@ export default function JamnightPage() {
                 variant: 'destructive',
             });
         }
+    }
+  }
+  
+  const handleJoinRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roomId.trim() || !user) return;
+    setIsJoining(true);
+    try {
+       await doJoinRoom(roomId.trim());
     } catch (error) {
         console.error("Error joining room: ", error);
         toast({
@@ -84,6 +105,23 @@ export default function JamnightPage() {
         setIsJoining(false);
     }
   };
+
+  const handleJoinPublicRoom = async () => {
+    if (!user) return;
+    setIsJoiningPublic(true);
+    try {
+        await doJoinRoom(PUBLIC_JAMNIGHT_ROOM_ID);
+    } catch (error) {
+        console.error("Error joining public room: ", error);
+        toast({
+            title: 'Error',
+            description: 'Could not join the public room. Please try again.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsJoiningPublic(false);
+    }
+  }
 
   if (authLoading || !user) {
     return (
@@ -106,10 +144,19 @@ export default function JamnightPage() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-heading">Jamnight</CardTitle>
-              <CardDescription>Create or join a room to listen to YouTube songs in sync with your friends.</CardDescription>
+              <CardDescription>Create a private room or join the public one to listen to YouTube songs in sync with your friends.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Button onClick={handleCreateRoom} className="w-full" disabled={isCreating}>
+              <Button onClick={handleJoinPublicRoom} className="w-full" disabled={isJoiningPublic}>
+                {isJoiningPublic ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Globe className="mr-2 h-4 w-4" />
+                )}
+                Join Public Room
+              </Button>
+
+               <Button onClick={handleCreateRoom} className="w-full" variant="outline" disabled={isCreating}>
                 {isCreating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
