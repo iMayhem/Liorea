@@ -255,7 +255,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     </Button>
                 </div>
             </header>
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid lg:grid-cols-3 gap-6 overflow-hidden">
+            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid lg:grid-cols-3 gap-6 overflow-hidden" style={{transform: 'scale(0.8)', transformOrigin: 'top center'}}>
                 <div className="lg:col-span-2 flex flex-col gap-6">
                     <Card className="overflow-hidden bg-background/80 backdrop-blur-sm flex-1 flex flex-col">
                          <div className="aspect-video w-full">
