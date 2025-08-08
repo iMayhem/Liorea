@@ -2,11 +2,11 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment } from 'firebase/firestore';
-import type { UserProgress, TimeTableData, UserQuizProgress } from './types';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit } from 'firebase/firestore';
+import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 
 /**
@@ -241,6 +241,7 @@ export async function resetQuizProgress(
 
 /**
  * Logs a completed study session for all participants in a room.
+ * It updates both the daily log and the all-time total.
  * @param participantUids - An array of user UIDs who were in the room.
  * @param durationInSeconds - The duration of the study session in seconds.
  */
@@ -249,13 +250,19 @@ export async function logStudySession(participantUids: string[], durationInSecon
   const today = format(new Date(), 'yyyy-MM-dd');
   
   for (const uid of participantUids) {
-    const docRef = doc(db, 'studyLogs', uid);
-    // Use dot notation to increment a field within a map
+    // Update daily log
+    const dailyLogRef = doc(db, 'studyLogs', uid);
     const fieldPath = `daily[${today}]`;
-    await setDoc(docRef, { 
+    await setDoc(dailyLogRef, { 
       daily: {
         [today]: increment(durationInSeconds) 
       }
+    }, { merge: true });
+
+    // Update total study hours in the user's profile
+    const userProfileRef = doc(db, 'users', uid);
+    await setDoc(userProfileRef, {
+        totalStudyHours: increment(durationInSeconds)
     }, { merge: true });
   }
 }
@@ -274,3 +281,111 @@ export async function getStudyLogsForUser(userId: string): Promise<Record<string
   return {};
 }
 
+/**
+ * Creates or updates a user's profile information.
+ * @param user - The authenticated user object from Firebase Auth.
+ */
+export async function upsertUserProfile(user: { uid: string; username: string | null; photoURL: string | null; email: string | null; }) {
+  const userRef = doc(db, 'users', user.uid);
+  const docSnap = await getDoc(userRef);
+
+  if (!docSnap.exists()) {
+    // Document doesn't exist, create it with default values
+    await setDoc(userRef, {
+      uid: user.uid,
+      username: user.username,
+      photoURL: user.photoURL,
+      email: user.email,
+      totalStudyHours: 0,
+      dailyStreak: 0,
+      mockScores: [],
+      leaderboardVisibility: 'anonymous', // Default privacy setting
+      createdAt: serverTimestamp(),
+    });
+  } else {
+    // Document exists, update only the fields that might change on login
+    await updateDoc(userRef, {
+        username: user.username,
+        photoURL: user.photoURL,
+        email: user.email,
+    });
+  }
+}
+
+/**
+ * Retrieves a user's profile from the 'users' collection.
+ * @param uid - The user's ID.
+ * @returns The user profile object or null if not found.
+ */
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+    const userRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as UserProfile;
+    }
+    return null;
+}
+
+/**
+ * Updates a user's profile with partial data.
+ * @param uid - The user's ID.
+ * @param data - The partial data to update.
+ */
+export async function updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, data);
+}
+
+/**
+ * Fetches and ranks users for the leaderboard based on study hours.
+ * @param type - The type of leaderboard ('study-hours-all-time' or 'study-hours-weekly').
+ * @returns A promise that resolves to an array of ranked UserProfile objects.
+ */
+export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-hours-weekly'): Promise<UserProfile[]> {
+  const usersRef = collection(db, 'users');
+  let q;
+
+  if (type === 'study-hours-all-time') {
+    q = query(usersRef, orderBy('totalStudyHours', 'desc'), limit(50));
+  } else {
+    // For weekly, we'll have to fetch all users and calculate on the client.
+    // This is not ideal for performance with many users, but necessary without server-side aggregation.
+    q = query(usersRef);
+  }
+
+  const querySnapshot = await getDocs(q);
+  let users: UserProfile[] = [];
+  querySnapshot.forEach((doc) => {
+    // Filter out users who want to be hidden
+    const data = doc.data() as UserProfile;
+    if (data.leaderboardVisibility !== 'hidden') {
+      users.push({ ...data, uid: doc.id });
+    }
+  });
+
+  if (type === 'study-hours-weekly') {
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+      const weeklyUsers = await Promise.all(users.map(async (user) => {
+          const studyLogRef = doc(db, 'studyLogs', user.uid);
+          const studyLogSnap = await getDoc(studyLogRef);
+          let weeklyHours = 0;
+          if (studyLogSnap.exists()) {
+              const dailyData = studyLogSnap.data().daily || {};
+              for (const dateStr in dailyData) {
+                  const logDate = new Date(dateStr);
+                  if (logDate >= weekStart && logDate <= weekEnd) {
+                      weeklyHours += dailyData[dateStr];
+                  }
+              }
+          }
+          return { ...user, totalStudyHours: weeklyHours };
+      }));
+
+      users = weeklyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0)).slice(0, 50);
+  }
+  
+  return users;
+}

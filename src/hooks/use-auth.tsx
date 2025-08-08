@@ -5,6 +5,8 @@ import React, {createContext, useContext, useState, useEffect, ReactNode} from '
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { upsertUserProfile } from '@/lib/firestore';
+
 
 interface User {
   uid: string;
@@ -35,6 +37,8 @@ export function AuthProvider({children}: {children: ReactNode}) {
         const { uid, displayName, email, photoURL } = firebaseUser;
         const appUser: User = { uid, username: displayName, email, photoURL };
         setUser(appUser);
+        // Create or update the user's profile in Firestore
+        upsertUserProfile(appUser);
       } else {
         setUser(null);
       }

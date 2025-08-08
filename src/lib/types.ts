@@ -84,3 +84,16 @@ export interface ChatMessage {
     replyToId?: string;
     replyToText?: string;
 }
+
+// New type for user profiles
+export interface UserProfile {
+    uid: string;
+    username: string | null;
+    email: string | null;
+    photoURL: string | null;
+    totalStudyHours: number;
+    dailyStreak: number;
+    mockScores: number[];
+    leaderboardVisibility: 'visible' | 'anonymous' | 'hidden';
+    createdAt: any; // Firebase ServerTimestamp
+}
