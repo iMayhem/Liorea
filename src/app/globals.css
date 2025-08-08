@@ -100,9 +100,6 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-
-  .dark body, .theme-zinc body, .theme-blue body {
     background-image: url('https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/backgrounds%2Fpic.jpg?alt=media&token=7860393d-c6f3-45d5-a6e9-a6ca2a4d06a7');
     background-size: cover;
     background-position: center;
