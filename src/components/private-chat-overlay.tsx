@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { useStudyRoom } from '@/hooks/use-study-room';
+import { ChatIcon } from './icons';
 
 interface PrivateChatOverlayProps {}
 
@@ -22,6 +23,7 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
   const [users, setUsers] = React.useState<UserProfile[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { user: currentUser } = useAuth();
+  const { newMessagesFrom } = useStudyRoom();
 
   React.useEffect(() => {
     const fetchUsers = async () => {
@@ -66,9 +68,12 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
                 <AvatarImage src={user.photoURL || ''} alt={user.username || 'User'}/>
                 <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                     <p className="font-medium">{user.username}</p>
                 </div>
+                 {newMessagesFrom.has(user.uid) && (
+                    <span className="block h-3 w-3 rounded-full bg-white/50 backdrop-blur-sm ring-1 ring-white/20" />
+                )}
             </button>
             ))
         ) : (
@@ -174,9 +179,14 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
 }
 
 export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
-  const { isPrivateChatOpen, setIsPrivateChatOpen } = useStudyRoom();
+  const { isPrivateChatOpen, setIsPrivateChatOpen, clearChatNotification } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  
+  const handleSelectUser = (user: UserProfile) => {
+    setSelectedUser(user);
+    clearChatNotification(user.uid);
+  }
 
   // Reset when overlay is closed
   React.useEffect(() => {
@@ -228,7 +238,7 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                         </div>
                     </header>
                     <div className="p-4 flex-1 overflow-hidden">
-                        <UserList onSelectUser={setSelectedUser} searchQuery={searchQuery}/>
+                        <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
                     </div>
                 </div>
             ) : (

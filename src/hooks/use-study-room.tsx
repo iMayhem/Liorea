@@ -11,7 +11,7 @@ import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 
 const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
-const LAST_SEEN_KEY = 'privateChatLastSeen';
+const LAST_SEEN_KEY_PREFIX = 'privateChatLastSeen_';
 
 
 interface StudyRoomContextType {
@@ -33,6 +33,8 @@ interface StudyRoomContextType {
     isLeaderboardOpen: boolean;
     setIsLeaderboardOpen: React.Dispatch<React.SetStateAction<boolean>>;
     hasNewPrivateMessage: boolean;
+    newMessagesFrom: Set<string>;
+    clearChatNotification: (userId: string) => void;
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
@@ -69,8 +71,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [isFocusMode, setIsFocusMode] = React.useState(false);
     const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
-    const [hasNewPrivateMessage, setHasNewPrivateMessage] = React.useState(false);
-
+    
+    // Notification state
+    const [newMessagesFrom, setNewMessagesFrom] = React.useState<Set<string>>(new Set());
+    const hasNewPrivateMessage = newMessagesFrom.size > 0;
 
     // Notepad state
     const [notepads, setNotepads] = useState<Notepads>({});
@@ -90,7 +94,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     // Effect for private chat notifications
     useEffect(() => {
         if (!user) {
-            setHasNewPrivateMessage(false);
+            setNewMessagesFrom(new Set());
             return;
         }
 
@@ -98,21 +102,23 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             try {
                 const allUsers = await getAllUsers();
                 const otherUsers = allUsers.filter(u => u.uid !== user.uid);
-                const lastSeenTimestamp = new Date(localStorage.getItem(LAST_SEEN_KEY) || 0).getTime();
                 
+                const updatedNewMessages = new Set(newMessagesFrom);
+
                 for (const otherUser of otherUsers) {
+                    const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${otherUser.uid}`;
+                    const lastSeenTimestamp = new Date(localStorage.getItem(lastSeenKey) || 0).getTime();
                     const chatRoomId = user.uid < otherUser.uid ? `${user.uid}_${otherUser.uid}` : `${otherUser.uid}_${user.uid}`;
                     const lastMessage = await getLastPrivateMessage(chatRoomId);
 
                     if (lastMessage && lastMessage.timestamp) {
                         const messageTimestamp = new Date(lastMessage.timestamp).getTime();
                         if (messageTimestamp > lastSeenTimestamp && lastMessage.senderId !== user.uid) {
-                            setHasNewPrivateMessage(true);
-                            return; // Found a new message, no need to check further
+                            updatedNewMessages.add(otherUser.uid);
                         }
                     }
                 }
-                 setHasNewPrivateMessage(false);
+                setNewMessagesFrom(updatedNewMessages);
             } catch (error) {
                 console.error("Error checking for new private messages:", error);
             }
@@ -125,14 +131,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     }, [user]);
 
-    // Effect to clear notification when chat is opened
-     useEffect(() => {
-        if (isPrivateChatOpen) {
-            localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
-            setHasNewPrivateMessage(false);
-        }
-    }, [isPrivateChatOpen]);
-
+    const clearChatNotification = useCallback((userId: string) => {
+        const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${userId}`;
+        localStorage.setItem(lastSeenKey, new Date().toISOString());
+        setNewMessagesFrom(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(userId);
+            return newSet;
+        });
+    }, []);
 
     // Effect to play sounds on participant changes
     useEffect(() => {
@@ -511,6 +518,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         isLeaderboardOpen,
         setIsLeaderboardOpen,
         hasNewPrivateMessage,
+        newMessagesFrom,
+        clearChatNotification,
         joinRoom,
         leaveRoom,
         handleTimerUpdate,

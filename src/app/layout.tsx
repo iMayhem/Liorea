@@ -2,12 +2,6 @@
 import type {Metadata} from 'next';
 import {Inter, Space_Grotesk} from 'next/font/google';
 import './globals.css';
-import {Toaster} from '@/components/ui/toaster';
-import {AuthProvider, StudyRoomProvider} from '@/hooks/use-auth';
-import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
-import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
-import { ThemeProvider } from '@/components/theme-provider';
-import { FocusModeOverlay } from '@/components/focus-mode-overlay';
 import { BackgroundProvider } from '@/hooks/use-background';
 import { AppBody } from '@/components/app-body';
 
