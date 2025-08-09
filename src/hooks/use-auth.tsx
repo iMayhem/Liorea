@@ -83,6 +83,20 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return () => unsubscribe();
   }, [fetchProfile]);
   
+  // Effect to periodically update the 'lastSeen' timestamp for the current user
+  useEffect(() => {
+    if (!user) return;
+
+    // Set an interval to update the timestamp every 60 seconds
+    const intervalId = setInterval(() => {
+      updateUserProfile(user.uid, { lastSeen: new Date() });
+    }, 60000); // 60 seconds
+
+    // Cleanup the interval when the component unmounts or the user changes
+    return () => clearInterval(intervalId);
+  }, [user]);
+
+
   const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchProfile(user.uid);

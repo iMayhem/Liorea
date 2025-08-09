@@ -20,7 +20,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 
 function formatLastSeen(timestamp: any): string {
     if (!timestamp) return 'Offline';
-    const date = timestamp.toDate();
+    const date = new Date(timestamp); // Changed from timestamp.toDate()
     const now = new Date();
     const diffSeconds = (now.getTime() - date.getTime()) / 1000;
 

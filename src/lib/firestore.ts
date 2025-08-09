@@ -290,12 +290,9 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
   const docSnap = await getDoc(userRef);
   
   const dataToSet = { ...data };
-  if (data.lastSeen instanceof Date || typeof data.lastSeen === 'string') {
-    dataToSet.lastSeen = Timestamp.fromDate(new Date(data.lastSeen));
-  } else if (!data.lastSeen) {
-     dataToSet.lastSeen = serverTimestamp();
-  }
-
+    if (data.lastSeen instanceof Date) {
+        dataToSet.lastSeen = Timestamp.fromDate(data.lastSeen);
+    }
 
   if (docSnap.exists()) {
     // Document exists, update it with new data
@@ -377,10 +374,8 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 export async function updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
     const userRef = doc(db, 'users', uid);
     const dataToSet = { ...data };
-    if (data.lastSeen instanceof Date || typeof data.lastSeen === 'string') {
-        dataToSet.lastSeen = Timestamp.fromDate(new Date(data.lastSeen));
-    } else if (!data.lastSeen) {
-        dataToSet.lastSeen = serverTimestamp();
+    if (data.lastSeen instanceof Date) {
+        dataToSet.lastSeen = Timestamp.fromDate(data.lastSeen);
     }
     // Use set with merge:true to either update an existing doc or create a new one if it doesn't exist.
     await setDoc(userRef, dataToSet, { merge: true });
