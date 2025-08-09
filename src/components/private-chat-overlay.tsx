@@ -86,7 +86,15 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
   );
 }
 
-function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () => void }) {
+function ChatView({ 
+    recipient, 
+    onBack,
+    onImageSelect
+}: { 
+    recipient: UserProfile; 
+    onBack: () => void;
+    onImageSelect: (imageUrl: string) => void;
+}) {
   const { user: sender, profile } = useAuth();
   const [messages, setMessages] = React.useState<PrivateChatMessage[]>([]);
   const [newMessage, setNewMessage] = React.useState('');
@@ -227,7 +235,7 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                             )}
                         >
                             {!isCurrentUser && <p className="text-xs font-bold text-primary mb-0.5">
-                                {profile?.username === msg.senderName ? "You" : msg.senderName}
+                                {profile?.username === msg.senderName ? "You" : recipient.username}
                             </p>}
                             
                             {originalMessage && (
@@ -236,25 +244,11 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                                     <p className="truncate">{originalMessage.text || 'Image'}</p>
                                 </div>
                             )}
-
                              {msg.imageUrl && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                      <button className="p-2 rounded-lg bg-black/20 hover:bg-black/30 my-1 flex items-center gap-2 text-left">
-                                          <ImageIcon className="h-5 w-5" />
-                                          <span className="font-semibold">Image</span>
-                                      </button>
-                                    </DialogTrigger>
-                                     <DialogPortal>
-                                        <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
-                                        <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
-                                            <DialogHeader>
-                                                <DialogTitle className="sr-only">Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
-                                            </DialogHeader>
-                                            <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain rounded-lg"/>
-                                        </DialogContent>
-                                    </DialogPortal>
-                                </Dialog>
+                                <button onClick={() => onImageSelect(msg.imageUrl!)} className="p-2 rounded-lg bg-black/20 hover:bg-black/30 my-1 flex items-center gap-2 text-left">
+                                    <ImageIcon className="h-5 w-5" />
+                                    <span className="font-semibold">Image</span>
+                                </button>
                             )}
                             {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
 
@@ -318,7 +312,8 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
   const { isPrivateChatOpen, setIsPrivateChatOpen, clearChatNotification } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
-  
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+
   const handleSelectUser = (user: UserProfile) => {
     setSelectedUser(user);
     clearChatNotification(user.uid);
@@ -338,37 +333,56 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
         <Dialog open={isPrivateChatOpen} onOpenChange={setIsPrivateChatOpen}>
             <DialogPortal>
                 <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
-                <DialogContent 
+                <DialogContent
                     className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg p-0 flex flex-col"
                     onInteractOutside={(e) => e.preventDefault()}
                 >
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Private Chat</DialogTitle>
+                    </DialogHeader>
                     <DialogClose className="sr-only" />
                     {!selectedUser ? (
                     <div className="h-full flex flex-col">
-                        <DialogHeader className="p-4 border-b border-white/10 shrink-0 text-center">
+                        <div className="p-4 border-b border-white/10 shrink-0 text-center">
                         <div className="relative pt-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
                                 placeholder="Search for a user..."
-                                className="pl-10 bg-background/50"
+                                className="pl-4 bg-background/50"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        </DialogHeader>
+                        </div>
                         <div className="p-4 flex-1 overflow-hidden">
                         <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
                         </div>
                     </div>
                     ) : (
                     <div className="h-full">
-                        <ChatView recipient={selectedUser} onBack={() => setSelectedUser(null)} />
+                        <ChatView 
+                            recipient={selectedUser} 
+                            onBack={() => setSelectedUser(null)}
+                            onImageSelect={setSelectedImage}
+                        />
                     </div>
                     )}
                 </DialogContent>
             </DialogPortal>
         </Dialog>
       )}
+       {selectedImage && (
+            <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+                 <DialogPortal>
+                    <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
+                    <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
+                         <DialogHeader>
+                            <DialogTitle className="sr-only">Image Viewer</DialogTitle>
+                         </DialogHeader>
+                        {selectedImage && <Image src={selectedImage} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain rounded-lg"/>}
+                    </DialogContent>
+                </DialogPortal>
+            </Dialog>
+        )}
     </AnimatePresence>
   );
 }
