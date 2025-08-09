@@ -48,7 +48,7 @@ const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefin
 const TIME_LOG_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 export function StudyRoomProvider({ children }: { children: ReactNode }) {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     const pathname = usePathname();
@@ -121,35 +121,19 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const leaveRoom = useCallback(async () => {
-        if (!user || !currentRoomId) return;
-
+        if (!user || !profile || !currentRoomId) return;
         setIsLeaving(true);
-        userHasLeftRef.current = true;
-        
-        const wasInRoomPage = pathname.includes(`/study-together/${currentRoomId}`);
+
         const leavingRoomId = currentRoomId;
 
-        // 1. Immediately update UI
-        setCurrentRoomId(null); 
-        setRoomData(null);
-        setChatMessages([]);
-        setParticipants([]);
-        setIsFocusMode(false);
-        cleanupListeners();
-        
-        router.push('/study-together');
-        
-        // This must be set after the UI has had a chance to unmount the button
-        setTimeout(() => setIsLeaving(false), 0);
-
-        // 2. Perform background cleanup
         try {
+            // Background cleanup
             await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
-                const userParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
+                const userParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
                 const typingField = `typingUsers.${user.uid}`;
                 await updateDoc(roomRef, {
                     participants: arrayRemove(userParticipant),
@@ -161,9 +145,22 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Error during room cleanup:", error);
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
+        } finally {
+            // UI update
+            if (currentRoomId === leavingRoomId) {
+                userHasLeftRef.current = true;
+                setCurrentRoomId(null); 
+                setRoomData(null);
+                setChatMessages([]);
+                setParticipants([]);
+                setIsFocusMode(false);
+                cleanupListeners();
+            }
+            setIsLeaving(false);
+            router.push('/study-together');
         }
 
-    }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
+    }, [user, profile, currentRoomId, toast, cleanupListeners, router]);
     
     // Effect for periodic time logging
     useEffect(() => {
@@ -183,7 +180,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     const joinRoom = useCallback(async (roomId: string) => {
         userHasLeftRef.current = false;
-        if (!user) return false;
+        if (!user || !profile?.username) return false;
         if (currentRoomId === roomId) return true;
         if (currentRoomId && currentRoomId !== roomId) {
             await leaveRoom(); // Leave current room before joining a new one
@@ -199,7 +196,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         
         await updateUserProfile(user.uid, { status: { isStudying: true, roomId: roomId }});
 
-        const newParticipant = { uid: user.uid, username: user.username, photoURL: user.photoURL };
+        const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
         const currentParticipants = docSnap.data().participants || [];
         if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
              await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
@@ -237,15 +234,23 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         });
         
         return true;
-    }, [user, currentRoomId, leaveRoom, toast, cleanupListeners, router]);
+    }, [user, profile, currentRoomId, leaveRoom, toast, cleanupListeners, router]);
 
     // Effect to handle component unmount or tab close
     useEffect(() => {
-        // This is a React effect cleanup function. It runs when the StudyRoomProvider
-        // unmounts. This happens when the user navigates away from the app,
-        // closes the tab, or the component tree changes.
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (currentRoomId) {
+                // Note: Most modern browsers prevent custom messages here.
+                // This is more about triggering the cleanup logic.
+                leaveRoom();
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
         return () => {
-            // Check if the user is in a room before trying to leave.
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // Also cleanup if the component unmounts for other reasons (like navigation)
             if (currentRoomId) {
                 leaveRoom();
             }
@@ -382,7 +387,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     // Other handlers
     const handleSendMessage = useCallback(async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
-        if (!user || !currentRoomId) return;
+        if (!user || !profile?.username || !currentRoomId) return;
         const chatCollectionRef = collection(db, 'studyRooms', currentRoomId, 'chats');
         
         if(!message.text && !message.imageUrl) return;
@@ -391,7 +396,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
           text: message.text,
           imageUrl: message.imageUrl || null,
           senderId: user.uid,
-          senderName: user.username,
+          senderName: profile.username,
           timestamp: serverTimestamp(),
         };
 
@@ -401,16 +406,16 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
         
         await addDoc(chatCollectionRef, messageData);
-    }, [user, currentRoomId]);
+    }, [user, profile, currentRoomId]);
 
     const handleTyping = useCallback(async (isTyping: boolean) => {
-        if (!user || !user.username || !currentRoomId) return;
+        if (!user || !profile?.username || !currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const typingField = `typingUsers.${user.uid}`;
 
         try {
             if (isTyping) {
-                await updateDoc(roomRef, { [typingField]: user.username });
+                await updateDoc(roomRef, { [typingField]: profile.username });
             } else {
                 await updateDoc(roomRef, { [typingField]: deleteField() });
             }
@@ -419,7 +424,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Failed to update typing status:", error);
             }
         }
-    }, [user, currentRoomId]);
+    }, [user, profile, currentRoomId]);
 
     const handleSoundChange = useCallback(async (sound: SoundType) => {
         if (!currentRoomId) return;

@@ -295,6 +295,17 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
     // Document exists, update it with new data
     await updateDoc(userRef, data);
   } else {
+    // Document doesn't exist, check for existing email before creating
+    if(data.email) {
+      const q = query(collection(db, 'users'), where('email', '==', data.email));
+      const emailQuerySnap = await getDocs(q);
+      if(!emailQuerySnap.empty) {
+        // Email already exists, don't create a new user profile
+        console.warn(`Attempted to create a new profile for an existing email: ${data.email}`);
+        return; 
+      }
+    }
+    
     // Document doesn't exist, create it with initial values
     await setDoc(userRef, {
       ...data, // provided data (uid, email, photoURL)

@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-
+import { useAuth } from '@/hooks/use-auth';
 
 interface GroupChatProps {
   messages: ChatMessage[];
@@ -31,6 +31,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const inputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = React.useRef(initialMessages.length);
+  const { profile } = useAuth();
 
 
   React.useEffect(() => {
@@ -82,6 +83,8 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profile?.username) return;
+
     if (newMessage.trim() || image) {
       const tempId = `temp_${Date.now()}`;
       const optimisticMessage: ChatMessage = {
@@ -89,7 +92,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
         text: newMessage.trim(),
         imageUrl: image,
         senderId: currentUserId,
-        senderName: 'You', 
+        senderName: profile.username, 
         timestamp: new Date(),
         ...(replyTo && { replyToId: replyTo.id, replyToText: replyTo.text }),
       };

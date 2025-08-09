@@ -15,12 +15,13 @@ import { GroupChat } from '@/components/group-chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useStudyRoom } from '@/hooks/use-study-room';
+import { ChatIcon } from '@/components/icons';
 
 const PUBLIC_ROOM_ID = "public-study-room-v1";
 
 export default function StudyRoomPage({ params }: { params: { roomId: string } }) {
   const { roomId } = React.use(params as any);
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { 
@@ -38,14 +39,16 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
       handleNotepadNameChange,
       cycleNotepad,
       claimNotepad,
+      setIsPrivateChatOpen
   } = useStudyRoom(roomId);
   
   const [isJoining, setIsJoining] = React.useState(true);
 
   React.useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-        router.push('/login');
+    if (!user || !profile?.username) {
+        if(!user) router.push('/login');
+        else if(!profile?.username) router.push('/set-username');
         return;
     }
 
@@ -65,7 +68,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
 
     performJoin();
 
-  }, [roomId, user, authLoading, router, toast, joinRoom, userHasLeftRef]);
+  }, [roomId, user, profile, authLoading, router, toast, joinRoom, userHasLeftRef]);
 
 
   const handleCopyRoomId = () => {
@@ -112,10 +115,16 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
                   </div>
                 </TooltipProvider>
             </div>
-            <Button variant="outline" onClick={handleCopyRoomId}>
-                <Clipboard className="mr-2 h-4 w-4"/>
-                Copy Room ID
-            </Button>
+             <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => setIsPrivateChatOpen(true)}>
+                    <ChatIcon className="mr-2 h-4 w-4" />
+                    Private Chat
+                </Button>
+                <Button variant="outline" onClick={handleCopyRoomId}>
+                    <Clipboard className="mr-2 h-4 w-4"/>
+                    Copy Room ID
+                </Button>
+            </div>
          </div>
       </header>
       <main className="flex-1 overflow-auto pb-24" style={{transform: 'scale(0.8)', transformOrigin: 'top center'}}>
@@ -145,9 +154,6 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
                     currentUserId={user!.uid} 
                     onTyping={handleTyping}
                     typingUsers={roomData.typingUsers || {}}
-                    isPublicRoom={roomId === PUBLIC_ROOM_ID}
-                    roomId={roomId}
-                    roomType="studyRooms"
                 />
             </motion.div>
         </div>
