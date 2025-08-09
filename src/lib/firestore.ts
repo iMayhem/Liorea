@@ -341,6 +341,22 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 }
 
 /**
+ * Retrieves all user profiles from the 'users' collection.
+ * @returns An array of user profile objects.
+ */
+export async function getAllUsers(): Promise<UserProfile[]> {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, orderBy('username'));
+    const querySnapshot = await getDocs(q);
+    const users: UserProfile[] = [];
+    querySnapshot.forEach((doc) => {
+        users.push(toPlainObject({ ...doc.data(), uid: doc.id }) as UserProfile);
+    });
+    return users;
+}
+
+
+/**
  * Updates a user's profile with partial data.
  * @param uid - The user's ID.
  * @param data - The partial data to update.

@@ -128,6 +128,14 @@ export interface UserProfile {
     }
 }
 
+export interface PrivateChatMessage {
+    id: string;
+    text: string;
+    senderId: string;
+    receiverId: string;
+    timestamp: any; // Firestore ServerTimestamp
+}
+
 
 export interface Report {
     userId: string;

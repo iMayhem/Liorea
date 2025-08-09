@@ -27,6 +27,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { ChatIcon } from '@/components/icons';
+import { PrivateChatOverlay } from '@/components/private-chat-overlay';
 
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -45,6 +47,7 @@ export default function NeetAchieverHomePage() {
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
   const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -86,6 +89,7 @@ export default function NeetAchieverHomePage() {
   return (
     <>
     <ReportDialog isOpen={isReportDialogOpen} onOpenChange={setIsReportDialogOpen} />
+    <PrivateChatOverlay isOpen={isChatOpen} onOpenChange={setIsChatOpen} />
     <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <motion.main
@@ -172,6 +176,21 @@ export default function NeetAchieverHomePage() {
         <p>specially built for achiever online batch</p>
       </footer>
        <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="fixed bottom-16 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
+                    onClick={() => setIsChatOpen(true)}
+                >
+                    <ChatIcon className="h-6 w-6" />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+            <p>Private Chat</p>
+            </TooltipContent>
+        </Tooltip>
         <Tooltip>
             <TooltipTrigger asChild>
                 <Button 
