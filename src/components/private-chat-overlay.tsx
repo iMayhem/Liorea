@@ -240,15 +240,16 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                              {msg.imageUrl && (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-auto w-auto p-2 rounded-lg bg-black/20 hover:bg-black/30 my-1">
-                                            <ImageIcon className="h-10 w-10" />
-                                        </Button>
+                                      <button className="p-2 rounded-lg bg-black/20 hover:bg-black/30 my-1 flex items-center gap-2 text-left">
+                                          <ImageIcon className="h-5 w-5" />
+                                          <span className="font-semibold">Image</span>
+                                      </button>
                                     </DialogTrigger>
                                      <DialogPortal>
                                         <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
                                         <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
-                                            <DialogHeader className="sr-only">
-                                                <DialogTitle>Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
+                                            <DialogHeader>
+                                                <DialogTitle className="sr-only">Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
                                             </DialogHeader>
                                             <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain rounded-lg"/>
                                         </DialogContent>
