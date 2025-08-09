@@ -19,6 +19,12 @@ import { LiveStudyList } from '@/components/live-study-list';
 import { useTheme } from 'next-themes';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ReportDialog } from '@/components/report-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -128,15 +134,6 @@ export default function JeeHomePage() {
                   />
                 </CardContent>
               </Card>
-               <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="absolute bottom-4 left-4"
-                    onClick={() => setIsReportDialogOpen(true)}
-                >
-                    <MessageSquareWarning className="mr-2 h-4 w-4" />
-                    Report an Issue
-                </Button>
             </div>
         </div>
 
@@ -148,8 +145,24 @@ export default function JeeHomePage() {
                 </Link>
             </Button>
         </div>
-
       </motion.main>
+       <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg"
+                    onClick={() => setIsReportDialogOpen(true)}
+                >
+                    <MessageSquareWarning className="h-6 w-6" />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+            <p>Report an Issue</p>
+            </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
     </>
   );
