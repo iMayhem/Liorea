@@ -58,12 +58,6 @@ export function AppHeader() {
             {user && (
               <>
                 <Button asChild variant="outline" size="sm">
-                    <Link href="/leaderboard">
-                        <Trophy className="mr-2 h-4 w-4" />
-                        Leaderboard
-                    </Link>
-                </Button>
-                <Button asChild variant="outline" size="sm">
                     <Link href="/study-together">
                         <Users className="mr-2 h-4 w-4" />
                         Study Together

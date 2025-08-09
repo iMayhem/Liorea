@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves, MessageSquare } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves, MessageSquare, Trophy } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -71,6 +71,14 @@ export function PersistentStudyRoomBar() {
                     
                     <div className="flex items-center gap-2">
                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" asChild>
+                                      <Link href="/leaderboard"><Trophy className="h-5 w-5"/></Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Leaderboard</p></TooltipContent>
+                            </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" onClick={() => setIsFocusMode(true)}>

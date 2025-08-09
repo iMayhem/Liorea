@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BrainCircuit, Music, Moon, Sun, Palette, MessageSquareWarning } from 'lucide-react';
+import { Loader2, BrainCircuit, Music, Moon, Sun, Palette, MessageSquareWarning, Trophy } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { motion } from 'framer-motion';
@@ -150,6 +150,21 @@ export default function JeeHomePage() {
         </div>
       </motion.main>
        <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="fixed bottom-32 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
+                    asChild
+                >
+                    <Link href="/leaderboard"><Trophy className="h-6 w-6" /></Link>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+            <p>Leaderboard</p>
+            </TooltipContent>
+        </Tooltip>
         <Tooltip>
             <TooltipTrigger asChild>
                 <Button 
