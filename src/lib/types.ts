@@ -120,6 +120,7 @@ export interface UserProfile {
     mockScores: number[];
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
     createdAt: any; // Can be server timestamp
+    lastSeen?: any; // Can be server timestamp
     preparationPath?: PreparationPath | null;
     status?: {
       isStudying: boolean;

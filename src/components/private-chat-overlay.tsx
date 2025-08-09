@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { X, Loader2, Send, ArrowLeft, CornerDownLeft } from 'lucide-react';
+import { X, Loader2, Send, ArrowLeft, CornerDownLeft, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
 import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
@@ -16,8 +16,20 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay, DialogClose } from './ui/dialog';
+import { formatDistanceToNowStrict } from 'date-fns';
 
-interface PrivateChatOverlayProps {}
+function formatLastSeen(timestamp: any): string {
+    if (!timestamp) return 'Offline';
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diffSeconds = (now.getTime() - date.getTime()) / 1000;
+
+    if (diffSeconds < 60) { // Less than a minute
+        return 'Online';
+    }
+    return `Active ${formatDistanceToNowStrict(date, { addSuffix: true })}`;
+}
+
 
 function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProfile) => void, searchQuery: string }) {
   const [users, setUsers] = React.useState<UserProfile[]>([]);
@@ -26,18 +38,22 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
   const { newMessagesFrom } = useStudyRoom();
 
   React.useEffect(() => {
-    const fetchUsers = async () => {
-        try {
-            const allUsers = await getAllUsers();
-            // Filter out the current user from the list
-            setUsers(allUsers.filter((u) => u.uid !== currentUser?.uid));
-        } catch(error) {
-            console.error("Failed to fetch users:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
-    fetchUsers();
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('uid', '!=', currentUser?.uid || ''));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedUsers: UserProfile[] = [];
+        snapshot.forEach(doc => {
+            fetchedUsers.push({ ...doc.data(), uid: doc.id } as UserProfile);
+        });
+        setUsers(fetchedUsers);
+        setLoading(false);
+    }, (error) => {
+        console.error("Failed to fetch users:", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [currentUser]);
 
   const filteredUsers = React.useMemo(() => {
@@ -58,24 +74,32 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
     <ScrollArea className="h-full">
       <div className="space-y-2">
         {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
-            <button
-                key={user.uid}
-                className="w-full text-left p-3 rounded-md hover:bg-white/10 transition-colors flex items-center gap-4 relative"
-                onClick={() => onSelectUser(user)}
-            >
-                <Avatar>
-                <AvatarImage src={user.photoURL || ''} alt={user.username || 'User'}/>
-                <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <p className="font-medium">{user.username}</p>
-                </div>
-                 {newMessagesFrom.has(user.uid) && (
-                     <span className="absolute top-2 right-2 block h-3 w-3 rounded-full bg-primary/80 ring-2 ring-background backdrop-blur-sm" />
-                )}
-            </button>
-            ))
+            filteredUsers.map((user) => {
+                const lastSeenStatus = formatLastSeen(user.lastSeen);
+                const isOnline = lastSeenStatus === 'Online';
+                return (
+                <button
+                    key={user.uid}
+                    className="w-full text-left p-3 rounded-md hover:bg-white/10 transition-colors flex items-center gap-4 relative"
+                    onClick={() => onSelectUser(user)}
+                >
+                    <div className="relative">
+                        <Avatar>
+                            <AvatarImage src={user.photoURL || ''} alt={user.username || 'User'}/>
+                            <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        {isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"/>}
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-medium">{user.username}</p>
+                        <p className={cn("text-xs", isOnline ? "text-green-400" : "text-muted-foreground")}>{lastSeenStatus}</p>
+                    </div>
+                    {newMessagesFrom.has(user.uid) && (
+                        <span className="absolute top-2 right-2 block h-3 w-3 rounded-full bg-primary/80 ring-2 ring-background backdrop-blur-sm" />
+                    )}
+                </button>
+                )
+            })
         ) : (
             <p className="text-center text-muted-foreground p-4">No users found.</p>
         )}
@@ -159,7 +183,10 @@ function ChatView({
             <AvatarImage src={recipient.photoURL || ''} alt={recipient.username || 'User'}/>
             <AvatarFallback>{recipient.username?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
-        <h2 className="text-xl font-bold font-heading">{recipient.username}</h2>
+        <div>
+            <h2 className="text-xl font-bold font-heading">{recipient.username}</h2>
+            <p className="text-xs text-muted-foreground">{formatLastSeen(recipient.lastSeen)}</p>
+        </div>
       </header>
       <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
           <div className="space-y-4">
@@ -168,7 +195,7 @@ function ChatView({
                 const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
                  return (
                     <div
-                        key={msg.id}
+                        key={msg.id || msg.timestamp.toString()}
                         className={cn(
                             'flex flex-col gap-1 group',
                             isCurrentUser ? 'items-end' : 'items-start'
@@ -231,7 +258,7 @@ function ChatView({
   );
 }
 
-export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
+export function PrivateChatOverlay() {
   const { isPrivateChatOpen, setIsPrivateChatOpen, clearChatNotification } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -256,7 +283,7 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-white"
             >
             <Button
@@ -269,11 +296,17 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                 <span className="sr-only">Close Private Chat</span>
             </Button>
             
-            <div className="w-full max-w-4xl h-full flex flex-col">
+            <motion.div 
+              className="w-full max-w-4xl h-full flex flex-col"
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              transition={{ type: 'tween', duration: 0.2}}
+            >
               {!selectedUser ? (
-                <div className="h-full flex flex-col">
-                    <div className="p-4 pt-16 shrink-0 text-center">
-                        <div className="relative pt-4">
+                <div className="h-full flex flex-col pt-12">
+                    <div className="p-4 pt-4 shrink-0 text-center">
+                        <div className="relative">
                             <Input
                                 placeholder="Search for a user..."
                                 className="pl-4 bg-background/50"
@@ -287,14 +320,14 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                     </div>
                 </div>
                 ) : (
-                <div className="h-full">
+                <div className="h-full pt-12">
                     <ChatView 
                         recipient={selectedUser} 
                         onBack={() => setSelectedUser(null)}
                     />
                 </div>
               )}
-            </div>
+            </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

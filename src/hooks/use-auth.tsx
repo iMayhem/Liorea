@@ -5,9 +5,10 @@ import React, {createContext, useContext, useState, useEffect, ReactNode, useCal
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
-import { upsertUserProfile, getUserProfile } from '@/lib/firestore';
+import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/firestore';
 import { StudyRoomProvider } from './use-study-room';
 import type { UserProfile } from '@/lib/types';
+import { serverTimestamp } from 'firebase/firestore';
 
 
 interface User {
@@ -63,6 +64,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
             uid,
             email,
             photoURL: photoURL || '',
+            lastSeen: serverTimestamp(),
             // Don't set username, it's handled on the set-username page
         });
 
@@ -101,6 +103,9 @@ export function AuthProvider({children}: {children: ReactNode}) {
   };
 
   const logout = async () => {
+    if(user) {
+        await updateUserProfile(user.uid, { lastSeen: serverTimestamp() });
+    }
     setLoading(true);
     setLoadingProfile(true);
     try {
