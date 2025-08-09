@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2 } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -92,6 +92,22 @@ export function PersistentStudyRoomBar() {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Fire Sound</p></TooltipContent>
+                            </Tooltip>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant={activeSound === 'coffee' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'coffee' ? 'none' : 'coffee')}>
+                                        <Coffee className="h-5 w-5"/>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Coffee Shop</p></TooltipContent>
+                            </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant={activeSound === 'ocean' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'ocean' ? 'none' : 'ocean')}>
+                                        <Waves className="h-5 w-5"/>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Ocean Waves</p></TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
 
