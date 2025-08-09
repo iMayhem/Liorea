@@ -203,9 +203,9 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                                 <DialogPortal>
                                     <DialogOverlay />
                                     <DialogContent className="p-0 border-0 max-w-4xl bg-transparent">
-                                        <DialogHeader>
-                                            <DialogTitle className="sr-only">Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
-                                        </DialogHeader>
+                                         <DialogHeader className="sr-only">
+                                            <DialogTitle>Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
+                                         </DialogHeader>
                                         <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
                                     </DialogContent>
                                 </DialogPortal>
@@ -305,10 +305,6 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                         <ChatView recipient={selectedUser} onBack={() => setSelectedUser(null)} />
                     </div>
                     )}
-                     <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground z-10">
-                        <X className="h-6 w-6" />
-                        <span className="sr-only">Close</span>
-                    </DialogClose>
                 </DialogContent>
             </DialogPortal>
         </Dialog>
