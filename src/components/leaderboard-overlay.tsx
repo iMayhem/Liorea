@@ -1,39 +1,31 @@
-// src/app/leaderboard/page.tsx
+// src/components/leaderboard-overlay.tsx
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
-import { AppHeader } from '@/components/header';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from './ui/button';
+import { X, Loader2, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Leaderboard } from '@/components/leaderboard';
 import type { UserProfile } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { startOfDay, endOfDay } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Leaderboard } from '@/components/leaderboard';
+import { useStudyRoom } from '@/hooks/use-study-room';
 
 type LeaderboardData = UserProfile[];
 type LeaderboardType = 'study-hours-daily' | 'study-hours-all-time';
 
-export default function LeaderboardPage() {
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
+function LeaderboardContent() {
+  const { user } = useAuth();
   const [allUsers, setAllUsers] = React.useState<Record<string, UserProfile>>({});
   const [studyLogs, setStudyLogs] = React.useState<Record<string, Record<string, number>>>({});
   const [leaderboardData, setLeaderboardData] = React.useState<LeaderboardData>([]);
   const [loading, setLoading] = React.useState(true);
   const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-daily');
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
-
-  React.useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
 
   // Effect to fetch all users and listen for updates
   React.useEffect(() => {
@@ -45,7 +37,6 @@ export default function LeaderboardPage() {
       });
       setAllUsers(usersData);
     });
-
     return () => unsubscribeUsers();
   }, []);
 
@@ -59,7 +50,6 @@ export default function LeaderboardPage() {
       });
       setStudyLogs(logsData);
     });
-
     return () => unsubscribeLogs();
   }, []);
 
@@ -105,63 +95,73 @@ export default function LeaderboardPage() {
   }, [allUsers, studyLogs, leaderboardType, user]);
 
 
-  if (authLoading || !user) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-transparent">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader />
-      <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center gap-8"
-        >
-          <div className="flex w-full max-w-2xl items-center justify-between">
-            <div className="text-left">
-              <h1 className="text-4xl font-bold font-heading">Leaderboard</h1>
-              <p className="mt-2 text-muted-foreground">
-                See who's topping the charts.
-              </p>
-            </div>
-          </div>
-
-          <Card className="w-full max-w-2xl">
-              <Tabs value={leaderboardType} onValueChange={(value) => setLeaderboardType(value as LeaderboardType)} className="w-full">
-                 <CardHeader className="flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Rankings</CardTitle>
-                        <CardDescription>
-                            {leaderboardType === 'study-hours-daily' ? "Today's leaderboard resets at midnight." : "All-time study champions."}
-                        </CardDescription>
-                    </div>
-                    <TabsList>
-                        <TabsTrigger value="study-hours-daily">Daily</TabsTrigger>
-                        <TabsTrigger value="study-hours-all-time">All-Time</TabsTrigger>
-                    </TabsList>
-                 </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="flex h-48 items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                    </div>
-                  ) : (
-                    <Leaderboard
-                      users={leaderboardData}
-                      currentUser={userProfile}
-                    />
-                  )}
-                </CardContent>
-              </Tabs>
-          </Card>
-        </motion.div>
-      </main>
-    </div>
+    <Card className="w-full max-w-2xl bg-transparent border-0 shadow-none">
+        <Tabs value={leaderboardType} onValueChange={(value) => setLeaderboardType(value as LeaderboardType)} className="w-full">
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Rankings</CardTitle>
+                    <CardDescription>
+                        {leaderboardType === 'study-hours-daily' ? "Today's leaderboard resets at midnight." : "All-time study champions."}
+                    </CardDescription>
+                </div>
+                <TabsList>
+                    <TabsTrigger value="study-hours-daily">Daily</TabsTrigger>
+                    <TabsTrigger value="study-hours-all-time">All-Time</TabsTrigger>
+                </TabsList>
+            </CardHeader>
+            <CardContent>
+            {loading ? (
+                <div className="flex h-48 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            ) : (
+                <Leaderboard
+                users={leaderboardData}
+                currentUser={userProfile}
+                />
+            )}
+            </CardContent>
+        </Tabs>
+    </Card>
   );
+}
+
+
+export function LeaderboardOverlay() {
+    const { isLeaderboardOpen, setIsLeaderboardOpen } = useStudyRoom();
+
+    return (
+        <AnimatePresence>
+        {isLeaderboardOpen && (
+            <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+            >
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10"
+                onClick={() => setIsLeaderboardOpen(false)}
+            >
+                <X className="h-8 w-8" />
+                <span className="sr-only">Close Leaderboard</span>
+            </Button>
+
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-4xl h-[90vh] max-h-[700px] flex items-center justify-center text-white"
+            >
+                <LeaderboardContent />
+            </motion.div>
+            </motion.div>
+        )}
+        </AnimatePresence>
+    );
 }

@@ -28,6 +28,8 @@ interface StudyRoomContextType {
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
     isPrivateChatOpen: boolean;
     setIsPrivateChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    isLeaderboardOpen: boolean;
+    setIsLeaderboardOpen: React.Dispatch<React.SetStateAction<boolean>>;
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
@@ -63,6 +65,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [isMuted, setIsMuted] = React.useState(false);
     const [isFocusMode, setIsFocusMode] = React.useState(false);
     const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
 
 
     // Notepad state
@@ -454,6 +457,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setIsFocusMode,
         isPrivateChatOpen,
         setIsPrivateChatOpen,
+        isLeaderboardOpen,
+        setIsLeaderboardOpen,
         joinRoom,
         leaveRoom,
         handleTimerUpdate,

@@ -38,7 +38,7 @@ export default function NeetHomePage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   const { setTheme } = useTheme();
-  const { setIsPrivateChatOpen } = useStudyRoom();
+  const { setIsPrivateChatOpen, setIsLeaderboardOpen } = useStudyRoom();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
@@ -155,9 +155,9 @@ export default function NeetHomePage() {
                     variant="outline" 
                     size="icon" 
                     className="fixed bottom-32 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
-                    asChild
+                    onClick={() => setIsLeaderboardOpen(true)}
                 >
-                    <Link href="/leaderboard"><Trophy className="h-6 w-6" /></Link>
+                    <Trophy className="h-6 w-6" />
                 </Button>
             </TooltipTrigger>
             <TooltipContent>

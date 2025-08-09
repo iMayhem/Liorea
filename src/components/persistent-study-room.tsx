@@ -38,7 +38,8 @@ export function PersistentStudyRoomBar() {
       handleSoundChange, 
       activeSound, 
       setIsFocusMode,
-      setIsPrivateChatOpen
+      setIsPrivateChatOpen,
+      setIsLeaderboardOpen
   } = useStudyRoom();
 
   if (!currentRoomId || !roomData) {
@@ -73,8 +74,8 @@ export function PersistentStudyRoomBar() {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" asChild>
-                                      <Link href="/leaderboard"><Trophy className="h-5 w-5"/></Link>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsLeaderboardOpen(true)}>
+                                      <Trophy className="h-5 w-5"/>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Leaderboard</p></TooltipContent>
