@@ -3,7 +3,7 @@
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField } from 'firebase/firestore';
-import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath } from './types';
+import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath, PrivateChatMessage } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
 import { format, startOfDay, endOfDay } from 'date-fns';
@@ -91,9 +91,7 @@ export async function updateScore(
     const fieldPath = `${date}.${subject}.score`;
 
     // We use updateDoc here for clarity, but setDoc with merge would also work.
-    await updateDoc(docRef, {
-        [fieldPath]: score
-    });
+    await setDoc(docRef, {[fieldPath]: score}, {merge: true});
 }
 
 
@@ -293,7 +291,7 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
 
   if (docSnap.exists()) {
     // Document exists, update it with new data
-    await updateDoc(userRef, data);
+    await setDoc(userRef, data, { merge: true });
   } else {
     // Document doesn't exist, check for existing email before creating
     if(data.email) {
@@ -316,7 +314,7 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
       preparationPath: null,
       createdAt: serverTimestamp(),
       status: { isStudying: false, isJamming: false, roomId: null },
-    });
+    }, { merge: true });
   }
 }
 
@@ -466,6 +464,22 @@ export async function sendPrivateMessage(senderId: string, receiverId: string, t
         receiverId: receiverId,
         timestamp: serverTimestamp(),
     });
+}
+
+/**
+* Retrieves the last message from a private chat room.
+* @param chatRoomId - The ID of the chat room.
+* @returns The last message object or null if no messages exist.
+*/
+export async function getLastPrivateMessage(chatRoomId: string): Promise<PrivateChatMessage | null> {
+    const messagesRef = collection(db, 'privateChats', chatRoomId, 'messages');
+    const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as PrivateChatMessage;
+    }
+    return null;
 }
 
 /**

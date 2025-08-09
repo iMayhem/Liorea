@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+
 export const AppLogo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     width="32"
@@ -33,18 +36,26 @@ export const AppLogo = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const ChatIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-    >
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-    </svg>
-);
+export const ChatIcon = (props: React.SVGProps<SVGSVGElement> & { showDot?: boolean }) => {
+    const { showDot, className, ...rest } = props;
+    return (
+        <div className={cn("relative", className)}>
+            <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                {...rest}
+            >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            {showDot && (
+                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+            )}
+        </div>
+    );
+};

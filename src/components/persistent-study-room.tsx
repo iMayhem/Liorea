@@ -39,7 +39,8 @@ export function PersistentStudyRoomBar() {
       activeSound, 
       setIsFocusMode,
       setIsPrivateChatOpen,
-      setIsLeaderboardOpen
+      setIsLeaderboardOpen,
+      hasNewPrivateMessage
   } = useStudyRoom();
 
   if (!currentRoomId || !roomData) {
@@ -91,7 +92,7 @@ export function PersistentStudyRoomBar() {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" onClick={() => setIsPrivateChatOpen(true)}>
-                                        <ChatIcon className="h-5 w-5"/>
+                                        <ChatIcon showDot={hasNewPrivateMessage} className="h-5 w-5"/>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Private Chat</p></TooltipContent>

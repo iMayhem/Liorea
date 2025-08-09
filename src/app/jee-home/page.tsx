@@ -40,7 +40,7 @@ export default function JeeHomePage() {
   const { user, profile, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const { setTheme } = useTheme();
-  const { setIsPrivateChatOpen, setIsLeaderboardOpen } = useStudyRoom();
+  const { setIsPrivateChatOpen, setIsLeaderboardOpen, hasNewPrivateMessage } = useStudyRoom();
   const jee2026ExamDate = '2026-01-24T00:00:00'; // Tentative date for JEE Main 2026
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
@@ -173,7 +173,7 @@ export default function JeeHomePage() {
                     className="fixed bottom-16 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
                     onClick={() => setIsPrivateChatOpen(true)}
                 >
-                    <ChatIcon className="h-6 w-6" />
+                    <ChatIcon showDot={hasNewPrivateMessage} className="h-6 w-6" />
                 </Button>
             </TooltipTrigger>
             <TooltipContent>

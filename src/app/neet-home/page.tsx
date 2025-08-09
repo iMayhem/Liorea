@@ -38,7 +38,7 @@ export default function NeetHomePage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   const { setTheme } = useTheme();
-  const { setIsPrivateChatOpen, setIsLeaderboardOpen } = useStudyRoom();
+  const { setIsPrivateChatOpen, setIsLeaderboardOpen, hasNewPrivateMessage } = useStudyRoom();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
@@ -172,7 +172,7 @@ export default function NeetHomePage() {
                     className="fixed bottom-16 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
                     onClick={() => setIsPrivateChatOpen(true)}
                 >
-                    <ChatIcon className="h-6 w-6" />
+                    <ChatIcon showDot={hasNewPrivateMessage} className="h-6 w-6" />
                 </Button>
             </TooltipTrigger>
             <TooltipContent>
