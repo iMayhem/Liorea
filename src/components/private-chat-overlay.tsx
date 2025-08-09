@@ -20,7 +20,12 @@ import { formatDistanceToNowStrict } from 'date-fns';
 
 function formatLastSeen(timestamp: any): string {
     if (!timestamp) return 'Offline';
-    const date = new Date(timestamp); // Changed from timestamp.toDate()
+    // Handle both Firestore Timestamp objects and ISO strings
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        return 'Offline';
+    }
+
     const now = new Date();
     const diffSeconds = (now.getTime() - date.getTime()) / 1000;
 
@@ -195,7 +200,7 @@ function ChatView({
                 const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
                  return (
                     <div
-                        key={msg.id || msg.timestamp.toString()}
+                        key={msg.id}
                         className={cn(
                             'flex flex-col gap-1 group',
                             isCurrentUser ? 'items-end' : 'items-start'
@@ -333,3 +338,4 @@ export function PrivateChatOverlay() {
     </AnimatePresence>
   );
 }
+
