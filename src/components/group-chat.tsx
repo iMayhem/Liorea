@@ -196,7 +196,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
-                                        <Image src={msg.imageUrl} alt="chat image" layout="fill" objectFit="cover" />
+                                        <Image src={msg.imageUrl} alt="chat image" fill={true} style={{objectFit: 'cover'}} />
                                     </div>
                                 </DialogTrigger>
                                 <DialogContent className="p-0 border-0 max-w-4xl">
@@ -241,7 +241,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
         {image && (
           <div className="relative p-2 rounded-md bg-muted w-full">
             <div className="relative w-24 h-24 rounded-md overflow-hidden">
-                <Image src={image} alt="preview" layout="fill" objectFit="cover" />
+                <Image src={image} alt="preview" fill={true} style={{objectFit: 'cover'}} />
             </div>
             <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => setImage(null)}><X className="h-4 w-4"/></Button>
           </div>
