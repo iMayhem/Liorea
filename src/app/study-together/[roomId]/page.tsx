@@ -71,14 +71,6 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
   }, [roomId, user, profile, authLoading, router, toast, joinRoom, userHasLeftRef]);
 
 
-  const handleCopyRoomId = () => {
-    navigator.clipboard.writeText(roomId);
-    toast({
-      title: "Room ID Copied!",
-      description: "You can now share it with your friends.",
-    });
-  };
-
   if (authLoading || isJoining || !roomData || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-transparent">
@@ -92,37 +84,6 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
         className="flex flex-col h-screen"
     >
       <AppHeader />
-      <header className="border-b shrink-0 bg-background/80">
-         <div className="container mx-auto py-3 px-4 flex justify-between items-center">
-            <div className="flex items-center gap-4">
-                <Users className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-bold font-heading">Study Room</h1>
-                 <TooltipProvider>
-                  <div className="flex -space-x-2 overflow-hidden">
-                    {participants.map((p) => (
-                      <Tooltip key={p.uid}>
-                        <TooltipTrigger asChild>
-                            <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                              <AvatarImage src={p.photoURL || `https://placehold.co/40x40.png`} alt={p.username || 'User'}/>
-                              <AvatarFallback>{p.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{p.username}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </div>
-                </TooltipProvider>
-            </div>
-             <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleCopyRoomId}>
-                    <Clipboard className="mr-2 h-4 w-4"/>
-                    Copy Room ID
-                </Button>
-            </div>
-         </div>
-      </header>
       <main className="flex-1 overflow-auto pb-24" style={{transform: 'scale(0.8)', transformOrigin: 'top center'}}>
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column: Timer & Sounds */}

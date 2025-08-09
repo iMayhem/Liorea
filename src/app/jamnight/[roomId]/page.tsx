@@ -188,15 +188,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         return () => clearInterval(interval);
     }, [debouncedSeekUpdate]);
 
-
-    const handleCopyRoomId = () => {
-        navigator.clipboard.writeText(roomId);
-        toast({
-            title: "Room ID Copied!",
-            description: "You can now share it with your friends.",
-        });
-    };
-    
      const handleSendMessage = async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
         if (!user || !profile?.username || !roomId) return;
         const chatCollectionRef = collection(db, 'jamRooms', roomId, 'chats');
@@ -251,18 +242,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             className="flex flex-col h-screen" 
         >
             <AppHeader />
-             <header className="border-b shrink-0 bg-background/80">
-                <div className="container mx-auto py-3 px-4 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <Music className="h-6 w-6 text-primary" />
-                        <h1 className="text-xl font-bold font-heading">Jamnight</h1>
-                    </div>
-                    <Button variant="outline" onClick={handleCopyRoomId}>
-                        <Clipboard className="mr-2 h-4 w-4"/>
-                        Copy Room ID
-                    </Button>
-                </div>
-            </header>
             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-rows-[1fr_auto] gap-6">
                 <div className="lg:grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 flex flex-col gap-6">

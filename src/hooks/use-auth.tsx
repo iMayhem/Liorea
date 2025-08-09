@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/firestore';
 import { StudyRoomProvider } from './use-study-room';
 import type { UserProfile } from '@/lib/types';
+import { useToast } from './use-toast';
 
 
 interface User {
