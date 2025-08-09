@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { X, Loader2, Send, ArrowLeft, Search, Image as ImageIcon } from 'lucide-react';
+import { X, Loader2, Send, ArrowLeft, Search, Image as ImageIcon, CornerDownLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
 import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
@@ -93,6 +93,8 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
   const [image, setImage] = React.useState<string | null>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
 
   const getChatRoomId = React.useCallback((uid1: string, uid2: string) => {
@@ -130,9 +132,11 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
     
     const textToSend = newMessage.trim();
     const imageToSend = image;
+    const replyToSend = replyTo;
 
     setNewMessage('');
     setImage(null);
+    setReplyTo(null);
 
     // Optimistic UI update
     const tempId = `temp_${Date.now()}`;
@@ -143,13 +147,21 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
       senderId: sender.uid,
       receiverId: recipient.uid,
       timestamp: new Date(),
+       ...(replyToSend && { replyToId: replyToSend.id, replyToText: replyToSend.text }),
     };
     setMessages(prev => [...prev, optimisticMessage]);
 
 
-    await sendPrivateMessage(sender.uid, recipient.uid, textToSend, imageToSend);
+    await sendPrivateMessage(sender.uid, recipient.uid, textToSend, imageToSend, replyToSend);
     // The real message will replace the optimistic one via the onSnapshot listener.
   };
+
+  const handleReplyClick = (message: PrivateChatMessage) => {
+    setReplyTo({id: message.id, text: message.text || 'Image'});
+    inputRef.current?.focus();
+  }
+
+  const findMessageById = (id: string) => messages.find(m => m.id === id);
   
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -195,49 +207,77 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
       </header>
       <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
           <div className="space-y-4">
-            {messages.map((msg) => (
-                <div
-                    key={msg.id}
-                    className={cn(
-                        'flex flex-col gap-1',
-                        msg.senderId === sender?.uid ? 'items-end' : 'items-start'
-                    )}
-                >
+            {messages.map((msg) => {
+                const isCurrentUser = msg.senderId === sender?.uid;
+                const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
+                 return (
                     <div
+                        key={msg.id}
                         className={cn(
-                        'rounded-lg px-3 py-2 max-w-xs break-words',
-                        msg.senderId === sender?.uid
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            'flex flex-col gap-1 group',
+                            isCurrentUser ? 'items-end' : 'items-start'
                         )}
                     >
-                         {msg.imageUrl && (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-auto w-auto p-2 rounded-lg">
-                                        <ImageIcon className="h-10 w-10" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogPortal>
-                                    <DialogOverlay />
-                                    <DialogContent className="p-0 border-0 max-w-4xl bg-transparent">
-                                         <DialogHeader className="sr-only">
-                                            <DialogTitle>Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
-                                         </DialogHeader>
-                                        <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
-                                    </DialogContent>
-                                </DialogPortal>
-                            </Dialog>
-                        )}
-                        {msg.text && <p className="text-sm">{msg.text}</p>}
+                        <div
+                            className={cn(
+                            'rounded-xl px-3 py-2 max-w-sm break-words relative bg-black/20 backdrop-blur-sm',
+                            isCurrentUser
+                                ? 'bg-primary/80 text-primary-foreground'
+                                : 'bg-muted/60'
+                            )}
+                        >
+                            {!isCurrentUser && <p className="text-xs font-bold text-primary mb-0.5">
+                                {profile?.username === msg.senderName ? "You" : msg.senderName}
+                            </p>}
+                            
+                            {originalMessage && (
+                                <div className="border-l-2 border-white/50 pl-2 text-xs opacity-80 mb-1 bg-black/20 p-2 rounded-md">
+                                    <p className="font-bold">{originalMessage.senderId === sender?.uid ? "You" : recipient.username}</p>
+                                    <p className="truncate">{originalMessage.text || 'Image'}</p>
+                                </div>
+                            )}
+
+                             {msg.imageUrl && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-auto w-auto p-2 rounded-lg bg-black/20 hover:bg-black/30 my-1">
+                                            <ImageIcon className="h-10 w-10" />
+                                        </Button>
+                                    </DialogTrigger>
+                                     <DialogPortal>
+                                        <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
+                                        <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
+                                            <DialogHeader className="sr-only">
+                                                <DialogTitle>Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
+                                            </DialogHeader>
+                                            <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain rounded-lg"/>
+                                        </DialogContent>
+                                    </DialogPortal>
+                                </Dialog>
+                            )}
+                            {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
+
+                            <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleReplyClick(msg)}><CornerDownLeft className="h-4 w-4"/></Button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            ))}
+                )
+            })}
         </div>
       </ScrollArea>
-       <div className="p-4 border-t border-white/10 shrink-0">
+       <div className="p-4 border-t border-white/10 shrink-0 space-y-2">
+         {replyTo && (
+            <div className="text-xs p-2 rounded-md bg-muted/60 w-full flex justify-between items-center">
+                <div>
+                    <p className="font-bold">Replying to {messages.find(m => m.id === replyTo.id)?.senderId === sender?.uid ? "yourself" : recipient.username}</p>
+                    <p className="truncate max-w-xs text-muted-foreground">{replyTo.text}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)}><X className="h-4 w-4"/></Button>
+            </div>
+         )}
           {image && (
-            <div className="relative p-2 rounded-md bg-muted w-full mb-2">
+            <div className="relative p-2 rounded-md bg-muted/60 w-full">
                 <div className="relative w-24 h-24 rounded-md overflow-hidden">
                     <Image src={image} alt="preview" fill={true} style={{objectFit: 'cover'}} />
                 </div>
@@ -246,6 +286,7 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
             )}
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                 <Input
+                    ref={inputRef}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onPaste={handlePaste}
@@ -295,11 +336,12 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
       {isPrivateChatOpen && (
         <Dialog open={isPrivateChatOpen} onOpenChange={setIsPrivateChatOpen}>
             <DialogPortal>
-                <DialogOverlay />
+                <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
                 <DialogContent 
-                    className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/80 rounded-2xl border border-white/10 shadow-lg p-0 flex flex-col"
+                    className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg p-0 flex flex-col"
                     onInteractOutside={(e) => e.preventDefault()}
                 >
+                    <DialogClose className="sr-only" />
                     {!selectedUser ? (
                     <div className="h-full flex flex-col">
                         <DialogHeader className="p-4 border-b border-white/10 shrink-0 text-center">

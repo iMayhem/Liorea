@@ -135,6 +135,8 @@ export interface PrivateChatMessage {
     senderId: string;
     receiverId: string;
     timestamp: any; // Firestore ServerTimestamp
+    replyToId?: string;
+    replyToText?: string;
 }
 
 

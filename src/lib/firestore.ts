@@ -455,17 +455,32 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
  * @param receiverId - The UID of the message receiver.
  * @param text - The content of the message.
  * @param imageUrl - Optional URL of an image to send.
+ * @param replyTo - Optional object containing info about the message being replied to.
  */
-export async function sendPrivateMessage(senderId: string, receiverId: string, text: string, imageUrl: string | null = null): Promise<void> {
+export async function sendPrivateMessage(
+    senderId: string,
+    receiverId: string,
+    text: string,
+    imageUrl: string | null = null,
+    replyTo: { id: string, text: string } | null = null
+): Promise<void> {
     const chatRoomId = senderId < receiverId ? `${senderId}_${receiverId}` : `${receiverId}_${senderId}`;
     const messagesRef = collection(db, 'privateChats', chatRoomId, 'messages');
-    await addDoc(messagesRef, {
+    
+    const messageData: any = {
         text,
         imageUrl,
-        senderId: senderId,
-        receiverId: receiverId,
+        senderId,
+        receiverId,
         timestamp: serverTimestamp(),
-    });
+    };
+
+    if (replyTo) {
+        messageData.replyToId = replyTo.id;
+        messageData.replyToText = replyTo.text;
+    }
+
+    await addDoc(messagesRef, messageData);
 }
 
 /**
