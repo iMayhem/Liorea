@@ -196,9 +196,9 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                          {msg.imageUrl && (
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
-                                        <Image src={msg.imageUrl} alt="chat image" fill={true} style={{objectFit: 'cover'}} />
-                                    </div>
+                                    <Button variant="outline" size="icon" className="rounded-full mt-2">
+                                        <ImageIcon className="h-5 w-5" />
+                                    </Button>
                                 </DialogTrigger>
                                 <DialogContent className="p-0 border-0 max-w-4xl">
                                      <DialogHeader>
