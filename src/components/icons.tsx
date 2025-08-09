@@ -54,7 +54,7 @@ export const ChatIcon = (props: React.SVGProps<SVGSVGElement> & { showDot?: bool
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             {showDot && (
-                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-white/50 backdrop-blur-sm ring-1 ring-white/20" />
             )}
         </div>
     );
