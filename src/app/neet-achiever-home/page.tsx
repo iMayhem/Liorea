@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BrainCircuit, Music, Sun, Moon, Palette } from 'lucide-react';
+import { Loader2, BrainCircuit, Music, Sun, Moon, Palette, MessageSquareWarning } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { TestCountdownTimer } from '@/components/test-countdown-timer';
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { LiveStudyList } from '@/components/live-study-list';
 import { useTheme } from 'next-themes';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { ReportDialog } from '@/components/report-dialog';
 
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -37,6 +38,8 @@ export default function NeetAchieverHomePage() {
   const neet2026ExamDate = '2026-05-03T00:00:00';
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
+  const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
+
 
   React.useEffect(() => {
     if (loading || !user) return;
@@ -75,6 +78,8 @@ export default function NeetAchieverHomePage() {
   const maxStudyTime = Math.max(1, ...Object.values(studyLogs));
 
   return (
+    <>
+    <ReportDialog isOpen={isReportDialogOpen} onOpenChange={setIsReportDialogOpen} />
     <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <motion.main
@@ -97,40 +102,52 @@ export default function NeetAchieverHomePage() {
                     <CountdownTimer targetDate={neet2026ExamDate} title="NEET 2026 Countdown"/>
                 </div>
 
-                <Card className="w-full max-w-md shadow-lg rounded-lg border-border/50 mx-auto bg-card">
-                    <CardContent className="flex justify-center p-0">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={handleDateSelect}
-                            className="rounded-md"
-                            fromDate={new Date('2025-07-01')}
-                            toDate={new Date('2026-05-05')}
-                            month={currentMonth}
-                            onMonthChange={setCurrentMonth}
-                            modifiers={{
-                            studyDay: (day) => {
-                                const dateKey = format(day, 'yyyy-MM-dd');
-                                return studyLogs[dateKey] > 0;
-                            }
-                            }}
-                            modifiersClassNames={{
-                                studyDay: 'study-day-modifier'
-                            }}
-                            modifiersStyles={{
-                                studyDay: (day: Date) => {
+                <div className="relative w-full max-w-md mx-auto">
+                    <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
+                        <CardContent className="flex justify-center p-0">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={handleDateSelect}
+                                className="rounded-md"
+                                fromDate={new Date('2025-07-01')}
+                                toDate={new Date('2026-05-05')}
+                                month={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                modifiers={{
+                                studyDay: (day) => {
                                     const dateKey = format(day, 'yyyy-MM-dd');
-                                    const studyTime = studyLogs[dateKey] || 0;
-                                    const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
-                                    return { 
-                                        backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
-                                        color: 'hsl(var(--primary-foreground))'
-                                    };
+                                    return studyLogs[dateKey] > 0;
                                 }
-                            }}
-                        />
-                    </CardContent>
-                </Card>
+                                }}
+                                modifiersClassNames={{
+                                    studyDay: 'study-day-modifier'
+                                }}
+                                modifiersStyles={{
+                                    studyDay: (day: Date) => {
+                                        const dateKey = format(day, 'yyyy-MM-dd');
+                                        const studyTime = studyLogs[dateKey] || 0;
+                                        const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
+                                        return { 
+                                            backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
+                                            color: 'hsl(var(--primary-foreground))'
+                                        };
+                                    }
+                                }}
+                            />
+                        </CardContent>
+                    </Card>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="absolute bottom-4 left-4"
+                        onClick={() => setIsReportDialogOpen(true)}
+                    >
+                        <MessageSquareWarning className="mr-2 h-4 w-4" />
+                        Report an Issue
+                    </Button>
+                </div>
+
 
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
                     <TestCountdownTimer tests={testSchedule} />
@@ -158,5 +175,6 @@ export default function NeetAchieverHomePage() {
         <p>specially built for achiever online batch</p>
       </footer>
     </div>
+    </>
   );
 }

@@ -127,3 +127,14 @@ export interface UserProfile {
       roomId: string | null;
     }
 }
+
+
+export interface Report {
+    userId: string;
+    username: string | null;
+    title: string;
+    description: string;
+    imageUrl?: string | null;
+    timestamp: any;
+    status: 'open' | 'closed' | 'in-progress';
+}
