@@ -51,7 +51,10 @@ function UserList({ onSelectUser }: { onSelectUser: (user: UserProfile) => void 
               <AvatarImage src={user.photoURL || ''} alt={user.username || 'User'}/>
               <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <span className="font-medium">{user.username}</span>
+            <div>
+                <p className="font-medium">{user.username}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+            </div>
           </button>
         ))}
       </div>
