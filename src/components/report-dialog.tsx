@@ -23,6 +23,7 @@ import { Loader2, Upload } from 'lucide-react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { cn } from '@/lib/utils';
 
 interface ReportDialogProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
         if(!open) resetForm();
         onOpenChange(open);
     }}>
-      <AlertDialogContent>
+      <AlertDialogContent className="card">
         <AlertDialogHeader>
           <AlertDialogTitle>Report an Issue or Suggestion</AlertDialogTitle>
           <AlertDialogDescription>
