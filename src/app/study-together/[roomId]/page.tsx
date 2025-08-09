@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useStudyRoom } from '@/hooks/use-study-room';
 
+const PUBLIC_ROOM_ID = "public-study-room-v1";
 
 export default function StudyRoomPage({ params }: { params: { roomId: string } }) {
   const { roomId } = React.use(params as any);
@@ -144,6 +145,9 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
                     currentUserId={user!.uid} 
                     onTyping={handleTyping}
                     typingUsers={roomData.typingUsers || {}}
+                    isPublicRoom={roomId === PUBLIC_ROOM_ID}
+                    roomId={roomId}
+                    roomType="studyRooms"
                 />
             </motion.div>
         </div>

@@ -31,6 +31,8 @@ interface JamRoomState {
     typingUsers?: { [uid: string]: string };
 }
 
+const PUBLIC_JAMNIGHT_ROOM_ID = "public-jamnight-room-v1";
+
 export default function JamRoomPage({ params }: { params: { roomId: string } }) {
     const routeParams = React.use(params as any);
     const { roomId } = routeParams;
@@ -286,6 +288,9 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                             currentUserId={user!.uid}
                             onTyping={handleTyping}
                             typingUsers={roomState.typingUsers || {}}
+                            isPublicRoom={roomId === PUBLIC_JAMNIGHT_ROOM_ID}
+                            roomId={roomId}
+                            roomType="jamRooms"
                         />
                     </div>
                 </div>

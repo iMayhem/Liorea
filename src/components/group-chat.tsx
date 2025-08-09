@@ -6,12 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, MessageSquare, CornerDownLeft, X, Image as ImageIcon } from 'lucide-react';
+import { Send, MessageSquare, CornerDownLeft, X, Image as ImageIcon, Trash2, Loader2 } from 'lucide-react';
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { clearChatHistory } from '@/lib/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface GroupChatProps {
@@ -20,9 +23,12 @@ interface GroupChatProps {
   currentUserId: string;
   onTyping: (isTyping: boolean) => void;
   typingUsers: { [uid: string]: string };
+  isPublicRoom?: boolean;
+  roomId?: string;
+  roomType?: 'studyRooms' | 'jamRooms';
 }
 
-export function GroupChat({ messages: initialMessages, onSendMessage, currentUserId, onTyping, typingUsers }: GroupChatProps) {
+export function GroupChat({ messages: initialMessages, onSendMessage, currentUserId, onTyping, typingUsers, isPublicRoom = false, roomId, roomType }: GroupChatProps) {
   const [messages, setMessages] = React.useState<ChatMessage[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
   const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
@@ -31,6 +37,8 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const inputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = React.useRef(initialMessages.length);
+  const [isClearing, setIsClearing] = React.useState(false);
+  const { toast } = useToast();
 
 
   React.useEffect(() => {
@@ -147,14 +155,51 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
         }
     }
   };
+  
+  const handleClearHistory = async () => {
+    if (!roomId || !roomType) return;
+    setIsClearing(true);
+    try {
+      await clearChatHistory(roomType, roomId);
+      toast({ title: "Success", description: "Chat history has been cleared." });
+    } catch (error) {
+      console.error("Error clearing chat history:", error);
+      toast({ title: "Error", description: "Failed to clear chat history.", variant: "destructive" });
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
 
   return (
     <Card className="h-full flex flex-col bg-background/80">
-      <CardHeader className="shrink-0">
+      <CardHeader className="shrink-0 flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 font-heading">
             <MessageSquare className="h-5 w-5"/>
             Group Chat
         </CardTitle>
+        {isPublicRoom && (
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isClearing}>
+                        {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4"/>}
+                        Clear History
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the entire public chat history for everyone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearHistory}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-2">
         <ScrollArea className="h-full" viewportRef={viewportRef}>
