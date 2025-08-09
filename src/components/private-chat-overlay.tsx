@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { X, Loader2, Send, ArrowLeft, Search, Image as ImageIcon, CornerDownLeft } from 'lucide-react';
+import { X, Loader2, Send, ArrowLeft, Image as ImageIcon, CornerDownLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
 import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
@@ -17,7 +17,7 @@ import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp,
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { ChatIcon } from './icons';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogPortal, DialogOverlay, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay, DialogClose } from './ui/dialog';
 
 interface PrivateChatOverlayProps {}
 
@@ -330,41 +330,46 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
   return (
     <AnimatePresence>
       {isPrivateChatOpen && (
-        <Dialog open={isPrivateChatOpen} onOpenChange={setIsPrivateChatOpen}>
-            <DialogPortal>
-                <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
-                <DialogContent
-                    className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg p-0 flex flex-col"
-                    onInteractOutside={(e) => e.preventDefault()}
-                >
-                    <DialogHeader className="sr-only">
-                        <DialogTitle className="sr-only">Private Chat</DialogTitle>
-                    </DialogHeader>
-                    <DialogClose asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 z-10"
-                            onClick={() => setIsPrivateChatOpen(false)}
-                        >
-                            <X className="h-6 w-6" />
-                            <span className="sr-only">Close Private Chat</span>
-                        </Button>
-                    </DialogClose>
-                    {!selectedUser ? (
+         <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+            >
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 z-10"
+                onClick={() => setIsPrivateChatOpen(false)}
+            >
+                <X className="h-8 w-8" />
+                <span className="sr-only">Close Private Chat</span>
+            </Button>
+
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-4xl h-[90vh] max-h-[700px] flex items-center justify-center text-white"
+            >
+               <div className="w-full h-full bg-background/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg p-0 flex flex-col">
+                  {!selectedUser ? (
                     <div className="h-full flex flex-col">
                         <div className="p-4 border-b border-white/10 shrink-0 text-center">
-                        <div className="relative pt-4">
-                            <Input
-                                placeholder="Search for a user..."
-                                className="pl-4 bg-background/50"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                            <h2 className="text-2xl font-bold font-heading">Private Chat</h2>
+                            <div className="relative pt-4">
+                                <Input
+                                    placeholder="Search for a user..."
+                                    className="pl-4 bg-background/50"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </div>
                         <div className="p-4 flex-1 overflow-hidden">
-                        <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
+                            <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
                         </div>
                     </div>
                     ) : (
@@ -375,10 +380,10 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                             onImageSelect={setSelectedImage}
                         />
                     </div>
-                    )}
-                </DialogContent>
-            </DialogPortal>
-        </Dialog>
+                  )}
+                </div>
+            </motion.div>
+        </motion.div>
       )}
        {selectedImage && (
             <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
