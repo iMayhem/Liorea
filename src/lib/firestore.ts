@@ -454,12 +454,14 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
  * @param senderId - The UID of the message sender.
  * @param receiverId - The UID of the message receiver.
  * @param text - The content of the message.
+ * @param imageUrl - Optional URL of an image to send.
  */
-export async function sendPrivateMessage(senderId: string, receiverId: string, text: string): Promise<void> {
+export async function sendPrivateMessage(senderId: string, receiverId: string, text: string, imageUrl: string | null = null): Promise<void> {
     const chatRoomId = senderId < receiverId ? `${senderId}_${receiverId}` : `${receiverId}_${senderId}`;
     const messagesRef = collection(db, 'privateChats', chatRoomId, 'messages');
     await addDoc(messagesRef, {
-        text: text,
+        text,
+        imageUrl,
         senderId: senderId,
         receiverId: receiverId,
         timestamp: serverTimestamp(),

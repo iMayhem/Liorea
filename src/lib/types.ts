@@ -131,6 +131,7 @@ export interface UserProfile {
 export interface PrivateChatMessage {
     id: string;
     text: string;
+    imageUrl?: string | null;
     senderId: string;
     receiverId: string;
     timestamp: any; // Firestore ServerTimestamp

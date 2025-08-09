@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { X, Loader2, Send, ArrowLeft, Search } from 'lucide-react';
+import { X, Loader2, Send, ArrowLeft, Search, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
 import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
@@ -16,6 +16,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { ChatIcon } from './icons';
+import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 interface PrivateChatOverlayProps {}
 
@@ -88,7 +90,10 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
   const { user: sender } = useAuth();
   const [messages, setMessages] = React.useState<PrivateChatMessage[]>([]);
   const [newMessage, setNewMessage] = React.useState('');
+  const [image, setImage] = React.useState<string | null>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   const getChatRoomId = React.useCallback((uid1: string, uid2: string) => {
     return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
@@ -121,11 +126,42 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !sender) return;
+    if (!newMessage.trim() && !image || !sender) return;
 
-    await sendPrivateMessage(sender.uid, recipient.uid, newMessage.trim());
+    await sendPrivateMessage(sender.uid, recipient.uid, newMessage.trim(), image);
     setNewMessage('');
+    setImage(null);
   };
+  
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if(file){
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setImage(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            }
+            event.preventDefault();
+            return;
+        }
+    }
+  };
+
 
   return (
     <div className="h-full flex flex-col">
@@ -157,23 +193,60 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                             : 'bg-muted'
                         )}
                     >
-                        <p className="text-sm">{msg.text}</p>
+                         {msg.imageUrl && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
+                                        <Image src={msg.imageUrl} alt="chat image" fill={true} style={{objectFit: 'cover'}} />
+                                    </div>
+                                </DialogTrigger>
+                                <DialogContent className="p-0 border-0 max-w-4xl">
+                                     <DialogHeader>
+                                         <DialogTitle className="sr-only">Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
+                                    </DialogHeader>
+                                    <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                        {msg.text && <p className="text-sm">{msg.text}</p>}
                     </div>
                 </div>
             ))}
         </div>
       </ScrollArea>
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-white/10 flex items-center gap-2">
-        <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="bg-background/50"
-        />
-        <Button type="submit" size="icon">
-            <Send className="h-4 w-4"/>
-        </Button>
-      </form>
+       <div className="p-4 border-t border-white/10 shrink-0">
+          {image && (
+            <div className="relative p-2 rounded-md bg-muted w-full mb-2">
+                <div className="relative w-24 h-24 rounded-md overflow-hidden">
+                    <Image src={image} alt="preview" fill={true} style={{objectFit: 'cover'}} />
+                </div>
+                <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => setImage(null)}><X className="h-4 w-4"/></Button>
+            </div>
+            )}
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onPaste={handlePaste}
+                    placeholder="Type a message..."
+                    className="bg-background/50"
+                />
+                 <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/*"
+                    className="hidden"
+                />
+                <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
+                    <ImageIcon className="h-4 w-4" />
+                    <span className="sr-only">Add Image</span>
+                </Button>
+                <Button type="submit" size="icon">
+                    <Send className="h-4 w-4"/>
+                </Button>
+            </form>
+       </div>
     </div>
   );
 }
