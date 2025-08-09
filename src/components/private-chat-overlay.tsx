@@ -138,21 +138,7 @@ function ChatView({
     setNewMessage('');
     setReplyTo(null);
 
-    // Optimistic UI update
-    const tempId = `temp_${Date.now()}`;
-    const optimisticMessage: PrivateChatMessage = {
-      id: tempId,
-      text: textToSend,
-      senderId: sender.uid,
-      receiverId: recipient.uid,
-      timestamp: new Date(),
-       ...(replyToSend && { replyToId: replyToSend.id, replyToText: replyToSend.text }),
-    };
-    setMessages(prev => [...prev, optimisticMessage]);
-
-
     await sendPrivateMessage(sender.uid, recipient.uid, textToSend, replyToSend);
-    // The real message will replace the optimistic one via the onSnapshot listener.
   };
 
   const handleReplyClick = (message: PrivateChatMessage) => {
@@ -182,7 +168,7 @@ function ChatView({
                 const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
                  return (
                     <div
-                        key={msg.id || msg.timestamp.toString()}
+                        key={msg.id}
                         className={cn(
                             'flex flex-col gap-1 group',
                             isCurrentUser ? 'items-end' : 'items-start'
@@ -271,7 +257,7 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+            className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-white"
             >
             <Button
                 variant="ghost"
@@ -282,42 +268,33 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                 <X className="h-8 w-8" />
                 <span className="sr-only">Close Private Chat</span>
             </Button>
-
-            <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="w-full max-w-4xl h-[90vh] max-h-[700px] flex items-center justify-center text-white"
-            >
-               <div className="w-full h-full bg-background/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg p-0 flex flex-col">
-                  {!selectedUser ? (
-                    <div className="h-full flex flex-col">
-                        <div className="p-4 border-b border-white/10 shrink-0 text-center">
-                            <h2 className="text-2xl font-bold font-heading sr-only">Private Chat</h2>
-                            <div className="relative pt-4">
-                                <Input
-                                    placeholder="Search for a user..."
-                                    className="pl-4 bg-background/50"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="p-4 flex-1 overflow-hidden">
-                            <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
+            
+            <div className="w-full max-w-4xl h-full flex flex-col">
+              {!selectedUser ? (
+                <div className="h-full flex flex-col">
+                    <div className="p-4 pt-16 shrink-0 text-center">
+                        <div className="relative pt-4">
+                            <Input
+                                placeholder="Search for a user..."
+                                className="pl-4 bg-background/50"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </div>
-                    ) : (
-                    <div className="h-full">
-                        <ChatView 
-                            recipient={selectedUser} 
-                            onBack={() => setSelectedUser(null)}
-                        />
+                    <div className="p-4 flex-1 overflow-hidden">
+                        <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
                     </div>
-                  )}
                 </div>
-            </motion.div>
+                ) : (
+                <div className="h-full">
+                    <ChatView 
+                        recipient={selectedUser} 
+                        onBack={() => setSelectedUser(null)}
+                    />
+                </div>
+              )}
+            </div>
         </motion.div>
       )}
     </AnimatePresence>
