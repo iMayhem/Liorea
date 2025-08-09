@@ -74,7 +74,7 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
                     <p className="font-medium">{user.username}</p>
                 </div>
                  {newMessagesFrom.has(user.uid) && (
-                     <span className="absolute top-2 right-2 block h-3 w-3 rounded-full bg-white/50 backdrop-blur-sm ring-1 ring-white/20" />
+                     <span className="absolute top-2 right-2 block h-3 w-3 rounded-full bg-primary/80 ring-2 ring-background backdrop-blur-sm" />
                 )}
             </button>
             ))
@@ -87,7 +87,7 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
 }
 
 function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () => void }) {
-  const { user: sender } = useAuth();
+  const { user: sender, profile } = useAuth();
   const [messages, setMessages] = React.useState<PrivateChatMessage[]>([]);
   const [newMessage, setNewMessage] = React.useState('');
   const [image, setImage] = React.useState<string | null>(null);
@@ -126,11 +126,29 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() && !image || !sender) return;
+    if (!newMessage.trim() && !image || !sender || !profile) return;
+    
+    const textToSend = newMessage.trim();
+    const imageToSend = image;
 
-    await sendPrivateMessage(sender.uid, recipient.uid, newMessage.trim(), image);
     setNewMessage('');
     setImage(null);
+
+    // Optimistic UI update
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMessage: PrivateChatMessage = {
+      id: tempId,
+      text: textToSend,
+      imageUrl: imageToSend,
+      senderId: sender.uid,
+      receiverId: recipient.uid,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, optimisticMessage]);
+
+
+    await sendPrivateMessage(sender.uid, recipient.uid, textToSend, imageToSend);
+    // The real message will replace the optimistic one via the onSnapshot listener.
   };
   
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,8 +214,8 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                          {msg.imageUrl && (
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="rounded-full mt-2">
-                                        <ImageIcon className="h-5 w-5" />
+                                    <Button variant="ghost" size="icon" className="h-auto w-auto p-2 rounded-lg">
+                                        <ImageIcon className="h-10 w-10" />
                                     </Button>
                                 </DialogTrigger>
                                 <DialogPortal>
