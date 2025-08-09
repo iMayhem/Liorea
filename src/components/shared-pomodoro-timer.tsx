@@ -25,6 +25,7 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
   const { mode, isActive, time, startTime, studyDuration, shortBreakDuration, longBreakDuration } = timerState;
   const [displayTime, setDisplayTime] = React.useState(time);
   const { user } = useAuth();
+  const audioRef = React.useRef<HTMLAudioElement>(null);
   
   const getDuration = (mode: TimerState['mode']) => {
     switch(mode) {
@@ -62,6 +63,9 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
 
   const handleTimerEnd = () => {
      // Only one client should handle the transition
+    if (audioRef.current) {
+        audioRef.current.play().catch(console.error);
+    }
     if (mode === 'study') {
        // Time logging is now handled by the useStudyRoom hook.
        switchMode('shortBreak');
@@ -126,6 +130,7 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
   }
 
   return (
+    <>
     <Card className="w-full max-w-md shadow-lg bg-background/80">
       <CardHeader>
         <div className="flex justify-center items-center mb-4 gap-2">
@@ -195,5 +200,7 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
         </Button>
       </CardFooter>
     </Card>
+    <audio ref={audioRef} src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Ftimer%20end.mp3?alt=media&token=947cbec0-3c0a-4f7a-8d3a-996a73b8a950" preload="auto"></audio>
+    </>
   );
 }
