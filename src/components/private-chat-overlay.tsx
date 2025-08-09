@@ -287,16 +287,19 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                 className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/80 rounded-2xl border border-white/10 shadow-lg p-0"
                 onInteractOutside={(e) => e.preventDefault()}
             >
+                 <DialogHeader className="sr-only">
+                    <DialogTitle>Private Chat</DialogTitle>
+                </DialogHeader>
                 <button
-                    className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 rounded-sm p-1"
+                    className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 rounded-sm p-1 z-10"
                     onClick={() => setIsPrivateChatOpen(false)}
                 >
                     <X className="h-6 w-6" />
                     <span className="sr-only">Close Chat</span>
                 </button>
                 {!selectedUser ? (
-                    <div className="h-full flex flex-col pt-12">
-                        <header className="p-4 border-b border-white/10">
+                    <div className="h-full flex flex-col">
+                        <header className="p-4 border-b border-white/10 shrink-0">
                             <h1 className="text-2xl font-bold font-heading text-center mb-4">Private Chat</h1>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -313,7 +316,7 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                         </div>
                     </div>
                 ) : (
-                    <div className="pt-12 h-full">
+                    <div className="h-full">
                         <ChatView recipient={selectedUser} onBack={() => setSelectedUser(null)} />
                     </div>
                 )}

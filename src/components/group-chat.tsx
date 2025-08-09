@@ -201,8 +201,8 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                                 </DialogTrigger>
                                 <DialogContent className="p-0 border-0 max-w-4xl">
                                      <DialogHeader>
-                                         <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
-                                    </DialogHeader>
+                                        <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
+                                     </DialogHeader>
                                     <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
                                 </DialogContent>
                             </Dialog>
