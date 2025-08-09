@@ -31,7 +31,7 @@ interface ReportDialogProps {
 }
 
 export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const { toast } = useToast();
     const [title, setTitle] = React.useState('');
     const [description, setDescription] = React.useState('');
@@ -57,7 +57,7 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
     };
 
     const handleSubmit = async () => {
-        if (!user || !title || !description) {
+        if (!user || !profile?.username || !title || !description) {
             toast({
                 title: 'Missing Fields',
                 description: 'Please provide a title and description.',
@@ -80,7 +80,7 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
              // Save report to Firestore
             await addDoc(collection(db, 'reports'), {
                 userId: user.uid,
-                username: user.username,
+                username: profile.username,
                 title,
                 description,
                 imageUrl,

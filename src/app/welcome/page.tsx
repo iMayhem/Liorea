@@ -8,38 +8,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { setUserPreparationPath, getUserProfile } from '@/lib/firestore';
+import { setUserPreparationPath } from '@/lib/firestore';
 import type { PreparationPath } from '@/lib/types';
 import { AppLogo } from '@/components/icons';
 
 export default function WelcomePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, loadingProfile, refreshProfile } = useAuth();
   const router = useRouter();
   const [step, setStep] = React.useState<'initial' | 'neet-batch'>('initial');
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading || loadingProfile) return;
+    if (!user) {
       router.push('/login');
+    } else if (!profile?.username) {
+      router.push('/set-username');
+    } else if (profile?.preparationPath) {
+        router.push('/');
     }
-  }, [user, authLoading, router]);
+  }, [user, profile, authLoading, loadingProfile, router]);
 
-   // Redirect if user already has a path
-  React.useEffect(() => {
-    if (user) {
-      getUserProfile(user.uid).then(profile => {
-        if (profile?.preparationPath) {
-          router.push('/');
-        }
-      });
-    }
-  }, [user, router]);
 
   const handleSelectPath = async (path: PreparationPath) => {
     if (!user) return;
     setIsSaving(true);
     try {
       await setUserPreparationPath(user.uid, path);
+      await refreshProfile();
       router.push('/');
     } catch (error) {
       console.error("Error setting preparation path:", error);
@@ -56,7 +52,7 @@ export default function WelcomePage() {
     handleSelectPath('jee');
   };
 
-  if (authLoading || !user) {
+  if (authLoading || loadingProfile || !user || !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -76,7 +72,7 @@ export default function WelcomePage() {
             <div className="flex justify-center mb-4">
                 <AppLogo />
             </div>
-          <CardTitle>Welcome, {user.username}!</CardTitle>
+          <CardTitle>Welcome, {profile.username || user.email}!</CardTitle>
           <CardDescription>
             {step === 'initial' 
               ? "Let's personalize your experience. Which exam are you preparing for?" 

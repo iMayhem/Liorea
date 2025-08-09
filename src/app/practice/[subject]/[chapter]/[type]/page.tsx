@@ -60,7 +60,7 @@ function formatTime(seconds: number) {
 
 
 export default function PracticeQuestionPage({ params: paramsProp }: { params: { subject: string; chapter: string; type: string } }) {
-    const { user, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     
@@ -103,7 +103,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
 
 
     const loadData = React.useCallback(async () => {
-        if (!user || !subject || !chapter) return;
+        if (!user || !profile?.username || !subject || !chapter) return;
         setLoading(true);
         
         const questionSet = await getQuestions(subjectSlug, chapterSlug, quizType);
@@ -111,7 +111,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
 
         if (questionSet.length > 0) {
             try {
-                const userProgress = await getQuizProgress(user.username, quizType);
+                const userProgress = await getQuizProgress(profile.username, quizType);
                 setProgress(userProgress[subjectSlug]?.[chapterSlug] || {});
             } catch (error) {
                 console.error("Failed to fetch quiz progress:", error);
@@ -119,7 +119,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
             }
         }
         setLoading(false);
-    }, [user, subject, chapter, subjectSlug, chapterSlug, quizType, toast]);
+    }, [user, profile, subject, chapter, subjectSlug, chapterSlug, quizType, toast]);
 
     // This effect handles fetching questions and user progress.
     React.useEffect(() => {
@@ -151,7 +151,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
 
 
   const handleAnswer = async (optionKey: string) => {
-    if (answered || !user) return;
+    if (answered || !user || !profile?.username) return;
     
     const isCorrect = optionKey === currentQuestion.correctAnswer;
     
@@ -159,7 +159,7 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
     setAnswered(true);
 
     try {
-        await saveQuizAttempt(user.username, subjectSlug, chapterSlug, quizType, currentQuestion.questionNumber, optionKey, isCorrect);
+        await saveQuizAttempt(profile.username, subjectSlug, chapterSlug, quizType, currentQuestion.questionNumber, optionKey, isCorrect);
         // Also update local progress state to re-render immediately
         setProgress(prev => ({
             ...prev,
@@ -183,13 +183,13 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
   };
   
   const handleBookmark = async () => {
-    if(!user || !currentQuestion) return;
+    if(!user || !profile?.username || !currentQuestion) return;
 
     const currentBookmarkState = progress?.[currentQuestion.questionNumber]?.bookmarked || false;
     const newBookmarkState = !currentBookmarkState;
 
     try {
-        await toggleBookmark(user.username, subjectSlug, chapterSlug, quizType, currentQuestion.questionNumber, newBookmarkState);
+        await toggleBookmark(profile.username, subjectSlug, chapterSlug, quizType, currentQuestion.questionNumber, newBookmarkState);
         setProgress(prev => ({
             ...prev,
             [currentQuestion.questionNumber]: { ...prev?.[currentQuestion.questionNumber], bookmarked: newBookmarkState }
@@ -201,9 +201,9 @@ export default function PracticeQuestionPage({ params: paramsProp }: { params: {
   };
 
   const handleReset = async () => {
-    if (!user || !subject || !chapter) return;
+    if (!user || !profile?.username || !subject || !chapter) return;
     try {
-        const newProgress = await resetQuizProgress(user.username, subjectSlug, chapterSlug, quizType);
+        const newProgress = await resetQuizProgress(profile.username, subjectSlug, chapterSlug, quizType);
         setProgress(newProgress[subjectSlug]?.[chapterSlug] || {});
         setCurrentQuestionIndex(0); // Go back to the first question
     } catch (error) {

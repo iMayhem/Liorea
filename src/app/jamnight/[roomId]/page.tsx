@@ -36,7 +36,7 @@ const PUBLIC_JAMNIGHT_ROOM_ID = "public-jamnight-room-v1";
 export default function JamRoomPage({ params }: { params: { roomId: string } }) {
     const routeParams = React.use(params as any);
     const { roomId } = routeParams;
-    const { user, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -71,7 +71,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
     // Effect to handle joining/leaving the room and listening for state changes
     React.useEffect(() => {
-        if (authLoading || !user) return;
+        if (authLoading || !user || !profile) return;
 
         const roomRef = doc(db, 'jamRooms', roomId);
         const chatQuery = query(collection(db, 'jamRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
@@ -84,7 +84,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 return;
             }
             // Add user to participants list
-            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: user.username, photoURL: user.photoURL }) });
+            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) });
             // Update user's status to indicate they are in a jam session
             await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
         });
@@ -121,19 +121,21 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         return () => {
             unsubscribeRoom();
             unsubscribeChat();
-            getDoc(roomRef).then(docSnap => {
-                if(docSnap.exists()) {
-                     updateDoc(roomRef, { 
-                         participants: arrayRemove({ uid: user.uid, username: user.username, photoURL: user.photoURL }),
-                         [`typingUsers.${user.uid}`]: deleteField()
-                     });
-                }
-            })
-            // Reset user's status when they leave
-            updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
+            if (user && profile) {
+                getDoc(roomRef).then(docSnap => {
+                    if(docSnap.exists()) {
+                        updateDoc(roomRef, { 
+                            participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }),
+                            [`typingUsers.${user.uid}`]: deleteField()
+                        });
+                    }
+                })
+                // Reset user's status when they leave
+                updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
+            }
         };
 
-    }, [roomId, user, authLoading, router, toast]);
+    }, [roomId, user, profile, authLoading, router, toast]);
 
     const handleVideoUrlChange = () => {
         const videoId = getYouTubeId(videoUrl);
@@ -196,7 +198,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     };
     
      const handleSendMessage = async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
-        if (!user || !roomId) return;
+        if (!user || !profile?.username || !roomId) return;
         const chatCollectionRef = collection(db, 'jamRooms', roomId, 'chats');
         
         if(!message.text && !message.imageUrl) return;
@@ -205,7 +207,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
           text: message.text,
           imageUrl: message.imageUrl || null,
           senderId: user.uid,
-          senderName: user.username,
+          senderName: profile.username,
           timestamp: serverTimestamp(),
         };
 
@@ -218,13 +220,13 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     };
 
     const handleTyping = async (isTyping: boolean) => {
-        if (!user || !user.username || !roomId) return;
+        if (!user || !profile?.username || !roomId) return;
         const roomRef = doc(db, 'jamRooms', roomId);
         const typingField = `typingUsers.${user.uid}`;
 
         try {
             if (isTyping) {
-                await updateDoc(roomRef, { [typingField]: user.username });
+                await updateDoc(roomRef, { [typingField]: profile.username });
             } else {
                 await updateDoc(roomRef, { [typingField]: deleteField() });
             }
@@ -288,9 +290,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                             currentUserId={user!.uid}
                             onTyping={handleTyping}
                             typingUsers={roomState.typingUsers || {}}
-                            isPublicRoom={roomId === PUBLIC_JAMNIGHT_ROOM_ID}
-                            roomId={roomId}
-                            roomType="jamRooms"
                         />
                     </div>
                 </div>

@@ -132,7 +132,7 @@ export default function AdminPage() {
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="space-y-4">
-                                            <p><strong className="font-semibold">From:</strong> {report.userId}</p>
+                                            <p><strong className="font-semibold">From:</strong> {report.username}</p>
                                             <p className="whitespace-pre-wrap"><strong className="font-semibold">Description:</strong> {report.description}</p>
                                             {report.imageUrl && (
                                                 <div>

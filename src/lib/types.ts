@@ -119,7 +119,7 @@ export interface UserProfile {
     dailyStreak: number;
     mockScores: number[];
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
-    createdAt: string; // Changed to string to be serializable
+    createdAt: any; // Can be server timestamp
     preparationPath?: PreparationPath | null;
     status?: {
       isStudying: boolean;

@@ -12,17 +12,17 @@ import { format, startOfDay, endOfDay } from 'date-fns';
 /**
  * Retrieves a user's progress for a specific date from Firestore.
  * If no progress exists, it initializes it based on the timetable.
- * @param userId - The ID of the user ('user1' or 'user2').
+ * @param username - The unique username of the user.
  * @param date - The date string (e.g., "August 3, 2025").
  * @param timetable - The timetable for the given date.
  * @returns The user's progress.
  */
 export async function getProgressForUser(
-  userId: string,
+  username: string,
   date: string,
   timetable: TimeTableData
 ): Promise<UserProgress> {
-  const docId = getDocId(userId, date);
+  const docId = getDocId(username, date);
   const docRef = doc(db, 'progress', docId);
   const docSnap = await getDoc(docRef);
 
@@ -38,20 +38,20 @@ export async function getProgressForUser(
 
 /**
  * Updates a specific task's completion status in Firestore.
- * @param userId - The ID of the user.
+ * @param username - The unique username of the user.
  * @param date - The date string.
  * @param subject - The subject name.
  * @param task - The task ID (e.g., "lecture").
  * @param isCompleted - The new completion status.
  */
 export async function updateTask(
-  userId: string,
+  username: string,
   date: string,
   subject: string,
   task: string,
   isCompleted: boolean
 ): Promise<void> {
-  const docId = getDocId(userId, date);
+  const docId = getDocId(username, date);
   const docRef = doc(db, 'progress', docId);
 
   // Firestore's dot notation allows us to update nested fields.
@@ -73,18 +73,18 @@ export async function updateTask(
 
 /**
  * Updates the score for a specific subject on a given date.
- * @param userId - The ID of the user.
+ * @param username - The unique username of the user.
  * @param date - The date string.
  * @param subject - The subject name.
  * @param score - The score to save.
  */
 export async function updateScore(
-  userId: string,
+  username: string,
   date: string,
   subject: string,
   score: number
 ): Promise<void> {
-    const docId = getDocId(userId, date);
+    const docId = getDocId(username, date);
     const docRef = doc(db, 'progress', docId);
 
     // Use dot notation to update only the score field of a specific subject
@@ -99,7 +99,7 @@ export async function updateScore(
 
 /**
  * Saves a user's quiz attempt for a specific question.
- * @param userId - The ID of the user.
+ * @param username - The unique username of the user.
  * @param subjectSlug - The slug of the subject.
  * @param chapterSlug - The slug of the chapter.
  * @param quizType - The type of quiz (e.g., 'topic-wise-questions').
@@ -108,7 +108,7 @@ export async function updateScore(
  * @param isCorrect - Whether the selected option was correct.
  */
 export async function saveQuizAttempt(
-  userId: string,
+  username: string,
   subjectSlug: string,
   chapterSlug: string,
   quizType: string,
@@ -116,7 +116,7 @@ export async function saveQuizAttempt(
   selectedOption: string,
   isCorrect: boolean
 ): Promise<void> {
-  const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
+  const docRef = doc(db, 'quiz_progress', `${username}_${quizType}`);
 
   const fieldPath = `${subjectSlug}.${chapterSlug}.${questionNumber}`;
 
@@ -139,12 +139,12 @@ export async function saveQuizAttempt(
 
 /**
  * Retrieves a user's entire quiz progress for a specific quiz type.
- * @param userId - The ID of the user.
+ * @param username - The unique username of the user.
  * @param quizType - The type of quiz.
  * @returns The user's quiz progress, or an empty object if none exists.
  */
-export async function getQuizProgress(userId: string, quizType: string): Promise<UserQuizProgress> {
-    const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
+export async function getQuizProgress(username: string, quizType: string): Promise<UserQuizProgress> {
+    const docRef = doc(db, 'quiz_progress', `${username}_${quizType}`);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -156,7 +156,7 @@ export async function getQuizProgress(userId: string, quizType: string): Promise
 
 /**
  * Toggles the bookmark status for a specific question.
- * @param userId - The ID of the user.
+ * @param username - The unique username of the user.
  * @param subjectSlug - The slug of the subject.
  * @param chapterSlug - The slug of the chapter.
  * @param quizType - The type of quiz (e.g., 'topic-wise-questions').
@@ -164,14 +164,14 @@ export async function getQuizProgress(userId: string, quizType: string): Promise
  * @param isBookmarked - The new bookmark status.
  */
 export async function toggleBookmark(
-    userId: string,
+    username: string,
     subjectSlug: string,
     chapterSlug: string,
     quizType: string,
     questionNumber: number,
     isBookmarked: boolean
 ): Promise<void> {
-    const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
+    const docRef = doc(db, 'quiz_progress', `${username}_${quizType}`);
     const fieldPath = `${subjectSlug}.${chapterSlug}.${questionNumber}.bookmarked`;
 
     await setDoc(
@@ -192,19 +192,19 @@ export async function toggleBookmark(
 
 /**
  * Resets a user's quiz progress for a specific chapter, preserving bookmarks.
- * @param userId - The ID of the user.
+ * @param username - The unique username of the user.
  * @param subjectSlug - The slug of the subject.
  * @param chapterSlug - The slug of the chapter.
  * @param quizType - The type of quiz.
  * @returns The updated quiz progress for the entire quiz type.
  */
 export async function resetQuizProgress(
-    userId: string,
+    username: string,
     subjectSlug: string,
     chapterSlug: string,
     quizType: string
 ): Promise<UserQuizProgress> {
-    const docRef = doc(db, 'quiz_progress', `${userId}_${quizType}`);
+    const docRef = doc(db, 'quiz_progress', `${username}_${quizType}`);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -269,11 +269,11 @@ export async function logStudySession(participantUids: string[], durationInSecon
 
 /**
  * Retrieves all study logs for a specific user.
- * @param userId - The ID of the user.
+ * @param uid - The ID of the user.
  * @returns An object mapping date strings to total study seconds.
  */
-export async function getStudyLogsForUser(userId: string): Promise<Record<string, number>> {
-  const docRef = doc(db, 'studyLogs', userId);
+export async function getStudyLogsForUser(uid: string): Promise<Record<string, number>> {
+  const docRef = doc(db, 'studyLogs', uid);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return docSnap.data().daily || {};
@@ -282,43 +282,30 @@ export async function getStudyLogsForUser(userId: string): Promise<Record<string
 }
 
 /**
- * Creates or updates a user's profile information, ensuring one profile per email.
- * @param user - The authenticated user object from Firebase Auth.
+ * Creates or updates a user's profile information. If a document for the UID doesn't exist, it creates one.
+ * It does not create duplicate profiles based on email.
+ * @param uid - The user's unique ID from Firebase Auth.
+ * @param data - The data to set or merge.
  */
-export async function upsertUserProfile(user: { uid: string; username: string | null; photoURL: string | null; email: string | null; }) {
-  if (!user.email) {
-      console.error("User email is null, cannot upsert profile.");
-      return;
-  }
-  
-  const usersRef = collection(db, 'users');
-  const q = query(usersRef, where("email", "==", user.email), limit(1));
-  const querySnapshot = await getDocs(q);
+export async function upsertUserProfile(uid: string, data: Partial<UserProfile>) {
+  const userRef = doc(db, 'users', uid);
+  const docSnap = await getDoc(userRef);
 
-  if (!querySnapshot.empty) {
-      // User with this email already exists. Update it.
-      const existingUserDoc = querySnapshot.docs[0];
-      const userRef = doc(db, 'users', existingUserDoc.id);
-      await updateDoc(userRef, {
-          uid: user.uid, // Update UID in case it's a new auth method for the same email
-          username: user.username,
-          photoURL: user.photoURL,
-      });
+  if (docSnap.exists()) {
+    // Document exists, update it with new data
+    await updateDoc(userRef, data);
   } else {
-      // No user with this email found. Create a new profile with the user's UID as the document ID.
-      const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, {
-        uid: user.uid,
-        username: user.username,
-        photoURL: user.photoURL,
-        email: user.email,
-        totalStudyHours: 0,
-        dailyStreak: 0,
-        mockScores: [],
-        preparationPath: null,
-        createdAt: serverTimestamp(),
-        status: { isStudying: false, isJamming: false, roomId: null },
-      });
+    // Document doesn't exist, create it with initial values
+    await setDoc(userRef, {
+      ...data, // provided data (uid, email, photoURL)
+      username: null, // Explicitly set username to null initially
+      totalStudyHours: 0,
+      dailyStreak: 0,
+      mockScores: [],
+      preparationPath: null,
+      createdAt: serverTimestamp(),
+      status: { isStudying: false, isJamming: false, roomId: null },
+    });
   }
 }
 
@@ -373,6 +360,18 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 export async function updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, data);
+}
+
+/**
+ * Checks if a username is unique.
+ * @param username The username to check.
+ * @returns A boolean indicating if the username is unique.
+ */
+export async function checkUsernameUnique(username: string): Promise<boolean> {
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, where("username", "==", username));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.empty;
 }
 
 /**

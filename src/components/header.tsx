@@ -12,7 +12,7 @@ import { useBackground } from "@/hooks/use-background";
 import * as React from 'react';
 
 export function AppHeader() {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { changeBackground, isChanging, clearCustomBackground } = useBackground();
@@ -41,7 +41,7 @@ export function AppHeader() {
             </Link>
           )}
         </div>
-        {user && <p className="text-sm text-muted-foreground">Signed in as {user.username}</p>}
+        {profile && <p className="text-sm text-muted-foreground">Signed in as {profile.username}</p>}
         <div className="flex flex-1 items-center justify-end space-x-2">
            {!isHomePage && (
              <Button onClick={handleBack} variant="ghost" size="sm">

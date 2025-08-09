@@ -10,12 +10,11 @@ import {AppHeader} from '@/components/header';
 import {useAuth} from '@/hooks/use-auth';
 import {Skeleton} from '@/components/ui/skeleton';
 import {motion} from 'framer-motion';
-import { getUserProfile } from '@/lib/firestore';
 import type { UserProfile } from '@/lib/types';
 
 
 export default function DayTrackerPage({params}: {params: {date: string}}) {
-  const {user, loading: authLoading} = useAuth();
+  const {user, loading: authLoading, profile, loadingProfile} = useAuth();
   const router = useRouter();
   
   const routeParams = React.use(params as any);
@@ -23,8 +22,6 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
 
   const [parsedDate, setParsedDate] = React.useState<Date | null>(null);
   const [dateIsValid, setDateIsValid] = React.useState<boolean | null>(null);
-  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
-
 
   React.useEffect(() => {
     if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
@@ -40,25 +37,25 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
 
 
   React.useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || loadingProfile) return;
     if (!user) {
       router.push('/login');
-    } else {
-       getUserProfile(user.uid).then(setUserProfile);
+    } else if (!profile?.username) {
+      router.push('/set-username');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, profile, loadingProfile, router]);
 
   const formattedDate = React.useMemo(() => {
     return parsedDate ? format(parsedDate, 'MMMM d, yyyy') : '';
   }, [parsedDate]);
 
   const timetable = React.useMemo(() => {
-      if (!formattedDate || !userProfile?.preparationPath) return {};
-      return generateTimeTableForDate(formattedDate, userProfile.preparationPath);
-  }, [formattedDate, userProfile]);
+      if (!formattedDate || !profile?.preparationPath) return {};
+      return generateTimeTableForDate(formattedDate, profile.preparationPath);
+  }, [formattedDate, profile]);
 
 
-  if (authLoading || !user || dateIsValid === null || !userProfile) {
+  if (authLoading || loadingProfile || !user || !profile || dateIsValid === null) {
     // Render a loading state or nothing while we validate the date on the client.
     return (
       <div className="flex flex-col min-h-screen">
@@ -96,10 +93,10 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
 
   return (
     <Dashboard
-      username={user.username}
+      username={profile.username!}
       date={formattedDate}
       timetable={timetable}
-      preparationPath={userProfile.preparationPath}
+      preparationPath={profile.preparationPath}
     />
   );
 }

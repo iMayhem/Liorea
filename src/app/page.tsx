@@ -5,56 +5,50 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import { getUserProfile } from '@/lib/firestore';
 import type { UserProfile } from '@/lib/types';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const [loadingProfile, setLoadingProfile] = React.useState(true);
-
+  const { user, loading: authLoading, profile, loadingProfile } = useAuth();
+  
   React.useEffect(() => {
-    if (authLoading) {
-      return;
+    if (authLoading || loadingProfile) {
+      return; // Wait until we have auth and profile info
     }
     if (!user) {
       router.push('/login');
       return;
     }
 
-    const fetchProfileAndRedirect = async () => {
-      try {
-        const profile = await getUserProfile(user.uid);
-        if (profile?.preparationPath) {
-          switch (profile.preparationPath) {
-            case 'neet-achiever':
-              router.push('/neet-achiever-home');
-              break;
-            case 'neet-other':
-              router.push('/neet-home');
-              break;
-            case 'jee':
-              router.push('/jee-home');
-              break;
-            default:
-              router.push('/welcome'); // Fallback
-              break;
-          }
-        } else {
-          // If no path is set, go to the welcome page.
-          router.push('/welcome');
-        }
-      } catch (error) {
-        console.error("Error fetching user profile, redirecting to welcome:", error);
+    // 1. Check if username is set. If not, redirect to set-username.
+    if (!profile?.username) {
+        router.push('/set-username');
+        return;
+    }
+
+    // 2. Check if preparation path is set. If not, redirect to welcome.
+    if (!profile?.preparationPath) {
         router.push('/welcome');
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
+        return;
+    }
+    
+    // 3. If everything is set, redirect to the correct home page.
+    switch (profile.preparationPath) {
+        case 'neet-achiever':
+          router.push('/neet-achiever-home');
+          break;
+        case 'neet-other':
+          router.push('/neet-home');
+          break;
+        case 'jee':
+          router.push('/jee-home');
+          break;
+        default:
+          router.push('/welcome'); // Fallback
+          break;
+    }
 
-    fetchProfileAndRedirect();
-
-  }, [user, authLoading, router]);
+  }, [user, authLoading, profile, loadingProfile, router]);
 
   // Render a loading spinner while we determine where to redirect the user.
   return (

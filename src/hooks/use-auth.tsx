@@ -1,26 +1,30 @@
 // src/hooks/use-auth.tsx
 'use client';
 
-import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import React, {createContext, useContext, useState, useEffect, ReactNode, useCallback} from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
-import { upsertUserProfile } from '@/lib/firestore';
+import { upsertUserProfile, getUserProfile } from '@/lib/firestore';
 import { StudyRoomProvider } from './use-study-room';
+import type { UserProfile } from '@/lib/types';
 
 
 interface User {
   uid: string;
-  username: string | null;
   email: string | null;
   photoURL: string | null;
+  // username is now part of the full profile
 }
 
 interface AuthContextType {
   user: User | null;
+  profile: UserProfile | null;
   loading: boolean;
+  loadingProfile: boolean;
   signInWithGoogle: () => void;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,50 +34,88 @@ const provider = new GoogleAuthProvider();
 
 export function AuthProvider({children}: {children: ReactNode}) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  const fetchProfile = useCallback(async (uid: string) => {
+    setLoadingProfile(true);
+    try {
+        const userProfile = await getUserProfile(uid);
+        setProfile(userProfile);
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setProfile(null);
+    } finally {
+        setLoadingProfile(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const { uid, displayName, email, photoURL } = firebaseUser;
-        const appUser: User = { uid, username: displayName, email, photoURL };
+        const appUser: User = { uid, email, photoURL };
         setUser(appUser);
-        // Create or update the user's profile in Firestore
-        upsertUserProfile(appUser);
+        
+        // Upsert the basic profile info but don't set username here
+        await upsertUserProfile(uid, {
+            uid,
+            email,
+            photoURL: photoURL || '',
+            // Don't set username, it's handled on the set-username page
+        });
+
+        // Fetch the full profile from Firestore
+        await fetchProfile(uid);
+
       } else {
         setUser(null);
+        setProfile(null);
+        setLoading(false);
+        setLoadingProfile(false);
       }
       setLoading(false);
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [fetchProfile]);
+  
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfile(user.uid);
+    }
+  }, [user, fetchProfile]);
 
   const signInWithGoogle = async () => {
     setLoading(true);
+    setLoadingProfile(true);
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error during sign-in:", error);
     } finally {
-      setLoading(false);
+      // setLoading will be handled by onAuthStateChanged
     }
   };
 
   const logout = async () => {
     setLoading(true);
+    setLoadingProfile(true);
     try {
         await signOut(auth);
     } catch (error) {
         console.error("Error during sign-out:", error);
     } finally {
         setUser(null);
+        setProfile(null);
         setLoading(false);
+        setLoadingProfile(false);
     }
   };
   
-  const value = {user, loading, signInWithGoogle, logout};
+  const value = {user, profile, loading, loadingProfile, signInWithGoogle, logout, refreshProfile};
 
   return (
     <AuthContext.Provider value={value}>

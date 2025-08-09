@@ -36,7 +36,7 @@ const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mo
 
 export default function NeetHomePage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { setTheme } = useTheme();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
@@ -71,7 +71,7 @@ export default function NeetHomePage() {
     }
   };
 
-  if (loading || !user) {
+  if (loading || !user || !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -94,7 +94,7 @@ export default function NeetHomePage() {
         className="flex-1 container mx-auto flex flex-col items-center justify-center p-4 text-center"
       >
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold font-heading">Welcome, {user.username}!</h1>
+          <h1 className="text-4xl font-bold font-heading">Welcome, {profile.username}!</h1>
           <p className="text-muted-foreground mt-2">
             Select a date to track your general NEET progress.
           </p>
