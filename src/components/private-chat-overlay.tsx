@@ -53,7 +53,6 @@ function UserList({ onSelectUser }: { onSelectUser: (user: UserProfile) => void 
             </Avatar>
             <div>
                 <p className="font-medium">{user.username}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </button>
         ))}
