@@ -151,7 +151,7 @@ export default function NeetHomePage() {
                 <Button 
                     variant="outline" 
                     size="icon" 
-                    className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg"
+                    className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
                     onClick={() => setIsReportDialogOpen(true)}
                 >
                     <MessageSquareWarning className="h-6 w-6" />
