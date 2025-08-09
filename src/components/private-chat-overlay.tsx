@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { X, Loader2, Send, ArrowLeft, Image as ImageIcon, CornerDownLeft } from 'lucide-react';
+import { X, Loader2, Send, ArrowLeft, CornerDownLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
 import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
@@ -15,8 +15,6 @@ import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { useStudyRoom } from '@/hooks/use-study-room';
-import { ChatIcon } from './icons';
-import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogPortal, DialogOverlay, DialogClose } from './ui/dialog';
 
 interface PrivateChatOverlayProps {}
@@ -89,18 +87,14 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
 function ChatView({ 
     recipient, 
     onBack,
-    onImageSelect
 }: { 
     recipient: UserProfile; 
     onBack: () => void;
-    onImageSelect: (imageUrl: string) => void;
 }) {
   const { user: sender, profile } = useAuth();
   const [messages, setMessages] = React.useState<PrivateChatMessage[]>([]);
   const [newMessage, setNewMessage] = React.useState('');
-  const [image, setImage] = React.useState<string | null>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -136,14 +130,12 @@ function ChatView({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() && !image || !sender || !profile) return;
+    if (!newMessage.trim() || !sender || !profile) return;
     
     const textToSend = newMessage.trim();
-    const imageToSend = image;
     const replyToSend = replyTo;
 
     setNewMessage('');
-    setImage(null);
     setReplyTo(null);
 
     // Optimistic UI update
@@ -151,7 +143,6 @@ function ChatView({
     const optimisticMessage: PrivateChatMessage = {
       id: tempId,
       text: textToSend,
-      imageUrl: imageToSend,
       senderId: sender.uid,
       receiverId: recipient.uid,
       timestamp: new Date(),
@@ -160,45 +151,16 @@ function ChatView({
     setMessages(prev => [...prev, optimisticMessage]);
 
 
-    await sendPrivateMessage(sender.uid, recipient.uid, textToSend, imageToSend, replyToSend);
+    await sendPrivateMessage(sender.uid, recipient.uid, textToSend, replyToSend);
     // The real message will replace the optimistic one via the onSnapshot listener.
   };
 
   const handleReplyClick = (message: PrivateChatMessage) => {
-    setReplyTo({id: message.id, text: message.text || 'Image'});
+    setReplyTo({id: message.id, text: message.text || 'Message'});
     inputRef.current?.focus();
   }
 
   const findMessageById = (id: string) => messages.find(m => m.id === id);
-  
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = event.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const file = items[i].getAsFile();
-            if(file){
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setImage(reader.result as string);
-                };
-                reader.readAsDataURL(file);
-            }
-            event.preventDefault();
-            return;
-        }
-    }
-  };
 
 
   return (
@@ -241,15 +203,10 @@ function ChatView({
                             {originalMessage && (
                                 <div className="border-l-2 border-white/50 pl-2 text-xs opacity-80 mb-1 bg-black/20 p-2 rounded-md">
                                     <p className="font-bold">{originalMessage.senderId === sender?.uid ? "You" : recipient.username}</p>
-                                    <p className="truncate">{originalMessage.text || 'Image'}</p>
+                                    <p className="truncate">{originalMessage.text}</p>
                                 </div>
                             )}
-                             {msg.imageUrl && (
-                                <button onClick={() => onImageSelect(msg.imageUrl!)} className="p-2 rounded-lg bg-black/20 hover:bg-black/30 my-1 flex items-center gap-2 text-left">
-                                    <ImageIcon className="h-5 w-5" />
-                                    <span className="font-semibold">Image</span>
-                                </button>
-                            )}
+                            
                             {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
 
                             <div className="absolute top-0 flex gap-1 p-1 rounded-full bg-background/20 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" style={isCurrentUser ? {left: '-8px'} : {right: '-8px'}}>
@@ -271,34 +228,14 @@ function ChatView({
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)}><X className="h-4 w-4"/></Button>
             </div>
          )}
-          {image && (
-            <div className="relative p-2 rounded-md bg-muted/60 w-full">
-                <div className="relative w-24 h-24 rounded-md overflow-hidden">
-                    <Image src={image} alt="preview" fill={true} style={{objectFit: 'cover'}} />
-                </div>
-                <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => setImage(null)}><X className="h-4 w-4"/></Button>
-            </div>
-            )}
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                 <Input
                     ref={inputRef}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onPaste={handlePaste}
                     placeholder="Type a message..."
                     className="bg-background/50"
                 />
-                 <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageSelect}
-                    accept="image/*"
-                    className="hidden"
-                />
-                <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
-                    <ImageIcon className="h-4 w-4" />
-                    <span className="sr-only">Add Image</span>
-                </Button>
                 <Button type="submit" size="icon">
                     <Send className="h-4 w-4"/>
                 </Button>
@@ -312,7 +249,6 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
   const { isPrivateChatOpen, setIsPrivateChatOpen, clearChatNotification } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
 
   const handleSelectUser = (user: UserProfile) => {
     setSelectedUser(user);
@@ -358,7 +294,7 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                   {!selectedUser ? (
                     <div className="h-full flex flex-col">
                         <div className="p-4 border-b border-white/10 shrink-0 text-center">
-                            <h2 className="text-2xl font-bold font-heading">Private Chat</h2>
+                            <h2 className="text-2xl font-bold font-heading sr-only">Private Chat</h2>
                             <div className="relative pt-4">
                                 <Input
                                     placeholder="Search for a user..."
@@ -377,7 +313,6 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                         <ChatView 
                             recipient={selectedUser} 
                             onBack={() => setSelectedUser(null)}
-                            onImageSelect={setSelectedImage}
                         />
                     </div>
                   )}
@@ -385,19 +320,6 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
             </motion.div>
         </motion.div>
       )}
-       {selectedImage && (
-            <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-                 <DialogPortal>
-                    <DialogOverlay className="bg-black/80 backdrop-blur-sm" />
-                    <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
-                         <DialogHeader>
-                            <DialogTitle className="sr-only">Image Viewer</DialogTitle>
-                         </DialogHeader>
-                        {selectedImage && <Image src={selectedImage} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain rounded-lg"/>}
-                    </DialogContent>
-                </DialogPortal>
-            </Dialog>
-        )}
     </AnimatePresence>
   );
 }
