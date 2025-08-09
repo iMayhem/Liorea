@@ -24,12 +24,18 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
   const { user: currentUser } = useAuth();
 
   React.useEffect(() => {
-    getAllUsers()
-      .then((allUsers) => {
-        // Filter out the current user from the list
-        setUsers(allUsers.filter((u) => u.uid !== currentUser?.uid));
-      })
-      .finally(() => setLoading(false));
+    const fetchUsers = async () => {
+        try {
+            const allUsers = await getAllUsers();
+            // Filter out the current user from the list
+            setUsers(allUsers.filter((u) => u.uid !== currentUser?.uid));
+        } catch(error) {
+            console.error("Failed to fetch users:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchUsers();
   }, [currentUser]);
 
   const filteredUsers = React.useMemo(() => {

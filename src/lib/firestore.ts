@@ -320,9 +320,12 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
 
 // Helper to convert Firestore data to a plain object
 const toPlainObject = (data: any) => {
+    if (!data) return data;
     const plainData = { ...data };
-    if (plainData.createdAt instanceof Timestamp) {
-        plainData.createdAt = plainData.createdAt.toDate().toISOString();
+    for (const key in plainData) {
+        if (plainData[key] instanceof Timestamp) {
+            plainData[key] = plainData[key].toDate().toISOString();
+        }
     }
     return plainData;
 }
@@ -337,10 +340,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     const docSnap = await getDoc(userRef);
     if (docSnap.exists()) {
         const userData = docSnap.data();
-        if (userData.createdAt instanceof Timestamp) {
-            userData.createdAt = userData.createdAt.toDate().toISOString();
-        }
-        return userData as UserProfile;
+        return toPlainObject(userData) as UserProfile;
     }
     return null;
 }
@@ -476,8 +476,9 @@ export async function getLastPrivateMessage(chatRoomId: string): Promise<Private
     const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as PrivateChatMessage;
+        const docSnap = querySnapshot.docs[0];
+        const messageData = docSnap.data();
+        return toPlainObject({ id: docSnap.id, ...messageData }) as PrivateChatMessage;
     }
     return null;
 }

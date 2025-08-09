@@ -7,8 +7,7 @@ import { Button } from './ui/button';
 import { X, Loader2, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile } from '@/lib/types';
-import { collection, onSnapshot, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getLeaderboardData } from '@/lib/firestore';
 import { startOfDay, endOfDay } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,79 +19,31 @@ type LeaderboardType = 'study-hours-daily' | 'study-hours-all-time';
 
 function LeaderboardContent() {
   const { user } = useAuth();
-  const [allUsers, setAllUsers] = React.useState<Record<string, UserProfile>>({});
-  const [studyLogs, setStudyLogs] = React.useState<Record<string, Record<string, number>>>({});
   const [leaderboardData, setLeaderboardData] = React.useState<LeaderboardData>([]);
   const [loading, setLoading] = React.useState(true);
   const [leaderboardType, setLeaderboardType] = React.useState<LeaderboardType>('study-hours-daily');
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
 
-  // Effect to fetch all users and listen for updates
+  // Effect to fetch and process leaderboard data
   React.useEffect(() => {
-    const usersQuery = query(collection(db, 'users'));
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-      const usersData: Record<string, UserProfile> = {};
-      snapshot.forEach((doc) => {
-        usersData[doc.id] = { uid: doc.id, ...doc.data() } as UserProfile;
-      });
-      setAllUsers(usersData);
-    });
-    return () => unsubscribeUsers();
-  }, []);
-
-  // Effect to fetch all study logs and listen for updates
-  React.useEffect(() => {
-    const logsQuery = query(collection(db, 'studyLogs'));
-    const unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
-      const logsData: Record<string, Record<string, number>> = {};
-      snapshot.forEach((doc) => {
-        logsData[doc.id] = doc.data().daily || {};
-      });
-      setStudyLogs(logsData);
-    });
-    return () => unsubscribeLogs();
-  }, []);
-
-  // Effect to process and sort leaderboard data when users or logs change
-  React.useEffect(() => {
-    if (Object.keys(allUsers).length === 0) {
-      setLoading(false); // If no users, stop loading
-      return;
-    };
-
-    setLoading(true);
-    let processedUsers: UserProfile[];
-
-    if (leaderboardType === 'study-hours-all-time') {
-      processedUsers = Object.values(allUsers).sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
-    } else { // daily
-      const now = new Date();
-      const dayStart = startOfDay(now);
-      const dayEnd = endOfDay(now);
-
-      processedUsers = Object.values(allUsers).map(userProfile => {
-        const userLogs = studyLogs[userProfile.uid] || {};
-        let dailyHours = 0;
-        for (const dateStr in userLogs) {
-          const logDate = new Date(dateStr);
-          if (logDate >= dayStart && logDate <= dayEnd) {
-            dailyHours += userLogs[dateStr];
-          }
+    const fetchAndSetData = async () => {
+        setLoading(true);
+        try {
+            const data = await getLeaderboardData(leaderboardType);
+            setLeaderboardData(data);
+            if(user) {
+              const currentUserData = data.find(p => p.uid === user.uid);
+              setUserProfile(currentUserData || null);
+            }
+        } catch (error) {
+            console.error(`Failed to fetch ${leaderboardType} leaderboard:`, error);
+        } finally {
+            setLoading(false);
         }
-        return { ...userProfile, dailyStudyHours: dailyHours };
-      }).sort((a, b) => (b.dailyStudyHours || 0) - (a.dailyStudyHours || 0))
-       .map(user => ({...user, totalStudyHours: user.dailyStudyHours || 0}));
-    }
+    };
     
-    setLeaderboardData(processedUsers);
-    
-    if(user && allUsers[user.uid]){
-      const currentUserData = processedUsers.find(p => p.uid === user.uid);
-      setUserProfile(currentUserData || allUsers[user.uid]);
-    }
-    
-    setLoading(false);
-  }, [allUsers, studyLogs, leaderboardType, user]);
+    fetchAndSetData();
+  }, [leaderboardType, user]);
 
 
   return (

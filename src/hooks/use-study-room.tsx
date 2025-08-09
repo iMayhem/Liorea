@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TimerState, ChatMessage, Participant, SoundType, Notepads } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant, SoundType, Notepads, PrivateChatMessage as PrivateChatMessageType } from '@/lib/types';
 import { logStudySession, updateUserProfile, getAllUsers, getLastPrivateMessage } from '@/lib/firestore';
 import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
@@ -105,7 +105,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                     const lastMessage = await getLastPrivateMessage(chatRoomId);
 
                     if (lastMessage && lastMessage.timestamp) {
-                        const messageTimestamp = (lastMessage.timestamp as Timestamp).toDate().getTime();
+                        const messageTimestamp = new Date(lastMessage.timestamp).getTime();
                         if (messageTimestamp > lastSeenTimestamp && lastMessage.senderId !== user.uid) {
                             setHasNewPrivateMessage(true);
                             return; // Found a new message, no need to check further
