@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { X, Loader2, Send, ArrowLeft } from 'lucide-react';
+import { X, Loader2, Send, ArrowLeft, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
 import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
@@ -18,7 +18,7 @@ import { useStudyRoom } from '@/hooks/use-study-room';
 
 interface PrivateChatOverlayProps {}
 
-function UserList({ onSelectUser }: { onSelectUser: (user: UserProfile) => void }) {
+function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProfile) => void, searchQuery: string }) {
   const [users, setUsers] = React.useState<UserProfile[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { user: currentUser } = useAuth();
@@ -32,6 +32,16 @@ function UserList({ onSelectUser }: { onSelectUser: (user: UserProfile) => void 
       .finally(() => setLoading(false));
   }, [currentUser]);
 
+  const filteredUsers = React.useMemo(() => {
+    if (!searchQuery) {
+        return users;
+    }
+    return users.filter(user => 
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [users, searchQuery]);
+
+
   if (loading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -39,21 +49,25 @@ function UserList({ onSelectUser }: { onSelectUser: (user: UserProfile) => void 
   return (
     <ScrollArea className="h-full">
       <div className="space-y-2">
-        {users.map((user) => (
-          <button
-            key={user.uid}
-            className="w-full text-left p-3 rounded-md hover:bg-white/10 transition-colors flex items-center gap-4"
-            onClick={() => onSelectUser(user)}
-          >
-            <Avatar>
-              <AvatarImage src={user.photoURL || ''} alt={user.username || 'User'}/>
-              <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-                <p className="font-medium">{user.username}</p>
-            </div>
-          </button>
-        ))}
+        {filteredUsers.length > 0 ? (
+            filteredUsers.map((user) => (
+            <button
+                key={user.uid}
+                className="w-full text-left p-3 rounded-md hover:bg-white/10 transition-colors flex items-center gap-4"
+                onClick={() => onSelectUser(user)}
+            >
+                <Avatar>
+                <AvatarImage src={user.photoURL || ''} alt={user.username || 'User'}/>
+                <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-medium">{user.username}</p>
+                </div>
+            </button>
+            ))
+        ) : (
+            <p className="text-center text-muted-foreground p-4">No users found.</p>
+        )}
       </div>
     </ScrollArea>
   );
@@ -156,11 +170,13 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
 export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
   const { isPrivateChatOpen, setIsPrivateChatOpen } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   // Reset when overlay is closed
   React.useEffect(() => {
     if (!isPrivateChatOpen) {
       setSelectedUser(null);
+      setSearchQuery('');
     }
   }, [isPrivateChatOpen]);
 
@@ -194,10 +210,19 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
             {!selectedUser ? (
                 <div className="h-full flex flex-col">
                     <header className="p-4 border-b border-white/10">
-                        <h1 className="text-2xl font-bold font-heading text-center">Private Chat</h1>
+                        <h1 className="text-2xl font-bold font-heading text-center mb-4">Private Chat</h1>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                placeholder="Search for a user..."
+                                className="pl-10 bg-background/50"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
                     </header>
                     <div className="p-4 flex-1 overflow-hidden">
-                        <UserList onSelectUser={setSelectedUser} />
+                        <UserList onSelectUser={setSelectedUser} searchQuery={searchQuery}/>
                     </div>
                 </div>
             ) : (
