@@ -282,34 +282,43 @@ export async function getStudyLogsForUser(userId: string): Promise<Record<string
 }
 
 /**
- * Creates or updates a user's profile information.
+ * Creates or updates a user's profile information, ensuring one profile per email.
  * @param user - The authenticated user object from Firebase Auth.
  */
 export async function upsertUserProfile(user: { uid: string; username: string | null; photoURL: string | null; email: string | null; }) {
-  const userRef = doc(db, 'users', user.uid);
-  const docSnap = await getDoc(userRef);
+  if (!user.email) {
+      console.error("User email is null, cannot upsert profile.");
+      return;
+  }
+  
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, where("email", "==", user.email), limit(1));
+  const querySnapshot = await getDocs(q);
 
-  if (!docSnap.exists()) {
-    // Document doesn't exist, create it with default values
-    await setDoc(userRef, {
-      uid: user.uid,
-      username: user.username,
-      photoURL: user.photoURL,
-      email: user.email,
-      totalStudyHours: 0,
-      dailyStreak: 0,
-      mockScores: [],
-      preparationPath: null,
-      createdAt: serverTimestamp(),
-      status: { isStudying: false, isJamming: false, roomId: null },
-    });
+  if (!querySnapshot.empty) {
+      // User with this email already exists. Update it.
+      const existingUserDoc = querySnapshot.docs[0];
+      const userRef = doc(db, 'users', existingUserDoc.id);
+      await updateDoc(userRef, {
+          uid: user.uid, // Update UID in case it's a new auth method for the same email
+          username: user.username,
+          photoURL: user.photoURL,
+      });
   } else {
-    // Document exists, update only the fields that might change on login
-    await updateDoc(userRef, {
+      // No user with this email found. Create a new profile with the user's UID as the document ID.
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        uid: user.uid,
         username: user.username,
         photoURL: user.photoURL,
         email: user.email,
-    });
+        totalStudyHours: 0,
+        dailyStreak: 0,
+        mockScores: [],
+        preparationPath: null,
+        createdAt: serverTimestamp(),
+        status: { isStudying: false, isJamming: false, roomId: null },
+      });
   }
 }
 
@@ -426,4 +435,23 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
   }
   
   return users;
+}
+
+
+/**
+ * Sends a private message between two users.
+ * Creates a chat room document if one doesn't exist.
+ * @param senderId - The UID of the message sender.
+ * @param receiverId - The UID of the message receiver.
+ * @param text - The content of the message.
+ */
+export async function sendPrivateMessage(senderId: string, receiverId: string, text: string): Promise<void> {
+    const chatRoomId = senderId < receiverId ? `${senderId}_${receiverId}` : `${receiverId}_${senderId}`;
+    const messagesRef = collection(db, 'privateChats', chatRoomId, 'messages');
+    await addDoc(messagesRef, {
+        text: text,
+        senderId: senderId,
+        receiverId: receiverId,
+        timestamp: serverTimestamp(),
+    });
 }

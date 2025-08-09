@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { X, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile, PrivateChatMessage } from '@/lib/types';
-import { getAllUsers } from '@/lib/firestore';
+import { getAllUsers, sendPrivateMessage } from '@/lib/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
@@ -101,16 +101,7 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
     e.preventDefault();
     if (!newMessage.trim() || !sender) return;
 
-    const chatRoomId = getChatRoomId(sender.uid, recipient.uid);
-    const messagesRef = collection(db, 'privateChats', chatRoomId, 'messages');
-
-    await addDoc(messagesRef, {
-      text: newMessage.trim(),
-      senderId: sender.uid,
-      receiverId: recipient.uid,
-      timestamp: serverTimestamp(),
-    });
-
+    await sendPrivateMessage(sender.uid, recipient.uid, newMessage.trim());
     setNewMessage('');
   };
 
