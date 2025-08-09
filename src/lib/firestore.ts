@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField } from 'firebase/firestore';
 import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
@@ -410,21 +410,4 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
   }
   
   return users;
-}
-
-/**
- * Deletes all documents in the 'chats' subcollection of a given room.
- * @param roomType - The collection name, either 'studyRooms' or 'jamRooms'.
- * @param roomId - The ID of the room document.
- */
-export async function clearChatHistory(roomType: 'studyRooms' | 'jamRooms', roomId: string): Promise<void> {
-  const chatCollectionRef = collection(db, roomType, roomId, 'chats');
-  const chatSnapshot = await getDocs(chatCollectionRef);
-  
-  const batch = writeBatch(db);
-  chatSnapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
-
-  await batch.commit();
 }
