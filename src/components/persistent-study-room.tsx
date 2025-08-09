@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves, MessageSquare, Trophy } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves, MessageSquare, Trophy, ImageIcon, RefreshCw } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Slider } from './ui/slider';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChatIcon } from './icons';
+import { useBackground } from '@/hooks/use-background';
 
 function formatTime(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -42,10 +43,17 @@ export function PersistentStudyRoomBar() {
       setIsLeaderboardOpen,
       hasNewPrivateMessage
   } = useStudyRoom();
+  const { changeBackground, isChanging, clearCustomBackground } = useBackground();
+
 
   if (!currentRoomId || !roomData) {
     return null;
   }
+  
+  const handleBackgroundCycleClick = () => {
+    clearCustomBackground();
+    changeBackground();
+  };
 
   const hasActiveSound = activeSound && activeSound !== 'none';
 
@@ -96,6 +104,14 @@ export function PersistentStudyRoomBar() {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Private Chat</p></TooltipContent>
+                            </Tooltip>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" onClick={handleBackgroundCycleClick} disabled={isChanging}>
+                                        {isChanging ? <RefreshCw className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
+                                      </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Change Background</p></TooltipContent>
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
