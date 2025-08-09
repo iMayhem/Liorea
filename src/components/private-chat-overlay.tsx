@@ -17,7 +17,7 @@ import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp,
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { ChatIcon } from './icons';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogPortal } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogPortal, DialogOverlay, DialogClose } from './ui/dialog';
 
 interface PrivateChatOverlayProps {}
 
@@ -74,7 +74,7 @@ function UserList({ onSelectUser, searchQuery }: { onSelectUser: (user: UserProf
                     <p className="font-medium">{user.username}</p>
                 </div>
                  {newMessagesFrom.has(user.uid) && (
-                    <span className="block h-3 w-3 rounded-full bg-white/50 backdrop-blur-sm ring-1 ring-white/20" />
+                    <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-white/50 backdrop-blur-sm ring-1 ring-white/20" />
                 )}
             </button>
             ))
@@ -194,20 +194,18 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                         )}
                     >
                          {msg.imageUrl && (
-                            <Dialog>
+                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="outline" size="icon" className="rounded-full mt-2">
                                         <ImageIcon className="h-5 w-5" />
                                     </Button>
                                 </DialogTrigger>
-                                 <DialogPortal>
-                                    <DialogContent className="p-0 border-0 max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle className="sr-only">Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
-                                        </DialogHeader>
-                                        <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
-                                    </DialogContent>
-                                </DialogPortal>
+                                <DialogContent className="p-0 border-0 max-w-4xl">
+                                     <DialogHeader>
+                                        <DialogTitle className="sr-only">Image from {msg.senderId === sender?.uid ? "You" : recipient.username}</DialogTitle>
+                                     </DialogHeader>
+                                    <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
+                                </DialogContent>
                             </Dialog>
                         )}
                         {msg.text && <p className="text-sm">{msg.text}</p>}
@@ -274,56 +272,52 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
   return (
     <AnimatePresence>
       {isPrivateChatOpen && (
-        <Dialog open={isPrivateChatOpen} onOpenChange={setIsPrivateChatOpen}>
-        <DialogPortal>
-            <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+        >
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/80 rounded-2xl border border-white/10 shadow-lg p-0 relative"
+          >
+            <button
+              className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 rounded-sm p-1 z-10"
+              onClick={() => setIsPrivateChatOpen(false)}
             >
-            <DialogContent 
-                className="w-full max-w-4xl h-[90vh] max-h-[700px] bg-background/80 rounded-2xl border border-white/10 shadow-lg p-0"
-                onInteractOutside={(e) => e.preventDefault()}
-            >
-                 <DialogHeader className="sr-only">
-                    <DialogTitle>Private Chat</DialogTitle>
-                </DialogHeader>
-                <button
-                    className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 rounded-sm p-1 z-10"
-                    onClick={() => setIsPrivateChatOpen(false)}
-                >
-                    <X className="h-6 w-6" />
-                    <span className="sr-only">Close Chat</span>
-                </button>
-                {!selectedUser ? (
-                    <div className="h-full flex flex-col">
-                        <header className="p-4 border-b border-white/10 shrink-0">
-                            <h1 className="text-2xl font-bold font-heading text-center mb-4">Private Chat</h1>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search for a user..."
-                                    className="pl-10 bg-background/50"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                        </header>
-                        <div className="p-4 flex-1 overflow-hidden">
-                            <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="h-full">
-                        <ChatView recipient={selectedUser} onBack={() => setSelectedUser(null)} />
-                    </div>
-                )}
-            </DialogContent>
-            </motion.div>
-        </DialogPortal>
-        </Dialog>
+              <X className="h-6 w-6" />
+              <span className="sr-only">Close Chat</span>
+            </button>
+            {!selectedUser ? (
+              <div className="h-full flex flex-col">
+                <header className="p-4 border-b border-white/10 shrink-0">
+                  <h1 className="text-2xl font-bold font-heading text-center mb-4">Private Chat</h1>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search for a user..."
+                      className="pl-10 bg-background/50"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </header>
+                <div className="p-4 flex-1 overflow-hidden">
+                  <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full">
+                <ChatView recipient={selectedUser} onBack={() => setSelectedUser(null)} />
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
