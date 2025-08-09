@@ -196,7 +196,7 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
                          {msg.imageUrl && (
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon" className="rounded-full mt-2">
+                                    <Button variant="ghost" size="icon" className="rounded-full mt-2">
                                         <ImageIcon className="h-5 w-5" />
                                     </Button>
                                 </DialogTrigger>
