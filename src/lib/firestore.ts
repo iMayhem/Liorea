@@ -288,10 +288,18 @@ export async function getStudyLogsForUser(uid: string): Promise<Record<string, n
 export async function upsertUserProfile(uid: string, data: Partial<UserProfile>) {
   const userRef = doc(db, 'users', uid);
   const docSnap = await getDoc(userRef);
+  
+  const dataToSet = { ...data };
+  if (data.lastSeen instanceof Date || typeof data.lastSeen === 'string') {
+    dataToSet.lastSeen = Timestamp.fromDate(new Date(data.lastSeen));
+  } else if (!data.lastSeen) {
+     dataToSet.lastSeen = serverTimestamp();
+  }
+
 
   if (docSnap.exists()) {
     // Document exists, update it with new data
-    await setDoc(userRef, data, { merge: true });
+    await setDoc(userRef, dataToSet, { merge: true });
   } else {
     // Document doesn't exist, check for existing email before creating
     if(data.email) {
@@ -306,7 +314,7 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
     
     // Document doesn't exist, create it with initial values
     await setDoc(userRef, {
-      ...data, // provided data (uid, email, photoURL)
+      ...dataToSet, // provided data (uid, email, photoURL)
       username: null, // Explicitly set username to null initially
       totalStudyHours: 0,
       dailyStreak: 0,
@@ -368,8 +376,14 @@ export async function getAllUsers(): Promise<UserProfile[]> {
  */
 export async function updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
     const userRef = doc(db, 'users', uid);
+    const dataToSet = { ...data };
+    if (data.lastSeen instanceof Date || typeof data.lastSeen === 'string') {
+        dataToSet.lastSeen = Timestamp.fromDate(new Date(data.lastSeen));
+    } else if (!data.lastSeen) {
+        dataToSet.lastSeen = serverTimestamp();
+    }
     // Use set with merge:true to either update an existing doc or create a new one if it doesn't exist.
-    await setDoc(userRef, data, { merge: true });
+    await setDoc(userRef, dataToSet, { merge: true });
 }
 
 

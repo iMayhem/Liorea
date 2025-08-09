@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/firestore';
 import { StudyRoomProvider } from './use-study-room';
 import type { UserProfile } from '@/lib/types';
-import { serverTimestamp } from 'firebase/firestore';
 
 
 interface User {
@@ -64,7 +63,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
             uid,
             email,
             photoURL: photoURL || '',
-            lastSeen: serverTimestamp(),
+            lastSeen: new Date(),
             // Don't set username, it's handled on the set-username page
         });
 
@@ -104,7 +103,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
   const logout = async () => {
     if(user) {
-        await updateUserProfile(user.uid, { lastSeen: serverTimestamp() });
+        await updateUserProfile(user.uid, { lastSeen: new Date() });
     }
     setLoading(true);
     setLoadingProfile(true);
