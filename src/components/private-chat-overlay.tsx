@@ -345,7 +345,6 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                     {!selectedUser ? (
                     <div className="h-full flex flex-col">
                         <DialogHeader className="p-4 border-b border-white/10 shrink-0 text-center">
-                        <DialogTitle className="text-2xl font-bold font-heading">Private Chat</DialogTitle>
                         <div className="relative pt-4">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
