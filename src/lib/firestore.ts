@@ -364,14 +364,16 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
 
 /**
- * Updates a user's profile with partial data.
+ * Updates a user's profile with partial data. This function will create the document if it doesn't exist.
  * @param uid - The user's ID.
- * @param data - The partial data to update.
+ * @param data - The partial data to update or set.
  */
 export async function updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
     const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, data);
+    // Use set with merge:true to either update an existing doc or create a new one if it doesn't exist.
+    await setDoc(userRef, data, { merge: true });
 }
+
 
 /**
  * Checks if a username is unique.
@@ -463,5 +465,23 @@ export async function sendPrivateMessage(senderId: string, receiverId: string, t
         senderId: senderId,
         receiverId: receiverId,
         timestamp: serverTimestamp(),
+    });
+}
+
+/**
+ * Creates or updates a report in the 'reports' collection.
+ * @param reportData The data for the report.
+ */
+export async function submitReport(reportData: {
+    userId: string;
+    username: string;
+    title: string;
+    description: string;
+    imageUrl?: string | null;
+}) {
+    await addDoc(collection(db, "reports"), {
+        ...reportData,
+        timestamp: serverTimestamp(),
+        status: 'open', // Default status
     });
 }
