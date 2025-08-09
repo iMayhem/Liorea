@@ -116,10 +116,6 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
                 </TooltipProvider>
             </div>
              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => setIsPrivateChatOpen(true)}>
-                    <ChatIcon className="mr-2 h-4 w-4" />
-                    Private Chat
-                </Button>
                 <Button variant="outline" onClick={handleCopyRoomId}>
                     <Clipboard className="mr-2 h-4 w-4"/>
                     Copy Room ID
