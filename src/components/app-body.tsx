@@ -10,6 +10,7 @@ import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
 import { FocusModeOverlay } from '@/components/focus-mode-overlay';
 import { Toaster } from '@/components/ui/toaster';
 import { useBackground } from '@/hooks/use-background';
+import { PrivateChatOverlay } from './private-chat-overlay';
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -54,6 +55,7 @@ export function AppBody({ children }: { children: React.ReactNode }) {
                 </div>
                 <PersistentAmbientSound />
                 <FocusModeOverlay />
+                <PrivateChatOverlay />
             </StudyRoomProvider>
           </AuthProvider>
             <Toaster />

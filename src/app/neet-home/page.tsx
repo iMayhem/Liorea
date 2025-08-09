@@ -26,7 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ChatIcon } from '@/components/icons';
-import { PrivateChatOverlay } from '@/components/private-chat-overlay';
+import { useStudyRoom } from '@/hooks/use-study-room';
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -38,12 +38,12 @@ export default function NeetHomePage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   const { setTheme } = useTheme();
+  const { setIsPrivateChatOpen } = useStudyRoom();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const neet2026ExamDate = '2026-05-03T00:00:00';
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
   const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
-  const [isChatOpen, setIsChatOpen] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -84,7 +84,6 @@ export default function NeetHomePage() {
   return (
     <>
     <ReportDialog isOpen={isReportDialogOpen} onOpenChange={setIsReportDialogOpen} />
-    <PrivateChatOverlay isOpen={isChatOpen} onOpenChange={setIsChatOpen} />
     <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <motion.main
@@ -156,7 +155,7 @@ export default function NeetHomePage() {
                     variant="outline" 
                     size="icon" 
                     className="fixed bottom-16 right-4 h-12 w-12 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
-                    onClick={() => setIsChatOpen(true)}
+                    onClick={() => setIsPrivateChatOpen(true)}
                 >
                     <ChatIcon className="h-6 w-6" />
                 </Button>

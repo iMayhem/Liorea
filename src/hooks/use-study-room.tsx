@@ -26,6 +26,8 @@ interface StudyRoomContextType {
     userHasLeftRef: React.MutableRefObject<boolean>;
     isFocusMode: boolean;
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
+    isPrivateChatOpen: boolean;
+    setIsPrivateChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
@@ -60,6 +62,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [volume, setVolume] = React.useState(0.5);
     const [isMuted, setIsMuted] = React.useState(false);
     const [isFocusMode, setIsFocusMode] = React.useState(false);
+    const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
+
 
     // Notepad state
     const [notepads, setNotepads] = useState<Notepads>({});
@@ -134,6 +138,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         cleanupListeners();
         
         router.push('/study-together');
+        
+        // This must be set after the UI has had a chance to unmount the button
+        setTimeout(() => setIsLeaving(false), 0);
 
         // 2. Perform background cleanup
         try {
@@ -154,8 +161,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Error during room cleanup:", error);
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
-        } finally {
-            setIsLeaving(false);
         }
 
     }, [user, currentRoomId, toast, cleanupListeners, pathname, router]);
@@ -442,6 +447,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         userHasLeftRef,
         isFocusMode,
         setIsFocusMode,
+        isPrivateChatOpen,
+        setIsPrivateChatOpen,
         joinRoom,
         leaveRoom,
         handleTimerUpdate,

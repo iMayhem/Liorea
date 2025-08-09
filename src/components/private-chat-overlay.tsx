@@ -14,11 +14,9 @@ import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { useStudyRoom } from '@/hooks/use-study-room';
 
-interface PrivateChatOverlayProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+interface PrivateChatOverlayProps {}
 
 function UserList({ onSelectUser }: { onSelectUser: (user: UserProfile) => void }) {
   const [users, setUsers] = React.useState<UserProfile[]>([]);
@@ -155,19 +153,20 @@ function ChatView({ recipient, onBack }: { recipient: UserProfile; onBack: () =>
   );
 }
 
-export function PrivateChatOverlay({ isOpen, onOpenChange }: PrivateChatOverlayProps) {
+export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
+  const { isPrivateChatOpen, setIsPrivateChatOpen } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
 
   // Reset when overlay is closed
   React.useEffect(() => {
-    if (!isOpen) {
+    if (!isPrivateChatOpen) {
       setSelectedUser(null);
     }
-  }, [isOpen]);
+  }, [isPrivateChatOpen]);
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isPrivateChatOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -179,7 +178,7 @@ export function PrivateChatOverlay({ isOpen, onOpenChange }: PrivateChatOverlayP
             variant="ghost"
             size="icon"
             className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10"
-            onClick={() => onOpenChange(false)}
+            onClick={() => setIsPrivateChatOpen(false)}
           >
             <X className="h-8 w-8" />
             <span className="sr-only">Close Chat</span>

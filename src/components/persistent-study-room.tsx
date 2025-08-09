@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves } from 'lucide-react';
+import { Users, PhoneOff, Clock, ExternalLink, Volume2, VolumeX, CloudRain, Flame, Eye, Loader2, Coffee, Waves, MessageSquare } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +14,7 @@ import {
 import Link from 'next/link';
 import { Slider } from './ui/slider';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChatIcon } from './icons';
 
 function formatTime(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -37,6 +38,7 @@ export function PersistentStudyRoomBar() {
       handleSoundChange, 
       activeSound, 
       setIsFocusMode,
+      setIsPrivateChatOpen
   } = useStudyRoom();
 
   if (!currentRoomId || !roomData) {
@@ -76,6 +78,14 @@ export function PersistentStudyRoomBar() {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Focus Mode</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsPrivateChatOpen(true)}>
+                                        <ChatIcon className="h-5 w-5"/>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Private Chat</p></TooltipContent>
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
