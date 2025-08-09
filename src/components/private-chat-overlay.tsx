@@ -220,7 +220,7 @@ function ChatView({
                 const originalMessage = msg.replyToId ? findMessageById(msg.replyToId) : null;
                  return (
                     <div
-                        key={msg.id}
+                        key={msg.id || msg.timestamp.toString()}
                         className={cn(
                             'flex flex-col gap-1 group',
                             isCurrentUser ? 'items-end' : 'items-start'
@@ -338,9 +338,19 @@ export function PrivateChatOverlay(props: PrivateChatOverlayProps) {
                     onInteractOutside={(e) => e.preventDefault()}
                 >
                     <DialogHeader className="sr-only">
-                        <DialogTitle>Private Chat</DialogTitle>
+                        <DialogTitle className="sr-only">Private Chat</DialogTitle>
                     </DialogHeader>
-                    <DialogClose className="sr-only" />
+                    <DialogClose asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 z-10"
+                            onClick={() => setIsPrivateChatOpen(false)}
+                        >
+                            <X className="h-6 w-6" />
+                            <span className="sr-only">Close Private Chat</span>
+                        </Button>
+                    </DialogClose>
                     {!selectedUser ? (
                     <div className="h-full flex flex-col">
                         <div className="p-4 border-b border-white/10 shrink-0 text-center">
