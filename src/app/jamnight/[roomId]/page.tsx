@@ -20,7 +20,6 @@ import { GroupChat } from '@/components/group-chat';
 import { Label } from '@/components/ui/label';
 import { updateUserProfile } from '@/lib/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { searchYoutube, type YoutubeSearchResult } from '@/ai/flows/youtube-search';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -50,12 +49,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     const isLocalChangeRef = React.useRef(false); // To prevent feedback loops
     const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
     
-    // State for YouTube search
-    const [searchQuery, setSearchQuery] = React.useState('');
-    const [isSearching, setIsSearching] = React.useState(false);
-    const [searchResults, setSearchResults] = React.useState<YoutubeSearchResult[]>([]);
-    const [isSearchResultsOpen, setIsSearchResultsOpen] = React.useState(false);
-
 
     // Function to parse YouTube video ID from URL
     const getYouTubeId = (url: string) => {
@@ -154,26 +147,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         } else {
             toast({ title: "Invalid URL", description: "Please enter a valid YouTube video URL.", variant: "destructive" });
         }
-    };
-
-    const handleSearch = async () => {
-        if (!searchQuery.trim()) return;
-        setIsSearching(true);
-        try {
-            const results = await searchYoutube({ query: searchQuery });
-            setSearchResults(results.results || []);
-            setIsSearchResultsOpen(true);
-        } catch (error) {
-            console.error("YouTube search failed:", error);
-            toast({ title: "Search Failed", description: "Could not fetch video results.", variant: "destructive" });
-        } finally {
-            setIsSearching(false);
-        }
-    };
-
-    const handleSelectVideo = (videoId: string) => {
-        updateRoomState({ currentVideoId: videoId });
-        setIsSearchResultsOpen(false);
     };
     
     const onPlayerReady = (event: { target: YouTubePlayer }) => {
@@ -306,63 +279,20 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     <div className="lg:col-span-2">
                         <Card>
                             <CardContent className="space-y-4 pt-6">
-                                <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="flex gap-2">
-                                     <Input
-                                        id="youtube-search"
-                                        placeholder="Search for a song on YouTube..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                    <Button type="submit" disabled={isSearching}>
-                                        {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Search className="mr-2 h-4 w-4"/>}
-                                        Search
-                                    </Button>
-                                </form>
                                 <div className="flex gap-2">
                                     <Input
                                         id="youtube-url"
-                                        placeholder="...or paste a direct YouTube URL"
+                                        placeholder="Paste a YouTube URL"
                                         value={videoUrl}
                                         onChange={(e) => setVideoUrl(e.target.value)}
                                     />
-                                    <Button onClick={handleVideoUrlChange}>Set</Button>
+                                    <Button onClick={handleVideoUrlChange}>Set Video</Button>
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 </div>
             </main>
-             <AlertDialog open={isSearchResultsOpen} onOpenChange={setIsSearchResultsOpen}>
-                <AlertDialogContent className="max-w-2xl">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>YouTube Search Results</AlertDialogTitle>
-                        <AlertDialogDescription>Select a video to play for everyone in the room.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <ScrollArea className="h-96">
-                        <div className="space-y-4 pr-4">
-                            {searchResults.length > 0 ? (
-                                searchResults.map((video) => (
-                                    <button 
-                                        key={video.id} 
-                                        className="w-full text-left p-2 rounded-md hover:bg-accent transition-colors flex items-center gap-4"
-                                        onClick={() => handleSelectVideo(video.id)}
-                                    >
-                                        <div className="relative w-24 h-16 rounded-md overflow-hidden shrink-0">
-                                            <Image src={video.thumbnailUrl} alt={video.title} fill style={{ objectFit: 'cover' }} />
-                                        </div>
-                                        <p className="font-medium line-clamp-2">{video.title}</p>
-                                    </button>
-                                ))
-                            ) : (
-                                <p className="text-center text-muted-foreground py-8">No results found.</p>
-                            )}
-                        </div>
-                    </ScrollArea>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Close</AlertDialogCancel>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
