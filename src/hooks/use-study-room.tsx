@@ -197,7 +197,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         try {
             // Background cleanup
-            await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
@@ -305,8 +305,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     // Effect to handle component unmount or tab close
     useEffect(() => {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-            if (currentRoomId) {
-                leaveRoom();
+            if (currentRoomId && user && profile) {
+                // This is a synchronous operation but might not complete. It's a best-effort.
+                 navigator.sendBeacon('/api/cleanup', JSON.stringify({
+                    userId: user.uid,
+                    roomId: currentRoomId,
+                    username: profile.username,
+                    photoURL: profile.photoURL,
+                    roomType: 'studyRooms'
+                }));
             }
         };
 
@@ -314,11 +321,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
+            // This will be called on component unmount (e.g., navigating away)
             if (currentRoomId) {
                 leaveRoom();
             }
         };
-    }, [currentRoomId, leaveRoom]);
+    }, [currentRoomId, user, profile, leaveRoom]);
 
 
     // When user logs out or auth state changes

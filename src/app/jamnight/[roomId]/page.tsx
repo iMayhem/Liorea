@@ -84,8 +84,10 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 router.push('/jamnight');
                 return;
             }
-            // Add user to participants list
-            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) });
+            // Add user to participants list if not already there
+             if (!docSnap.data().participants?.some((p: Participant) => p.uid === user.uid)) {
+                await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) });
+            }
             // Update user's status to indicate they are in a jam session
             await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
         });

@@ -3,11 +3,11 @@
 
 import React, {createContext, useContext, useState, useEffect, ReactNode, useCallback} from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
-import { app } from '@/lib/firebase';
+import { app, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, doc, getDoc, updateDoc, arrayRemove, deleteField } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 
 
@@ -95,9 +95,21 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const intervalId = setInterval(() => {
       updateUserProfile(user.uid, { lastSeen: new Date() });
     }, 60000); // 60 seconds
+    
+    // Also update when user becomes visible again (e.g. switches back to the tab)
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            updateUserProfile(user.uid, { lastSeen: new Date() });
+        }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Cleanup the interval when the component unmounts or the user changes
-    return () => clearInterval(intervalId);
+    return () => {
+        clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
   }, [user]);
 
 
@@ -120,8 +132,20 @@ export function AuthProvider({children}: {children: ReactNode}) {
   };
 
   const logout = async () => {
-    if(user) {
-        await updateUserProfile(user.uid, { lastSeen: new Date() });
+    if(user && profile) {
+        const userStatus = profile.status;
+        if(userStatus?.roomId) {
+            const roomType = userStatus.isStudying ? 'studyRooms' : 'jamRooms';
+            const roomRef = doc(db, roomType, userStatus.roomId);
+            const roomSnap = await getDoc(roomRef);
+            if(roomSnap.exists()){
+                 await updateDoc(roomRef, { 
+                    participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }),
+                    [`typingUsers.${user.uid}`]: deleteField()
+                });
+            }
+        }
+        await updateUserProfile(user.uid, { lastSeen: new Date(), status: { isStudying: false, isJamming: false, roomId: null } });
     }
     setLoading(true);
     setLoadingProfile(true);
