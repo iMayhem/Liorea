@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ScrollArea } from './ui/scroll-area';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { format } from 'date-fns';
+import { format, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface TimetableSettingsOverlayProps {
@@ -64,7 +64,27 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
     const handleDateSelect = (date: Date | undefined) => {
         setSelectedDate(date);
         if (date) {
-            setActiveKey(format(date, 'yyyy-MM-dd'));
+            const specificDateKey = format(date, 'yyyy-MM-dd');
+            setActiveKey(specificDateKey);
+            
+            // If there's no schedule for this specific date yet, create one
+            // based on the schedule for that day of the week.
+            if (!timetable[specificDateKey]) {
+                const dayOfWeek = getDay(date);
+                const defaultScheduleForDay = profile?.preparationPath === 'jee' ? defaultJeeSchedule[dayOfWeek] : defaultAchieverSchedule[dayOfWeek];
+                const baseSchedule = timetable[dayOfWeek] || defaultScheduleForDay || [];
+                
+                const newScheduleForDate = JSON.parse(JSON.stringify(baseSchedule)).map((subject: CustomSubject) => ({
+                    ...subject,
+                    id: `sub-${Date.now()}-${Math.random()}`,
+                    tasks: subject.tasks.map((task: CustomTask) => ({
+                        ...task,
+                        id: `task-${Date.now()}-${Math.random()}`
+                    }))
+                }));
+
+                setTimetable(prev => ({ ...prev, [specificDateKey]: newScheduleForDate }));
+            }
         } else {
             // Revert to today's day of week if date is cleared
             setActiveKey(new Date().getDay());
@@ -138,7 +158,11 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
         if(typeof activeKey === 'number') {
             return `${daysOfWeek[activeKey]}'s Schedule`
         }
-        return `Schedule for ${format(new Date(activeKey), 'MMM d, yyyy')}`;
+        try {
+            return `Schedule for ${format(new Date(activeKey), 'MMM d, yyyy')}`;
+        } catch {
+             return "Invalid Date Schedule"
+        }
     }
 
     return (
