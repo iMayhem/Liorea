@@ -89,18 +89,26 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
         }
     };
     
-    const handleApplyToAll = (dayToCopy: number) => {
-        const scheduleToCopy = timetable[dayToCopy];
-        if(!scheduleToCopy) return;
+    const handleApplyToAll = (dayToCopyFrom: number) => {
+        const scheduleToCopy = timetable[dayToCopyFrom];
+        if (!scheduleToCopy) return;
 
         const newTimetable: CustomTimetable = {};
         for (let i = 0; i < 7; i++) {
-            // Deep copy to avoid reference issues
-            newTimetable[i] = JSON.parse(JSON.stringify(scheduleToCopy));
+            // Create a deep copy with new unique IDs for each subject and task
+            newTimetable[i] = scheduleToCopy.map(subject => ({
+                ...subject,
+                id: `sub-${Date.now()}-${i}-${Math.random()}`,
+                tasks: subject.tasks.map(task => ({
+                    ...task,
+                    id: `task-${Date.now()}-${i}-${Math.random()}`
+                }))
+            }));
         }
         setTimetable(newTimetable);
-        toast({ title: "Applied to all days", description: `Copied schedule from ${daysOfWeek[dayToCopy]}.` });
+        toast({ title: "Applied to all days", description: `Copied schedule from ${daysOfWeek[dayToCopyFrom]}.` });
     };
+
 
     const activeDaySubjects = timetable[activeDay] || [];
 
