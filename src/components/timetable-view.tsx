@@ -2,7 +2,7 @@
 'use client';
 
 import React, {useMemo, useState, useEffect} from 'react';
-import type {UserProgress, Subject, Task, PreparationPath} from '@/lib/types';
+import type {UserProgress, Subject, Task, PreparationPath, CustomTimetable, CustomSubject} from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -22,11 +22,12 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { getDay } from 'date-fns';
 
 
 interface TimeTableViewProps {
   day: string;
-  subjects: Subject[];
+  subjects: CustomSubject[];
   progress: UserProgress;
   onTaskToggle: (
     day: string,
@@ -37,38 +38,36 @@ interface TimeTableViewProps {
   onScoreSave: (day: string, subject: string, score: number) => void;
   isReadOnly: boolean;
   preparationPath?: PreparationPath | null;
+  userTimetable: CustomTimetable | null;
 }
 
 const defaultTasks: Task[] = [
-  {id: 'lecture', label: 'Attend Lecture', icon: <BookOpen className="h-4 w-4" />},
-  {id: 'notes', label: 'Make Notes', icon: <Pencil className="h-4 w-4" />},
-  {id: 'homework', label: 'Complete Homework', icon: <ClipboardList className="h-4 w-4" />},
-  {id: 'revision', label: 'Revise', icon: <RefreshCw className="h-4 w-4" />},
+  {id: 'lecture', label: 'Attend Lecture'},
+  {id: 'notes', label: 'Make Notes'},
+  {id: 'homework', label: 'Complete Homework'},
+  {id: 'revision', label: 'Revise'},
 ];
 
-const genericTask: Task[] = [{ id: 'completed', label: 'Completed', icon: <CheckSquare className="h-4 w-4" /> }];
+const genericTask: Task[] = [{ id: 'completed', label: 'Completed' }];
 
-const getTasksForSubject = (subjectName: string, path?: PreparationPath | null): Task[] => {
-    if (path === 'neet-achiever') {
-        if (testSchedule.some(test => test.name === subjectName)) {
-            return [{ id: 'attempted', label: 'Attempted', icon: <TrophyIcon className="h-4 w-4" /> }];
-        }
+const getTasksForSubject = (subject: CustomSubject): Task[] => {
+    if (subject.tasks && subject.tasks.length > 0) {
+        return subject.tasks;
     }
-    
-    // For all paths, certain subjects have specific tasks
-    if (['Short Notes', 'Full Week Revision', 'Backlog'].includes(subjectName)) {
+    // Fallback for older data structure or test days
+    if (testSchedule.some(test => test.name === subject.name)) {
+        return [{ id: 'attempted', label: 'Attempted' }];
+    }
+    if (['Short Notes', 'Full Week Revision', 'Backlog'].includes(subject.name)) {
         return genericTask;
     }
-
-    // Default tasks for regular subjects across all paths
     return defaultTasks;
 };
 
 function calculateCompletionPercentage(
-  subjects: Subject[],
+  subjects: CustomSubject[],
   progress: UserProgress,
-  day: string,
-  path?: PreparationPath | null,
+  day: string
 ) {
   if (!subjects || subjects.length === 0 || !progress || !progress[day]) {
     return 0;
@@ -77,7 +76,7 @@ function calculateCompletionPercentage(
   let completedTasks = 0;
 
   subjects.forEach(subject => {
-    const tasksForSubject = getTasksForSubject(subject.name, path);
+    const tasksForSubject = getTasksForSubject(subject);
     totalTasks += tasksForSubject.length;
     const subjectProgress = progress[day]?.[subject.name];
     if (subjectProgress) {
@@ -97,15 +96,16 @@ export function TimeTableView({
   onTaskToggle,
   onScoreSave,
   isReadOnly,
-  preparationPath
+  preparationPath,
+  userTimetable
 }: TimeTableViewProps) {
   const [showReward, setShowReward] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [selectedSubjectForScore, setSelectedSubjectForScore] = useState<string | null>(null);
 
   const completionPercentage = useMemo(
-    () => calculateCompletionPercentage(subjects, progress, day, preparationPath),
-    [subjects, progress, day, preparationPath]
+    () => calculateCompletionPercentage(subjects, progress, day),
+    [subjects, progress, day]
   );
   
   const [rewardShown, setRewardShown] = useState(false);
@@ -160,6 +160,16 @@ export function TimeTableView({
         label: "Progress",
       },
   };
+
+  const getTaskIcon = (taskLabel: string) => {
+    const lowerLabel = taskLabel.toLowerCase();
+    if (lowerLabel.includes('lecture')) return <BookOpen className="h-4 w-4" />;
+    if (lowerLabel.includes('notes')) return <Pencil className="h-4 w-4" />;
+    if (lowerLabel.includes('homework')) return <ClipboardList className="h-4 w-4" />;
+    if (lowerLabel.includes('revise')) return <RefreshCw className="h-4 w-4" />;
+    if (lowerLabel.includes('attempted')) return <TrophyIcon className="h-4 w-4" />;
+    return <CheckSquare className="h-4 w-4" />;
+  }
 
   return (
     <>
@@ -220,12 +230,13 @@ export function TimeTableView({
             initial="hidden"
             animate="visible"
           >
-            {subjects.map((subject: Subject) => {
+            {subjects.map((subject: CustomSubject) => {
                 const isTest = testSchedule.some(test => test.name === subject.name);
                 const savedScore = progress[day]?.[subject.name]?.score;
+                const tasks = getTasksForSubject(subject);
 
                return (
-              <motion.div key={subject.name} variants={itemVariants}>
+              <motion.div key={subject.id || subject.name} variants={itemVariants}>
                 <Card className="shadow-md bg-card/80 h-full">
                   <CardHeader>
                     <CardTitle className="text-lg font-heading">
@@ -234,7 +245,7 @@ export function TimeTableView({
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 pl-2">
-                      {getTasksForSubject(subject.name, preparationPath).map(task => (
+                      {tasks.map(task => (
                         <div
                           key={task.id}
                           className="flex items-center space-x-3"
@@ -258,7 +269,7 @@ export function TimeTableView({
                             htmlFor={`${day}-${subject.name}-${task.id}`}
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
                           >
-                            {task.icon}
+                            {getTaskIcon(task.label)}
                             {task.label}
                           </label>
                         </div>

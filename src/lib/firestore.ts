@@ -3,7 +3,7 @@
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField } from 'firebase/firestore';
-import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath, PrivateChatMessage } from './types';
+import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath, PrivateChatMessage, CustomTimetable } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
 import { format, startOfDay, endOfDay } from 'date-fns';
@@ -349,6 +349,29 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     }
     return null;
 }
+
+/**
+ * Retrieves a user's custom timetable from their profile.
+ * @param uid The user's ID.
+ * @returns The custom timetable object or null if not found.
+ */
+export async function getUserTimetable(uid: string): Promise<CustomTimetable | null> {
+    const userProfile = await getUserProfile(uid);
+    return userProfile?.customTimetable || null;
+}
+
+/**
+ * Saves a user's custom timetable to their profile.
+ * @param uid The user's ID.
+ * @param timetable The custom timetable object to save.
+ */
+export async function saveUserTimetable(uid: string, timetable: CustomTimetable): Promise<void> {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
+        customTimetable: timetable
+    });
+}
+
 
 /**
  * Retrieves all user profiles from the 'users' collection.

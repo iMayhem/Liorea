@@ -1,6 +1,7 @@
 // src/lib/types.ts
 import { DocumentData } from 'firebase/firestore';
 
+// Kept for default data structure
 export interface Task {
   id: string;
   label: string;
@@ -11,12 +12,29 @@ export interface Subject {
   name: string;
 }
 
+// New types for custom timetables
+export interface CustomTask {
+  id: string;
+  label: string;
+}
+
+export interface CustomSubject {
+  id: string;
+  name: string;
+  tasks: CustomTask[];
+}
+
+export interface CustomTimetable {
+  [dayOfWeek: number]: CustomSubject[]; // 0 for Sunday, 1 for Monday, etc.
+}
+
+
 export interface Test {
   name: string;
   date: string;
 }
 
-export type DaySchedule = Subject[];
+export type DaySchedule = CustomSubject[];
 
 export interface TimeTableData {
   [day: string]: DaySchedule;
@@ -125,13 +143,14 @@ export interface UserProfile {
     mockScores: number[];
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
     createdAt: any; // Can be server timestamp
-    lastSeen?: any; // Can be server timestamp
+    lastSeen: any; // Can be server timestamp
     preparationPath?: PreparationPath | null;
     status?: {
       isStudying: boolean;
       isJamming?: boolean;
       roomId: string | null;
     }
+    customTimetable?: CustomTimetable;
 }
 
 export interface PrivateChatMessage {

@@ -1,4 +1,4 @@
-import type {TimeTableData, UserProgress, Subject, Test} from './types';
+import type {TimeTableData, CustomSubject, Test, CustomTimetable} from './types';
 import {parse, getDay, format} from 'date-fns';
 
 export const testSchedule: Test[] = [
@@ -16,113 +16,117 @@ export const testSchedule: Test[] = [
     { name: 'Minor Test-12', date: 'March 1, 2026' },
 ];
 
-const achieverSchedule: {[key: number]: Subject[]} = {
-  0: [{name: 'Short Notes'}, {name: 'Full Week Revision'}], // Sunday
+const defaultTasks = [
+  {id: 'task-1', label: 'Attend Lecture'},
+  {id: 'task-2', label: 'Make Notes'},
+  {id: 'task-3', label: 'Complete Homework'},
+  {id: 'task-4', label: 'Revise'},
+];
+
+const genericTasks = [{ id: 'task-1', label: 'Completed' }];
+
+export const defaultAchieverSchedule: {[key: number]: CustomSubject[]} = {
+  0: [{id: 'sub-1', name: 'Short Notes', tasks: genericTasks}, {id: 'sub-2', name: 'Full Week Revision', tasks: genericTasks}], // Sunday
   1: [ // Monday
-    {name: '12th Physics'},
-    {name: 'Inorganic Chemistry'},
-    {name: 'Botany'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Botany', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   2: [ // Tuesday
-    {name: '11th Physics'},
-    {name: 'Organic Chemistry'},
-    {name: 'Zoology'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '11th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Organic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Zoology', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   3: [ // Wednesday
-    {name: '12th Physics'},
-    {name: 'Inorganic Chemistry'},
-    {name: 'Botany'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Botany', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   4: [ // Thursday
-    {name: '11th Physics'},
-    {name: 'Organic Chemistry'},
-    {name: 'Zoology'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '11th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Organic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Zoology', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   5: [ // Friday
-    {name: '12th Physics'},
-    {name: 'Inorganic Chemistry'},
-    {name: 'Botany'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Botany', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   6: [ // Saturday
-    {name: '11th Physics'},
-    {name: 'Organic Chemistry'},
-    {name: 'Zoology'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '11th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Organic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Zoology', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
 };
 
-const jeeSchedule: {[key: number]: Subject[]} = {
-  0: [{name: 'Short Notes'}, {name: 'Full Week Revision'}], // Sunday
+export const defaultJeeSchedule: {[key: number]: CustomSubject[]} = {
+  0: [{id: 'sub-1', name: 'Short Notes', tasks: genericTasks}, {id: 'sub-2', name: 'Full Week Revision', tasks: genericTasks}], // Sunday
   1: [ // Monday
-    {name: '12th Physics'},
-    {name: 'Inorganic Chemistry'},
-    {name: 'Maths'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Maths', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   2: [ // Tuesday
-    {name: '11th Physics'},
-    {name: 'Organic Chemistry'},
-    {name: 'Maths'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '11th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Organic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Maths', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   3: [ // Wednesday
-    {name: '12th Physics'},
-    {name: 'Inorganic Chemistry'},
-    {name: 'Maths'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Maths', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   4: [ // Thursday
-    {name: '11th Physics'},
-    {name: 'Organic Chemistry'},
-    {name: 'Maths'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '11th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Organic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Maths', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   5: [ // Friday
-    {name: '12th Physics'},
-    {name: 'Inorganic Chemistry'},
-    {name: 'Maths'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Maths', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   6: [ // Saturday
-    {name: '11th Physics'},
-    {name: 'Organic Chemistry'},
-    {name: 'Maths'},
-    {name: 'Backlog'},
+    {id: 'sub-1', name: '11th Physics', tasks: defaultTasks},
+    {id: 'sub-2', name: 'Organic Chemistry', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Maths', tasks: defaultTasks},
+    {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
 };
 
 
-export const generateTimeTableForDate = (dateKey: string, path?: string): TimeTableData => {
-  // The dateKey is in "MMMM d, yyyy" format. We parse it to get a Date object.
+export const generateTimeTableForDate = (dateKey: string, path?: string | null, customTimetable?: CustomTimetable | null): TimeTableData => {
   const date = parse(dateKey, 'MMMM d, yyyy', new Date());
   const dayOfWeek = getDay(date);
 
-  // Check if it's a test day for NEET Achiever batch
+  // Use custom timetable if it exists for that day
+  if (customTimetable && customTimetable[dayOfWeek]) {
+      return { [dateKey]: customTimetable[dayOfWeek] };
+  }
+
+  // Fallback to default schedules
   if (path === 'neet-achiever') {
       const testForDay = testSchedule.find(test => test.date === dateKey);
       if (testForDay) {
         return {
-          [dateKey]: [{name: testForDay.name}],
+          [dateKey]: [{ id: 'test-1', name: testForDay.name, tasks: [{id: 'task-1', label: 'Attempted'}] }],
         }
       }
   }
   
-  if (path === 'neet-other' || path === 'neet-achiever') {
-      return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
-  }
-
-  if (path === 'jee') {
-      return { [dateKey]: jeeSchedule[dayOfWeek] || [] };
-  }
-
-  // Fallback for when path is not defined or doesn't match
-  return { [dateKey]: achieverSchedule[dayOfWeek] || [] };
-
+  const defaultSchedule = path === 'jee' ? defaultJeeSchedule : defaultAchieverSchedule;
+  return { [dateKey]: defaultSchedule[dayOfWeek] || [] };
 };
 
 export const generateInitialProgressForDate = (
@@ -138,26 +142,10 @@ export const generateInitialProgressForDate = (
 
       if (isTest) {
         progress[day][subject.name]['attempted'] = false;
-      } else if (['Short Notes', 'Full Week Revision', 'Physics', 'Chemistry', 'Biology', 'Maths', 'Backlog'].includes(subject.name)) {
-         progress[day][subject.name]['completed'] = false;
-      }
-      else {
-        switch (subject.name) {
-          case 'Short Notes':
-            progress[day][subject.name]['completed'] = false;
-            break;
-          case 'Full Week Revision':
-            progress[day][subject.name]['did_revise'] = false;
-            break;
-          default:
-            progress[day][subject.name] = {
-              lecture: false,
-              notes: false,
-              homework: false,
-              revision: false,
-            };
-            break;
-        }
+      } else {
+        subject.tasks.forEach(task => {
+          progress[day][subject.name][task.id] = false;
+        })
       }
     });
   });

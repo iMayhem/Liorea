@@ -7,13 +7,13 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BrainCircuit, Music, Sun, Moon, Palette, MessageSquareWarning, Trophy } from 'lucide-react';
+import { Loader2, BrainCircuit, Music, Sun, Moon, Palette, MessageSquareWarning, Trophy, Settings } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getStudyLogsForUser } from '@/lib/firestore';
+import { getStudyLogsForUser, getUserTimetable } from '@/lib/firestore';
 import { cn } from '@/lib/utils';
 import { LiveStudyList } from '@/components/live-study-list';
 import { useTheme } from 'next-themes';
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/tooltip";
 import { ChatIcon } from '@/components/icons';
 import { useStudyRoom } from '@/hooks/use-study-room';
+import { TimetableSettingsOverlay } from '@/components/timetable-settings-overlay';
+import type { CustomTimetable } from '@/lib/types';
 
 // Dynamically import the Calendar to ensure it only renders on the client
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), {
@@ -44,6 +46,8 @@ export default function NeetHomePage() {
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
   const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [userTimetable, setUserTimetable] = React.useState<CustomTimetable | null>(null);
 
 
   React.useEffect(() => {
@@ -54,7 +58,13 @@ export default function NeetHomePage() {
         setStudyLogs(logs || {});
     };
 
+    const fetchTimetable = async () => {
+        const timetable = await getUserTimetable(user.uid);
+        setUserTimetable(timetable);
+    }
+
     fetchStudyLogs();
+    fetchTimetable();
   }, [user, loading, currentMonth]);
 
   React.useEffect(() => {
@@ -84,6 +94,7 @@ export default function NeetHomePage() {
   return (
     <>
     <ReportDialog isOpen={isReportDialogOpen} onOpenChange={setIsReportDialogOpen} />
+    <TimetableSettingsOverlay isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} currentTimetable={userTimetable} onTimetableSave={setUserTimetable}/>
     <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <motion.main
@@ -136,6 +147,14 @@ export default function NeetHomePage() {
                     />
                   </CardContent>
                 </Card>
+                 <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
+                    onClick={() => setIsSettingsOpen(true)}
+                >
+                    <Settings className="h-5 w-5" />
+                </Button>
             </div>
         </div>
 

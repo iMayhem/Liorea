@@ -10,7 +10,8 @@ import {AppHeader} from '@/components/header';
 import {useAuth} from '@/hooks/use-auth';
 import {Skeleton} from '@/components/ui/skeleton';
 import {motion} from 'framer-motion';
-import type { UserProfile } from '@/lib/types';
+import type { UserProfile, CustomTimetable } from '@/lib/types';
+import { getUserTimetable } from '@/lib/firestore';
 
 
 export default function DayTrackerPage({params}: {params: {date: string}}) {
@@ -22,6 +23,8 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
 
   const [parsedDate, setParsedDate] = React.useState<Date | null>(null);
   const [dateIsValid, setDateIsValid] = React.useState<boolean | null>(null);
+  const [userTimetable, setUserTimetable] = React.useState<CustomTimetable | null>(null);
+  const [loadingTimetable, setLoadingTimetable] = React.useState(true);
 
   React.useEffect(() => {
     if (dateString && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
@@ -44,18 +47,26 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       router.push('/set-username');
     }
   }, [user, authLoading, profile, loadingProfile, router]);
+  
+  React.useEffect(() => {
+    if (!user) return;
+    setLoadingTimetable(true);
+    getUserTimetable(user.uid)
+      .then(setUserTimetable)
+      .finally(() => setLoadingTimetable(false));
+  }, [user]);
 
   const formattedDate = React.useMemo(() => {
     return parsedDate ? format(parsedDate, 'MMMM d, yyyy') : '';
   }, [parsedDate]);
 
   const timetable = React.useMemo(() => {
-      if (!formattedDate || !profile?.preparationPath) return {};
-      return generateTimeTableForDate(formattedDate, profile.preparationPath);
-  }, [formattedDate, profile]);
+      if (!formattedDate || !profile) return {};
+      return generateTimeTableForDate(formattedDate, profile.preparationPath, userTimetable);
+  }, [formattedDate, profile, userTimetable]);
 
 
-  if (authLoading || loadingProfile || !user || !profile || dateIsValid === null) {
+  if (authLoading || loadingProfile || loadingTimetable || !user || !profile || dateIsValid === null) {
     // Render a loading state or nothing while we validate the date on the client.
     return (
       <div className="flex flex-col min-h-screen">
@@ -97,6 +108,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       date={formattedDate}
       timetable={timetable}
       preparationPath={profile.preparationPath}
+      userTimetable={userTimetable}
     />
   );
 }
