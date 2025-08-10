@@ -60,7 +60,7 @@ const youtubeSearchFlow = ai.defineFlow(
   },
   async (input) => {
      const llmResponse = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview',
+        model: 'googleai/gemini-1.5-flash-latest',
         prompt: `Find relevant YouTube videos for the query: ${input.query}. Prioritize music, podcasts, or study-related content.`,
         tools: [youtubeSearchTool],
         config: {
@@ -81,4 +81,3 @@ const youtubeSearchFlow = ai.defineFlow(
     return { results: [] };
   }
 );
-
