@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AppHeader } from '@/components/header';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, LogOut } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Report, UserProfile } from '@/lib/types';
@@ -346,6 +346,77 @@ function ChatManagement() {
     );
 }
 
+function GlobalUserEviction() {
+    const { toast } = useToast();
+    const [isEvicting, setIsEvicting] = React.useState(false);
+
+    const handleEvictAllUsers = async () => {
+        setIsEvicting(true);
+        try {
+            const batch = writeBatch(db);
+
+            // Clear participants from all study rooms
+            const studyRoomsSnapshot = await getDocs(collection(db, 'studyRooms'));
+            studyRoomsSnapshot.forEach(roomDoc => {
+                batch.update(roomDoc.ref, { participants: [], typingUsers: {} });
+            });
+
+            // Clear participants from all jam rooms
+            const jamRoomsSnapshot = await getDocs(collection(db, 'jamRooms'));
+            jamRoomsSnapshot.forEach(roomDoc => {
+                batch.update(roomDoc.ref, { participants: [], typingUsers: {} });
+            });
+
+            // Reset status for all users
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            usersSnapshot.forEach(userDoc => {
+                batch.update(userDoc.ref, { status: { isStudying: false, isJamming: false, roomId: null } });
+            });
+
+            await batch.commit();
+
+            toast({ title: "All Users Evicted", description: "All users have been removed from rooms and their statuses have been reset." });
+
+        } catch (error) {
+            console.error("Failed to evict all users:", error);
+            toast({ title: "Error", description: "Could not evict all users from rooms.", variant: "destructive" });
+        } finally {
+            setIsEvicting(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Global Room Tools</CardTitle>
+                <CardDescription>Use with caution. These actions affect all users.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full" disabled={isEvicting}>
+                            {isEvicting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOut className="mr-2 h-4 w-4"/>}
+                            Evict All Users from Rooms
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will remove every user from every study and jamnight room and reset their online status. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleEvictAllUsers}>Yes, evict everyone</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);
     const [username, setUsername] = React.useState('');
@@ -478,14 +549,15 @@ export default function AdminPage() {
             <main className="container mx-auto p-4 md:p-6 lg:p-8">
                 <h1 className="text-3xl font-bold font-heading mb-6">Admin Panel</h1>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                    <UserManagement users={users} loading={loadingUsers} />
                    <RoomManagement rooms={rooms} loading={loadingRooms}/>
                    <LeaderboardTools />
                    <ChatManagement />
+                   <GlobalUserEviction />
                 </div>
                 
-                <Card className="col-span-1 md:col-span-2 lg:col-span-2">
+                <Card className="col-span-1 md:col-span-2 lg:col-span-3">
                     <CardHeader>
                         <CardTitle>User Reports</CardTitle>
                         <CardDescription>Issues and suggestions submitted by users.</CardDescription>
@@ -508,6 +580,12 @@ export default function AdminPage() {
                                         <AccordionContent className="space-y-4">
                                             <p><strong className="font-semibold">From:</strong> {report.username}</p>
                                             <p className="whitespace-pre-wrap"><strong className="font-semibold">Description:</strong> {report.description}</p>
+                                            {report.imageUrl && (
+                                                <div className="mt-2">
+                                                    <p><strong className="font-semibold">Attachment:</strong></p>
+                                                    <Image src={report.imageUrl} alt="Report attachment" width={300} height={200} className="rounded-md border mt-1" />
+                                                </div>
+                                            )}
                                         </AccordionContent>
                                     </AccordionItem>
                                 ))}

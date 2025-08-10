@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TimerState, ChatMessage, Participant, SoundType, Notepads, PrivateChatMessage as PrivateChatMessageType, UserProfile } from '@/lib/types';
+import type { TimerState, ChatMessage, Participant, SoundType, Notepads, PrivateChatMessage as PrivateChatMessageType, UserProfile, StudyRoom } from '@/lib/types';
 import { logStudySession, updateUserProfile, getAllUsers, getLastPrivateMessage, getUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
@@ -17,7 +17,7 @@ const INACTIVITY_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 interface StudyRoomContextType {
     currentRoomId: string | null;
     isLeaving: boolean;
-    roomData: DocumentData | null;
+    roomData: StudyRoom | null;
     chatMessages: ChatMessage[];
     participants: Participant[];
     displayTime: number;
@@ -41,13 +41,15 @@ interface StudyRoomContextType {
     handleNotepadChange: (newContent: string) => void;
     handleNotepadNameChange: (newName: string) => void;
     cycleNotepad: () => void;
-    handleSendMessage: (message: {text: string}, replyTo: { id: string, text: string } | null) => void;
+    handleSendMessage: (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => void;
     handleTyping: (isTyping: boolean) => void;
     activeSound: SoundType;
     handleSoundChange: (sound: SoundType) => void;
     notepads: Notepads;
     activeNotepadId: string;
     claimNotepad: () => void;
+    toggleBeastMode: () => void;
+    isBeastModeLocked: boolean;
 }
 
 const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefined);
@@ -62,7 +64,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
     const [isLeaving, setIsLeaving] = useState(false);
-    const [roomData, setRoomData] = useState<DocumentData | null>(null);
+    const [roomData, setRoomData] = useState<StudyRoom | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [displayTime, setDisplayTime] = useState(0);
@@ -81,6 +83,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [activeNotepadId, setActiveNotepadId] = useState<string>('collaborative');
 
     const activeSound = roomData?.activeSound || 'none';
+    const isBeastModeLocked = !!profile?.status?.isBeastMode;
 
 
     const unsubscribeRoomRef = useRef<() => void | undefined>();
@@ -152,6 +155,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
 
         const playSound = (soundId: string) => {
+            if (isBeastModeLocked) return;
             const sound = document.getElementById(soundId) as HTMLAudioElement;
             if (sound) {
                 sound.play().catch(error => {
@@ -170,7 +174,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
         sessionStorage.setItem(`participants-${currentRoomId}`, JSON.stringify(participants));
 
-    }, [participants, currentRoomId]);
+    }, [participants, currentRoomId, isBeastModeLocked]);
 
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
@@ -200,12 +204,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         try {
             // Background cleanup
-            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
-                const userParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
+                const userParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: profile.status?.isBeastMode };
                 const typingField = `typingUsers.${user.uid}`;
                 await updateDoc(roomRef, {
                     participants: arrayRemove(userParticipant),
@@ -230,7 +234,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
 
-        if (currentRoomId && user) {
+        if (currentRoomId && user && roomData?.timerState.isActive && roomData.timerState.mode === 'study') {
             logTimeIntervalRef.current = setInterval(() => {
                 logStudySession([user.uid], TIME_LOG_INTERVAL_MS / 1000);
             }, TIME_LOG_INTERVAL_MS);
@@ -239,7 +243,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         return () => {
             if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
         }
-    }, [currentRoomId, user]);
+    }, [currentRoomId, user, roomData?.timerState]);
 
     // Effect for inactive user cleanup (owner only)
     useEffect(() => {
@@ -289,6 +293,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         
         if (profile.isBlocked) {
             toast({ title: "Access Denied", description: "You are currently blocked from joining study rooms.", variant: "destructive" });
+            router.push('/');
             return false;
         }
 
@@ -309,7 +314,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         
         await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, roomId: roomId }});
 
-        const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
+        const newParticipant: Participant = { 
+            uid: user.uid, 
+            username: profile.username, 
+            photoURL: profile.photoURL,
+            isBeastMode: profile.status?.isBeastMode
+        };
         const currentParticipants = docSnap.data().participants || [];
         if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
              await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
@@ -322,7 +332,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         unsubscribeRoomRef.current = onSnapshot(roomRef, (snap) => {
             if (userHasLeftRef.current) return;
             if (snap.exists()) {
-                const data = snap.data();
+                const data = snap.data() as StudyRoom;
                 setRoomData(data);
                 setParticipants(data.participants || []);
                 setNotepads(data.notepads || {});
@@ -351,12 +361,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (currentRoomId && user && profile) {
-                // This is a synchronous operation but might not complete. It's a best-effort.
                  navigator.sendBeacon('/api/cleanup', JSON.stringify({
                     userId: user.uid,
                     roomId: currentRoomId,
                     username: profile.username,
                     photoURL: profile.photoURL,
+                    isBeastMode: profile.status?.isBeastMode,
                     roomType: 'studyRooms'
                 }));
             }
@@ -366,7 +376,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
-            // This will be called on component unmount (e.g., navigating away)
             if (currentRoomId) {
                 leaveRoom();
             }
@@ -501,14 +510,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
 
     // Other handlers
-    const handleSendMessage = useCallback(async (message: {text: string}, replyTo: { id: string, text: string } | null) => {
+    const handleSendMessage = useCallback(async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
         if (!user || !profile?.username || !currentRoomId) return;
         const chatCollectionRef = collection(db, 'studyRooms', currentRoomId, 'chats');
         
-        if(!message.text) return;
+        if(!message.text && !message.imageUrl) return;
 
         const messageData: any = {
-          text: message.text,
+          text: message.text || '',
+          imageUrl: message.imageUrl || null,
           senderId: user.uid,
           senderName: profile.username,
           timestamp: serverTimestamp(),
@@ -541,7 +551,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     }, [user, profile, currentRoomId]);
 
     const handleSoundChange = useCallback(async (sound: SoundType) => {
-        if (!currentRoomId) return;
+        if (!currentRoomId || isBeastModeLocked) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         try {
             await updateDoc(roomRef, { activeSound: sound });
@@ -550,7 +560,33 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 console.error("Failed to update sound:", error);
             }
         }
-    }, [currentRoomId]);
+    }, [currentRoomId, isBeastModeLocked]);
+    
+    const toggleBeastMode = useCallback(async () => {
+        if (!user || !profile || !currentRoomId) return;
+        const newBeastModeState = !profile.status?.isBeastMode;
+        
+        await updateUserProfile(user.uid, {
+            status: { ...profile.status, isBeastMode: newBeastModeState }
+        });
+
+        const roomRef = doc(db, 'studyRooms', currentRoomId);
+        const roomSnap = await getDoc(roomRef);
+        if (roomSnap.exists()) {
+            const participants = roomSnap.data().participants || [];
+            const userIndex = participants.findIndex((p: Participant) => p.uid === user.uid);
+            if (userIndex > -1) {
+                const newParticipants = [...participants];
+                newParticipants[userIndex].isBeastMode = newBeastModeState;
+                await updateDoc(roomRef, { participants: newParticipants });
+            }
+        }
+
+        if (newBeastModeState) {
+            router.push('/');
+        }
+
+    }, [user, profile, currentRoomId, router]);
 
     const value = {
         currentRoomId,
@@ -586,6 +622,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         notepads,
         activeNotepadId,
         claimNotepad,
+        toggleBeastMode,
+        isBeastModeLocked
     };
 
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;
