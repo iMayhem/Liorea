@@ -5,14 +5,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useAuth } from './use-auth';
 import { doc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, arrayUnion, arrayRemove, writeBatch, getDocs, deleteField, DocumentData, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { TimerState, ChatMessage, Participant, SoundType, Notepads, PrivateChatMessage as PrivateChatMessageType } from '@/lib/types';
-import { logStudySession, updateUserProfile, getAllUsers, getLastPrivateMessage } from '@/lib/firestore';
+import type { TimerState, ChatMessage, Participant, SoundType, Notepads, PrivateChatMessage as PrivateChatMessageType, UserProfile } from '@/lib/types';
+import { logStudySession, updateUserProfile, getAllUsers, getLastPrivateMessage, getUserProfile } from '@/lib/firestore';
 import { useToast } from './use-toast';
 import { usePathname, useRouter } from 'next/navigation';
 
 const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
 const LAST_SEEN_KEY_PREFIX = 'privateChatLastSeen_';
-
+const INACTIVITY_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
 interface StudyRoomContextType {
     currentRoomId: string | null;
@@ -87,6 +87,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const unsubscribeChatRef = useRef<() => void | undefined>();
     const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const logTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
 
@@ -176,10 +177,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         if (unsubscribeChatRef.current) unsubscribeChatRef.current();
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
+        if (cleanupIntervalRef.current) clearInterval(cleanupIntervalRef.current);
         unsubscribeRoomRef.current = undefined;
         unsubscribeChatRef.current = undefined;
         timerIntervalRef.current = null;
         logTimeIntervalRef.current = null;
+        cleanupIntervalRef.current = null;
     }, []);
     
     const leaveRoom = useCallback(async () => {
@@ -237,6 +240,48 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
         }
     }, [currentRoomId, user]);
+
+    // Effect for inactive user cleanup (owner only)
+    useEffect(() => {
+        if(cleanupIntervalRef.current) clearInterval(cleanupIntervalRef.current);
+
+        if (currentRoomId && user && roomData?.ownerId === user.uid) {
+            cleanupIntervalRef.current = setInterval(async () => {
+                const roomRef = doc(db, 'studyRooms', currentRoomId);
+                const roomSnap = await getDoc(roomRef);
+                if(!roomSnap.exists()) return;
+
+                const currentParticipants: Participant[] = roomSnap.data().participants || [];
+                const batch = writeBatch(db);
+                let changesMade = false;
+
+                for (const p of currentParticipants) {
+                    if(p.uid === user.uid) continue; // Don't check owner
+
+                    const pProfile = await getUserProfile(p.uid);
+                    if(pProfile?.lastSeen) {
+                        const lastSeenDate = pProfile.lastSeen.toDate ? pProfile.lastSeen.toDate() : new Date(pProfile.lastSeen);
+                        if (Date.now() - lastSeenDate.getTime() > INACTIVITY_THRESHOLD_MS) {
+                            // User is inactive, remove them
+                            batch.update(roomRef, { participants: arrayRemove(p) });
+                            const userDocRef = doc(db, 'users', p.uid);
+                            batch.update(userDocRef, { status: { isStudying: false, isJamming: false, roomId: null } });
+                            changesMade = true;
+                        }
+                    }
+                }
+                if (changesMade) {
+                    await batch.commit();
+                }
+
+            }, 60 * 1000); // Run every minute
+        }
+
+        return () => {
+             if (cleanupIntervalRef.current) clearInterval(cleanupIntervalRef.current);
+        }
+
+    }, [currentRoomId, user, roomData]);
 
 
     const joinRoom = useCallback(async (roomId: string) => {

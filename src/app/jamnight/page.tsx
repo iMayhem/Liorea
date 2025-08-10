@@ -45,6 +45,7 @@ export default function JamnightPage() {
       const newRoomRef = doc(collection(db, 'jamRooms'));
       // Initialize room with default state
       await setDoc(newRoomRef, {
+        ownerId: user.uid,
         createdAt: serverTimestamp(),
         currentVideoId: 'jfKfPfyJRdk', // A default video
         playerState: 'PAUSED',
@@ -81,6 +82,7 @@ export default function JamnightPage() {
         if (id === PUBLIC_JAMNIGHT_ROOM_ID) {
           // If public room doesn't exist, create it
            await setDoc(roomRef, {
+                ownerId: user.uid,
                 createdAt: serverTimestamp(),
                 currentVideoId: 'jfKfPfyJRdk', // A default video
                 playerState: 'PAUSED',

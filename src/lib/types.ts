@@ -133,6 +133,7 @@ export interface StudyRoom extends DocumentData {
 export interface JamRoomState {
     currentVideoId: string;
     participants: Participant[];
+    ownerId?: string;
 }
 
 

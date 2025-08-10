@@ -12,16 +12,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { doc, onSnapshot, updateDoc, getDoc, arrayUnion, arrayRemove, serverTimestamp, collection, addDoc, query, orderBy, deleteField } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc, arrayUnion, arrayRemove, serverTimestamp, collection, addDoc, query, orderBy, deleteField, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useDebouncedCallback } from 'use-debounce';
-import type { ChatMessage, Participant } from '@/lib/types';
+import type { ChatMessage, Participant, UserProfile } from '@/lib/types';
 import { GroupChat } from '@/components/group-chat';
 import { Label } from '@/components/ui/label';
-import { updateUserProfile } from '@/lib/firestore';
+import { updateUserProfile, getUserProfile } from '@/lib/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 
+const INACTIVITY_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
 type PlayerState = 'PLAYING' | 'PAUSED' | 'BUFFERING';
 
@@ -32,6 +33,7 @@ interface JamRoomState {
     lastSeekTimeSeconds: number;
     typingUsers?: { [uid: string]: string };
     participants?: Participant[];
+    ownerId?: string;
 }
 
 export default function JamRoomPage({ params }: { params: { roomId: string } }) {
@@ -47,7 +49,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     const isLocalChangeRef = React.useRef(false); // To prevent feedback loops
     const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
     
-
     // Function to parse YouTube video ID from URL
     const getYouTubeId = (url: string) => {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -69,6 +70,44 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         await updateRoomState({ lastSeekTimeSeconds: time, lastSeekTimestamp: serverTimestamp() });
     }, 1000), [roomId]);
 
+    // Effect for inactive user cleanup (owner only)
+    React.useEffect(() => {
+        if (!roomId || !user || !roomState?.ownerId || roomState.ownerId !== user.uid) {
+            return;
+        }
+
+        const cleanupInterval = setInterval(async () => {
+            const roomRef = doc(db, 'jamRooms', roomId);
+            const roomSnap = await getDoc(roomRef);
+            if (!roomSnap.exists()) return;
+
+            const currentParticipants: Participant[] = roomSnap.data().participants || [];
+            const batch = writeBatch(db);
+            let changesMade = false;
+
+            for (const p of currentParticipants) {
+                if (p.uid === user.uid) continue; // Don't check owner
+
+                const pProfile = await getUserProfile(p.uid);
+                if (pProfile?.lastSeen) {
+                    const lastSeenDate = pProfile.lastSeen.toDate ? pProfile.lastSeen.toDate() : new Date(pProfile.lastSeen);
+                    if (Date.now() - lastSeenDate.getTime() > INACTIVITY_THRESHOLD_MS) {
+                        batch.update(roomRef, { participants: arrayRemove(p) });
+                        const userDocRef = doc(db, 'users', p.uid);
+                        batch.update(userDocRef, { status: { isStudying: false, isJamming: false, roomId: null } });
+                        changesMade = true;
+                    }
+                }
+            }
+            if (changesMade) {
+                await batch.commit();
+            }
+        }, 60 * 1000); // Run every minute
+
+        return () => clearInterval(cleanupInterval);
+
+    }, [roomId, user, roomState]);
+
 
     // Effect to handle joining/leaving the room and listening for state changes
     React.useEffect(() => {
@@ -84,9 +123,13 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 router.push('/jamnight');
                 return;
             }
-            // Add user to participants list if not already there
-             if (!docSnap.data().participants?.some((p: Participant) => p.uid === user.uid)) {
-                await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) });
+
+            const roomData = docSnap.data();
+
+             if (!roomData.participants?.some((p: Participant) => p.uid === user.uid)) {
+                await updateDoc(roomRef, { 
+                    participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) 
+                });
             }
             // Update user's status to indicate they are in a jam session
             await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
