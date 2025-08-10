@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/tooltip"
 import Link from 'next/link';
 import { Slider } from './ui/slider';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ChatIcon, SkullIcon } from './icons';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChatIcon } from './icons';
 import { useBackground } from '@/hooks/use-background';
 import { cn } from '@/lib/utils';
 
@@ -89,7 +89,7 @@ export function PersistentStudyRoomBar() {
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant={isBeastMode ? 'destructive' : 'ghost'} size="icon" onClick={toggleBeastMode} disabled={isBeastModeLocked}>
-                                      <SkullIcon className="h-5 w-5"/>
+                                      <Flame className="h-5 w-5"/>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Beast Mode</p></TooltipContent>

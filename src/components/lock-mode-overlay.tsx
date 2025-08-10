@@ -4,10 +4,9 @@
 import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { Button } from './ui/button';
-import { X } from 'lucide-react';
+import { X, Flame } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { SkullIcon } from './icons';
 
 
 export function LockModeOverlay() {
@@ -37,7 +36,7 @@ export function LockModeOverlay() {
                 animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 200, damping: 10 } }}
                 className="flex flex-col items-center gap-4"
               >
-                  <SkullIcon className="h-24 w-24 text-red-500 animate-pulse" />
+                  <Flame className="h-24 w-24 text-red-500 animate-pulse" />
                   <p className="text-2xl font-bold font-heading text-red-400">BEAST MODE ON</p>
               </motion.div>
           ) : (
