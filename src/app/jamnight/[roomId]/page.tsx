@@ -241,10 +241,10 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     return (
         <div className="flex flex-col h-screen">
             <AppHeader />
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-rows-[minmax(0,1fr)_auto] gap-6">
+            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-rows-[1fr_auto] gap-6 h-[calc(100vh-theme(height.14))]">
                 <div className="grid lg:grid-cols-3 gap-6 min-h-0">
-                    <div className="lg:col-span-2 flex flex-col gap-6">
-                        <Card className="w-full h-full aspect-video overflow-hidden">
+                    <div className="lg:col-span-2 flex flex-col h-full">
+                        <Card className="w-full h-full flex flex-col overflow-hidden">
                             <YouTube
                                 videoId={roomState.currentVideoId}
                                 onReady={onPlayerReady}
@@ -257,11 +257,11 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                                         controls: 1,
                                     },
                                 }}
-                                className="w-full h-full"
+                                className="w-full h-full min-h-[250px] md:min-h-[400px] lg:min-h-0"
                             />
                         </Card>
                     </div>
-                    <div className="lg:col-span-1 flex flex-col min-h-0">
+                    <div className="lg:col-span-1 flex flex-col h-full min-h-[400px] lg:min-h-0">
                         <GroupChat
                             messages={chatMessages}
                             onSendMessage={handleSendMessage}
