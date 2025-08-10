@@ -67,8 +67,6 @@ const youtubeSearchFlow = ai.defineFlow(
             temperature: 0.1, 
         }
     });
-
-    const toolOutput = llmResponse.toolOutput(youtubeSearchTool);
     
     // The LLM decides whether to call the tool based on the prompt.
     // We pass the user's raw query to the tool.
