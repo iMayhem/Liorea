@@ -126,6 +126,7 @@ export interface StudyRoom extends DocumentData {
     timerState: TimerState;
     notepads: Notepads;
     activeSound: SoundType;
+    isBeastMode?: boolean;
     typingUsers?: { [uid: string]: string };
 }
 

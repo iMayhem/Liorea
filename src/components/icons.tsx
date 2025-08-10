@@ -59,3 +59,27 @@ export const ChatIcon = (props: React.SVGProps<SVGSVGElement> & { showDot?: bool
         </div>
     );
 };
+
+export const SkullIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+    >
+        <circle cx="9" cy="12" r="1" />
+        <circle cx="15" cy="12" r="1" />
+        <path d="M8 20v2h8v-2" />
+        <path d="M12.5 17.5c-1.5-1.5-3-1.5-4.5 0" />
+        <path d="M16 20a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2" />
+        <path d="M16 20a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2" />
+        <path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.86 8.17 6.84 9.5" />
+        <path d="M12 2c5.52 0 10 4.48 10 10 0 4.42-2.86 8.17-6.84 9.5" />
+    </svg>
+);

@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider, StudyRoomProvider } from '@/hooks/use-auth';
 import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
-import { FocusModeOverlay } from '@/components/focus-mode-overlay';
+import { LockModeOverlay } from '@/components/lock-mode-overlay';
 import { Toaster } from '@/components/ui/toaster';
 import { useBackground } from '@/hooks/use-background';
 import { PrivateChatOverlay } from './private-chat-overlay';
@@ -55,7 +55,7 @@ export function AppBody({ children }: { children: React.ReactNode }) {
                     <PersistentStudyRoomBar />
                 </div>
                 <PersistentAmbientSound />
-                <FocusModeOverlay />
+                <LockModeOverlay />
                 <PrivateChatOverlay />
                 <LeaderboardOverlay />
             </StudyRoomProvider>

@@ -14,6 +14,8 @@ import { logStudySession } from '@/lib/firestore';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
+import { useStudyRoom } from '@/hooks/use-study-room';
+
 
 interface SharedPomodoroTimerProps {
   timerState: TimerState;
@@ -26,6 +28,8 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
   const [displayTime, setDisplayTime] = React.useState(time);
   const { user } = useAuth();
   const audioRef = React.useRef<HTMLAudioElement>(null);
+  const { isBeastModeLocked } = useStudyRoom();
+
   
   const getDuration = (mode: TimerState['mode']) => {
     switch(mode) {
@@ -135,13 +139,13 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
       <CardHeader>
         <div className="flex justify-center items-center mb-4 gap-2">
             <div className="flex-grow flex justify-center gap-2">
-                <Button variant={mode === 'study' ? 'secondary' : 'outline'} onClick={() => switchMode('study')}>Pomodoro</Button>
-                <Button variant={mode === 'shortBreak' ? 'secondary' : 'outline'} onClick={() => switchMode('shortBreak')}>Short Break</Button>
-                <Button variant={mode === 'longBreak' ? 'secondary' : 'outline'} onClick={() => switchMode('longBreak')}>Long Break</Button>
+                <Button variant={mode === 'study' ? 'secondary' : 'outline'} onClick={() => switchMode('study')} disabled={isBeastModeLocked}>Pomodoro</Button>
+                <Button variant={mode === 'shortBreak' ? 'secondary' : 'outline'} onClick={() => switchMode('shortBreak')} disabled={isBeastModeLocked}>Short Break</Button>
+                <Button variant={mode === 'longBreak' ? 'secondary' : 'outline'} onClick={() => switchMode('longBreak')} disabled={isBeastModeLocked}>Long Break</Button>
             </div>
              <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" disabled={isBeastModeLocked}>
                         <Settings className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
@@ -190,11 +194,11 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
         </div>
       </CardContent>
       <CardFooter className="flex justify-center gap-4">
-        <Button onClick={toggleTimer} className="w-24">
+        <Button onClick={toggleTimer} className="w-24" disabled={isBeastModeLocked && isActive}>
           {isActive ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
           {isActive ? 'Pause' : 'Start'}
         </Button>
-        <Button onClick={resetTimer} variant="outline" className="w-24">
+        <Button onClick={resetTimer} variant="outline" className="w-24" disabled={isBeastModeLocked}>
           <RotateCcw className="mr-2 h-4 w-4" />
           Reset
         </Button>

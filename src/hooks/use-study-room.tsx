@@ -26,6 +26,8 @@ interface StudyRoomContextType {
     isMuted: boolean;
     setIsMuted: React.Dispatch<React.SetStateAction<boolean>>;
     userHasLeftRef: React.MutableRefObject<boolean>;
+    isBeastMode: boolean;
+    isBeastModeLocked: boolean;
     isFocusMode: boolean;
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
     isPrivateChatOpen: boolean;
@@ -38,6 +40,7 @@ interface StudyRoomContextType {
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
+    toggleBeastMode: () => void;
     handleNotepadChange: (newContent: string) => void;
     handleNotepadNameChange: (newName: string) => void;
     cycleNotepad: () => void;
@@ -68,9 +71,13 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [displayTime, setDisplayTime] = useState(0);
     const [volume, setVolume] = React.useState(0.5);
     const [isMuted, setIsMuted] = React.useState(false);
-    const [isFocusMode, setIsFocusMode] = React.useState(false);
+    const [isFocusMode, setIsFocusMode] = React.useState(false); // Local-only focus mode
     const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
+    
+    // Beast Mode State
+    const isBeastMode = roomData?.isBeastMode || false;
+    const isBeastModeLocked = isBeastMode && roomData?.timerState?.isActive && roomData?.timerState?.mode === 'study';
     
     // Notification state
     const [newMessagesFrom, setNewMessagesFrom] = React.useState<Set<string>>(new Set());
@@ -376,6 +383,18 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         };
     }, [roomData, user, participants, handleTimerUpdate]);
 
+    const toggleBeastMode = useCallback(async () => {
+        if (!currentRoomId) return;
+        const roomRef = doc(db, 'studyRooms', currentRoomId);
+        try {
+            await updateDoc(roomRef, { isBeastMode: !isBeastMode });
+        } catch (error) {
+            if ((error as any).code !== 'not-found') {
+                console.error("Failed to toggle beast mode:", error);
+            }
+        }
+    }, [currentRoomId, isBeastMode]);
+
 
     // Notepad handlers
     const handleNotepadChange = useCallback(async (content: string) => {
@@ -511,6 +530,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         isMuted,
         setIsMuted,
         userHasLeftRef,
+        isBeastMode,
+        isBeastModeLocked,
         isFocusMode,
         setIsFocusMode,
         isPrivateChatOpen,
@@ -523,6 +544,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         joinRoom,
         leaveRoom,
         handleTimerUpdate,
+        toggleBeastMode,
         handleNotepadChange,
         handleNotepadNameChange,
         cycleNotepad,

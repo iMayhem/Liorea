@@ -13,6 +13,8 @@ import { useDebouncedCallback } from 'use-debounce';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { useStudyRoom } from '@/hooks/use-study-room';
+
 
 interface GroupChatProps {
   messages: ChatMessage[];
@@ -32,6 +34,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = React.useRef(initialMessages.length);
   const { profile } = useAuth();
+  const { isBeastModeLocked } = useStudyRoom();
 
 
   React.useEffect(() => {
@@ -83,7 +86,7 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.username) return;
+    if (!profile?.username || isBeastModeLocked) return;
 
     if (newMessage.trim() || image) {
       const tempId = `temp_${Date.now()}`;
@@ -253,8 +256,9 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
             value={newMessage}
             onChange={handleInputChange}
             onPaste={handlePaste}
-            placeholder="Type your message..."
+            placeholder={isBeastModeLocked ? "Chat is disabled in Beast Mode" : "Type your message..."}
             autoComplete="off"
+            disabled={isBeastModeLocked}
           />
            <input
             type="file"
@@ -262,12 +266,13 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
             onChange={handleImageSelect}
             accept="image/*"
             className="hidden"
+            disabled={isBeastModeLocked}
           />
-          <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
+          <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={isBeastModeLocked}>
             <ImageIcon className="h-4 w-4" />
             <span className="sr-only">Add Image</span>
           </Button>
-          <Button type="submit" size="icon">
+          <Button type="submit" size="icon" disabled={isBeastModeLocked}>
             <Send className="h-4 w-4" />
             <span className="sr-only">Send</span>
           </Button>
