@@ -129,6 +129,12 @@ export interface StudyRoom extends DocumentData {
     typingUsers?: { [uid: string]: string };
 }
 
+// Added for admin panel
+export interface JamRoomState {
+    currentVideoId: string;
+    participants: Participant[];
+}
+
 
 // New type for user profiles
 export type PreparationPath = 'neet-achiever' | 'neet-other' | 'jee';

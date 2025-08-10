@@ -9,14 +9,169 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AppHeader } from '@/components/header';
 import { Loader2 } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Report } from '@/lib/types';
+import type { Report, UserProfile, StudyRoom, JamRoomState } from '@/lib/types';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 interface ReportWithId extends Report {
     id: string;
+}
+
+interface UserManagementProps {
+    users: UserProfile[];
+    loading: boolean;
+}
+
+function UserManagement({ users, loading }: UserManagementProps) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>{users.length} users found.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="h-72">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Username</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Path</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow><TableCell colSpan={3} className="text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
+                            ) : users.map(user => (
+                                <TableRow key={user.uid}>
+                                    <TableCell className="font-medium">{user.username}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>{user.preparationPath || 'N/A'}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+    );
+}
+
+interface Room {
+    id: string;
+    type: 'study' | 'jam';
+    participants: any[];
+}
+
+interface RoomManagementProps {
+    rooms: Room[];
+    loading: boolean;
+}
+
+function RoomManagement({ rooms, loading }: RoomManagementProps) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Room Management</CardTitle>
+                <CardDescription>{rooms.length} active rooms.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <ScrollArea className="h-72">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Room ID</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead className="text-right">Participants</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                             {loading ? (
+                                <TableRow><TableCell colSpan={3} className="text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
+                            ) : rooms.map(room => (
+                                <TableRow key={room.id}>
+                                    <TableCell className="font-mono text-xs truncate max-w-[100px]">{room.id}</TableCell>
+                                    <TableCell className="capitalize">{room.type}</TableCell>
+                                    <TableCell className="text-right">{room.participants.length}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+    );
+}
+
+function LeaderboardTools() {
+    const { toast } = useToast();
+    const [isResetting, setIsResetting] = React.useState(false);
+
+    const handleResetLeaderboard = async () => {
+        setIsResetting(true);
+        try {
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const studyLogsSnapshot = await getDocs(collection(db, 'studyLogs'));
+            const batch = writeBatch(db);
+
+            // Reset totalStudyHours for all users
+            usersSnapshot.forEach(userDoc => {
+                batch.update(userDoc.ref, { totalStudyHours: 0 });
+            });
+            
+            // Delete all studyLogs documents
+            studyLogsSnapshot.forEach(logDoc => {
+                batch.delete(logDoc.ref);
+            });
+
+            await batch.commit();
+
+            toast({ title: "Leaderboard Reset", description: "All user study times have been reset." });
+
+        } catch (error) {
+            console.error("Failed to reset leaderboard:", error);
+            toast({ title: "Error", description: "Could not reset the leaderboard.", variant: "destructive" });
+        } finally {
+            setIsResetting(false);
+        }
+    };
+
+
+    return (
+         <Card>
+            <CardHeader><CardTitle>Leaderboard Tools</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+                <p className="text-muted-foreground">Use these tools to manage the global leaderboard.</p>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isResetting}>
+                            {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            Reset All Study Time
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete all study logs and reset total study time for every user to zero.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleResetLeaderboard}>Yes, reset leaderboard</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+            </CardContent>
+        </Card>
+    );
 }
 
 
@@ -27,14 +182,19 @@ export default function AdminPage() {
     const [isLoading, setIsLoading] = React.useState(false);
     const [reports, setReports] = React.useState<ReportWithId[]>([]);
     const [loadingReports, setLoadingReports] = React.useState(true);
+    const [users, setUsers] = React.useState<UserProfile[]>([]);
+    const [loadingUsers, setLoadingUsers] = React.useState(true);
+    const [rooms, setRooms] = React.useState<Room[]>([]);
+    const [loadingRooms, setLoadingRooms] = React.useState(true);
     const { toast } = useToast();
 
     React.useEffect(() => {
         if(!isAuthenticated) return;
 
+        // Reports Listener
         setLoadingReports(true);
         const q = query(collection(db, 'reports'), orderBy('timestamp', 'desc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribeReports = onSnapshot(q, (snapshot) => {
             const fetchedReports: ReportWithId[] = [];
             snapshot.forEach((doc) => {
                 fetchedReports.push({ id: doc.id, ...doc.data() } as ReportWithId);
@@ -43,7 +203,42 @@ export default function AdminPage() {
             setLoadingReports(false);
         });
 
-        return () => unsubscribe();
+        // Users listener
+        setLoadingUsers(true);
+        const usersQuery = query(collection(db, 'users'), orderBy('username'));
+        const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+            const fetchedUsers: UserProfile[] = [];
+            snapshot.forEach(doc => {
+                fetchedUsers.push({ uid: doc.id, ...doc.data() } as UserProfile);
+            });
+            setUsers(fetchedUsers);
+            setLoadingUsers(false);
+        });
+
+        // Rooms listener
+        setLoadingRooms(true);
+        const studyRoomsQuery = collection(db, 'studyRooms');
+        const jamRoomsQuery = collection(db, 'jamRooms');
+
+        const unsubscribeStudyRooms = onSnapshot(studyRoomsQuery, (snapshot) => {
+            const studyRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'study' as const, participants: doc.data().participants || []}));
+            setRooms(prev => [...studyRooms, ...prev.filter(r => r.type !== 'study')]);
+            setLoadingRooms(false);
+        });
+
+        const unsubscribeJamRooms = onSnapshot(jamRoomsQuery, (snapshot) => {
+            const jamRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'jam' as const, participants: doc.data().participants || []}));
+            setRooms(prev => [...jamRooms, ...prev.filter(r => r.type !== 'jam')]);
+            setLoadingRooms(false);
+        });
+
+
+        return () => {
+            unsubscribeReports();
+            unsubscribeUsers();
+            unsubscribeStudyRooms();
+            unsubscribeJamRooms();
+        };
     }, [isAuthenticated]);
 
     const handleLogin = (e: React.FormEvent) => {
@@ -111,6 +306,13 @@ export default function AdminPage() {
             <AppHeader />
             <main className="container mx-auto p-4 md:p-6 lg:p-8">
                 <h1 className="text-3xl font-bold font-heading mb-6">Admin Panel</h1>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                   <UserManagement users={users} loading={loadingUsers} />
+                   <RoomManagement rooms={rooms} loading={loadingRooms}/>
+                   <LeaderboardTools />
+                </div>
+                
                 <Card>
                     <CardHeader>
                         <CardTitle>User Reports</CardTitle>
@@ -128,7 +330,7 @@ export default function AdminPage() {
                                         <AccordionTrigger>
                                             <div className="flex justify-between w-full pr-4">
                                                 <span>{report.title}</span>
-                                                <span className="text-sm text-muted-foreground">{new Date(report.timestamp.seconds * 1000).toLocaleString()}</span>
+                                                <span className="text-sm text-muted-foreground">{report.timestamp?.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleString() : 'No timestamp'}</span>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="space-y-4">
@@ -151,21 +353,6 @@ export default function AdminPage() {
                         )}
                     </CardContent>
                 </Card>
-                 {/* Placeholder for future admin features */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                    <Card className="opacity-50">
-                        <CardHeader><CardTitle>User Management</CardTitle></CardHeader>
-                        <CardContent><p className="text-muted-foreground">Coming soon...</p></CardContent>
-                    </Card>
-                     <Card className="opacity-50">
-                        <CardHeader><CardTitle>Room Management</CardTitle></CardHeader>
-                        <CardContent><p className="text-muted-foreground">Coming soon...</p></CardContent>
-                    </Card>
-                     <Card className="opacity-50">
-                        <CardHeader><CardTitle>Leaderboard Tools</CardTitle></CardHeader>
-                        <CardContent><p className="text-muted-foreground">Coming soon...</p></CardContent>
-                    </Card>
-                </div>
             </main>
         </div>
     );
