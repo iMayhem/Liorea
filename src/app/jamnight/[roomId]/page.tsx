@@ -85,9 +85,9 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 return;
             }
             // Add user to participants list
-            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) });
+            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: profile.status?.isBeastMode || false }) });
             // Update user's status to indicate they are in a jam session
-            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId, isBeastMode: profile.status?.isBeastMode || false } });
         });
 
         const unsubscribeRoom = onSnapshot(roomRef, (doc) => {
@@ -126,13 +126,13 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 getDoc(roomRef).then(docSnap => {
                     if(docSnap.exists()) {
                         updateDoc(roomRef, { 
-                            participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }),
+                            participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: profile.status?.isBeastMode || false }),
                             [`typingUsers.${user.uid}`]: deleteField()
                         });
                     }
                 })
                 // Reset user's status when they leave
-                updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
+                updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
             }
         };
 
@@ -229,7 +229,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         }
     };
 
-
     if (authLoading || !roomState || !user) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-transparent">
@@ -237,58 +236,74 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             </div>
         );
     }
-
+    
     return (
-        <div className="flex flex-col h-screen">
-            <AppHeader />
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-rows-[1fr_auto] gap-6 h-[calc(100vh-theme(height.14))]">
-                <div className="grid lg:grid-cols-3 gap-6 min-h-0">
-                    <div className="lg:col-span-2 flex flex-col h-full">
-                        <Card className="w-full h-full flex flex-col overflow-hidden">
-                            <YouTube
-                                videoId={roomState.currentVideoId}
-                                onReady={onPlayerReady}
-                                onStateChange={onPlayerStateChange}
-                                opts={{
-                                    height: '100%',
-                                    width: '100%',
-                                    playerVars: {
-                                        autoplay: 0,
-                                        controls: 1,
-                                    },
-                                }}
-                                className="w-full h-full min-h-[250px] md:min-h-[400px] lg:min-h-0"
-                            />
-                        </Card>
-                    </div>
-                    <div className="lg:col-span-1 flex flex-col h-full min-h-[400px] lg:min-h-0">
-                        <GroupChat
-                            messages={chatMessages}
-                            onSendMessage={handleSendMessage}
-                            currentUserId={user!.uid}
-                            onTyping={handleTyping}
-                            typingUsers={roomState.typingUsers || {}}
-                        />
-                    </div>
-                </div>
-                <div className="grid lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                        <Card>
-                            <CardContent className="space-y-4 pt-6">
-                                <div className="flex gap-2">
-                                    <Input
-                                        id="youtube-url"
-                                        placeholder="Paste a YouTube URL"
-                                        value={videoUrl}
-                                        onChange={(e) => setVideoUrl(e.target.value)}
-                                    />
-                                    <Button onClick={handleVideoUrlChange}>Set Video</Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </main>
+    <div className="flex flex-col h-screen">
+      <AppHeader />
+      <main className="flex-1 grid grid-cols-[auto_1fr] h-[calc(100vh-theme(height.14))]">
+        <div className="flex flex-col h-full bg-background/80 border-r border-border p-2 space-y-2">
+            <h2 className="text-lg font-semibold text-center">Participants</h2>
+            <ScrollArea className="flex-1">
+                 <div className="space-y-2">
+                    {roomState.participants?.map((p: Participant) => (
+                        <div key={p.uid} className="flex items-center gap-2 p-1 rounded-md">
+                           <Avatar>
+                                <AvatarImage src={p.photoURL || ''} alt={p.username || 'User'}/>
+                                <AvatarFallback>{p.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                           </Avatar>
+                           <span className="font-medium text-sm">{p.username}</span>
+                        </div>
+                    ))}
+                 </div>
+            </ScrollArea>
         </div>
-    );
+        <div className="grid grid-rows-[1fr_auto] min-h-0">
+          <div className="grid lg:grid-cols-3 gap-6 p-4 md:p-6 lg:p-8 overflow-hidden min-h-0">
+            <div className="lg:col-span-2 flex flex-col h-full">
+              <Card className="w-full h-full flex flex-col overflow-hidden">
+                <YouTube
+                  videoId={roomState.currentVideoId}
+                  onReady={onPlayerReady}
+                  onStateChange={onPlayerStateChange}
+                  opts={{
+                    height: '100%',
+                    width: '100%',
+                    playerVars: {
+                      autoplay: 0,
+                      controls: 1,
+                    },
+                  }}
+                  className="w-full h-full min-h-[250px] md:min-h-[400px] lg:min-h-0"
+                />
+              </Card>
+            </div>
+            <div className="lg:col-span-1 flex flex-col h-full min-h-[400px] lg:min-h-0">
+              <GroupChat
+                messages={chatMessages}
+                onSendMessage={handleSendMessage}
+                currentUserId={user!.uid}
+                onTyping={handleTyping}
+                typingUsers={roomState.typingUsers || {}}
+              />
+            </div>
+          </div>
+          <div className="p-4 md:p-6 lg:p-8 pt-0">
+             <Card>
+                <CardContent className="space-y-4 pt-6">
+                    <div className="flex gap-2">
+                        <Input
+                            id="youtube-url"
+                            placeholder="Paste a YouTube URL to set a new video"
+                            value={videoUrl}
+                            onChange={(e) => setVideoUrl(e.target.value)}
+                        />
+                        <Button onClick={handleVideoUrlChange}>Set Video</Button>
+                    </div>
+                </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
