@@ -34,8 +34,6 @@ interface JamRoomState {
     participants?: Participant[];
 }
 
-const PUBLIC_JAMNIGHT_ROOM_ID = "public-jamnight-room-v1";
-
 export default function JamRoomPage({ params }: { params: { roomId: string } }) {
     const routeParams = React.use(params as any);
     const { roomId } = routeParams;
@@ -245,8 +243,8 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             className="flex flex-col h-screen" 
         >
             <AppHeader />
-            <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-rows-[1fr_auto] gap-6">
-                <div className="lg:grid lg:grid-cols-3 gap-6">
+             <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 grid grid-rows-[1fr_auto] gap-6">
+                <div className="grid lg:grid-cols-3 gap-6 min-h-0">
                     <div className="lg:col-span-2 flex flex-col gap-6">
                          <Card className="aspect-video w-full h-full overflow-hidden">
                             <YouTube
@@ -265,7 +263,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                             />
                         </Card>
                     </div>
-                    <div className="lg:col-span-1 h-full flex flex-col min-h-0 mt-6 lg:mt-0">
+                    <div className="lg:col-span-1 flex flex-col min-h-0">
                          <GroupChat
                             messages={chatMessages}
                             onSendMessage={handleSendMessage}
@@ -275,7 +273,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                         />
                     </div>
                 </div>
-                <div className="lg:grid lg:grid-cols-3 gap-6">
+                <div className="grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
                         <Card>
                             <CardContent className="space-y-4 pt-6">
