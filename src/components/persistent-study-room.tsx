@@ -17,8 +17,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChatIcon } from './icons';
 import { useBackground } from '@/hooks/use-background';
 import { cn } from '@/lib/utils';
-import { BeastModeDialog } from './beast-mode-dialog';
-
 
 function formatTime(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -41,17 +39,12 @@ export function PersistentStudyRoomBar() {
       setIsMuted, 
       handleSoundChange, 
       activeSound, 
-      isBeastMode,
-      isBeastModeLocked,
-      beastModeDisplayTime,
-      toggleBeastMode, // This will now open the dialog
       setIsFocusMode,
       setIsPrivateChatOpen,
       setIsLeaderboardOpen,
       hasNewPrivateMessage
   } = useStudyRoom();
   const { changeBackground, isChanging, clearCustomBackground } = useBackground();
-  const [isBeastModeDialogOpen, setIsBeastModeDialogOpen] = React.useState(false);
 
 
   if (!currentRoomId || !roomData) {
@@ -63,17 +56,11 @@ export function PersistentStudyRoomBar() {
     changeBackground();
   };
 
-  const handleBeastModeClick = () => {
-    if (!isBeastModeLocked) {
-        setIsBeastModeDialogOpen(true);
-    }
-  }
 
   const hasActiveSound = activeSound && activeSound !== 'none';
 
   return (
     <>
-    <BeastModeDialog isOpen={isBeastModeDialogOpen} onOpenChange={setIsBeastModeDialogOpen}/>
     <AnimatePresence>
         <motion.div
             initial={{ y: "100%" }}
@@ -85,17 +72,8 @@ export function PersistentStudyRoomBar() {
             <div className="glass-effect flex items-center justify-between gap-4 rounded-lg border p-4 shadow-lg">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm text-primary font-mono">
-                       {isBeastModeLocked ? (
-                         <>
-                           <Flame className="h-4 w-4 text-red-500 animate-pulse" />
-                           <span>{formatTime(beastModeDisplayTime)}</span>
-                         </>
-                       ) : (
-                         <>
-                           <Clock className="h-4 w-4" />
-                           <span>{formatTime(displayTime)}</span>
-                         </>
-                       )}
+                       <Clock className="h-4 w-4" />
+                       <span>{formatTime(displayTime)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
@@ -107,15 +85,7 @@ export function PersistentStudyRoomBar() {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant={isBeastModeLocked ? 'destructive' : 'ghost'} size="icon" onClick={handleBeastModeClick}>
-                                  <Flame className="h-5 w-5"/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Beast Mode</p></TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setIsLeaderboardOpen(true)} disabled={isBeastModeLocked}>
+                                <Button variant="ghost" size="icon" onClick={() => setIsLeaderboardOpen(true)}>
                                   <Trophy className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -123,7 +93,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setIsFocusMode(true)} disabled={isBeastModeLocked}>
+                                <Button variant="ghost" size="icon" onClick={() => setIsFocusMode(true)}>
                                     <Eye className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -131,7 +101,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setIsPrivateChatOpen(true)} disabled={isBeastModeLocked}>
+                                <Button variant="ghost" size="icon" onClick={() => setIsPrivateChatOpen(true)}>
                                     <ChatIcon showDot={hasNewPrivateMessage} className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -139,7 +109,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                          <Tooltip>
                             <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" onClick={handleBackgroundCycleClick} disabled={isChanging || isBeastModeLocked}>
+                                  <Button variant="ghost" size="icon" onClick={handleBackgroundCycleClick} disabled={isChanging}>
                                     {isChanging ? <RefreshCw className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
                                   </Button>
                             </TooltipTrigger>
@@ -147,7 +117,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant={activeSound === 'rain' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'rain' ? 'none' : 'rain')} disabled={isBeastModeLocked}>
+                                <Button variant={activeSound === 'rain' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'rain' ? 'none' : 'rain')}>
                                     <CloudRain className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -155,7 +125,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                          <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant={activeSound === 'fire' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'fire' ? 'none' : 'fire')} disabled={isBeastModeLocked}>
+                                <Button variant={activeSound === 'fire' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'fire' ? 'none' : 'fire')}>
                                     <FlameKindling className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -163,7 +133,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                          <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant={activeSound === 'coffee' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'coffee' ? 'none' : 'coffee')} disabled={isBeastModeLocked}>
+                                <Button variant={activeSound === 'coffee' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'coffee' ? 'none' : 'coffee')}>
                                     <Coffee className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -171,7 +141,7 @@ export function PersistentStudyRoomBar() {
                         </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant={activeSound === 'ocean' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'ocean' ? 'none' : 'ocean')} disabled={isBeastModeLocked}>
+                                <Button variant={activeSound === 'ocean' ? 'secondary' : 'ghost'} size="icon" onClick={() => handleSoundChange(activeSound === 'ocean' ? 'none' : 'ocean')}>
                                     <Waves className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -181,7 +151,7 @@ export function PersistentStudyRoomBar() {
 
                     {hasActiveSound && (
                         <div className="flex items-center gap-2 w-24">
-                            <button onClick={() => setIsMuted(!isMuted)} disabled={isBeastModeLocked}>
+                            <button onClick={() => setIsMuted(!isMuted)}>
                             {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                             </button>
                             <Slider
@@ -193,7 +163,6 @@ export function PersistentStudyRoomBar() {
                                 max={100}
                                 step={1}
                                 className="flex-1"
-                                disabled={isBeastModeLocked}
                             />
                         </div>
                     )}

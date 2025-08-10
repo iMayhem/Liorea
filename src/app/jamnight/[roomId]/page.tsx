@@ -7,7 +7,7 @@ import YouTube from 'react-youtube';
 import type { YouTubePlayer } from 'react-youtube';
 import { useAuth } from '@/hooks/use-auth';
 import { AppHeader } from '@/components/header';
-import { Loader2, Music, Clipboard, Send, Search, Video } from 'lucide-react';
+import { Loader2, Music, Clipboard, Send, Search, Video, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,10 @@ import { updateUserProfile } from '@/lib/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { motion } from 'framer-motion';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+
 
 type PlayerState = 'PLAYING' | 'PAUSED' | 'BUFFERING';
 
@@ -46,6 +50,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     const playerRef = React.useRef<YouTubePlayer | null>(null);
     const isLocalChangeRef = React.useRef(false); // To prevent feedback loops
     const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
     
 
     // Function to parse YouTube video ID from URL
@@ -85,9 +90,9 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 return;
             }
             // Add user to participants list
-            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: profile.status?.isBeastMode || false }) });
+            await updateDoc(roomRef, { participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) });
             // Update user's status to indicate they are in a jam session
-            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId, isBeastMode: profile.status?.isBeastMode || false } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
         });
 
         const unsubscribeRoom = onSnapshot(roomRef, (doc) => {
@@ -126,13 +131,13 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                 getDoc(roomRef).then(docSnap => {
                     if(docSnap.exists()) {
                         updateDoc(roomRef, { 
-                            participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: profile.status?.isBeastMode || false }),
+                            participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }),
                             [`typingUsers.${user.uid}`]: deleteField()
                         });
                     }
                 })
                 // Reset user's status when they leave
-                updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
+                updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
             }
         };
 
@@ -240,9 +245,18 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     return (
     <div className="flex flex-col h-screen">
       <AppHeader />
-      <main className="flex-1 grid grid-cols-[auto_1fr] h-[calc(100vh-theme(height.14))]">
-        <div className="flex flex-col h-full bg-background/80 border-r border-border p-2 space-y-2">
-            <h2 className="text-lg font-semibold text-center">Participants</h2>
+       <main className="flex-1 grid grid-cols-[auto_1fr] h-[calc(100vh-theme(height.14))]">
+        <motion.div
+            animate={{ width: isSidebarOpen ? 256 : 80 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col h-full bg-background/80 border-r border-border p-2 space-y-2"
+        >
+            <div className="flex items-center justify-between p-2">
+                {isSidebarOpen && <h2 className="text-lg font-semibold text-center">Participants</h2>}
+                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                    <Users className="h-5 w-5"/>
+                </Button>
+            </div>
             <ScrollArea className="flex-1">
                  <div className="space-y-2">
                     {roomState.participants?.map((p: Participant) => (
@@ -251,12 +265,23 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                                 <AvatarImage src={p.photoURL || ''} alt={p.username || 'User'}/>
                                 <AvatarFallback>{p.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                            </Avatar>
-                           <span className="font-medium text-sm">{p.username}</span>
+                           <AnimatePresence>
+                           {isSidebarOpen && (
+                                <motion.span 
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="font-medium text-sm whitespace-nowrap"
+                                >
+                                    {p.username}
+                                </motion.span>
+                            )}
+                            </AnimatePresence>
                         </div>
                     ))}
                  </div>
             </ScrollArea>
-        </div>
+        </motion.div>
         <div className="grid grid-rows-[1fr_auto] min-h-0">
           <div className="grid lg:grid-cols-3 gap-6 p-4 md:p-6 lg:p-8 overflow-hidden min-h-0">
             <div className="lg:col-span-2 flex flex-col h-full">

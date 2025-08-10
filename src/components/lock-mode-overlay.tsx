@@ -10,9 +10,9 @@ import { cn } from '@/lib/utils';
 
 
 export function LockModeOverlay() {
-  const { isFocusMode, setIsFocusMode, isBeastModeLocked } = useStudyRoom();
+  const { isFocusMode, setIsFocusMode } = useStudyRoom();
 
-  const showOverlay = isFocusMode || isBeastModeLocked;
+  const showOverlay = isFocusMode;
 
   if (!showOverlay) {
     return null;
@@ -30,17 +30,6 @@ export function LockModeOverlay() {
             'fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm'
           )}
         >
-          {isBeastModeLocked ? (
-              <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 200, damping: 10 } }}
-                className="flex flex-col items-center gap-4 text-center p-4"
-              >
-                  <Flame className="h-24 w-24 text-red-500 animate-pulse" />
-                  <p className="text-3xl font-bold font-heading text-red-400">BEAST MODE ON</p>
-                  <p className="text-lg text-muted-foreground">Focus. No distractions.</p>
-              </motion.div>
-          ) : (
             <Button
                 variant="ghost"
                 size="icon"
@@ -50,7 +39,6 @@ export function LockModeOverlay() {
                 <X className="h-8 w-8" />
                 <span className="sr-only">Exit Focus Mode</span>
             </Button>
-          )}
         </motion.div>
       )}
     </AnimatePresence>

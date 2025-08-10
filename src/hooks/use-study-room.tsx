@@ -12,7 +12,6 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
 const LAST_SEEN_KEY_PREFIX = 'privateChatLastSeen_';
-const BEAST_MODE_END_TIME_KEY = 'beastModeEndTime';
 
 
 interface StudyRoomContextType {
@@ -27,9 +26,6 @@ interface StudyRoomContextType {
     isMuted: boolean;
     setIsMuted: React.Dispatch<React.SetStateAction<boolean>>;
     userHasLeftRef: React.MutableRefObject<boolean>;
-    isBeastMode: boolean;
-    isBeastModeLocked: boolean;
-    beastModeDisplayTime: number;
     isFocusMode: boolean;
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
     isPrivateChatOpen: boolean;
@@ -42,7 +38,6 @@ interface StudyRoomContextType {
     joinRoom: (roomId: string) => Promise<boolean>;
     leaveRoom: () => void;
     handleTimerUpdate: (newState: Partial<TimerState>) => void;
-    toggleBeastMode: () => void;
     handleNotepadChange: (newContent: string) => void;
     handleNotepadNameChange: (newName: string) => void;
     cycleNotepad: () => void;
@@ -77,12 +72,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
     
-    // Beast Mode State
-    const [beastModeEndTime, setBeastModeEndTime] = useState<number | null>(null);
-    const [beastModeDisplayTime, setBeastModeDisplayTime] = useState(0);
-    const isBeastModeLocked = beastModeEndTime !== null && beastModeEndTime > Date.now();
-    const isBeastMode = isBeastModeLocked; // Alias for simplicity
-    
     // Notification state
     const [newMessagesFrom, setNewMessagesFrom] = React.useState<Set<string>>(new Set());
     const hasNewPrivateMessage = newMessagesFrom.size > 0;
@@ -100,70 +89,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const logTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
-
-    const toggleBeastMode = useCallback(() => {
-        const endTime = Date.now() + 25 * 60 * 1000;
-        localStorage.setItem(BEAST_MODE_END_TIME_KEY, endTime.toString());
-        setBeastModeEndTime(endTime);
-        setIsFocusMode(true); // Automatically enter focus mode
-        
-        // Redirect to home page
-        if (profile?.preparationPath) {
-             switch (profile.preparationPath) {
-                case 'neet-achiever':
-                  router.push('/neet-achiever-home');
-                  break;
-                case 'neet-other':
-                  router.push('/neet-home');
-                  break;
-                case 'jee':
-                  router.push('/jee-home');
-                  break;
-                default:
-                  router.push('/');
-                  break;
-            }
-        } else {
-            router.push('/');
-        }
-
-    }, [profile, router]);
-
-    // Beast mode countdown effect
-    useEffect(() => {
-        // On initial load, check local storage for an active beast mode session
-        const storedEndTime = localStorage.getItem(BEAST_MODE_END_TIME_KEY);
-        if (storedEndTime) {
-            const endTime = parseInt(storedEndTime, 10);
-            if (endTime > Date.now()) {
-                setBeastModeEndTime(endTime);
-                setIsFocusMode(true);
-            } else {
-                localStorage.removeItem(BEAST_MODE_END_TIME_KEY);
-            }
-        }
-
-        const interval = setInterval(() => {
-            if (beastModeEndTime && beastModeEndTime > Date.now()) {
-                const remaining = Math.max(0, beastModeEndTime - Date.now());
-                setBeastModeDisplayTime(Math.round(remaining / 1000));
-            } else if (beastModeEndTime) {
-                setBeastModeEndTime(null);
-                setIsFocusMode(false);
-                localStorage.removeItem(BEAST_MODE_END_TIME_KEY);
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [beastModeEndTime]);
-    
-     // Effect to handle site-wide mute during beast mode
-    useEffect(() => {
-        if (isBeastModeLocked) {
-            setIsMuted(true);
-        }
-    }, [isBeastModeLocked]);
-
 
     // Effect for private chat notifications
     useEffect(() => {
@@ -188,9 +113,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                     const lastMessage = await getLastPrivateMessage(chatRoomId);
 
                     if (lastMessage && lastMessage.timestamp) {
-                         const messageTimestamp = lastMessage.timestamp instanceof Timestamp 
-                            ? lastMessage.timestamp.toDate().getTime() 
-                            : new Date(lastMessage.timestamp).getTime();
+                         const messageTimestamp = lastMessage.timestamp.toDate ? lastMessage.timestamp.toDate().getTime() : new Date(lastMessage.timestamp).getTime();
 
                         if (messageTimestamp > lastSeenTimestamp && lastMessage.senderId !== user.uid) {
                             updatedNewMessages.add(otherUser.uid);
@@ -222,7 +145,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     // Effect to play sounds on participant changes
     useEffect(() => {
-        if (isInitialJoinRef.current || !currentRoomId || isBeastModeLocked) {
+        if (isInitialJoinRef.current || !currentRoomId) {
             isInitialJoinRef.current = false;
             return;
         }
@@ -246,7 +169,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
         sessionStorage.setItem(`participants-${currentRoomId}`, JSON.stringify(participants));
 
-    }, [participants, currentRoomId, isBeastModeLocked]);
+    }, [participants, currentRoomId]);
 
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
@@ -259,13 +182,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         logTimeIntervalRef.current = null;
     }, []);
     
-    // Update user's beast mode status in Firestore when local state changes
-    useEffect(() => {
-        if (user && currentRoomId) {
-            updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, isBeastMode: isBeastMode, roomId: currentRoomId }});
-        }
-    }, [isBeastMode, user, currentRoomId]);
-
     const leaveRoom = useCallback(async () => {
         if (!user || !profile || !currentRoomId) return;
         setIsLeaving(true);
@@ -274,7 +190,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         try {
             // Background cleanup
-            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, isBeastMode: false, roomId: null } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
@@ -300,8 +216,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 setChatMessages([]);
                 setParticipants([]);
                 setIsFocusMode(false);
-                setBeastModeEndTime(null);
-                localStorage.removeItem(BEAST_MODE_END_TIME_KEY);
                 cleanupListeners();
             }
             setIsLeaving(false);
@@ -314,7 +228,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
 
-        if (currentRoomId && user && !isBeastModeLocked) { // Don't log if in beast mode via pomodoro
+        if (currentRoomId && user) {
             logTimeIntervalRef.current = setInterval(() => {
                 logStudySession([user.uid], TIME_LOG_INTERVAL_MS / 1000);
             }, TIME_LOG_INTERVAL_MS);
@@ -323,7 +237,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         return () => {
             if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
         }
-    }, [currentRoomId, user, isBeastModeLocked]);
+    }, [currentRoomId, user]);
 
 
     const joinRoom = useCallback(async (roomId: string) => {
@@ -348,9 +262,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             return false;
         }
         
-        await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, isBeastMode: isBeastModeLocked, roomId: roomId }});
+        await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, roomId: roomId }});
 
-        const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: isBeastModeLocked };
+        const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
         const currentParticipants = docSnap.data().participants || [];
         if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
              await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
@@ -388,7 +302,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         });
         
         return true;
-    }, [user, profile, currentRoomId, leaveRoom, toast, cleanupListeners, router, isBeastModeLocked]);
+    }, [user, profile, currentRoomId, leaveRoom, toast, cleanupListeners, router]);
 
     // Effect to handle component unmount or tab close
     useEffect(() => {
@@ -600,9 +514,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         isMuted,
         setIsMuted,
         userHasLeftRef,
-        isBeastMode,
-        isBeastModeLocked,
-        beastModeDisplayTime,
         isFocusMode,
         setIsFocusMode,
         isPrivateChatOpen,
@@ -615,7 +526,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         joinRoom,
         leaveRoom,
         handleTimerUpdate,
-        toggleBeastMode,
         handleNotepadChange,
         handleNotepadNameChange,
         cycleNotepad,
