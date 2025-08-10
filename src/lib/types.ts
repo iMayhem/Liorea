@@ -1,5 +1,6 @@
 // src/lib/types.ts
 import { DocumentData } from 'firebase/firestore';
+import { z } from 'zod';
 
 // Kept for default data structure
 export interface Task {
@@ -182,3 +183,21 @@ export interface Report {
     timestamp: any;
     status: 'open' | 'closed' | 'in-progress';
 }
+
+// YouTube Search Types
+export const YoutubeSearchInputSchema = z.object({
+  query: z.string().describe('The search query for YouTube videos.'),
+});
+export type YoutubeSearchInput = z.infer<typeof YoutubeSearchInputSchema>;
+
+export const YoutubeSearchResultSchema = z.object({
+    id: z.string().describe("The unique YouTube video ID."),
+    title: z.string().describe("The title of the video."),
+    thumbnailUrl: z.string().describe("The URL of the video's thumbnail image."),
+});
+export type YoutubeSearchResult = z.infer<typeof YoutubeSearchResultSchema>;
+
+export const YoutubeSearchOutputSchema = z.object({
+    results: z.array(YoutubeSearchResultSchema).describe('A list of search results, should contain at least 5 videos.'),
+});
+export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;

@@ -4,31 +4,13 @@
  * @fileOverview A YouTube video search AI agent.
  *
  * - searchYoutube - A function that handles the video search process.
- * - YoutubeSearchInput - The input type for the searchYoutube function.
- * - YoutubeSearchOutput - The return type for the searchYoutube function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
 import { GoogleAuth } from 'google-auth-library';
+import type { YoutubeSearchInput, YoutubeSearchOutput, YoutubeSearchResult } from '@/lib/types';
+import { YoutubeSearchInputSchema, YoutubeSearchOutputSchema } from '@/lib/types';
 
-
-const YoutubeSearchInputSchema = z.object({
-  query: z.string().describe('The search query for YouTube videos.'),
-});
-export type YoutubeSearchInput = z.infer<typeof YoutubeSearchInputSchema>;
-
-export const YoutubeSearchResultSchema = z.object({
-    id: z.string().describe("The unique YouTube video ID."),
-    title: z.string().describe("The title of the video."),
-    thumbnailUrl: z.string().describe("The URL of the video's thumbnail image."),
-});
-export type YoutubeSearchResult = z.infer<typeof YoutubeSearchResultSchema>;
-
-const YoutubeSearchOutputSchema = z.object({
-    results: z.array(YoutubeSearchResultSchema).describe('A list of search results, should contain at least 5 videos.'),
-});
-export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;
 
 // This function is exported and can be called from your frontend code.
 export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
