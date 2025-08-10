@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useStudyRoom } from '@/hooks/use-study-room';
 
 export function PersistentAmbientSound() {
-    const { roomData, volume, isMuted } = useStudyRoom();
+    const { roomData, volume, isMuted, isBeastModeLocked } = useStudyRoom();
     const activeSound = roomData?.activeSound;
 
     const rainAudioRef = React.useRef<HTMLAudioElement>(null);
@@ -33,6 +33,15 @@ export function PersistentAmbientSound() {
             audioRef.current.currentTime = 0;
         }
         };
+        
+        // Stop all sounds if beast mode is locked
+        if(isBeastModeLocked) {
+            stopAudio(rainAudioRef);
+            stopAudio(fireAudioRef);
+            stopAudio(coffeeAudioRef);
+            stopAudio(oceanAudioRef);
+            return;
+        }
 
         stopAudio(rainAudioRef);
         stopAudio(fireAudioRef);
@@ -48,16 +57,16 @@ export function PersistentAmbientSound() {
         } else if (activeSound === 'ocean') {
             playAudio(oceanAudioRef);
         }
-  }, [activeSound]);
+  }, [activeSound, isBeastModeLocked]);
 
   // This effect handles volume changes
   React.useEffect(() => {
-    const finalVolume = isMuted ? 0 : volume;
+    const finalVolume = isMuted || isBeastModeLocked ? 0 : volume;
     if(rainAudioRef.current) rainAudioRef.current.volume = finalVolume;
     if(fireAudioRef.current) fireAudioRef.current.volume = finalVolume;
     if(coffeeAudioRef.current) coffeeAudioRef.current.volume = finalVolume;
     if(oceanAudioRef.current) oceanAudioRef.current.volume = finalVolume;
-  }, [volume, isMuted]);
+  }, [volume, isMuted, isBeastModeLocked]);
 
   return (
     <>

@@ -12,6 +12,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { useBackground } from '@/hooks/use-background';
 import { PrivateChatOverlay } from './private-chat-overlay';
 import { LeaderboardOverlay } from './leaderboard-overlay';
+import { BeastModeDialog } from './beast-mode-dialog';
 
 const fontSans = Inter({
   subsets: ['latin'],

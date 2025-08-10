@@ -12,6 +12,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const NOTEPAD_IDS = ['collaborative', 'notepad1', 'notepad2'];
 const LAST_SEEN_KEY_PREFIX = 'privateChatLastSeen_';
+const BEAST_MODE_END_TIME_KEY = 'beastModeEndTime';
 
 
 interface StudyRoomContextType {
@@ -28,6 +29,7 @@ interface StudyRoomContextType {
     userHasLeftRef: React.MutableRefObject<boolean>;
     isBeastMode: boolean;
     isBeastModeLocked: boolean;
+    beastModeDisplayTime: number;
     isFocusMode: boolean;
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
     isPrivateChatOpen: boolean;
@@ -71,13 +73,15 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [displayTime, setDisplayTime] = useState(0);
     const [volume, setVolume] = React.useState(0.5);
     const [isMuted, setIsMuted] = React.useState(false);
-    const [isFocusMode, setIsFocusMode] = React.useState(false); // Local-only focus mode
+    const [isFocusMode, setIsFocusMode] = React.useState(false);
     const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
     
-    // Beast Mode State (now local)
-    const [isBeastMode, setIsBeastMode] = React.useState(false);
-    const isBeastModeLocked = isBeastMode && roomData?.timerState?.isActive && roomData?.timerState?.mode === 'study';
+    // Beast Mode State
+    const [beastModeEndTime, setBeastModeEndTime] = useState<number | null>(null);
+    const [beastModeDisplayTime, setBeastModeDisplayTime] = useState(0);
+    const isBeastModeLocked = beastModeEndTime !== null && beastModeEndTime > Date.now();
+    const isBeastMode = isBeastModeLocked; // Alias for simplicity
     
     // Notification state
     const [newMessagesFrom, setNewMessagesFrom] = React.useState<Set<string>>(new Set());
@@ -98,8 +102,68 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const isInitialJoinRef = useRef(true);
 
     const toggleBeastMode = useCallback(() => {
-        setIsBeastMode(prev => !prev);
-    }, []);
+        const endTime = Date.now() + 25 * 60 * 1000;
+        localStorage.setItem(BEAST_MODE_END_TIME_KEY, endTime.toString());
+        setBeastModeEndTime(endTime);
+        setIsFocusMode(true); // Automatically enter focus mode
+        
+        // Redirect to home page
+        if (profile?.preparationPath) {
+             switch (profile.preparationPath) {
+                case 'neet-achiever':
+                  router.push('/neet-achiever-home');
+                  break;
+                case 'neet-other':
+                  router.push('/neet-home');
+                  break;
+                case 'jee':
+                  router.push('/jee-home');
+                  break;
+                default:
+                  router.push('/');
+                  break;
+            }
+        } else {
+            router.push('/');
+        }
+
+    }, [profile, router]);
+
+    // Beast mode countdown effect
+    useEffect(() => {
+        // On initial load, check local storage for an active beast mode session
+        const storedEndTime = localStorage.getItem(BEAST_MODE_END_TIME_KEY);
+        if (storedEndTime) {
+            const endTime = parseInt(storedEndTime, 10);
+            if (endTime > Date.now()) {
+                setBeastModeEndTime(endTime);
+                setIsFocusMode(true);
+            } else {
+                localStorage.removeItem(BEAST_MODE_END_TIME_KEY);
+            }
+        }
+
+        const interval = setInterval(() => {
+            if (beastModeEndTime && beastModeEndTime > Date.now()) {
+                const remaining = Math.max(0, beastModeEndTime - Date.now());
+                setBeastModeDisplayTime(Math.round(remaining / 1000));
+            } else if (beastModeEndTime) {
+                setBeastModeEndTime(null);
+                setIsFocusMode(false);
+                localStorage.removeItem(BEAST_MODE_END_TIME_KEY);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [beastModeEndTime]);
+    
+     // Effect to handle site-wide mute during beast mode
+    useEffect(() => {
+        if (isBeastModeLocked) {
+            setIsMuted(true);
+        }
+    }, [isBeastModeLocked]);
+
 
     // Effect for private chat notifications
     useEffect(() => {
@@ -117,12 +181,17 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
                 for (const otherUser of otherUsers) {
                     const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${otherUser.uid}`;
-                    const lastSeenTimestamp = new Date(localStorage.getItem(lastSeenKey) || 0).getTime();
+                    const lastSeenTimestampStr = localStorage.getItem(lastSeenKey);
+                    const lastSeenTimestamp = lastSeenTimestampStr ? new Date(lastSeenTimestampStr).getTime() : 0;
+                    
                     const chatRoomId = user.uid < otherUser.uid ? `${user.uid}_${otherUser.uid}` : `${otherUser.uid}_${user.uid}`;
                     const lastMessage = await getLastPrivateMessage(chatRoomId);
 
                     if (lastMessage && lastMessage.timestamp) {
-                        const messageTimestamp = new Date(lastMessage.timestamp).getTime();
+                         const messageTimestamp = lastMessage.timestamp instanceof Timestamp 
+                            ? lastMessage.timestamp.toDate().getTime() 
+                            : new Date(lastMessage.timestamp).getTime();
+
                         if (messageTimestamp > lastSeenTimestamp && lastMessage.senderId !== user.uid) {
                             updatedNewMessages.add(otherUser.uid);
                         }
@@ -139,7 +208,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         return () => clearInterval(intervalId);
 
-    }, [user]);
+    }, [user, newMessagesFrom]);
 
     const clearChatNotification = useCallback((userId: string) => {
         const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${userId}`;
@@ -153,7 +222,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
     // Effect to play sounds on participant changes
     useEffect(() => {
-        if (isInitialJoinRef.current || !currentRoomId) {
+        if (isInitialJoinRef.current || !currentRoomId || isBeastModeLocked) {
             isInitialJoinRef.current = false;
             return;
         }
@@ -162,7 +231,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             const sound = document.getElementById(soundId) as HTMLAudioElement;
             if (sound) {
                 sound.play().catch(error => {
-                    // Ignore errors from being interrupted by a pause call.
                     if (error.name !== 'AbortError') {
                         console.error(`Error playing ${soundId}:`, error)
                     }
@@ -178,7 +246,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
         sessionStorage.setItem(`participants-${currentRoomId}`, JSON.stringify(participants));
 
-    }, [participants, currentRoomId]);
+    }, [participants, currentRoomId, isBeastModeLocked]);
 
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
@@ -232,7 +300,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 setChatMessages([]);
                 setParticipants([]);
                 setIsFocusMode(false);
-                setIsBeastMode(false); // Reset local beast mode
+                setBeastModeEndTime(null);
+                localStorage.removeItem(BEAST_MODE_END_TIME_KEY);
                 cleanupListeners();
             }
             setIsLeaving(false);
@@ -245,7 +314,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
 
-        if (currentRoomId && user) {
+        if (currentRoomId && user && !isBeastModeLocked) { // Don't log if in beast mode via pomodoro
             logTimeIntervalRef.current = setInterval(() => {
                 logStudySession([user.uid], TIME_LOG_INTERVAL_MS / 1000);
             }, TIME_LOG_INTERVAL_MS);
@@ -254,7 +323,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         return () => {
             if (logTimeIntervalRef.current) clearInterval(logTimeIntervalRef.current);
         }
-    }, [currentRoomId, user]);
+    }, [currentRoomId, user, isBeastModeLocked]);
 
 
     const joinRoom = useCallback(async (roomId: string) => {
@@ -268,10 +337,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         if (currentRoomId === roomId) return true;
         if (currentRoomId && currentRoomId !== roomId) {
-            await leaveRoom(); // Leave current room before joining a new one
+            await leaveRoom();
         }
 
-        isInitialJoinRef.current = true; // Set flag to prevent sound on initial join
+        isInitialJoinRef.current = true;
         const roomRef = doc(db, 'studyRooms', roomId);
         const docSnap = await getDoc(roomRef);
 
@@ -279,9 +348,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             return false;
         }
         
-        await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, isBeastMode: false, roomId: roomId }});
+        await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, isBeastMode: isBeastModeLocked, roomId: roomId }});
 
-        const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
+        const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: isBeastModeLocked };
         const currentParticipants = docSnap.data().participants || [];
         if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
              await updateDoc(roomRef, { participants: arrayUnion(newParticipant) });
@@ -319,14 +388,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         });
         
         return true;
-    }, [user, profile, currentRoomId, leaveRoom, toast, cleanupListeners, router]);
+    }, [user, profile, currentRoomId, leaveRoom, toast, cleanupListeners, router, isBeastModeLocked]);
 
     // Effect to handle component unmount or tab close
     useEffect(() => {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (currentRoomId) {
-                // Note: Most modern browsers prevent custom messages here.
-                // This is more about triggering the cleanup logic.
                 leaveRoom();
             }
         };
@@ -335,7 +402,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
-            // Also cleanup if the component unmounts for other reasons (like navigation)
             if (currentRoomId) {
                 leaveRoom();
             }
@@ -368,7 +434,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         try {
             await updateDoc(roomRef, { timerState: { ...roomData.timerState, ...newState } });
         } catch (error) {
-            if ((error as any).code !== 'not-found') {
+             if ((error as any).code !== 'not-found') {
                 console.error("Failed to update timer state:", error);
             }
         }
@@ -409,7 +475,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const isOwner = notepad.owner === user.uid;
         const isCollaborative = activeNotepadId === 'collaborative';
         
-        if (!isOwner && !isCollaborative) return; // Don't allow editing if not owner or collaborative
+        if (!isOwner && !isCollaborative) return; 
 
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const fieldPath = `notepads.${activeNotepadId}.content`;
@@ -429,12 +495,11 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const isOwner = notepad.owner === user.uid;
         const isUnclaimed = !notepad.owner;
 
-        if (!isOwner && !isUnclaimed) return; // Only owner or claimer can change name
+        if (!isOwner && !isUnclaimed) return;
 
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const fieldPath = `notepads.${activeNotepadId}.name`;
         try {
-            // If unclaimed, claim it while changing the name
             if (isUnclaimed) {
                  await updateDoc(roomRef, { 
                      [fieldPath]: newName,
@@ -537,6 +602,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         userHasLeftRef,
         isBeastMode,
         isBeastModeLocked,
+        beastModeDisplayTime,
         isFocusMode,
         setIsFocusMode,
         isPrivateChatOpen,

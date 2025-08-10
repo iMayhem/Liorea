@@ -67,7 +67,7 @@ export function SharedPomodoroTimer({ timerState, onUpdate, participants }: Shar
 
   const handleTimerEnd = () => {
      // Only one client should handle the transition
-    if (audioRef.current) {
+    if (audioRef.current && !isBeastModeLocked) { // Don't play sound in beast mode
         audioRef.current.play().catch(console.error);
     }
     if (mode === 'study') {

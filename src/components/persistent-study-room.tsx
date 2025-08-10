@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChatIcon } from './icons';
 import { useBackground } from '@/hooks/use-background';
 import { cn } from '@/lib/utils';
+import { BeastModeDialog } from './beast-mode-dialog';
 
 
 function formatTime(seconds: number) {
@@ -42,13 +43,15 @@ export function PersistentStudyRoomBar() {
       activeSound, 
       isBeastMode,
       isBeastModeLocked,
-      toggleBeastMode,
+      beastModeDisplayTime,
+      toggleBeastMode, // This will now open the dialog
       setIsFocusMode,
       setIsPrivateChatOpen,
       setIsLeaderboardOpen,
       hasNewPrivateMessage
   } = useStudyRoom();
   const { changeBackground, isChanging, clearCustomBackground } = useBackground();
+  const [isBeastModeDialogOpen, setIsBeastModeDialogOpen] = React.useState(false);
 
 
   if (!currentRoomId || !roomData) {
@@ -60,9 +63,17 @@ export function PersistentStudyRoomBar() {
     changeBackground();
   };
 
+  const handleBeastModeClick = () => {
+    if (!isBeastModeLocked) {
+        setIsBeastModeDialogOpen(true);
+    }
+  }
+
   const hasActiveSound = activeSound && activeSound !== 'none';
 
   return (
+    <>
+    <BeastModeDialog isOpen={isBeastModeDialogOpen} onOpenChange={setIsBeastModeDialogOpen}/>
     <AnimatePresence>
         <motion.div
             initial={{ y: "100%" }}
@@ -74,8 +85,17 @@ export function PersistentStudyRoomBar() {
             <div className="glass-effect flex items-center justify-between gap-4 rounded-lg border p-4 shadow-lg">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm text-primary font-mono">
-                        <Clock className="h-4 w-4" />
-                        <span>{formatTime(displayTime)}</span>
+                       {isBeastModeLocked ? (
+                         <>
+                           <Flame className="h-4 w-4 text-red-500 animate-pulse" />
+                           <span>{formatTime(beastModeDisplayTime)}</span>
+                         </>
+                       ) : (
+                         <>
+                           <Clock className="h-4 w-4" />
+                           <span>{formatTime(displayTime)}</span>
+                         </>
+                       )}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
@@ -87,7 +107,7 @@ export function PersistentStudyRoomBar() {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant={isBeastMode ? 'destructive' : 'ghost'} size="icon" onClick={toggleBeastMode} disabled={isBeastModeLocked}>
+                                <Button variant={isBeastModeLocked ? 'destructive' : 'ghost'} size="icon" onClick={handleBeastModeClick}>
                                   <Flame className="h-5 w-5"/>
                                 </Button>
                             </TooltipTrigger>
@@ -196,5 +216,6 @@ export function PersistentStudyRoomBar() {
             </div>
         </motion.div>
     </AnimatePresence>
+    </>
   );
 }

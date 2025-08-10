@@ -34,10 +34,11 @@ export function LockModeOverlay() {
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 200, damping: 10 } }}
-                className="flex flex-col items-center gap-4"
+                className="flex flex-col items-center gap-4 text-center p-4"
               >
                   <Flame className="h-24 w-24 text-red-500 animate-pulse" />
-                  <p className="text-2xl font-bold font-heading text-red-400">BEAST MODE ON</p>
+                  <p className="text-3xl font-bold font-heading text-red-400">BEAST MODE ON</p>
+                  <p className="text-lg text-muted-foreground">Focus. No distractions.</p>
               </motion.div>
           ) : (
             <Button
