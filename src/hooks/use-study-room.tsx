@@ -193,19 +193,21 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         if (!user || !profile || !currentRoomId) return;
         setIsLeaving(true);
         userHasLeftRef.current = true;
-
+    
         const leavingRoomId = currentRoomId;
-        cleanupListeners(); // Clean up listeners immediately
-        setCurrentRoomId(null); 
+    
+        // Clear local state immediately to remove UI elements like the study bar
+        setCurrentRoomId(null);
         setRoomData(null);
         setChatMessages([]);
         setParticipants([]);
         setIsFocusMode(false);
-
+        cleanupListeners();
+    
+        // Perform database cleanup in the background
         try {
-            // Background cleanup
             await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
-
+    
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
@@ -227,8 +229,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                  router.push('/study-together');
             }
         }
-
-    }, [user, profile, currentRoomId, toast, cleanupListeners, router, pathname]);
+    }, [user, profile, currentRoomId, cleanupListeners, pathname, router, toast]);
     
     // Effect for periodic time logging
     useEffect(() => {
@@ -361,14 +362,20 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (currentRoomId && user && profile) {
-                 navigator.sendBeacon('/api/cleanup', JSON.stringify({
+                const userStatus = profile.status;
+                const roomType = userStatus?.isStudying ? 'studyRooms' : 'jamRooms';
+                if (!userStatus?.roomId) return;
+                
+                 const payload = JSON.stringify({
                     userId: user.uid,
-                    roomId: currentRoomId,
+                    roomId: userStatus.roomId,
                     username: profile.username,
                     photoURL: profile.photoURL,
                     isBeastMode: profile.status?.isBeastMode,
-                    roomType: 'studyRooms'
-                }));
+                    roomType: roomType
+                });
+                // Use sendBeacon for reliable background requests on unload
+                navigator.sendBeacon('/api/cleanup', payload);
             }
         };
 
@@ -376,11 +383,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
-            if (currentRoomId) {
-                leaveRoom();
-            }
+            // Don't call leaveRoom() here as it causes issues with navigation
         };
-    }, [currentRoomId, user, profile, leaveRoom]);
+    }, [currentRoomId, user, profile]);
 
 
     // When user logs out or auth state changes
