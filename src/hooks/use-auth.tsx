@@ -58,7 +58,11 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const { uid, displayName, email, photoURL } = firebaseUser;
+        const appUser: User = { uid, email, photoURL };
         
+        setUser(appUser);
+        setLoading(false); // Auth loading is complete
+
         // Upsert basic user info first
         await upsertUserProfile(uid, {
             uid,
@@ -66,11 +70,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
             photoURL: photoURL || '',
             lastSeen: new Date(),
         });
-        
-        // Set the user state immediately after basic info is handled.
-        const appUser: User = { uid, email, photoURL };
-        setUser(appUser);
-        setLoading(false); // Auth loading is complete
 
         // Now, fetch the full profile.
         await fetchProfile(uid);
@@ -139,13 +138,14 @@ export function AuthProvider({children}: {children: ReactNode}) {
             const roomRef = doc(db, roomType, userStatus.roomId);
             const roomSnap = await getDoc(roomRef);
             if(roomSnap.exists()){
+                const participantData = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
                  await updateDoc(roomRef, { 
-                    participants: arrayRemove({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }),
+                    participants: arrayRemove(participantData),
                     [`typingUsers.${user.uid}`]: deleteField()
                 });
             }
         }
-        await updateUserProfile(user.uid, { lastSeen: new Date(), status: { isStudying: false, isJamming: false, roomId: null } });
+        await updateUserProfile(user.uid, { lastSeen: new Date(), status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
     }
     setLoading(true);
     setLoadingProfile(true);

@@ -629,7 +629,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     return <StudyRoomContext.Provider value={value}>{children}</StudyRoomContext.Provider>;
 }
 
-export function useStudyRoom(roomId?: string) {
+export function useStudyRoom() {
     const context = useContext(StudyRoomContext);
     if (context === undefined) {
         throw new Error('useStudyRoom must be used within a StudyRoomProvider');

@@ -57,18 +57,18 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     };
 
     // Firestore update function
-    const updateRoomState = async (newState: Partial<JamRoomState>) => {
+    const updateRoomState = React.useCallback(async (newState: Partial<JamRoomState>) => {
         if (!roomId) return;
         isLocalChangeRef.current = true;
         const roomRef = doc(db, 'jamRooms', roomId);
         await updateDoc(roomRef, newState);
         // Allow remote changes to be processed after a short delay
         setTimeout(() => { isLocalChangeRef.current = false; }, 500);
-    };
+    }, [roomId]);
     
-    const debouncedSeekUpdate = React.useCallback(useDebouncedCallback(async (time: number) => {
+    const debouncedSeekUpdate = useDebouncedCallback(async (time: number) => {
         await updateRoomState({ lastSeekTimeSeconds: time, lastSeekTimestamp: serverTimestamp() });
-    }, 1000), [roomId]);
+    }, 1000);
 
     // Effect for inactive user cleanup (owner only)
     React.useEffect(() => {
