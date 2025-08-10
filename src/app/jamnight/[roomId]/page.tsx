@@ -65,9 +65,9 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         setTimeout(() => { isLocalChangeRef.current = false; }, 500);
     };
     
-    const debouncedSeekUpdate = useDebouncedCallback(async (time: number) => {
+    const debouncedSeekUpdate = React.useCallback(useDebouncedCallback(async (time: number) => {
         await updateRoomState({ lastSeekTimeSeconds: time, lastSeekTimestamp: serverTimestamp() });
-    }, 1000);
+    }, 1000), [roomId]);
 
 
     // Effect to handle joining/leaving the room and listening for state changes

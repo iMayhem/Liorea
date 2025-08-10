@@ -64,12 +64,12 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
     }
   }, [messages, typingUsers]);
   
-  const debouncedStopTyping = useDebouncedCallback(
+  const debouncedStopTyping = React.useCallback(useDebouncedCallback(
     () => {
       onTyping(false);
     },
     2000, // 2 second delay after user stops typing
-  );
+  ), [onTyping]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;

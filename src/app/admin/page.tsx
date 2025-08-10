@@ -305,13 +305,13 @@ export default function AdminPage() {
             const studyRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'study' as const, participants: doc.data().participants || []}));
             setRooms(prev => [...studyRooms, ...prev.filter(r => r.type !== 'study')]);
             setLoadingRooms(false);
-        });
+        }, () => setLoadingRooms(false));
 
         const unsubscribeJamRooms = onSnapshot(jamRoomsQuery, (snapshot) => {
             const jamRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'jam' as const, participants: doc.data().participants || []}));
             setRooms(prev => [...jamRooms, ...prev.filter(r => r.type !== 'jam')]);
             setLoadingRooms(false);
-        });
+        }, () => setLoadingRooms(false));
 
 
         return () => {

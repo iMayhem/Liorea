@@ -96,6 +96,7 @@ export interface Participant {
   uid: string;
   username: string | null;
   photoURL?: string | null;
+  isBeastMode?: boolean;
 }
 
 export interface ChatMessage {
@@ -156,6 +157,7 @@ export interface UserProfile {
     status?: {
       isStudying: boolean;
       isJamming?: boolean;
+      isBeastMode?: boolean;
       roomId: string | null;
     }
     customTimetable?: CustomTimetable;

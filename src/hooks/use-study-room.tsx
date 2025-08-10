@@ -187,6 +187,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setIsLeaving(true);
 
         const leavingRoomId = currentRoomId;
+        cleanupListeners(); // Clean up listeners immediately
 
         try {
             // Background cleanup
@@ -216,7 +217,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 setChatMessages([]);
                 setParticipants([]);
                 setIsFocusMode(false);
-                cleanupListeners();
             }
             setIsLeaving(false);
             router.push('/study-together');
@@ -250,11 +250,13 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
 
         if (currentRoomId === roomId) return true;
+        // Clean up old listeners before joining a new room
         if (currentRoomId && currentRoomId !== roomId) {
             await leaveRoom();
         }
 
         isInitialJoinRef.current = true;
+        cleanupListeners(); // Ensure no old listeners are running
         const roomRef = doc(db, 'studyRooms', roomId);
         const docSnap = await getDoc(roomRef);
 
@@ -275,9 +277,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setActiveNotepadId('collaborative');
         
         unsubscribeRoomRef.current = onSnapshot(roomRef, (snap) => {
-            if (userHasLeftRef.current && snap.id === currentRoomId) {
-                return;
-            }
+            if (userHasLeftRef.current) return;
             if (snap.exists()) {
                 const data = snap.data();
                 setRoomData(data);
@@ -332,7 +332,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
 
     // Timer logic
-    const getDuration = (timerState: TimerState) => {
+    const getDuration = useCallback((timerState: TimerState) => {
         const { mode, studyDuration, shortBreakDuration, longBreakDuration } = timerState;
         switch(mode) {
             case 'study': return (studyDuration || 25) * 60;
@@ -340,7 +340,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             case 'longBreak': return (longBreakDuration || 15) * 60;
             default: return 25 * 60;
         }
-    }
+    }, []);
 
     const handleTimerUpdate = useCallback(async (newState: Partial<TimerState>) => {
         if (!roomData || !currentRoomId) return;
@@ -378,7 +378,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         return () => {
             if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         };
-    }, [roomData, user, participants, handleTimerUpdate]);
+    }, [roomData, user, participants, handleTimerUpdate, getDuration]);
 
 
     // Notepad handlers
