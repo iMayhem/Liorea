@@ -21,7 +21,7 @@ export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeS
 const youtubeSearchTool = ai.defineTool(
     {
         name: 'youtubeSearch',
-        description: 'Search for YouTube videos based on a query.',
+        description: 'Search for YouTube videos based on a query. Prioritize music, podcasts, or study-related content.',
         inputSchema: YoutubeSearchInputSchema,
         outputSchema: YoutubeSearchOutputSchema
     },
@@ -57,25 +57,15 @@ const youtubeSearchFlow = ai.defineFlow(
     name: 'youtubeSearchFlow',
     inputSchema: YoutubeSearchInputSchema,
     outputSchema: YoutubeSearchOutputSchema,
+    // By providing the tool here, Genkit knows it can use it.
+    // The description in the tool definition guides the LLM on when to use it.
+    tools: [youtubeSearchTool] 
   },
   async (input) => {
-     const llmResponse = await ai.generate({
-        model: 'googleai/gemini-1.5-flash-latest',
-        prompt: `Find relevant YouTube videos for the query: ${input.query}. Prioritize music, podcasts, or study-related content.`,
-        tools: [youtubeSearchTool],
-        config: {
-            temperature: 0.1, 
-        }
-    });
-    
-    // The LLM decides whether to call the tool based on the prompt.
-    // We pass the user's raw query to the tool.
-    if (llmResponse.hasToolRequest()) {
-        return youtubeSearchTool(input);
-    }
-    
-    // Fallback or if the model doesn't use the tool for some reason
-    // which is unlikely given the prompt.
-    return { results: [] };
+    // When the flow is called, Genkit automatically determines
+    // if a tool should be used based on the input and the tool's description.
+    // If it decides to use youtubeSearchTool, it will call it and return the output.
+    // We don't need to manually check for tool requests.
+    return await youtubeSearchTool(input);
   }
 );
