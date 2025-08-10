@@ -255,6 +255,96 @@ function LeaderboardTools() {
     );
 }
 
+function ChatManagement() {
+    const { toast } = useToast();
+    const [isClearingStudy, setIsClearingStudy] = React.useState(false);
+    const [isClearingJam, setIsClearingJam] = React.useState(false);
+
+    const handleClearAllChats = async (type: 'study' | 'jam') => {
+        const setIsClearing = type === 'study' ? setIsClearingStudy : setIsClearingJam;
+        setIsClearing(true);
+        
+        const collectionName = type === 'study' ? 'studyRooms' : 'jamRooms';
+        
+        try {
+            const roomsSnapshot = await getDocs(collection(db, collectionName));
+            
+            for (const roomDoc of roomsSnapshot.docs) {
+                const batch = writeBatch(db);
+                const chatCollectionRef = collection(db, collectionName, roomDoc.id, 'chats');
+                const chatSnapshot = await getDocs(chatCollectionRef);
+                
+                if (chatSnapshot.empty) continue;
+                
+                chatSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+            }
+
+            toast({ title: `All ${type} chats cleared`, description: `All chat messages in ${collectionName} have been deleted.` });
+
+        } catch (error) {
+            console.error(`Failed to clear ${type} chats:`, error);
+            toast({ title: "Error", description: `Could not clear ${type} chats.`, variant: "destructive" });
+        } finally {
+            setIsClearing(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Chat Management</CardTitle>
+                <CardDescription>Permanently delete all chat messages from all rooms.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full" disabled={isClearingStudy}>
+                            {isClearingStudy ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                            Clear All Study Room Chats
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all chat messages from every single Study Room. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleClearAllChats('study')}>Yes, clear study chats</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button variant="destructive" className="w-full" disabled={isClearingJam}>
+                            {isClearingJam ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                            Clear All Jamnight Chats
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all chat messages from every single Jamnight Room. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleClearAllChats('jam')}>Yes, clear jamnight chats</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -388,13 +478,14 @@ export default function AdminPage() {
             <main className="container mx-auto p-4 md:p-6 lg:p-8">
                 <h1 className="text-3xl font-bold font-heading mb-6">Admin Panel</h1>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
                    <UserManagement users={users} loading={loadingUsers} />
                    <RoomManagement rooms={rooms} loading={loadingRooms}/>
                    <LeaderboardTools />
+                   <ChatManagement />
                 </div>
                 
-                <Card>
+                <Card className="col-span-1 md:col-span-2 lg:col-span-2">
                     <CardHeader>
                         <CardTitle>User Reports</CardTitle>
                         <CardDescription>Issues and suggestions submitted by users.</CardDescription>
