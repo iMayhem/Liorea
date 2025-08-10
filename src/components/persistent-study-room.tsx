@@ -167,16 +167,18 @@ export function PersistentStudyRoomBar() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                         <Button asChild variant="outline" size="sm">
-                            <Link href={`/study-together/${currentRoomId}`}>
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                Open Room
-                            </Link>
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={leaveRoom} disabled={isLeaving}>
-                            {isLeaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <PhoneOff className="mr-2 h-4 w-4" />}
-                            Leave Room
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="destructive" size="icon" onClick={leaveRoom} disabled={isLeaving}>
+                                        {isLeaving ? <Loader2 className="h-4 w-4 animate-spin"/> : <PhoneOff className="h-4 w-4" />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Leave Room</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
             </div>
