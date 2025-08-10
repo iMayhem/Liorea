@@ -85,6 +85,23 @@ export default function NeetAchieverHomePage() {
       router.push(`/day/${dateString}`);
     }
   };
+  
+  const studyDayStyle = React.useMemo(() => {
+    if (Object.keys(studyLogs).length === 0) return {};
+    const maxStudyTime = Math.max(1, ...Object.values(studyLogs));
+    return (day: Date) => {
+        const dateKey = format(day, 'yyyy-MM-dd');
+        const studyTime = studyLogs[dateKey] || 0;
+        if (studyTime === 0) return {};
+        
+        const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
+        return { 
+            backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
+            color: 'hsl(var(--primary-foreground))'
+        };
+    }
+  }, [studyLogs]);
+
 
   if (loading || !user || !profile) {
     return (
@@ -94,8 +111,6 @@ export default function NeetAchieverHomePage() {
     );
   }
   
-  const maxStudyTime = Math.max(1, ...Object.values(studyLogs));
-
   return (
     <>
     <ReportDialog isOpen={isReportDialogOpen} onOpenChange={setIsReportDialogOpen} />
@@ -143,17 +158,7 @@ export default function NeetAchieverHomePage() {
                                 modifiersClassNames={{
                                     studyDay: 'study-day-modifier'
                                 }}
-                                modifiersStyles={{
-                                    studyDay: (day: Date) => {
-                                        const dateKey = format(day, 'yyyy-MM-dd');
-                                        const studyTime = studyLogs[dateKey] || 0;
-                                        const opacity = Math.max(0.1, Math.min(1, studyTime / maxStudyTime));
-                                        return { 
-                                            backgroundColor: `hsla(var(--primary-hsl), ${opacity})`,
-                                            color: 'hsl(var(--primary-foreground))'
-                                        };
-                                    }
-                                }}
+                                modifiersStyles={{ studyDay: studyDayStyle }}
                             />
                         </CardContent>
                     </Card>
