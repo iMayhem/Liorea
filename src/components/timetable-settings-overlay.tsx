@@ -17,6 +17,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface TimetableSettingsOverlayProps {
     isOpen: boolean;
@@ -119,10 +120,10 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
 
         let newTimetable: CustomTimetable = { ...timetable };
         for (let i = 0; i < 7; i++) {
-            newTimetable[i] = scheduleToCopy.map(subject => ({
+            newTimetable[i] = JSON.parse(JSON.stringify(scheduleToCopy)).map((subject: CustomSubject) => ({
                 ...subject,
                 id: `sub-${Date.now()}-${i}-${Math.random()}`,
-                tasks: subject.tasks.map(task => ({
+                tasks: subject.tasks.map((task: CustomTask) => ({
                     ...task,
                     id: `task-${Date.now()}-${i}-${Math.random()}`
                 }))
@@ -177,7 +178,7 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
                                             {selectedDate ? format(selectedDate, 'PPP') : "Select Specific Date"}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
+                                    <PopoverContent className={cn("w-auto p-0", "z-[1001]")}>
                                         <Calendar
                                             mode="single"
                                             selected={selectedDate}
