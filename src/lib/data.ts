@@ -108,14 +108,21 @@ export const defaultJeeSchedule: {[key: number]: CustomSubject[]} = {
 
 export const generateTimeTableForDate = (dateKey: string, path?: string | null, customTimetable?: CustomTimetable | null): TimeTableData => {
   const date = parse(dateKey, 'MMMM d, yyyy', new Date());
+  const specificDateKey = format(date, 'yyyy-MM-dd');
   const dayOfWeek = getDay(date);
 
-  // Use custom timetable if it exists for that day
+  // Priority order:
+  // 1. Custom schedule for the specific date
+  if (customTimetable && customTimetable[specificDateKey]) {
+      return { [dateKey]: customTimetable[specificDateKey] };
+  }
+
+  // 2. Custom schedule for the recurring day of the week
   if (customTimetable && customTimetable[dayOfWeek]) {
       return { [dateKey]: customTimetable[dayOfWeek] };
   }
 
-  // Fallback to default schedules
+  // 3. Fallback to default schedules, checking for tests
   if (path === 'neet-achiever') {
       const testForDay = testSchedule.find(test => test.date === dateKey);
       if (testForDay) {

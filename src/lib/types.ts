@@ -25,7 +25,8 @@ export interface CustomSubject {
 }
 
 export interface CustomTimetable {
-  [dayOfWeek: number]: CustomSubject[]; // 0 for Sunday, 1 for Monday, etc.
+  // A key can be a number (0-6 for day of week) or a string ('yyyy-MM-dd' for a specific date)
+  [key: number | string]: CustomSubject[];
 }
 
 
