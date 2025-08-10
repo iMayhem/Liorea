@@ -78,21 +78,23 @@ const youtubeSearchFlow = ai.defineFlow(
   },
   async (input) => {
      const llmResponse = await ai.generate({
-        prompt: `You are an expert at finding relevant YouTube videos. Use the provided tool to search for videos based on the user's query.`,
+        prompt: `Find relevant YouTube videos for the query: ${input.query}. Prioritize music, podcasts, or study-related content.`,
         tools: [youtubeSearchTool],
         config: {
-            temperature: 0.1, // Low temperature for deterministic tool use
+            temperature: 0.1, 
         }
     });
 
-    // The LLM will automatically call the tool. We just need to return its output.
     const toolOutput = llmResponse.toolOutput(youtubeSearchTool);
     
-    if (toolOutput) {
-        return toolOutput;
-    } else {
-        // Fallback or error handling if the tool wasn't called
-        return { results: [] };
+    // The LLM decides whether to call the tool based on the prompt.
+    // We pass the user's raw query to the tool.
+    if (llmResponse.hasToolRequest(youtubeSearchTool)) {
+        return youtubeSearchTool(input);
     }
+    
+    // Fallback or if the model doesn't use the tool for some reason
+    // which is unlikely given the prompt.
+    return { results: [] };
   }
 );
