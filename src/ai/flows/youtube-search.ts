@@ -6,11 +6,7 @@
  * - searchYoutube - A function that handles the video search process.
  */
 
-import { ai } from '@/ai/genkit';
-import { GoogleAuth } from 'google-auth-library';
 import type { YoutubeSearchInput, YoutubeSearchOutput, YoutubeSearchResult } from '@/lib/types';
-import { YoutubeSearchInputSchema, YoutubeSearchOutputSchema } from '@/lib/types';
-
 
 // This is the main function that will be called from the frontend.
 export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
