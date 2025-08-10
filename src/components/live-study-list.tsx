@@ -92,7 +92,7 @@ export function LiveStudyList() {
               <div>
                 <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
                     <Radio className="h-4 w-4 text-green-500 animate-pulse" />
-                    Studying Now ({studyingUsers.length})
+                    Studying ({studyingUsers.length})
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   <AnimatePresence>
@@ -129,7 +129,7 @@ export function LiveStudyList() {
                <div>
                     <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
                         <Music className="h-4 w-4 text-purple-500" />
-                        In a Jamnight ({jammingUsers.length})
+                        Jamnight ({jammingUsers.length})
                     </h3>
                     <div className="flex flex-wrap gap-3">
                       <AnimatePresence>
@@ -166,7 +166,7 @@ export function LiveStudyList() {
                  <div>
                     <h3 className="text-muted-foreground mb-3 text-sm font-semibold flex items-center gap-2">
                         <Flame className="h-4 w-4 text-red-500" />
-                        Beast Mode ({beastModeUsers.length})
+                        Beast ({beastModeUsers.length})
                     </h3>
                     <div className="flex flex-wrap gap-3">
                       <AnimatePresence>
