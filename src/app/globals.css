@@ -115,16 +115,6 @@
     }
   }
   
-  .dark .card, .theme-blue .card, .theme-zinc .card {
-    position: relative;
-    overflow: hidden;
-    background: rgba(10, 10, 15, 0.25);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    animation: glassReveal 0.7s ease-in-out forwards;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
   .dark .card::before, .theme-blue .card::before, .theme-zinc .card::before {
     content: '';
     position: absolute;
@@ -139,6 +129,7 @@
     opacity: 0.5;
     transform: translate(50%, -50%) scale(2);
   }
+
 }
 
 @layer utilities {
@@ -153,6 +144,9 @@
     white-space: nowrap;
     border-width: 0;
   }
+  .glass-effect {
+    @apply bg-background/60 backdrop-blur-lg;
+  }
 }
 
 .study-day-modifier:not([aria-selected]) {
@@ -160,4 +154,14 @@
 }
 .study-day-modifier:not([aria-selected]):hover {
     background-color: hsl(var(--accent)) !important;
+}
+
+.dark .card, .theme-blue .card, .theme-zinc .card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(10, 10, 15, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: glassReveal 0.7s ease-in-out forwards;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
