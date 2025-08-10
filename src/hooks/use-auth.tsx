@@ -6,10 +6,9 @@ import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signO
 import { app } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/firestore';
-import { StudyRoomProvider } from './use-study-room';
-import type { UserProfile } from '@/lib/types';
 import { useToast } from './use-toast';
 import { Timestamp } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
 
 
 interface User {
@@ -59,19 +58,21 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const { uid, displayName, email, photoURL } = firebaseUser;
-        const appUser: User = { uid, email, photoURL };
-        setUser(appUser);
         
-        // Upsert the basic profile info but don't set username here
+        // Upsert basic user info first
         await upsertUserProfile(uid, {
             uid,
             email,
             photoURL: photoURL || '',
             lastSeen: new Date(),
-            // Don't set username, it's handled on the set-username page
         });
+        
+        // Set the user state immediately after basic info is handled.
+        const appUser: User = { uid, email, photoURL };
+        setUser(appUser);
+        setLoading(false); // Auth loading is complete
 
-        // Fetch the full profile from Firestore
+        // Now, fetch the full profile.
         await fetchProfile(uid);
 
       } else {
@@ -80,7 +81,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
         setLoadingProfile(false);
       }
-      setLoading(false);
     });
 
     // Cleanup subscription on unmount
@@ -157,6 +157,3 @@ export function useAuth() {
   }
   return context;
 }
-
-// Re-exporting StudyRoomProvider here to keep layout.tsx clean
-export { StudyRoomProvider };

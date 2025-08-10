@@ -14,10 +14,10 @@ import { motion } from 'framer-motion';
 import { doc, getDoc, setDoc, serverTimestamp, collection, deleteDoc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { useStudyRoom } from '@/hooks/use-study-room';
 import { RoomParticipantCounter } from '@/components/room-participant-counter';
 import Link from 'next/link';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useStudyRoom } from '@/hooks/use-study-room';
 
 
 const PUBLIC_ROOM_ID = "public-study-room-v1";
@@ -29,7 +29,7 @@ interface PrivateRoom {
 
 export default function StudyTogetherPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { joinRoom } = useStudyRoom();
   const [roomId, setRoomId] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
@@ -61,7 +61,11 @@ export default function StudyTogetherPage() {
   }, [user]);
 
   const handleCreateRoom = async () => {
-    if (!user) return;
+    if (!user || !profile) return;
+    if (profile.isBlocked) {
+        toast({ title: 'Action Denied', description: 'You are blocked from creating rooms.', variant: 'destructive' });
+        return;
+    }
     setIsCreating(true);
     try {
       const newRoomRef = doc(collection(db, 'studyRooms'));
@@ -99,6 +103,11 @@ export default function StudyTogetherPage() {
   };
 
   const doJoinRoom = async (id: string) => {
+     if (!user || !profile) return;
+    if (profile.isBlocked) {
+        toast({ title: 'Action Denied', description: 'You are blocked from joining rooms.', variant: 'destructive' });
+        return;
+    }
     const roomRef = doc(db, 'studyRooms', id);
     const roomSnap = await getDoc(roomRef);
 
@@ -107,6 +116,7 @@ export default function StudyTogetherPage() {
     } else {
       if (id === PUBLIC_ROOM_ID) {
           await setDoc(roomRef, {
+            ownerId: user.uid,
             createdAt: serverTimestamp(),
             notepads: {
                 collaborative: { name: 'Collaborative', content: 'Welcome to the Public Study Room!', owner: null },
