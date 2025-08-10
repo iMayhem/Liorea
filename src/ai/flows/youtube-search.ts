@@ -70,7 +70,7 @@ const youtubeSearchFlow = ai.defineFlow(
     
     // The LLM decides whether to call the tool based on the prompt.
     // We pass the user's raw query to the tool.
-    if (llmResponse.hasToolRequest(youtubeSearchTool)) {
+    if (llmResponse.hasToolRequest()) {
         return youtubeSearchTool(input);
     }
     
