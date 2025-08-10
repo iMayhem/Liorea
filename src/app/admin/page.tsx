@@ -417,14 +417,6 @@ export default function AdminPage() {
                                         <AccordionContent className="space-y-4">
                                             <p><strong className="font-semibold">From:</strong> {report.username}</p>
                                             <p className="whitespace-pre-wrap"><strong className="font-semibold">Description:</strong> {report.description}</p>
-                                            {report.imageUrl && (
-                                                <div>
-                                                    <strong className="font-semibold">Attached Image:</strong>
-                                                    <div className="mt-2 relative w-full h-96">
-                                                        <Image src={report.imageUrl} alt="User report image" fill style={{objectFit: 'contain'}} />
-                                                    </div>
-                                                </div>
-                                            )}
                                         </AccordionContent>
                                     </AccordionItem>
                                 ))}

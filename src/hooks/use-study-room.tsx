@@ -41,7 +41,7 @@ interface StudyRoomContextType {
     handleNotepadChange: (newContent: string) => void;
     handleNotepadNameChange: (newName: string) => void;
     cycleNotepad: () => void;
-    handleSendMessage: (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => void;
+    handleSendMessage: (message: {text: string}, replyTo: { id: string, text: string } | null) => void;
     handleTyping: (isTyping: boolean) => void;
     activeSound: SoundType;
     handleSoundChange: (sound: SoundType) => void;
@@ -185,13 +185,19 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const leaveRoom = useCallback(async () => {
         if (!user || !profile || !currentRoomId) return;
         setIsLeaving(true);
+        userHasLeftRef.current = true;
 
         const leavingRoomId = currentRoomId;
         cleanupListeners(); // Clean up listeners immediately
+        setCurrentRoomId(null); 
+        setRoomData(null);
+        setChatMessages([]);
+        setParticipants([]);
+        setIsFocusMode(false);
 
         try {
             // Background cleanup
-            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
@@ -209,20 +215,13 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 toast({ title: "Error", description: "Could not fully leave the room.", variant: "destructive" });
             }
         } finally {
-            // UI update
-            if (currentRoomId === leavingRoomId) {
-                userHasLeftRef.current = true;
-                setCurrentRoomId(null); 
-                setRoomData(null);
-                setChatMessages([]);
-                setParticipants([]);
-                setIsFocusMode(false);
-            }
             setIsLeaving(false);
-            router.push('/study-together');
+            if (pathname.includes('/study-together/')) {
+                 router.push('/study-together');
+            }
         }
 
-    }, [user, profile, currentRoomId, toast, cleanupListeners, router]);
+    }, [user, profile, currentRoomId, toast, cleanupListeners, router, pathname]);
     
     // Effect for periodic time logging
     useEffect(() => {
@@ -241,7 +240,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
 
     const joinRoom = useCallback(async (roomId: string) => {
-        userHasLeftRef.current = false;
         if (!user || !profile?.username) return false;
         
         if (profile.isBlocked) {
@@ -249,14 +247,14 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             return false;
         }
 
-        if (currentRoomId === roomId) return true;
-        // Clean up old listeners before joining a new room
         if (currentRoomId && currentRoomId !== roomId) {
             await leaveRoom();
         }
-
+        
+        userHasLeftRef.current = false;
         isInitialJoinRef.current = true;
-        cleanupListeners(); // Ensure no old listeners are running
+        cleanupListeners();
+
         const roomRef = doc(db, 'studyRooms', roomId);
         const docSnap = await getDoc(roomRef);
 
@@ -450,15 +448,14 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
 
     // Other handlers
-    const handleSendMessage = useCallback(async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
+    const handleSendMessage = useCallback(async (message: {text: string}, replyTo: { id: string, text: string } | null) => {
         if (!user || !profile?.username || !currentRoomId) return;
         const chatCollectionRef = collection(db, 'studyRooms', currentRoomId, 'chats');
         
-        if(!message.text && !message.imageUrl) return;
+        if(!message.text) return;
 
         const messageData: any = {
           text: message.text,
-          imageUrl: message.imageUrl || null,
           senderId: user.uid,
           senderName: profile.username,
           timestamp: serverTimestamp(),

@@ -35,26 +35,13 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
     const { toast } = useToast();
     const [title, setTitle] = React.useState('');
     const [description, setDescription] = React.useState('');
-    const [image, setImage] = React.useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const resetForm = () => {
         setTitle('');
         setDescription('');
-        setImage(null);
     }
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
     const handleSubmit = async () => {
         if (!user || !profile?.username || !title || !description) {
@@ -68,14 +55,6 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
         setIsSubmitting(true);
 
         try {
-            let imageUrl: string | null = null;
-            if (image) {
-                 // Upload image to Firebase Storage
-                const storage = getStorage();
-                const storageRef = ref(storage, `reports/${user.uid}/${Date.now()}`);
-                const snapshot = await uploadString(storageRef, image, 'data_url');
-                imageUrl = await getDownloadURL(snapshot.ref);
-            }
 
              // Save report to Firestore
             await addDoc(collection(db, 'reports'), {
@@ -83,7 +62,6 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
                 username: profile.username,
                 title,
                 description,
-                imageUrl,
                 timestamp: serverTimestamp(),
                 status: 'open',
             });
@@ -139,21 +117,6 @@ export function ReportDialog({ isOpen, onOpenChange }: ReportDialogProps) {
                     onChange={(e) => setDescription(e.target.value)}
                     rows={5}
                 />
-            </div>
-             <div className="space-y-2">
-                <Label>Attach Screenshot (Optional)</Label>
-                <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageSelect}
-                    accept="image/*"
-                    className="hidden"
-                 />
-                 <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    {image ? 'Change Image' : 'Upload Image'}
-                 </Button>
-                 {image && <p className="text-sm text-muted-foreground">Image selected.</p>}
             </div>
         </div>
         <AlertDialogFooter>

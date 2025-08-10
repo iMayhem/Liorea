@@ -189,15 +189,14 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         return () => clearInterval(interval);
     }, [debouncedSeekUpdate]);
 
-     const handleSendMessage = async (message: {text: string, imageUrl?: string | null}, replyTo: { id: string, text: string } | null) => {
+     const handleSendMessage = async (message: {text: string}, replyTo: { id: string, text: string } | null) => {
         if (!user || !profile?.username || !roomId) return;
         const chatCollectionRef = collection(db, 'jamRooms', roomId, 'chats');
         
-        if(!message.text && !message.imageUrl) return;
+        if(!message.text) return;
 
         const messageData: any = {
           text: message.text,
-          imageUrl: message.imageUrl || null,
           senderId: user.uid,
           senderName: profile.username,
           timestamp: serverTimestamp(),

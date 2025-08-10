@@ -18,7 +18,7 @@ import { useStudyRoom } from '@/hooks/use-study-room';
 
 interface GroupChatProps {
   messages: ChatMessage[];
-  onSendMessage: (message: { text: string; imageUrl?: string | null }, replyTo: { id: string, text: string } | null) => void;
+  onSendMessage: (message: { text: string; }, replyTo: { id: string, text: string } | null) => void;
   currentUserId: string;
   onTyping: (isTyping: boolean) => void;
   typingUsers: { [uid: string]: string };
@@ -28,13 +28,11 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
   const [messages, setMessages] = React.useState<ChatMessage[]>(initialMessages);
   const [newMessage, setNewMessage] = React.useState('');
   const [replyTo, setReplyTo] = React.useState<{id: string, text: string} | null>(null);
-  const [image, setImage] = React.useState<string | null>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = React.useRef(initialMessages.length);
   const { profile } = useAuth();
-  const { isBeastModeLocked } = useStudyRoom();
 
 
   React.useEffect(() => {
@@ -86,14 +84,13 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.username || isBeastModeLocked) return;
+    if (!profile?.username) return;
 
-    if (newMessage.trim() || image) {
+    if (newMessage.trim()) {
       const tempId = `temp_${Date.now()}`;
       const optimisticMessage: ChatMessage = {
         id: tempId,
         text: newMessage.trim(),
-        imageUrl: image,
         senderId: currentUserId,
         senderName: profile.username, 
         timestamp: new Date(),
@@ -102,17 +99,16 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
 
       // Optimistic UI update
       setMessages(prev => [...prev, optimisticMessage]);
-      onSendMessage({ text: newMessage.trim(), imageUrl: image }, replyTo);
+      onSendMessage({ text: newMessage.trim() }, replyTo);
       debouncedStopTyping.cancel();
       onTyping(false); // Immediately clear typing indicator on send
       setNewMessage('');
       setReplyTo(null);
-      setImage(null);
     }
   };
 
   const handleReplyClick = (message: ChatMessage) => {
-    setReplyTo({id: message.id, text: message.text || 'Image'});
+    setReplyTo({id: message.id, text: message.text || 'Message'});
     inputRef.current?.focus();
   }
 
@@ -124,35 +120,6 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
     .map(([, username]) => username),
   [typingUsers, currentUserId]);
 
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = event.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const file = items[i].getAsFile();
-            if(file){
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setImage(reader.result as string);
-                };
-                reader.readAsDataURL(file);
-            }
-            event.preventDefault();
-            return;
-        }
-    }
-  };
 
   return (
     <Card className="h-full flex flex-col bg-background/80">
@@ -191,24 +158,8 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                         {originalMessage && (
                             <div className="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1">
                                 <p className="font-bold">{originalMessage.senderName}</p>
-                                <p className="truncate">{originalMessage.text || 'Image'}</p>
+                                <p className="truncate">{originalMessage.text}</p>
                             </div>
-                        )}
-
-                         {msg.imageUrl && (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <div className="relative h-48 w-full my-2 rounded-md overflow-hidden cursor-pointer">
-                                        <Image src={msg.imageUrl} alt="chat image" fill={true} style={{objectFit: 'cover'}} />
-                                    </div>
-                                </DialogTrigger>
-                                <DialogContent className="p-0 border-0 max-w-4xl">
-                                     <DialogHeader>
-                                        <DialogTitle className="sr-only">Image from {msg.senderName}</DialogTitle>
-                                     </DialogHeader>
-                                    <Image src={msg.imageUrl} alt="chat image" width={1000} height={1000} className="w-full h-auto object-contain"/>
-                                </DialogContent>
-                            </Dialog>
                         )}
                         
                         {msg.text && <p className="text-sm">{msg.text}</p>}
@@ -241,38 +192,17 @@ export function GroupChat({ messages: initialMessages, onSendMessage, currentUse
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyTo(null)}><X className="h-4 w-4"/></Button>
             </div>
          )}
-        {image && (
-          <div className="relative p-2 rounded-md bg-muted w-full">
-            <div className="relative w-24 h-24 rounded-md overflow-hidden">
-                <Image src={image} alt="preview" fill={true} style={{objectFit: 'cover'}} />
-            </div>
-            <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => setImage(null)}><X className="h-4 w-4"/></Button>
-          </div>
-        )}
+        
 
         <form onSubmit={handleSubmit} className="w-full flex items-center gap-2">
           <Input
             ref={inputRef}
             value={newMessage}
             onChange={handleInputChange}
-            onPaste={handlePaste}
-            placeholder={isBeastModeLocked ? "Chat is disabled in Beast Mode" : "Type your message..."}
+            placeholder={"Type your message..."}
             autoComplete="off"
-            disabled={isBeastModeLocked}
           />
-           <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageSelect}
-            accept="image/*"
-            className="hidden"
-            disabled={isBeastModeLocked}
-          />
-          <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={isBeastModeLocked}>
-            <ImageIcon className="h-4 w-4" />
-            <span className="sr-only">Add Image</span>
-          </Button>
-          <Button type="submit" size="icon" disabled={isBeastModeLocked}>
+          <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
             <span className="sr-only">Send</span>
           </Button>

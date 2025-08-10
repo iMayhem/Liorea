@@ -96,13 +96,11 @@ export interface Participant {
   uid: string;
   username: string | null;
   photoURL?: string | null;
-  isBeastMode?: boolean;
 }
 
 export interface ChatMessage {
     id: string;
     text: string;
-    imageUrl?: string | null; // Optional field for image data URI
     senderId: string;
     senderName: string;
     timestamp: any; // Can be Firebase ServerTimestamp
@@ -157,7 +155,6 @@ export interface UserProfile {
     status?: {
       isStudying: boolean;
       isJamming?: boolean;
-      isBeastMode?: boolean;
       roomId: string | null;
     }
     customTimetable?: CustomTimetable;
@@ -180,7 +177,6 @@ export interface Report {
     username: string | null;
     title: string;
     description: string;
-    imageUrl?: string | null;
     timestamp: any;
     status: 'open' | 'closed' | 'in-progress';
 }
