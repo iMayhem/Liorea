@@ -159,6 +159,7 @@ export interface UserProfile {
       roomId: string | null;
     }
     customTimetable?: CustomTimetable;
+    isBlocked?: boolean;
 }
 
 export interface PrivateChatMessage {

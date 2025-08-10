@@ -260,6 +260,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const joinRoom = useCallback(async (roomId: string) => {
         userHasLeftRef.current = false;
         if (!user || !profile?.username) return false;
+        
+        if (profile.isBlocked) {
+            toast({ title: "Access Denied", description: "You are currently blocked from joining study rooms.", variant: "destructive" });
+            return false;
+        }
+
         if (currentRoomId === roomId) return true;
         if (currentRoomId && currentRoomId !== roomId) {
             await leaveRoom(); // Leave current room before joining a new one

@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AppHeader } from '@/components/header';
-import { Loader2 } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { Loader2, Trash2 } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Report, UserProfile, StudyRoom, JamRoomState } from '@/lib/types';
+import type { Report, UserProfile } from '@/lib/types';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,6 +29,26 @@ interface UserManagementProps {
 }
 
 function UserManagement({ users, loading }: UserManagementProps) {
+    const { toast } = useToast();
+    const [blockingUid, setBlockingUid] = React.useState<string | null>(null);
+
+    const handleToggleBlock = async (uid: string, isCurrentlyBlocked: boolean) => {
+        setBlockingUid(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { isBlocked: !isCurrentlyBlocked });
+            toast({
+                title: `User ${isCurrentlyBlocked ? 'Unblocked' : 'Blocked'}`,
+                description: `The user has been successfully ${isCurrentlyBlocked ? 'unblocked' : 'blocked'}.`,
+            });
+        } catch (error) {
+            console.error("Failed to update user block status:", error);
+            toast({ title: "Error", description: "Could not update user status.", variant: "destructive" });
+        } finally {
+            setBlockingUid(null);
+        }
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -42,7 +62,7 @@ function UserManagement({ users, loading }: UserManagementProps) {
                             <TableRow>
                                 <TableHead>Username</TableHead>
                                 <TableHead>Email</TableHead>
-                                <TableHead>Path</TableHead>
+                                <TableHead>Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -52,7 +72,16 @@ function UserManagement({ users, loading }: UserManagementProps) {
                                 <TableRow key={user.uid}>
                                     <TableCell className="font-medium">{user.username}</TableCell>
                                     <TableCell>{user.email}</TableCell>
-                                    <TableCell>{user.preparationPath || 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <Button
+                                            variant={user.isBlocked ? 'secondary' : 'destructive'}
+                                            size="sm"
+                                            onClick={() => handleToggleBlock(user.uid, !!user.isBlocked)}
+                                            disabled={blockingUid === user.uid}
+                                        >
+                                            {blockingUid === user.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : (user.isBlocked ? 'Unblock' : 'Block')}
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -75,6 +104,40 @@ interface RoomManagementProps {
 }
 
 function RoomManagement({ rooms, loading }: RoomManagementProps) {
+    const { toast } = useToast();
+    const [deletingRoomId, setDeletingRoomId] = React.useState<string | null>(null);
+
+    const handleDeleteRoom = async (roomId: string, type: 'study' | 'jam') => {
+        setDeletingRoomId(roomId);
+        try {
+            const collectionName = type === 'study' ? 'studyRooms' : 'jamRooms';
+            const roomRef = doc(db, collectionName, roomId);
+            
+            // Delete subcollections (like chats) first
+            const chatCollectionRef = collection(db, collectionName, roomId, 'chats');
+            const chatSnapshot = await getDocs(chatCollectionRef);
+            const deletePromises = chatSnapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(deletePromises);
+
+            // Delete the room document itself
+            await deleteDoc(roomRef);
+
+            toast({
+                title: "Room Deleted",
+                description: `The ${type} room has been successfully deleted.`,
+            });
+        } catch (error) {
+            console.error("Error deleting room:", error);
+            toast({
+                title: 'Error',
+                description: 'Could not delete the room. Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setDeletingRoomId(null);
+        }
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -88,7 +151,7 @@ function RoomManagement({ rooms, loading }: RoomManagementProps) {
                             <TableRow>
                                 <TableHead>Room ID</TableHead>
                                 <TableHead>Type</TableHead>
-                                <TableHead className="text-right">Participants</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -98,7 +161,25 @@ function RoomManagement({ rooms, loading }: RoomManagementProps) {
                                 <TableRow key={room.id}>
                                     <TableCell className="font-mono text-xs truncate max-w-[100px]">{room.id}</TableCell>
                                     <TableCell className="capitalize">{room.type}</TableCell>
-                                    <TableCell className="text-right">{room.participants.length}</TableCell>
+                                    <TableCell className="text-right">
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="icon" disabled={deletingRoomId === room.id}>
+                                                    {deletingRoomId === room.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Room?</AlertDialogTitle>
+                                                    <AlertDialogDescription>This will permanently delete the room and its chat history. This action cannot be undone.</AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteRoom(room.id, room.type)}>Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

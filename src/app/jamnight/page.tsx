@@ -19,7 +19,7 @@ const PUBLIC_JAMNIGHT_ROOM_ID = "public-jamnight-room-v1";
 
 export default function JamnightPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [roomId, setRoomId] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
   const [isJoining, setIsJoining] = React.useState(false);
@@ -33,7 +33,13 @@ export default function JamnightPage() {
   }, [user, authLoading, router]);
 
   const handleCreateRoom = async () => {
-    if (!user) return;
+    if (!user || !profile) return;
+
+    if (profile.isBlocked) {
+        toast({ title: 'Action Denied', description: 'You are blocked from creating rooms.', variant: 'destructive' });
+        return;
+    }
+
     setIsCreating(true);
     try {
       const newRoomRef = doc(collection(db, 'jamRooms'));
@@ -60,6 +66,12 @@ export default function JamnightPage() {
   };
 
   const doJoinRoom = async (id: string) => {
+    if (!user || !profile) return;
+     if (profile.isBlocked) {
+        toast({ title: 'Action Denied', description: 'You are blocked from joining rooms.', variant: 'destructive' });
+        return;
+    }
+
     const roomRef = doc(db, 'jamRooms', id);
     const roomSnap = await getDoc(roomRef);
 
