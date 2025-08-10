@@ -126,7 +126,6 @@ export interface StudyRoom extends DocumentData {
     timerState: TimerState;
     notepads: Notepads;
     activeSound: SoundType;
-    isBeastMode?: boolean;
     typingUsers?: { [uid: string]: string };
 }
 
@@ -156,6 +155,7 @@ export interface UserProfile {
     status?: {
       isStudying: boolean;
       isJamming?: boolean;
+      isBeastMode?: boolean;
       roomId: string | null;
     }
     customTimetable?: CustomTimetable;

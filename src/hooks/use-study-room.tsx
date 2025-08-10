@@ -75,8 +75,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [isPrivateChatOpen, setIsPrivateChatOpen] = React.useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
     
-    // Beast Mode State
-    const isBeastMode = roomData?.isBeastMode || false;
+    // Beast Mode State (now local)
+    const [isBeastMode, setIsBeastMode] = React.useState(false);
     const isBeastModeLocked = isBeastMode && roomData?.timerState?.isActive && roomData?.timerState?.mode === 'study';
     
     // Notification state
@@ -97,6 +97,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
 
+    const toggleBeastMode = useCallback(() => {
+        setIsBeastMode(prev => !prev);
+    }, []);
 
     // Effect for private chat notifications
     useEffect(() => {
@@ -187,6 +190,13 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         timerIntervalRef.current = null;
         logTimeIntervalRef.current = null;
     }, []);
+    
+    // Update user's beast mode status in Firestore when local state changes
+    useEffect(() => {
+        if (user && currentRoomId) {
+            updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, isBeastMode: isBeastMode, roomId: currentRoomId }});
+        }
+    }, [isBeastMode, user, currentRoomId]);
 
     const leaveRoom = useCallback(async () => {
         if (!user || !profile || !currentRoomId) return;
@@ -196,7 +206,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         try {
             // Background cleanup
-            await updateUserProfile(user.uid, { status: { isStudying: false, roomId: null } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, isBeastMode: false, roomId: null } });
 
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
@@ -222,6 +232,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 setChatMessages([]);
                 setParticipants([]);
                 setIsFocusMode(false);
+                setIsBeastMode(false); // Reset local beast mode
                 cleanupListeners();
             }
             setIsLeaving(false);
@@ -262,7 +273,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             return false;
         }
         
-        await updateUserProfile(user.uid, { status: { isStudying: true, roomId: roomId }});
+        await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, isBeastMode: false, roomId: roomId }});
 
         const newParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL };
         const currentParticipants = docSnap.data().participants || [];
@@ -382,18 +393,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         };
     }, [roomData, user, participants, handleTimerUpdate]);
-
-    const toggleBeastMode = useCallback(async () => {
-        if (!currentRoomId) return;
-        const roomRef = doc(db, 'studyRooms', currentRoomId);
-        try {
-            await updateDoc(roomRef, { isBeastMode: !isBeastMode });
-        } catch (error) {
-            if ((error as any).code !== 'not-found') {
-                console.error("Failed to toggle beast mode:", error);
-            }
-        }
-    }, [currentRoomId, isBeastMode]);
 
 
     // Notepad handlers
