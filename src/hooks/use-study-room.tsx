@@ -211,7 +211,12 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
-                const userParticipant = { uid: user.uid, username: profile.username, photoURL: profile.photoURL, isBeastMode: profile.status?.isBeastMode };
+                const userParticipant: Participant = { 
+                    uid: user.uid, 
+                    username: profile.username, 
+                    photoURL: profile.photoURL, 
+                    isBeastMode: !!profile.status?.isBeastMode 
+                };
                 const typingField = `typingUsers.${user.uid}`;
                 await updateDoc(roomRef, {
                     participants: arrayRemove(userParticipant),
@@ -319,7 +324,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             uid: user.uid, 
             username: profile.username, 
             photoURL: profile.photoURL,
-            isBeastMode: profile.status?.isBeastMode
+            isBeastMode: !!profile.status?.isBeastMode
         };
         const currentParticipants = docSnap.data().participants || [];
         if(!currentParticipants.some((p: Participant) => p.uid === user.uid)) {
