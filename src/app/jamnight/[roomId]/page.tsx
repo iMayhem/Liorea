@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, onSnapshot, updateDoc, getDoc, arrayUnion, arrayRemove, serverTimestamp, collection, addDoc, query, orderBy, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useDebouncedCallback } from 'use-debounce';
-import type { ChatMessage } from '@/lib/types';
+import type { ChatMessage, Participant } from '@/lib/types';
 import { GroupChat } from '@/components/group-chat';
 import { Label } from '@/components/ui/label';
 import { updateUserProfile } from '@/lib/firestore';
@@ -29,6 +29,7 @@ interface JamRoomState {
     lastSeekTimestamp: any;
     lastSeekTimeSeconds: number;
     typingUsers?: { [uid: string]: string };
+    participants?: Participant[];
 }
 
 const PUBLIC_JAMNIGHT_ROOM_ID = "public-jamnight-room-v1";

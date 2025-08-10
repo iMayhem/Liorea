@@ -9,6 +9,7 @@ import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/fire
 import { StudyRoomProvider } from './use-study-room';
 import type { UserProfile } from '@/lib/types';
 import { useToast } from './use-toast';
+import { Timestamp } from 'firebase/firestore';
 
 
 interface User {
@@ -38,6 +39,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const { toast } = useToast();
 
   const fetchProfile = useCallback(async (uid: string) => {
     setLoadingProfile(true);
@@ -46,11 +48,12 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setProfile(userProfile);
     } catch (error) {
         console.error("Error fetching user profile:", error);
+        toast({ title: "Error", description: "Failed to load your profile.", variant: "destructive" });
         setProfile(null);
     } finally {
         setLoadingProfile(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

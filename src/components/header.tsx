@@ -10,13 +10,23 @@ import { useAuth } from "@/hooks/use-auth";
 import { useBackground } from "@/hooks/use-background";
 import * as React from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { useStudyRoom } from "@/hooks/use-study-room";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { ScrollArea } from "./ui/scroll-area";
+import type { Participant } from "@/lib/types";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export function AppHeader() {
   const { user, profile, logout } = useAuth();
+  const { participants: studyRoomParticipants } = useStudyRoom();
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
   const { changeBackground, isChanging, clearCustomBackground } = useBackground();
+  const [jamRoomParticipants, setJamRoomParticipants] = React.useState<Participant[]>([]);
+
 
   const handleBack = () => {
     router.back();
@@ -29,10 +39,28 @@ export function AppHeader() {
     changeBackground();
   };
 
-  const isHomePage = ['/neet-achiever-home', '/neet-home', '/jee-home', '/'].includes(pathname);
   const isStudyRoom = pathname.startsWith('/study-together/');
   const isJamRoom = pathname.startsWith('/jamnight/');
   const roomId = isStudyRoom || isJamRoom ? pathname.split('/').pop() : null;
+
+  React.useEffect(() => {
+    if (!isJamRoom || !roomId) {
+        setJamRoomParticipants([]);
+        return;
+    }
+    const roomRef = doc(db, 'jamRooms', roomId);
+    const unsubscribe = onSnapshot(roomRef, (doc) => {
+        if (doc.exists()) {
+            setJamRoomParticipants(doc.data().participants || []);
+        } else {
+            setJamRoomParticipants([]);
+        }
+    });
+    return () => unsubscribe();
+  }, [isJamRoom, roomId]);
+  
+  const participants = isStudyRoom ? studyRoomParticipants : jamRoomParticipants;
+
 
   const handleCopyRoomId = () => {
     if (!roomId) return;
@@ -46,13 +74,34 @@ export function AppHeader() {
   const getHeaderContent = () => {
       if(isStudyRoom || isJamRoom) {
           return (
-            <div className="flex w-full items-center justify-between">
+            <div className="flex w-full items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     {isStudyRoom && <Users className="h-6 w-6 text-primary" />}
                     {isJamRoom && <Music className="h-6 w-6 text-primary" />}
                     <span className="font-bold">{isStudyRoom ? "Study Room" : "Jamnight"}</span>
                 </div>
-                 <div className="flex items-center gap-2">
+                
+                <div className="flex-1 min-w-0">
+                    <TooltipProvider>
+                    <div className="flex items-center gap-3">
+                        {participants.map(p => (
+                             <Tooltip key={p.uid}>
+                                <TooltipTrigger>
+                                     <Avatar>
+                                        <AvatarImage src={p.photoURL || ''} alt={p.username || 'User'} />
+                                        <AvatarFallback>{p.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                                    </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{p.username}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        ))}
+                    </div>
+                    </TooltipProvider>
+                </div>
+
+                 <div className="flex items-center gap-2 shrink-0">
                     {roomId && (
                        <Button variant="outline" size="sm" onClick={handleCopyRoomId}>
                             <Clipboard className="mr-2 h-4 w-4"/>
@@ -120,6 +169,8 @@ export function AppHeader() {
          </>
       )
   }
+
+  const isHomePage = ['/neet-achiever-home', '/neet-home', '/jee-home', '/'].includes(pathname);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 supports-[backdrop-filter]:bg-background/60">

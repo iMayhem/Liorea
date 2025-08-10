@@ -1,4 +1,6 @@
 // src/lib/types.ts
+import { DocumentData } from 'firebase/firestore';
+
 export interface Task {
   id: string;
   label: string;
@@ -97,12 +99,15 @@ export interface Notepads {
   [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...', owner: null }, notepad1: {...} }
 }
 
-export interface StudyRoom {
+export interface StudyRoom extends DocumentData {
     id: string;
     ownerId: string;
     createdAt: any;
     participants: Participant[];
-    // ... other room properties
+    timerState: TimerState;
+    notepads: Notepads;
+    activeSound: SoundType;
+    typingUsers?: { [uid: string]: string };
 }
 
 
