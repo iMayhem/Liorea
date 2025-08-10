@@ -102,7 +102,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                 const allUsers = await getAllUsers();
                 const otherUsers = allUsers.filter(u => u.uid !== user.uid);
                 
-                const updatedNewMessages = new Set(newMessagesFrom);
+                const updatedNewMessages = new Set<string>();
 
                 for (const otherUser of otherUsers) {
                     const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${otherUser.uid}`;
@@ -131,7 +131,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         return () => clearInterval(intervalId);
 
-    }, [user, newMessagesFrom]);
+    }, [user]);
 
     const clearChatNotification = useCallback((userId: string) => {
         const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${userId}`;
