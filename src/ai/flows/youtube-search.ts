@@ -1,186 +1,71 @@
-// src/lib/types.ts
-import { DocumentData } from 'firebase/firestore';
+'use server';
+/**
+ * @fileOverview A flow for searching YouTube videos.
+ *
+ * - searchYoutube - A function that takes a search query and returns a list of videos.
+ * - YoutubeSearchInput - The input type for the searchYoutube function.
+ * - YoutubeSearchOutput - The return type for the searchYoutube function.
+ */
+
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-// Kept for default data structure
-export interface Task {
-  id: string;
-  label: string;
-  icon?: React.ReactNode;
-}
+export const YoutubeSearchInputSchema = z.object({
+  query: z.string().describe('The search query for YouTube.'),
+});
+export type YoutubeSearchInput = z.infer<typeof YoutubeSearchInputSchema>;
 
-export interface Subject {
-  name: string;
-}
+const VideoSchema = z.object({
+    videoId: z.string(),
+    title: z.string(),
+    thumbnail: z.string(),
+});
 
-// New types for custom timetables
-export interface CustomTask {
-  id: string;
-  label: string;
-}
+export const YoutubeSearchOutputSchema = z.object({
+  videos: z.array(VideoSchema).describe('A list of YouTube video results.'),
+});
+export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;
 
-export interface CustomSubject {
-  id: string;
-  name: string;
-  tasks: CustomTask[];
-}
+const youtubeSearchFlow = ai.defineFlow(
+  {
+    name: 'youtubeSearchFlow',
+    inputSchema: YoutubeSearchInputSchema,
+    outputSchema: YoutubeSearchOutputSchema,
+  },
+  async ({ query }) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('YouTube API key is not configured.');
+    }
 
-export interface CustomTimetable {
-  // A key can be a number (0-6 for day of week) or a string ('yyyy-MM-dd' for a specific date)
-  [key: number | string]: CustomSubject[];
-}
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+      query
+    )}&type=video&key=${apiKey}&maxResults=10`;
 
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error('YouTube API Error:', await response.text());
+        throw new Error('Failed to fetch from YouTube API.');
+      }
+      const data = await response.json();
+      
+      const videos = data.items.map((item: any) => ({
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        thumbnail: item.snippet.thumbnails.default.url,
+      }));
 
-export interface Test {
-  name: string;
-  date: string;
-}
+      return { videos };
 
-export type DaySchedule = CustomSubject[];
-
-export interface TimeTableData {
-  [day: string]: DaySchedule;
-}
-
-// UserProgress can now store a numeric score for a subject
-// alongside the boolean task completion status.
-export interface UserProgress {
-  [day:string]: {
-    [subject: string]: {
-      [taskId: string]: boolean;
-      score?: number; // Optional score field
+    } catch (error) {
+      console.error('Error in youtubeSearchFlow:', error);
+      return { videos: [] };
     }
   }
-}
-
-export interface Question {
-  id?: string; // Optional for local data
-  questionNumber: number;
-  questionText: string;
-  questionImageURL?: string;
-  options: {[key: string]: string};
-  correctAnswer: string;
-  chapter?: string;
-  subject?: string;
-}
-
-export interface QuizProgress {
-    [questionNumber: number]: {
-        selected: string;
-        isCorrect: boolean;
-        bookmarked?: boolean;
-    }
-}
-
-export interface UserQuizProgress {
-    [subject: string]: {
-        [chapter: string]: QuizProgress
-    }
-}
-
-// Types for "Study Together" feature
-export type AnimationType = 'rain' | 'fire' | 'snow' | 'confetti' | 'stars';
-export type SoundType = 'rain' | 'fire' | 'coffee' | 'ocean' | 'none';
-
-export interface TimerState {
-    mode: 'study' | 'shortBreak' | 'longBreak';
-    time: number;
-    isActive: boolean;
-    startTime: any; // Can be Firebase ServerTimestamp
-    studyDuration?: number;
-    shortBreakDuration?: number;
-    longBreakDuration?: number;
-}
-
-export interface Participant {
-  uid: string;
-  username: string | null;
-  photoURL?: string | null;
-  isBeastMode?: boolean;
-}
-
-export interface ChatMessage {
-    id: string;
-    text: string;
-    imageUrl?: string | null; // Optional field for image data URI
-    senderId: string;
-    senderName: string;
-    timestamp: any; // Can be Firebase ServerTimestamp
-    replyToId?: string;
-    replyToText?: string;
-}
-
-export interface Notepad {
-  name: string;
-  content: string;
-  owner: string | null; // UID of the owner, null for collaborative
-}
-
-export interface Notepads {
-  [id: string]: Notepad; // e.g., { collaborative: { name: '...', content: '...', owner: null }, notepad1: {...} }
-}
-
-export interface StudyRoom extends DocumentData {
-    id: string;
-    ownerId: string;
-    createdAt: any;
-    participants: Participant[];
-    timerState: TimerState;
-    notepads: Notepads;
-    activeSound: SoundType;
-    typingUsers?: { [uid: string]: string };
-}
-
-// Added for admin panel
-export interface JamRoomState {
-    currentVideoId: string;
-    participants: Participant[];
-}
+);
 
 
-// New type for user profiles
-export type PreparationPath = 'neet-achiever' | 'neet-other' | 'jee';
-
-export interface UserProfile {
-    uid: string;
-    username: string | null;
-    email: string | null;
-    photoURL: string | null;
-    totalStudyHours: number;
-    dailyStudyHours?: number; // Optional field for daily calculation
-    dailyStreak: number;
-    mockScores: number[];
-    leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
-    createdAt: any; // Can be server timestamp
-    lastSeen: any; // Can be server timestamp
-    preparationPath?: PreparationPath | null;
-    status?: {
-      isStudying: boolean;
-      isJamming?: boolean;
-      isBeastMode?: boolean;
-      roomId: string | null;
-    }
-    customTimetable?: CustomTimetable;
-    isBlocked?: boolean;
-}
-
-export interface PrivateChatMessage {
-    id: string;
-    text: string;
-    senderId: string;
-    receiverId: string;
-    timestamp: any; // Firestore ServerTimestamp
-    replyToId?: string;
-    replyToText?: string;
-}
-
-
-export interface Report {
-    userId: string;
-    username: string | null;
-    title: string;
-    description: string;
-    imageUrl?: string | null;
-    timestamp: any;
-    status: 'open' | 'closed' | 'in-progress';
+export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
+  return youtubeSearchFlow(input);
 }
