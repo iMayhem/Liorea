@@ -1,5 +1,4 @@
 // src/lib/types/youtube.ts
-'use client';
 
 import { z } from 'zod';
 
