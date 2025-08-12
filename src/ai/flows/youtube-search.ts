@@ -17,7 +17,9 @@ const youtubeSearchFlow = ai.defineFlow(
   async ({ query }) => {
     const apiKey = process.env.YOUTUBE_API_KEY; // Corrected to use a specific YouTube API key
     if (!apiKey) {
-      throw new Error('YOUTUBE_API_KEY is not configured in the environment.');
+      console.error('YOUTUBE_API_KEY is not configured in the environment.');
+      // Return empty results instead of throwing an error
+      return { videos: [] };
     }
 
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
@@ -28,7 +30,8 @@ const youtubeSearchFlow = ai.defineFlow(
       const response = await fetch(url);
       if (!response.ok) {
         console.error('YouTube API Error:', await response.text());
-        throw new Error('Failed to fetch from YouTube API.');
+        // Return empty results on API failure
+        return { videos: [] };
       }
       const data = await response.json();
       
