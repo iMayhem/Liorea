@@ -321,7 +321,10 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     };
     
     const handleSelectVideo = (videoId: string) => {
-        if(videoId) {
+        if(videoId && roomState) {
+            // Optimistic UI update for instant feedback
+            setRoomState(prevState => prevState ? { ...prevState, currentVideoId: videoId } : null);
+            // Then, update Firestore for everyone else
             updateRoomState({ currentVideoId: videoId });
         }
     };
@@ -339,7 +342,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
       <AppHeader />
       <main className="flex-1 overflow-auto pb-24">
         <div className="container mx-auto h-full p-4 md:p-6 lg:p-8 flex flex-col gap-6 lg:gap-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 flex-grow">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-2 flex flex-col h-full">
                   <Card className="w-full h-full flex flex-col overflow-hidden min-h-[250px] md:min-h-[400px] lg:min-h-[500px]">
                     <YouTube
