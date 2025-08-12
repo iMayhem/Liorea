@@ -38,7 +38,12 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchProfile = useCallback(async (uid: string) => {
     setLoadingProfile(true);
@@ -163,13 +168,17 @@ export function AuthProvider({children}: {children: ReactNode}) {
   
   const value = {user, profile, loading, loadingProfile, signInWithGoogle, logout, refreshProfile};
 
+  if (!isClient || loading) {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-transparent">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={value}>
-        {loading ? (
-            <div className="flex items-center justify-center min-h-screen bg-background">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        ) : children}
+        {children}
     </AuthContext.Provider>
   );
 }
