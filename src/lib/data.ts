@@ -3,7 +3,7 @@ import {parse, getDay, format} from 'date-fns';
 
 export const testSchedule: Test[] = [
     { name: 'Minor Test-1', date: 'July 27, 2025' },
-    { name: 'Minor Test-2', date: 'August 17, 2025' },
+    { name: "Something's coming", date: 'August 17, 2025' },
     { name: 'Minor Test-3', date: 'September 7, 2025' },
     { name: 'Minor Test-4', date: 'September 28, 2025' },
     { name: 'Minor Test-5', date: 'October 17, 2025' },
@@ -30,7 +30,7 @@ export const defaultAchieverSchedule: {[key: number]: CustomSubject[]} = {
   1: [ // Monday
     {id: 'sub-1', name: '12th Physics', tasks: defaultTasks},
     {id: 'sub-2', name: 'Inorganic Chemistry', tasks: defaultTasks},
-    {id: 'sub-3', name: 'Botany', tasks: defaultTasks},
+    {id: 'sub-3', name: 'Botany', tasks: genericTasks},
     {id: 'sub-4', name: 'Backlog', tasks: genericTasks},
   ],
   2: [ // Tuesday
