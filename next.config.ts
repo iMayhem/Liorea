@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 const {headers} = require('./headers');
 
@@ -26,6 +27,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'storage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
         port: '',
         pathname: '/**',
       }
