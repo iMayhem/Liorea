@@ -77,7 +77,7 @@ function YouTubeSearch({ onSelectVideo }: { onSelectVideo: (videoId: string) => 
                     </Button>
                 </div>
                  {searchResults.length > 0 && (
-                    <ScrollArea className="h-48">
+                    <ScrollArea className="h-72">
                         <div className="space-y-2">
                             {searchResults.map(video => (
                                 <div key={video.videoId} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent cursor-pointer" onClick={() => onSelectVideo(video.videoId)}>
