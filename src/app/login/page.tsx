@@ -49,7 +49,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
             <AppLogo />
           </div>
-          <CardTitle>Welcome to Study Tracker</CardTitle>
+          <CardTitle>Welcome to Liorea</CardTitle>
           <CardDescription>Sign in with your Google account to continue.</CardDescription>
         </CardHeader>
           <CardContent className="space-y-4">

@@ -129,7 +129,7 @@ export function AppHeader() {
               {isHomePage && (
                 <Link href="/" className="flex items-center space-x-2">
                   <AppLogo />
-                  <span className="font-bold">Study Tracker</span>
+                  <span className="font-bold">Liorea</span>
                 </Link>
               )}
             </div>

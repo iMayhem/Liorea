@@ -17,7 +17,7 @@ const fontHeading = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Study Tracker',
+  title: 'Liorea',
   description: 'Track your studies with your partner.',
 };
 
