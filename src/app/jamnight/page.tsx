@@ -48,9 +48,6 @@ export default function JamnightPage() {
         ownerId: user.uid,
         createdAt: serverTimestamp(),
         currentVideoId: 'jfKfPfyJRdk', // A default video
-        playerState: 'PAUSED',
-        lastSeekTimestamp: serverTimestamp(),
-        lastSeekTimeSeconds: 0,
         participants: [],
         typingUsers: {}, // Initialize for chat
       });
@@ -85,9 +82,6 @@ export default function JamnightPage() {
                 ownerId: user.uid,
                 createdAt: serverTimestamp(),
                 currentVideoId: 'jfKfPfyJRdk', // A default video
-                playerState: 'PAUSED',
-                lastSeekTimestamp: serverTimestamp(),
-                lastSeekTimeSeconds: 0,
                 participants: [],
                 typingUsers: {},
            });

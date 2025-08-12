@@ -25,15 +25,8 @@ import { searchYoutube } from '@/ai/flows/youtube-search';
 import type { YoutubeSearchOutput } from '@/lib/types/youtube';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const INACTIVITY_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
-
-type PlayerState = 'PLAYING' | 'PAUSED' | 'BUFFERING';
-
 interface JamRoomState {
     currentVideoId: string;
-    playerState: PlayerState;
-    lastSeekTimestamp: any;
-    lastSeekTimeSeconds: number;
     typingUsers?: { [uid: string]: string };
     participants?: Participant[];
     ownerId?: string;
@@ -102,68 +95,14 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
 
     const [roomState, setRoomState] = React.useState<JamRoomState | null>(null);
     const playerRef = React.useRef<YouTubePlayer | null>(null);
-    const isLocalChangeRef = React.useRef(false); // To prevent feedback loops
     const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
     
-    // Function to parse YouTube video ID from URL
-    const getYouTubeId = (url: string) => {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    };
-
     // Firestore update function
     const updateRoomState = React.useCallback(async (newState: Partial<JamRoomState>) => {
         if (!roomId) return;
-        isLocalChangeRef.current = true;
         const roomRef = doc(db, 'jamRooms', roomId);
         await updateDoc(roomRef, newState);
-        // Allow remote changes to be processed after a short delay
-        setTimeout(() => { isLocalChangeRef.current = false; }, 500);
     }, [roomId]);
-    
-    const debouncedSeekUpdate = useDebouncedCallback(async (time: number) => {
-        await updateRoomState({ lastSeekTimeSeconds: time, lastSeekTimestamp: serverTimestamp() });
-    }, 1000);
-
-    // Effect for inactive user cleanup (owner only)
-    React.useEffect(() => {
-        if (!roomId || !user || !roomState?.ownerId || roomState.ownerId !== user.uid) {
-            return;
-        }
-
-        const cleanupInterval = setInterval(async () => {
-            const roomRef = doc(db, 'jamRooms', roomId);
-            const roomSnap = await getDoc(roomRef);
-            if (!roomSnap.exists()) return;
-
-            const currentParticipants: Participant[] = roomSnap.data().participants || [];
-            const batch = writeBatch(db);
-            let changesMade = false;
-
-            for (const p of currentParticipants) {
-                if (p.uid === user.uid) continue; // Don't check owner
-
-                const pProfile = await getUserProfile(p.uid);
-                if (pProfile?.lastSeen) {
-                    const lastSeenDate = pProfile.lastSeen.toDate ? pProfile.lastSeen.toDate() : new Date(pProfile.lastSeen);
-                    if (Date.now() - lastSeenDate.getTime() > INACTIVITY_THRESHOLD_MS) {
-                        batch.update(roomRef, { participants: arrayRemove(p) });
-                        const userDocRef = doc(db, 'users', p.uid);
-                        batch.update(userDocRef, { status: { isStudying: false, isJamming: false, roomId: null } });
-                        changesMade = true;
-                    }
-                }
-            }
-            if (changesMade) {
-                await batch.commit();
-            }
-        }, 60 * 1000); // Run every minute
-
-        return () => clearInterval(cleanupInterval);
-
-    }, [roomId, user, roomState]);
-
 
     // Effect to handle joining/leaving the room and listening for state changes
     React.useEffect(() => {
@@ -172,7 +111,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
         const roomRef = doc(db, 'jamRooms', roomId);
         const chatQuery = query(collection(db, 'jamRooms', roomId, 'chats'), orderBy('timestamp', 'asc'));
 
-        // Check if room exists
         getDoc(roomRef).then(async (docSnap) => {
             if (!docSnap.exists()) {
                 toast({ title: "Error", description: "Jam room not found.", variant: "destructive" });
@@ -187,30 +125,12 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     participants: arrayUnion({ uid: user.uid, username: profile.username, photoURL: profile.photoURL }) 
                 });
             }
-            // Update user's status to indicate they are in a jam session
             await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: true, roomId: roomId } });
         });
 
         const unsubscribeRoom = onSnapshot(roomRef, (doc) => {
-            if (isLocalChangeRef.current) return;
             const data = doc.data() as JamRoomState;
             setRoomState(data);
-
-            const player = playerRef.current;
-            if(!player || !data) return;
-
-            const currentPlayerState = player.getPlayerState();
-            
-            // Only seek if the difference is significant to avoid jitter
-            if (data.lastSeekTimeSeconds && Math.abs(data.lastSeekTimeSeconds - player.getCurrentTime()) > 2) {
-                player.seekTo(data.lastSeekTimeSeconds, true);
-            }
-
-            if (data.playerState === 'PLAYING' && currentPlayerState !== 1) {
-                player.playVideo();
-            } else if (data.playerState === 'PAUSED' && currentPlayerState !== 2) {
-                player.pauseVideo();
-            }
         });
 
         const unsubscribeChat = onSnapshot(chatQuery, (snapshot) => {
@@ -219,7 +139,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             setChatMessages(messages);
         });
         
-        // Cleanup on unmount
         return () => {
             unsubscribeRoom();
             unsubscribeChat();
@@ -232,7 +151,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                         });
                     }
                 })
-                // Reset user's status when they leave
                 updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null } });
             }
         };
@@ -241,35 +159,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     
     const onPlayerReady = (event: { target: YouTubePlayer }) => {
         playerRef.current = event.target;
-        // Sync to server state once player is ready
-        if (roomState) {
-            if (playerRef.current?.seekTo) {
-                playerRef.current.seekTo(roomState.lastSeekTimeSeconds, true);
-            }
-            if (roomState.playerState === 'PLAYING') {
-                playerRef.current?.playVideo();
-            }
-        }
-    };
-    
-    const onPlayerStateChange = (event: { data: number }) => {
-        // This is a special handler for the seek event since the YouTube API doesn't have a direct 'onSeek' event.
-        // It's part of the onStateChange event with a BUFFERING state.
-        if (event.data === 3) { // Buffering state, often triggered by seeking
-            if(playerRef.current?.getCurrentTime) {
-                debouncedSeekUpdate(playerRef.current.getCurrentTime());
-            }
-            return;
-        }
-
-        switch (event.data) {
-            case 1: // Playing
-                updateRoomState({ playerState: 'PLAYING', lastSeekTimeSeconds: playerRef.current?.getCurrentTime() });
-                break;
-            case 2: // Paused
-                updateRoomState({ playerState: 'PAUSED', lastSeekTimeSeconds: playerRef.current?.getCurrentTime() });
-                break;
-        }
     };
     
      const handleSendMessage = async (message: {text: string}, replyTo: { id: string, text: string } | null) => {
@@ -313,9 +202,6 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     
     const handleSelectVideo = (videoId: string) => {
         if(videoId && roomState) {
-            // Optimistic UI update for instant feedback
-            setRoomState(prevState => prevState ? { ...prevState, currentVideoId: videoId } : null);
-            // Then, update Firestore for everyone else
             updateRoomState({ currentVideoId: videoId });
         }
     };
@@ -339,16 +225,16 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     <YouTube
                       videoId={roomState.currentVideoId}
                       onReady={onPlayerReady}
-                      onStateChange={onPlayerStateChange}
                       opts={{
                         height: '100%',
                         width: '100%',
                         playerVars: {
-                          autoplay: 0,
+                          autoplay: 1, // Autoplay for new videos
                           controls: 1,
                         },
                       }}
                       className="w-full h-full flex-grow"
+                      key={roomState.currentVideoId} // Force re-render on video change
                     />
                   </Card>
                 </div>
