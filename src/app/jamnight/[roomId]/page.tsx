@@ -338,36 +338,40 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     <div className="flex flex-col h-screen">
       <AppHeader />
       <main className="flex-1 overflow-auto pb-24">
-        <div className="container mx-auto h-full p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            <div className="lg:col-span-2 flex flex-col h-full gap-6">
-              <Card className="w-full h-full flex flex-col overflow-hidden">
-                <YouTube
-                  videoId={roomState.currentVideoId}
-                  onReady={onPlayerReady}
-                  onStateChange={onPlayerStateChange}
-                  opts={{
-                    height: '100%',
-                    width: '100%',
-                    playerVars: {
-                      autoplay: 0,
-                      controls: 1,
-                    },
-                  }}
-                  className="w-full h-full min-h-[250px] md:min-h-[400px] lg:min-h-0"
-                />
-              </Card>
-               <YouTubeSearch onSelectVideo={handleSelectVideo} />
+        <div className="container mx-auto h-full p-4 md:p-6 lg:p-8 flex flex-col gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 flex-grow">
+                <div className="lg:col-span-2 flex flex-col h-full">
+                  <Card className="w-full h-full flex flex-col overflow-hidden min-h-[250px] md:min-h-[400px] lg:min-h-[500px]">
+                    <YouTube
+                      videoId={roomState.currentVideoId}
+                      onReady={onPlayerReady}
+                      onStateChange={onPlayerStateChange}
+                      opts={{
+                        height: '100%',
+                        width: '100%',
+                        playerVars: {
+                          autoplay: 0,
+                          controls: 1,
+                        },
+                      }}
+                      className="w-full h-full flex-grow"
+                    />
+                  </Card>
+                </div>
+                <div className="lg:col-span-1 flex flex-col h-full min-h-[400px] lg:min-h-0">
+                  <GroupChat
+                    messages={chatMessages}
+                    onSendMessage={handleSendMessage}
+                    currentUserId={user!.uid}
+                    onTyping={handleTyping}
+                    typingUsers={roomState.typingUsers || {}}
+                  />
+                </div>
             </div>
-            <div className="lg:col-span-1 flex flex-col h-full min-h-[400px] lg:min-h-0">
-              <GroupChat
-                messages={chatMessages}
-                onSendMessage={handleSendMessage}
-                currentUserId={user!.uid}
-                onTyping={handleTyping}
-                typingUsers={roomState.typingUsers || {}}
-              />
+            <div className="w-full">
+              <YouTubeSearch onSelectVideo={handleSelectVideo} />
             </div>
-          </div>
+        </div>
       </main>
     </div>
   );
