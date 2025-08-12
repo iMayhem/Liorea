@@ -170,6 +170,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     
     const handleSelectVideo = (videoId: string) => {
         if(videoId) {
+            setRoomState(prevState => prevState ? { ...prevState, currentVideoId: videoId } : null);
             updateRoomState({ currentVideoId: videoId });
         }
     };
@@ -211,7 +212,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                     onSendMessage={handleSendMessage}
                     currentUserId={user!.uid}
                     onTyping={handleTyping}
-                    typingUsers={roomState.typingUsers || {}}
+                    typingUsers={{}}
                   />
                 </div>
             </div>
