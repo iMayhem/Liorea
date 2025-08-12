@@ -10,6 +10,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2, BrainCircuit, Music, Sun, Moon, Palette, MessageSquareWarning, Trophy, Settings } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { CountdownTimer } from '@/components/countdown-timer';
+import { TestCountdownTimer } from '@/components/test-countdown-timer';
+import { testSchedule } from '@/lib/data';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -126,44 +128,58 @@ export default function NeetHomePage() {
         </div>
         
         <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-8">
-            <LiveStudyList />
-            <CountdownTimer targetDate={neet2026ExamDate} title="NEET 2026 Countdown" />
+           <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-start justify-center gap-8">
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
+                    <LiveStudyList />
+                    <CountdownTimer targetDate={neet2026ExamDate} title="NEET 2026 Countdown" />
+                </div>
 
-             <div className="relative w-full max-w-md mx-auto">
-                <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
-                  <CardContent className="flex justify-center p-0">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={handleDateSelect}
-                      className="rounded-md"
-                      month={currentMonth}
-                      onMonthChange={setCurrentMonth}
-                      modifiers={{
-                        studyDay: (day) => {
-                            const dateKey = format(day, 'yyyy-MM-dd');
-                            return studyLogs[dateKey] > 0;
-                        }
-                      }}
-                      modifiersClassNames={{
-                          studyDay: 'study-day-modifier'
-                      }}
-                      modifiersStyles={{ studyDay: studyDayStyle }}
-                    />
-                  </CardContent>
-                </Card>
-                 <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
-                    onClick={() => setIsSettingsOpen(true)}
-                >
-                    <Settings className="h-5 w-5" />
-                </Button>
+                <div className="relative w-full max-w-md mx-auto">
+                    <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
+                        <CardContent className="flex justify-center p-0">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={handleDateSelect}
+                                className="rounded-md"
+                                month={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                modifiers={{
+                                    studyDay: (day) => {
+                                        const dateKey = format(day, 'yyyy-MM-dd');
+                                        return studyLogs[dateKey] > 0;
+                                    }
+                                }}
+                                modifiersClassNames={{
+                                    studyDay: 'study-day-modifier'
+                                }}
+                                modifiersStyles={{ studyDay: studyDayStyle }}
+                            />
+                        </CardContent>
+                    </Card>
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
+                        onClick={() => setIsSettingsOpen(true)}
+                    >
+                        <Settings className="h-5 w-5" />
+                    </Button>
+                </div>
+
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
+                    <TestCountdownTimer tests={testSchedule} />
+                </div>
             </div>
         </div>
 
         <div className="mt-8 flex gap-4">
+             <Button asChild>
+                <Link href="/practice">
+                    <BrainCircuit className="mr-2 h-4 w-4" />
+                    Practice Module
+                </Link>
+            </Button>
             <Button asChild variant="secondary">
                 <Link href="/jamnight">
                     <Music className="mr-2 h-4 w-4" />
