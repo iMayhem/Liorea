@@ -3,28 +3,10 @@
  * @fileOverview A flow for searching YouTube videos.
  *
  * - searchYoutube - A function that takes a search query and returns a list of videos.
- * - YoutubeSearchInput - The input type for the searchYoutube function.
- * - YoutubeSearchOutput - The return type for the searchYoutube function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-
-export const YoutubeSearchInputSchema = z.object({
-  query: z.string().describe('The search query for YouTube.'),
-});
-export type YoutubeSearchInput = z.infer<typeof YoutubeSearchInputSchema>;
-
-const VideoSchema = z.object({
-    videoId: z.string(),
-    title: z.string(),
-    thumbnail: z.string(),
-});
-
-export const YoutubeSearchOutputSchema = z.object({
-  videos: z.array(VideoSchema).describe('A list of YouTube video results.'),
-});
-export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;
+import { YoutubeSearchInputSchema, YoutubeSearchOutputSchema, type YoutubeSearchInput, type YoutubeSearchOutput } from '@/lib/types/youtube';
 
 const youtubeSearchFlow = ai.defineFlow(
   {

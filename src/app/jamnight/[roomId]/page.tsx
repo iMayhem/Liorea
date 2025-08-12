@@ -22,7 +22,7 @@ import { updateUserProfile, getUserProfile } from '@/lib/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { searchYoutube } from '@/ai/flows/youtube-search';
-import type { YoutubeSearchOutput } from '@/ai/flows/youtube-search';
+import type { YoutubeSearchOutput } from '@/lib/types/youtube';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const INACTIVITY_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
