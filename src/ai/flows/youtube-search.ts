@@ -15,9 +15,9 @@ const youtubeSearchFlow = ai.defineFlow(
     outputSchema: YoutubeSearchOutputSchema,
   },
   async ({ query }) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.YOUTUBE_API_KEY; // Corrected to use a specific YouTube API key
     if (!apiKey) {
-      throw new Error('YouTube API key is not configured.');
+      throw new Error('YOUTUBE_API_KEY is not configured in the environment.');
     }
 
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
