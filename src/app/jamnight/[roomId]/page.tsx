@@ -253,34 +253,25 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     };
     
     const onPlayerStateChange = (event: { data: number }) => {
+        // This is a special handler for the seek event since the YouTube API doesn't have a direct 'onSeek' event.
+        // It's part of the onStateChange event with a BUFFERING state.
+        if (event.data === 3) { // Buffering state, often triggered by seeking
+            if(playerRef.current?.getCurrentTime) {
+                debouncedSeekUpdate(playerRef.current.getCurrentTime());
+            }
+            return;
+        }
+
         switch (event.data) {
             case 1: // Playing
-                updateRoomState({ playerState: 'PLAYING' });
-                // When starting to play, also sync the current time
-                if(playerRef.current?.getCurrentTime) {
-                    debouncedSeekUpdate(playerRef.current.getCurrentTime());
-                }
+                updateRoomState({ playerState: 'PLAYING', lastSeekTimeSeconds: playerRef.current?.getCurrentTime() });
                 break;
             case 2: // Paused
-                updateRoomState({ playerState: 'PAUSED' });
+                updateRoomState({ playerState: 'PAUSED', lastSeekTimeSeconds: playerRef.current?.getCurrentTime() });
                 break;
         }
     };
     
-    // Interval to sync seek time periodically, since there's no direct 'onSeek' event
-    React.useEffect(() => {
-        const interval = setInterval(() => {
-            // Only the person playing the video should be sending seek updates
-            if (playerRef.current && playerRef.current.getPlayerState && playerRef.current.getPlayerState() === 1) { 
-                 if(playerRef.current?.getCurrentTime) {
-                    const currentTime = playerRef.current.getCurrentTime();
-                    debouncedSeekUpdate(currentTime);
-                }
-            }
-        }, 5000); // Sync every 5 seconds
-        return () => clearInterval(interval);
-    }, [debouncedSeekUpdate]);
-
      const handleSendMessage = async (message: {text: string}, replyTo: { id: string, text: string } | null) => {
         if (!user || !profile?.username || !roomId) return;
         const chatCollectionRef = collection(db, 'jamRooms', roomId, 'chats');
