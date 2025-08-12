@@ -201,7 +201,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     };
     
     const handleSelectVideo = (videoId: string) => {
-        if(videoId && roomState) {
+        if(videoId) {
             updateRoomState({ currentVideoId: videoId });
         }
     };
@@ -217,11 +217,10 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
     return (
     <div className="flex flex-col h-screen">
       <AppHeader />
-      <main className="flex-1 overflow-auto pb-24">
-        <div className="container mx-auto h-full p-4 md:p-6 lg:p-8 flex flex-col gap-6 lg:gap-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                <div className="lg:col-span-2 flex flex-col h-full">
-                  <Card className="w-full h-full flex flex-col overflow-hidden min-h-[250px] md:min-h-[400px] lg:min-h-[500px]">
+      <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 lg:h-[55vh]">
+                <div className="lg:col-span-2">
+                  <Card className="w-full h-full flex flex-col overflow-hidden">
                     <YouTube
                       videoId={roomState.currentVideoId}
                       onReady={onPlayerReady}
@@ -229,16 +228,17 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
                         height: '100%',
                         width: '100%',
                         playerVars: {
-                          autoplay: 1, // Autoplay for new videos
+                          autoplay: 1,
                           controls: 1,
+                          rel: 0,
                         },
                       }}
                       className="w-full h-full flex-grow"
-                      key={roomState.currentVideoId} // Force re-render on video change
+                      key={roomState.currentVideoId}
                     />
                   </Card>
                 </div>
-                <div className="lg:col-span-1 flex flex-col h-full min-h-[400px] lg:min-h-0">
+                <div className="lg:col-span-1 h-full min-h-[400px] lg:min-h-0">
                   <GroupChat
                     messages={chatMessages}
                     onSendMessage={handleSendMessage}
@@ -251,8 +251,7 @@ export default function JamRoomPage({ params }: { params: { roomId: string } }) 
             <div className="w-full">
               <YouTubeSearch onSelectVideo={handleSelectVideo} />
             </div>
-        </div>
-      </main>
+        </main>
     </div>
   );
 }
