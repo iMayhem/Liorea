@@ -122,65 +122,65 @@ export default function HomePage() {
                 initial={{opacity: 0}}
                 animate={{opacity: 1}}
                 transition={{duration: 0.5}}
-                className="flex-1 lg:ml-80 container mx-auto flex flex-col items-center justify-center p-4 text-center"
+                className="flex-1 lg:ml-80 container mx-auto flex flex-col items-center justify-center p-4 text-center relative"
             >
-                <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
-                    <div className="lg:hidden w-full max-w-xs mx-auto">
-                        <UserActivityList />
+                 {/* Mobile User Activity List */}
+                <div className="lg:hidden w-full max-w-xs mx-auto mb-8">
+                    <UserActivityList />
+                </div>
+
+                {/* Center Column */}
+                <div className="flex flex-col items-center gap-4">
+                    <div className="text-center mb-4">
+                        <h1 className="text-4xl font-bold font-heading">Welcome, {profile.username}!</h1>
+                        <p className="text-muted-foreground mt-2">
+                            Select a date to track your progress.
+                        </p>
                     </div>
-                    {/* Center Column */}
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="text-center mb-4">
-                            <h1 className="text-4xl font-bold font-heading">Welcome, {profile.username}!</h1>
-                            <p className="text-muted-foreground mt-2">
-                                Select a date to track your progress.
-                            </p>
-                        </div>
-                        <div className="relative w-full max-w-md mx-auto">
-                            <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
-                                <CardContent className="flex justify-center p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={handleDateSelect}
-                                    className="rounded-md"
-                                    month={currentMonth}
-                                    onMonthChange={setCurrentMonth}
-                                    modifiers={{
-                                    studyDay: (day) => {
-                                        const dateKey = format(day, 'yyyy-MM-dd');
-                                        return studyLogs[dateKey] > 0;
-                                    }
-                                    }}
-                                    modifiersClassNames={{
-                                        studyDay: 'study-day-modifier'
-                                    }}
-                                    modifiersStyles={{ studyDay: studyDayStyle }}
-                                />
-                                </CardContent>
-                            </Card>
-                            <Button 
-                                variant="outline" 
-                                size="icon" 
-                                className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
-                                onClick={() => setIsSettingsOpen(true)}
-                            >
-                                <Settings className="h-5 w-5" />
-                            </Button>
-                        </div>
-                        <Button asChild variant="secondary">
-                            <Link href="/jamnight">
-                                <Music className="mr-2 h-4 w-4" />
-                                Jamnight
-                            </Link>
+                    <div className="relative w-full max-w-md mx-auto">
+                        <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
+                            <CardContent className="flex justify-center p-0">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={handleDateSelect}
+                                className="rounded-md"
+                                month={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                modifiers={{
+                                studyDay: (day) => {
+                                    const dateKey = format(day, 'yyyy-MM-dd');
+                                    return studyLogs[dateKey] > 0;
+                                }
+                                }}
+                                modifiersClassNames={{
+                                    studyDay: 'study-day-modifier'
+                                }}
+                                modifiersStyles={{ studyDay: studyDayStyle }}
+                            />
+                            </CardContent>
+                        </Card>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
+                            onClick={() => setIsSettingsOpen(true)}
+                        >
+                            <Settings className="h-5 w-5" />
                         </Button>
                     </div>
-                    
-                    {/* Right Column */}
-                    <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
-                        <CountdownTimer targetDate="2026-01-01T00:00:00" title="JEE Mains 2026"/>
-                        <CountdownTimer targetDate="2026-05-03T00:00:00" title="NEET 2026 Countdown"/>
-                    </div>
+                    <Button asChild variant="secondary">
+                        <Link href="/jamnight">
+                            <Music className="mr-2 h-4 w-4" />
+                            Jamnight
+                        </Link>
+                    </Button>
+                </div>
+                
+                {/* Right Column - Positioned absolutely on large screens */}
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8 mt-8 lg:absolute lg:right-4 lg:top-1/2 lg:-translate-y-1/2 lg:mt-0">
+                    <CountdownTimer targetDate="2026-01-01T00:00:00" title="JEE Mains 2026"/>
+                    <CountdownTimer targetDate="2026-05-03T00:00:00" title="NEET 2026 Countdown"/>
                 </div>
 
             </motion.main>
@@ -235,4 +235,3 @@ export default function HomePage() {
     </div>
     </>
   );
-}
