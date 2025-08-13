@@ -111,7 +111,7 @@ export default function HomePage() {
     <TimetableSettingsOverlay isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} currentTimetable={userTimetable} onTimetableSave={setUserTimetable}/>
     <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
-       <div className="flex-1 flex">
+       <div className="flex-1 flex lg:px-80">
             {/* Left Fixed Panel */}
             <div className="hidden lg:block w-80 fixed top-14 left-0 h-[calc(100vh-4rem)] p-4 pr-0">
                 <UserActivityList />
@@ -122,7 +122,7 @@ export default function HomePage() {
                 initial={{opacity: 0}}
                 animate={{opacity: 1}}
                 transition={{duration: 0.5}}
-                className="flex-1 lg:ml-80 container mx-auto flex flex-col items-center justify-center p-4 text-center relative"
+                className="flex-1 mx-auto flex flex-col items-center justify-center p-4 text-center relative"
             >
                  {/* Mobile User Activity List */}
                 <div className="lg:hidden w-full max-w-xs mx-auto mb-8">
@@ -235,3 +235,4 @@ export default function HomePage() {
     </div>
     </>
   );
+}
