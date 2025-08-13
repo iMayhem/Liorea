@@ -62,7 +62,7 @@ export function CountdownTimer({ targetDate, title }: CountdownTimerProps) {
   }
 
   return (
-    <Card className="p-2">
+    <Card className="p-2 w-full max-w-xs">
       <h2 className="text-md font-bold text-center mb-2 font-heading tracking-tight">{title}</h2>
       <div className="grid grid-cols-4 gap-2 text-center">
         <div className="p-2 rounded-lg bg-secondary/50">

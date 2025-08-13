@@ -25,6 +25,7 @@ import { ChatIcon } from '@/components/icons';
 import { useStudyRoom } from '@/hooks/use-study-room';
 import { TimetableSettingsOverlay } from '@/components/timetable-settings-overlay';
 import type { CustomTimetable } from '@/lib/types';
+import { CountdownTimer } from '@/components/countdown-timer';
 
 
 // Dynamically import the Calendar to ensure it only renders on the client
@@ -122,55 +123,65 @@ export default function HomePage() {
           </p>
         </div>
         
-        <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-8">
-            <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start justify-center gap-8">
+        <div className="w-full max-w-7xl mx-auto flex flex-col items-center justify-center gap-8">
+            <div className="w-full grid grid-cols-1 lg:grid-cols-3 items-start justify-center gap-8">
+                
+                {/* Left Column */}
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
                     <LiveStudyList />
+                    <CountdownTimer targetDate="2026-05-03T00:00:00" title="NEET 2026 Countdown"/>
                 </div>
 
-                <div className="relative w-full max-w-md mx-auto">
-                    <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
-                        <CardContent className="flex justify-center p-0">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={handleDateSelect}
-                            className="rounded-md"
-                            month={currentMonth}
-                            onMonthChange={setCurrentMonth}
-                            modifiers={{
-                            studyDay: (day) => {
-                                const dateKey = format(day, 'yyyy-MM-dd');
-                                return studyLogs[dateKey] > 0;
-                            }
-                            }}
-                            modifiersClassNames={{
-                                studyDay: 'study-day-modifier'
-                            }}
-                            modifiersStyles={{ studyDay: studyDayStyle }}
-                        />
-                        </CardContent>
-                    </Card>
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
-                        onClick={() => setIsSettingsOpen(true)}
-                    >
-                        <Settings className="h-5 w-5" />
+                {/* Center Column */}
+                 <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-full max-w-md mx-auto">
+                        <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
+                            <CardContent className="flex justify-center p-0">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={handleDateSelect}
+                                className="rounded-md"
+                                month={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                modifiers={{
+                                studyDay: (day) => {
+                                    const dateKey = format(day, 'yyyy-MM-dd');
+                                    return studyLogs[dateKey] > 0;
+                                }
+                                }}
+                                modifiersClassNames={{
+                                    studyDay: 'study-day-modifier'
+                                }}
+                                modifiersStyles={{ studyDay: studyDayStyle }}
+                            />
+                            </CardContent>
+                        </Card>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="absolute top-2 right-2 h-10 w-10 rounded-full shadow-lg bg-background/30 backdrop-blur-sm"
+                            onClick={() => setIsSettingsOpen(true)}
+                        >
+                            <Settings className="h-5 w-5" />
+                        </Button>
+                    </div>
+                    <Button asChild variant="secondary">
+                        <Link href="/jamnight">
+                            <Music className="mr-2 h-4 w-4" />
+                            Jamnight
+                        </Link>
                     </Button>
                 </div>
+                
+                {/* Right Column */}
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
+                     <CountdownTimer targetDate="2026-05-24T00:00:00" title="JEE Advanced 2026"/>
+                </div>
+
             </div>
         </div>
 
-        <div className="mt-8 flex justify-center gap-4">
-            <Button asChild variant="secondary">
-                <Link href="/jamnight">
-                    <Music className="mr-2 h-4 w-4" />
-                    Jamnight
-                </Link>
-            </Button>
-        </div>
       </motion.main>
        <TooltipProvider>
         <Tooltip>
