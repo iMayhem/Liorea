@@ -82,7 +82,8 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const [notepads, setNotepads] = useState<Notepads>({});
     const [activeNotepadId, setActiveNotepadId] = useState<string>('collaborative');
 
-    const activeSound = roomData?.activeSound || 'none';
+    // Local state for ambient sound
+    const [activeSound, setActiveSound] = useState<SoundType>('none');
     const isBeastModeLocked = !!profile?.status?.isBeastMode;
 
 
@@ -202,6 +203,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setChatMessages([]);
         setParticipants([]);
         setIsFocusMode(false);
+        setActiveSound('none'); // Turn off sound on leaving
         cleanupListeners();
     
         // Perform database cleanup in the background
@@ -560,17 +562,10 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         }
     }, [user, profile, currentRoomId]);
 
-    const handleSoundChange = useCallback(async (sound: SoundType) => {
-        if (!currentRoomId || isBeastModeLocked) return;
-        const roomRef = doc(db, 'studyRooms', currentRoomId);
-        try {
-            await updateDoc(roomRef, { activeSound: sound });
-        } catch(error) {
-            if ((error as any).code !== 'not-found') {
-                console.error("Failed to update sound:", error);
-            }
-        }
-    }, [currentRoomId, isBeastModeLocked]);
+    const handleSoundChange = useCallback((sound: SoundType) => {
+        if (isBeastModeLocked) return;
+        setActiveSound(prevSound => (prevSound === sound ? 'none' : sound));
+    }, [isBeastModeLocked]);
     
     const toggleBeastMode = useCallback(async () => {
         if (!user || !profile || !currentRoomId) return;
