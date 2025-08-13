@@ -74,7 +74,7 @@ export default function StudyTogetherPage() {
     }
   };
 
-  const doJoinRoom = async (id: string) => {
+  const doJoinPublicRoom = async (id: string) => {
      if (!user || !profile) return;
     if (profile.isBlocked) {
         toast({ title: 'Action Denied', description: 'You are blocked from joining rooms.', variant: 'destructive' });
@@ -86,30 +86,22 @@ export default function StudyTogetherPage() {
     if (roomSnap.exists()) {
       router.push(`/study-together/${id}`);
     } else {
-      if (id === PUBLIC_ROOM_ID) {
-          await setDoc(roomRef, {
-            ownerId: user.uid,
-            createdAt: serverTimestamp(),
-            notepads: {
-                collaborative: { name: 'Collaborative', content: 'Welcome to the Public Study Room!', owner: null },
-                notepad1: { name: 'Notepad 1', content: '', owner: null },
-                notepad2: { name: 'Notepad 2', content: '', owner: null },
-            },
-            timerState: {
-              mode: 'study', time: 25 * 60, isActive: false, startTime: null,
-              studyDuration: 25, shortBreakDuration: 5, longBreakDuration: 15,
-            },
-            participants: [],
-            typingUsers: {},
-          });
-          router.push(`/study-together/${id}`);
-      } else {
-        toast({
-            title: 'Room Not Found',
-            description: "The Room ID you entered doesn't exist. Please check the ID and try again.",
-            variant: 'destructive',
-        });
-      }
+      await setDoc(roomRef, {
+        ownerId: user.uid,
+        createdAt: serverTimestamp(),
+        notepads: {
+            collaborative: { name: 'Collaborative', content: 'Welcome to the Public Study Room!', owner: null },
+            notepad1: { name: 'Notepad 1', content: '', owner: null },
+            notepad2: { name: 'Notepad 2', content: '', owner: null },
+        },
+        timerState: {
+          mode: 'study', time: 25 * 60, isActive: false, startTime: null,
+          studyDuration: 25, shortBreakDuration: 5, longBreakDuration: 15,
+        },
+        participants: [],
+        typingUsers: {},
+      });
+      router.push(`/study-together/${id}`);
     }
   }
   
@@ -117,25 +109,16 @@ export default function StudyTogetherPage() {
     e.preventDefault();
     if (!roomId.trim() || !user) return;
     setIsJoining(true);
-    try {
-       await doJoinRoom(roomId.trim());
-    } catch (error) {
-        console.error("Error joining room: ", error);
-        toast({
-            title: 'Error',
-            description: 'Could not join the room. Please try again.',
-            variant: 'destructive',
-        });
-    } finally {
-        setIsJoining(false);
-    }
+    // Directly navigate to the room page without checking if it exists.
+    // The room page itself will handle non-existent rooms.
+    router.push(`/study-together/${roomId.trim()}`);
   };
 
   const handleJoinPublicRoom = async () => {
     if (!user) return;
     setIsJoiningPublic(true);
      try {
-       await doJoinRoom(PUBLIC_ROOM_ID);
+       await doJoinPublicRoom(PUBLIC_ROOM_ID);
     } catch (error) {
         console.error("Error joining public room: ", error);
         toast({
