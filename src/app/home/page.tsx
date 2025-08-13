@@ -176,7 +176,7 @@ export default function HomePage() {
                 
                 {/* Right Column */}
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
-                     <CountdownTimer targetDate="2026-05-24T00:00:00" title="JEE Advanced 2026"/>
+                     <CountdownTimer targetDate="2026-04-15T00:00:00" title="JEE 2026"/>
                 </div>
 
             </div>
