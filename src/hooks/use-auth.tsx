@@ -43,6 +43,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
+  const [signInPending, setSignInPending] = useState(false);
   
   useEffect(() => {
     setIsClient(true);
@@ -53,12 +54,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
     try {
         const userProfile = await getUserProfile(uid);
         setProfile(userProfile);
-        
-        // This is the new, correct place to check for a username
-        if (userProfile && !userProfile.username && pathname !== '/set-username') {
-             router.push('/set-username');
-        }
-
     } catch (error) {
         console.error("Error fetching user profile:", error);
         toast({ title: "Error", description: "Failed to load your profile.", variant: "destructive" });
@@ -66,10 +61,11 @@ export function AuthProvider({children}: {children: ReactNode}) {
     } finally {
         setLoadingProfile(false);
     }
-  }, [toast, router, pathname]);
+  }, [toast]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setSignInPending(false); // Authentication attempt is complete
       if (firebaseUser) {
         const { uid, displayName, email, photoURL } = firebaseUser;
         const appUser: User = { uid, email, photoURL };
@@ -85,7 +81,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
             lastSeen: new Date(),
         });
 
-        // Now, fetch the full profile. fetchProfile will handle the redirect if needed.
         await fetchProfile(uid);
 
       } else {
@@ -133,14 +128,19 @@ export function AuthProvider({children}: {children: ReactNode}) {
   }, [user, fetchProfile]);
 
   const signInWithGoogle = async () => {
-    setLoading(true);
-    setLoadingProfile(true);
+    setSignInPending(true);
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error during sign-in:", error);
-    } finally {
-      // setLoading will be handled by onAuthStateChanged
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+          console.error("Error during sign-in:", error);
+           toast({
+                title: 'Sign-in Failed',
+                description: 'Could not sign in with Google. Please try again.',
+                variant: 'destructive',
+            });
+      }
+      setSignInPending(false);
     }
   };
 
@@ -177,7 +177,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
   
   const value = {user, profile, loading, loadingProfile, signInWithGoogle, logout, refreshProfile};
 
-  if (!isClient || loading) {
+  if (!isClient || (loading && !signInPending)) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-transparent">
             <Loader2 className="h-8 w-8 animate-spin" />
