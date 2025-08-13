@@ -47,7 +47,7 @@ const headers = [
   ...securityHeaders,
   {
     key: 'Cache-Control',
-    value: CACHE_CONTROL_NO_CACHE,
+    value: CACHE_CONTROL_DEFAULT,
   },
   {
     key: 'Access-Control-Allow-Origin',
