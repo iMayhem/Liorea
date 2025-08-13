@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getStudyLogsForUser, getUserTimetable } from '@/lib/firestore';
-import { LiveStudyList } from '@/components/live-study-list';
+import { UserActivityList } from '@/components/user-activity-list';
 import { ReportDialog } from '@/components/report-dialog';
 import {
   Tooltip,
@@ -129,8 +129,7 @@ export default function HomePage() {
                 
                 {/* Left Column */}
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
-                    <LiveStudyList />
-                    <CountdownTimer targetDate="2026-05-03T00:00:00" title="NEET 2026 Countdown"/>
+                    <UserActivityList />
                 </div>
 
                 {/* Center Column */}
@@ -178,6 +177,7 @@ export default function HomePage() {
                 {/* Right Column */}
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
                      <CountdownTimer targetDate="2026-01-01T00:00:00" title="JEE Mains 2026"/>
+                     <CountdownTimer targetDate="2026-05-03T00:00:00" title="NEET 2026 Countdown"/>
                 </div>
 
             </div>
