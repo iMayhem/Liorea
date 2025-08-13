@@ -161,64 +161,49 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         cleanupIntervalRef.current = null;
     }, []);
     
-    const leaveRoom = useCallback(async (options: { isSwitching?: boolean } = {}) => {
+    const leaveRoom = useCallback(async () => {
         if (!user || !profile || !currentRoomId) return;
         
         setIsLeaving(true);
-        userHasLeftRef.current = true;
+        userHasLeftRef.current = true; // Mark that user intends to leave
     
-        const leavingRoomId = currentRoomId;
-        const localUser = user;
-        const localProfile = profile;
+        const leavingRoomId = currentRoomId; // Capture the currentRoomId before clearing
     
-        // Clear local state immediately for a snappy UI response
+        // Perform state cleanup before async operations
+        cleanupListeners();
         setCurrentRoomId(null);
         setRoomData(null);
         setChatMessages([]);
         setParticipants([]);
         setIsFocusMode(false);
         setActiveSound('none'); // Turn off sound on leaving
-        cleanupListeners();
-    
-        // Perform database cleanup in the background without blocking UI
-        const cleanup = async () => {
-            try {
-                // Only update status if not immediately joining another room
-                if (!options.isSwitching) {
-                    await updateUserProfile(localUser.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
-                }
-                
-                const roomRef = doc(db, 'studyRooms', leavingRoomId);
-                const roomSnap = await getDoc(roomRef);
-                if (roomSnap.exists()) {
-                     const userParticipant: Participant = { 
-                        uid: localUser.uid, 
-                        username: localProfile.username, 
-                        photoURL: localProfile.photoURL,
-                        isBeastMode: !!localProfile.status?.isBeastMode
-                    };
-                    const typingField = `typingUsers.${localUser.uid}`;
-                    await updateDoc(roomRef, {
-                        participants: arrayRemove(userParticipant),
-                        [typingField]: deleteField(),
-                    });
-                }
-            } catch (error) {
-                if ((error as any).code !== 'not-found') {
-                    console.error("Error during room cleanup:", error);
-                    // Avoid showing toast for background errors unless necessary
-                }
-            } finally {
-                // Only redirect if we are not switching rooms and currently on the page being left
-                 if (!options.isSwitching && pathname.includes(`/study-together/${leavingRoomId}`)) {
-                     router.push('/study-together');
-                }
-                setIsLeaving(false);
+
+        try {
+            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
+            const roomRef = doc(db, 'studyRooms', leavingRoomId);
+            const roomSnap = await getDoc(roomRef);
+            if (roomSnap.exists()) {
+                const userParticipant: Participant = { 
+                    uid: user.uid, 
+                    username: profile.username, 
+                    photoURL: profile.photoURL,
+                    isBeastMode: !!profile.status?.isBeastMode
+                };
+                const typingField = `typingUsers.${user.uid}`;
+                await updateDoc(roomRef, {
+                    participants: arrayRemove(userParticipant),
+                    [typingField]: deleteField(),
+                });
             }
-        };
-    
-        cleanup(); // Run cleanup without await
-    
+        } catch (error) {
+            console.error("Error during room leave cleanup:", error);
+            // Optionally, show a toast for cleanup errors if needed.
+        } finally {
+             if (pathname.includes(`/study-together/${leavingRoomId}`)) {
+                router.push('/study-together');
+            }
+            setIsLeaving(false);
+        }
     }, [user, profile, currentRoomId, cleanupListeners, pathname, router]);
     
     // Effect for periodic time logging
@@ -288,9 +273,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             return false;
         }
 
-        // If we're already in a different room, leave it first but mark it as a switch
+        // If we're already in a different room, leave it first
         if (currentRoomId && currentRoomId !== roomId) {
-            await leaveRoom({ isSwitching: true });
+            await leaveRoom();
         }
         
         userHasLeftRef.current = false;
