@@ -124,19 +124,18 @@ export default function HomePage() {
                 transition={{duration: 0.5}}
                 className="flex-1 lg:ml-80 container mx-auto flex flex-col items-center justify-center p-4 text-center"
             >
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold font-heading">Welcome, {profile.username}!</h1>
-                    <p className="text-muted-foreground mt-2">
-                        Select a date to track your progress.
-                    </p>
-                </div>
-                
-                 <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
+                <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
                     <div className="lg:hidden w-full max-w-xs mx-auto">
                         <UserActivityList />
                     </div>
                     {/* Center Column */}
                     <div className="flex flex-col items-center gap-4">
+                        <div className="text-center mb-4">
+                            <h1 className="text-4xl font-bold font-heading">Welcome, {profile.username}!</h1>
+                            <p className="text-muted-foreground mt-2">
+                                Select a date to track your progress.
+                            </p>
+                        </div>
                         <div className="relative w-full max-w-md mx-auto">
                             <Card className="w-full shadow-lg rounded-lg border-border/50 bg-card">
                                 <CardContent className="flex justify-center p-0">
