@@ -111,9 +111,9 @@ export default function HomePage() {
     <TimetableSettingsOverlay isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} currentTimetable={userTimetable} onTimetableSave={setUserTimetable}/>
     <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
-       <div className="flex-1 flex lg:px-80">
+       <div className="flex-1 grid lg:grid-cols-[320px_1fr_320px] lg:gap-4">
             {/* Left Fixed Panel */}
-            <div className="hidden lg:block w-80 fixed top-14 left-0 h-[calc(100vh-4rem)] p-4 pr-0">
+            <div className="hidden lg:block h-full p-4 pl-4 pr-0">
                 <UserActivityList />
             </div>
 
@@ -122,10 +122,10 @@ export default function HomePage() {
                 initial={{opacity: 0}}
                 animate={{opacity: 1}}
                 transition={{duration: 0.5}}
-                className="flex-1 mx-auto flex flex-col items-center justify-center p-4 text-center relative"
+                className="flex-1 container mx-auto flex flex-col items-center justify-center p-4 text-center"
             >
                  {/* Mobile User Activity List */}
-                <div className="lg:hidden w-full max-w-xs mx-auto mb-8">
+                <div className="lg:hidden w-full max-w-md mx-auto mb-8">
                     <UserActivityList />
                 </div>
 
@@ -176,14 +176,16 @@ export default function HomePage() {
                         </Link>
                     </Button>
                 </div>
-                
-                {/* Right Column - Positioned absolutely on large screens */}
-                <div className="w-full max-w-xs mx-auto flex flex-col gap-8 mt-8 lg:absolute lg:right-4 lg:top-1/2 lg:-translate-y-1/2 lg:mt-0">
+            </motion.main>
+            
+            {/* Right Column */}
+             <div className="hidden lg:flex flex-col items-center justify-center p-4 pr-4 pl-0">
+                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
                     <CountdownTimer targetDate="2026-01-01T00:00:00" title="JEE Mains 2026"/>
                     <CountdownTimer targetDate="2026-05-03T00:00:00" title="NEET 2026 Countdown"/>
                 </div>
+            </div>
 
-            </motion.main>
       </div>
        <TooltipProvider>
         <Tooltip>
