@@ -9,56 +9,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, LogIn, Globe, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, LogIn, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { doc, getDoc, setDoc, serverTimestamp, collection, deleteDoc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { RoomParticipantCounter } from '@/components/room-participant-counter';
-import Link from 'next/link';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useStudyRoom } from '@/hooks/use-study-room';
-
 
 const PUBLIC_ROOM_ID = "public-study-room-v1";
-
-interface PrivateRoom {
-    id: string;
-    createdAt: any;
-}
 
 export default function StudyTogetherPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
-  const { joinRoom } = useStudyRoom();
   const [roomId, setRoomId] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
   const [isJoining, setIsJoining] = React.useState(false);
   const [isJoiningPublic, setIsJoiningPublic] = React.useState(false);
   const { toast } = useToast();
-  const [privateRooms, setPrivateRooms] = React.useState<PrivateRoom[]>([]);
-  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
-
 
   React.useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
-
-  // Fetch user's private rooms
-  React.useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'studyRooms'), where('ownerId', '==', user.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const rooms: PrivateRoom[] = [];
-        snapshot.forEach((doc) => {
-            rooms.push({ id: doc.id, ...doc.data() } as PrivateRoom);
-        });
-        setPrivateRooms(rooms);
-    });
-    return () => unsubscribe();
-  }, [user]);
 
   const handleCreateRoom = async () => {
     if (!user || !profile) return;
@@ -88,7 +61,6 @@ export default function StudyTogetherPage() {
         },
         participants: [],
         typingUsers: {},
-        activeSound: 'none',
       });
       router.push(`/study-together/${newRoomRef.id}`);
     } catch (error) {
@@ -129,7 +101,6 @@ export default function StudyTogetherPage() {
             },
             participants: [],
             typingUsers: {},
-            activeSound: 'none',
           });
           router.push(`/study-together/${id}`);
       } else {
@@ -176,37 +147,6 @@ export default function StudyTogetherPage() {
         setIsJoiningPublic(false);
     }
   }
-
-  const handleDeleteRoom = async (roomIdToDelete: string) => {
-    setIsDeleting(roomIdToDelete);
-    try {
-        const roomRef = doc(db, 'studyRooms', roomIdToDelete);
-        
-        // Delete subcollections (like chats) first
-        const chatCollectionRef = collection(db, 'studyRooms', roomIdToDelete, 'chats');
-        const chatSnapshot = await getDocs(chatCollectionRef);
-        const deletePromises = chatSnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-
-        // Delete the room document itself
-        await deleteDoc(roomRef);
-
-        toast({
-            title: "Room Deleted",
-            description: "The study room has been successfully deleted.",
-        });
-    } catch (error) {
-        console.error("Error deleting room:", error);
-        toast({
-            title: 'Error',
-            description: 'Could not delete the room. Please try again.',
-            variant: 'destructive',
-        });
-    } finally {
-        setIsDeleting(null);
-    }
-  };
-
 
   if (authLoading || !user) {
     return (
@@ -273,47 +213,6 @@ export default function StudyTogetherPage() {
             </CardContent>
           </Card>
         </motion.div>
-        
-        {privateRooms.length > 0 && (
-            <div className="w-full max-w-md mt-4">
-                <h2 className="text-2xl font-heading mb-4 text-center">Your Private Rooms</h2>
-                <div className="space-y-4">
-                    {privateRooms.map(room => (
-                        <Card key={room.id}>
-                            <CardHeader>
-                                <CardTitle className="text-lg truncate">Room ID: {room.id}</CardTitle>
-                            </CardHeader>
-                            <CardFooter className="flex justify-between">
-                                <Button asChild>
-                                    <Link href={`/study-together/${room.id}`}>Join Room</Link>
-                                </Button>
-                                 <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" disabled={isDeleting === room.id}>
-                                            {isDeleting === room.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                                            Delete
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the study room and all its data.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteRoom(room.id)}>Continue</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-        )}
-
       </main>
     </div>
   );
