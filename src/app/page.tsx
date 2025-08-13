@@ -12,27 +12,33 @@ export default function HomePage() {
   const { user, loading: authLoading, profile, loadingProfile } = useAuth();
   
   React.useEffect(() => {
-    if (authLoading || loadingProfile) {
-      return; // Wait until we have auth and profile info
+    if (authLoading) {
+      return; // Wait for authentication to resolve first
     }
+
     if (!user) {
       router.push('/login');
       return;
     }
 
-    // 1. Check if username is set. If not, redirect to set-username.
+    // If user is authenticated, wait for their profile to finish loading
+    if (loadingProfile) {
+        return;
+    }
+
+    // At this point, we know the user is logged in and profile loading is complete.
+    // Now we can safely check the profile fields.
     if (!profile?.username) {
         router.push('/set-username');
         return;
     }
 
-    // 2. Check if preparation path is set. If not, redirect to welcome.
-    if (!profile?.preparationPath) {
+    if (!profile.preparationPath) {
         router.push('/welcome');
         return;
     }
     
-    // 3. If everything is set, redirect to the correct home page.
+    // If everything is set, redirect to the correct home page.
     switch (profile.preparationPath) {
         case 'neet-achiever':
           router.push('/neet-achiever-home');
@@ -44,7 +50,8 @@ export default function HomePage() {
           router.push('/jee-home');
           break;
         default:
-          router.push('/welcome'); // Fallback
+          // Fallback to the welcome page if path is somehow invalid
+          router.push('/welcome'); 
           break;
     }
 
