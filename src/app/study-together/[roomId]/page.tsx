@@ -4,21 +4,15 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { AppHeader } from '@/components/header';
-import { Loader2, Users, Clipboard } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { SharedPomodoroTimer } from '@/components/shared-pomodoro-timer';
 import { CollaborativeNotepad } from '@/components/collaborative-notepad';
 import { GroupChat } from '@/components/group-chat';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useStudyRoom } from '@/hooks/use-study-room';
-import { ChatIcon } from '@/components/icons';
-import type { Participant } from '@/lib/types';
+import { StudyRoomHeader } from '@/components/study-room-header';
 
-const PUBLIC_ROOM_ID = "public-study-room-v1";
 
 export default function StudyRoomPage({ params }: { params: { roomId: string } }) {
   const { roomId } = React.use(params as any);
@@ -75,16 +69,19 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
 
   if (authLoading || isJoining || !roomData || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-transparent">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col h-screen">
+        <StudyRoomHeader />
+        <div className="flex-1 flex items-center justify-center bg-transparent">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
   
   return (
     <div className="flex flex-col h-screen">
-      <AppHeader />
-      <main className="flex-1 overflow-auto pb-24">
+      <StudyRoomHeader />
+      <main className="flex-1 overflow-auto pb-4">
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">
                 {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} participants={participants} />}

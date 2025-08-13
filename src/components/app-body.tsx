@@ -6,7 +6,6 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/hooks/use-auth';
 import { StudyRoomProvider } from '@/hooks/use-study-room';
-import { PersistentStudyRoomBar } from '@/components/persistent-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
 import { LockModeOverlay } from '@/components/lock-mode-overlay';
 import { Toaster } from '@/components/ui/toaster';
@@ -53,7 +52,6 @@ export function AppBody({ children }: { children: React.ReactNode }) {
                     <div className="flex-1">
                         {children}
                     </div>
-                    <PersistentStudyRoomBar />
                 </div>
                 <PersistentAmbientSound />
                 <LockModeOverlay />
@@ -62,7 +60,6 @@ export function AppBody({ children }: { children: React.ReactNode }) {
             </StudyRoomProvider>
           </AuthProvider>
             <Toaster />
-            <audio id="timer-end-sound" src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Ftimer%20end.mp3?alt=media&token=947cbec0-3c0a-4f7a-8d3a-996a73b8a950" preload="auto"></audio>
         </ThemeProvider>
       </div>
   )
