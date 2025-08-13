@@ -9,7 +9,7 @@ import { StudyRoomProvider } from '@/hooks/use-study-room';
 import { PersistentAmbientSound } from '@/components/persistent-ambient-sound';
 import { LockModeOverlay } from '@/components/lock-mode-overlay';
 import { Toaster } from '@/components/ui/toaster';
-import { useBackground } from '@/hooks/use-background';
+import { useBackground, BackgroundProvider } from '@/hooks/use-background';
 import { PrivateChatOverlay } from './private-chat-overlay';
 import { LeaderboardOverlay } from './leaderboard-overlay';
 
@@ -23,44 +23,55 @@ const fontHeading = Space_Grotesk({
   variable: '--font-heading',
 });
 
-export function AppBody({ children }: { children: React.ReactNode }) {
+// Create a new component to consume the background context
+function AppBodyContent({ children }: { children: React.ReactNode }) {
   const { backgroundImage } = useBackground();
+  
   return (
-      <div
-        className={cn(
-          'min-h-screen font-sans antialiased',
-          fontSans.variable,
-          fontHeading.variable
-        )}
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-        }}
+    <div
+      className={cn(
+        'min-h-screen font-sans antialiased',
+        fontSans.variable,
+        fontHeading.variable
+      )}
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+          themes={["dark", "theme-blue", "theme-zinc"]}
       >
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-            themes={["dark", "theme-blue", "theme-zinc"]}
-        >
-          <AuthProvider>
-            <StudyRoomProvider>
-                <div className="relative flex min-h-screen flex-col">
-                    <div className="flex-1">
-                        {children}
-                    </div>
-                </div>
-                <PersistentAmbientSound />
-                <LockModeOverlay />
-                <PrivateChatOverlay />
-                <LeaderboardOverlay />
-            </StudyRoomProvider>
-          </AuthProvider>
-            <Toaster />
-        </ThemeProvider>
-      </div>
+        <AuthProvider>
+          <StudyRoomProvider>
+              <div className="relative flex min-h-screen flex-col">
+                  <div className="flex-1">
+                      {children}
+                  </div>
+              </div>
+              <PersistentAmbientSound />
+              <LockModeOverlay />
+              <PrivateChatOverlay />
+              <LeaderboardOverlay />
+          </StudyRoomProvider>
+        </AuthProvider>
+          <Toaster />
+      </ThemeProvider>
+    </div>
+  );
+}
+
+
+export function AppBody({ children }: { children: React.ReactNode }) {
+  return (
+    <BackgroundProvider>
+      <AppBodyContent>{children}</AppBodyContent>
+    </BackgroundProvider>
   )
 }

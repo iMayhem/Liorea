@@ -161,18 +161,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
         }
         await updateUserProfile(user.uid, { lastSeen: new Date(), status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
     }
-    setLoading(true);
-    setLoadingProfile(true);
-    try {
-        await signOut(auth);
-    } catch (error) {
-        console.error("Error during sign-out:", error);
-    } finally {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-        setLoadingProfile(false);
-    }
+    await signOut(auth);
   };
   
   const value = {user, profile, loading, loadingProfile, signInWithGoogle, logout, refreshProfile};

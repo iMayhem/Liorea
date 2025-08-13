@@ -2,7 +2,6 @@
 import type {Metadata} from 'next';
 import {Inter, Space_Grotesk} from 'next/font/google';
 import './globals.css';
-import { BackgroundProvider } from '@/hooks/use-background';
 import { AppBody } from '@/components/app-body';
 
 
@@ -31,9 +30,7 @@ export default function RootLayout({
       <body
         className={fontHeading.variable}
       >
-        <BackgroundProvider>
-          <AppBody>{children}</AppBody>
-        </BackgroundProvider>
+        <AppBody>{children}</AppBody>
       </body>
     </html>
   );
