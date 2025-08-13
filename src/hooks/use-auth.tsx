@@ -9,6 +9,7 @@ import { upsertUserProfile, getUserProfile, updateUserProfile } from '@/lib/fire
 import { useToast } from './use-toast';
 import { Timestamp, doc, getDoc, updateDoc, arrayRemove, deleteField } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
+import { usePathname, useRouter } from 'next/navigation';
 
 
 interface User {
@@ -40,6 +41,8 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
   
   useEffect(() => {
     setIsClient(true);
@@ -50,6 +53,12 @@ export function AuthProvider({children}: {children: ReactNode}) {
     try {
         const userProfile = await getUserProfile(uid);
         setProfile(userProfile);
+        
+        // This is the new, correct place to check for a username
+        if (userProfile && !userProfile.username && pathname !== '/set-username') {
+             router.push('/set-username');
+        }
+
     } catch (error) {
         console.error("Error fetching user profile:", error);
         toast({ title: "Error", description: "Failed to load your profile.", variant: "destructive" });
@@ -57,7 +66,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
     } finally {
         setLoadingProfile(false);
     }
-  }, [toast]);
+  }, [toast, router, pathname]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -76,7 +85,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
             lastSeen: new Date(),
         });
 
-        // Now, fetch the full profile.
+        // Now, fetch the full profile. fetchProfile will handle the redirect if needed.
         await fetchProfile(uid);
 
       } else {

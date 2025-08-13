@@ -22,10 +22,22 @@ export default function WelcomePage() {
     if (authLoading || loadingProfile) return;
     if (!user) {
       router.push('/login');
-    } else if (!profile?.username) {
-      router.push('/set-username');
     } else if (profile?.preparationPath) {
-        router.push('/');
+        // If path is already set, go to the correct home page
+         switch (profile.preparationPath) {
+            case 'neet-achiever':
+              router.push('/neet-achiever-home');
+              break;
+            case 'neet-other':
+              router.push('/neet-home');
+              break;
+            case 'jee':
+              router.push('/jee-home');
+              break;
+            default:
+              router.push('/');
+              break;
+        }
     }
   }, [user, profile, authLoading, loadingProfile, router]);
 
@@ -52,7 +64,7 @@ export default function WelcomePage() {
     handleSelectPath('jee');
   };
 
-  if (authLoading || loadingProfile || !user || !profile) {
+  if (authLoading || loadingProfile || !user || !profile || profile.preparationPath) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin" />

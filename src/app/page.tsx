@@ -12,28 +12,18 @@ export default function HomePage() {
   const { user, loading: authLoading, profile, loadingProfile } = useAuth();
   
   React.useEffect(() => {
-    if (authLoading) {
-      return; // Wait for authentication to resolve first
+    if (authLoading || loadingProfile) {
+      return; // Wait for authentication and profile to resolve
     }
 
     if (!user) {
       router.push('/login');
       return;
     }
-
-    // If user is authenticated, wait for their profile to finish loading
-    if (loadingProfile) {
-        return;
-    }
-
-    // At this point, we know the user is logged in and profile loading is complete.
-    // Now we can safely check the profile fields.
-    if (!profile?.username) {
-        router.push('/set-username');
-        return;
-    }
-
-    if (!profile.preparationPath) {
+    
+    // After login, useAuth will handle the /set-username redirect.
+    // This page will now just handle redirecting to the correct home page or welcome page.
+    if (!profile?.preparationPath) {
         router.push('/welcome');
         return;
     }

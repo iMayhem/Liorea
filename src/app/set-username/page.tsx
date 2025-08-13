@@ -75,7 +75,7 @@ export default function SetUsernamePage() {
                 title: 'Username Set!',
                 description: `Welcome, ${username}!`,
             });
-            router.push('/'); // Redirect to home page to continue onboarding
+            router.push('/'); // Redirect to home page to continue onboarding (welcome page)
         } catch (error) {
             console.error('Error setting username:', error);
             toast({
