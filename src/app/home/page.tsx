@@ -1,4 +1,4 @@
-// src/app/jee-home/page.tsx
+// src/app/home/page.tsx
 'use client';
 
 import * as React from 'react';
@@ -7,19 +7,13 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, BrainCircuit, Music, Moon, Sun, Palette, MessageSquareWarning, Trophy, Settings } from 'lucide-react';
+import { Loader2, Music, MessageSquareWarning, Trophy, Settings } from 'lucide-react';
 import { AppHeader } from '@/components/header';
-import { CountdownTimer } from '@/components/countdown-timer';
-import { TestCountdownTimer } from '@/components/test-countdown-timer';
-import { testSchedule } from '@/lib/data';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getStudyLogsForUser, getUserTimetable } from '@/lib/firestore';
-import { cn } from '@/lib/utils';
 import { LiveStudyList } from '@/components/live-study-list';
-import { useTheme } from 'next-themes';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ReportDialog } from '@/components/report-dialog';
 import {
   Tooltip,
@@ -39,13 +33,11 @@ const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mo
   loading: () => <div className="h-[298px] w-full rounded-md bg-muted animate-pulse" />,
 });
 
-export default function JeeHomePage() {
+export default function HomePage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const { setTheme } = useTheme();
   const { setIsPrivateChatOpen, setIsLeaderboardOpen, hasNewPrivateMessage } = useStudyRoom();
-  const jee2026ExamDate = '2026-01-24T00:00:00'; // Tentative date for JEE Main 2026
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [studyLogs, setStudyLogs] = React.useState<Record<string, number>>({});
   const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
@@ -73,8 +65,10 @@ export default function JeeHomePage() {
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (!loading && user && !profile?.username) {
+      router.push('/set-username');
     }
-  }, [user, loading, router]);
+  }, [user, profile, loading, router]);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -124,15 +118,14 @@ export default function JeeHomePage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold font-heading">Welcome, {profile.username}!</h1>
           <p className="text-muted-foreground mt-2">
-            Select a date to track your JEE progress.
+            Select a date to track your progress.
           </p>
         </div>
         
         <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-8">
-            <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-start justify-center gap-8">
+            <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto] items-start justify-center gap-8">
                 <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
                     <LiveStudyList />
-                    <CountdownTimer targetDate={jee2026ExamDate} title="JEE 2026 Countdown"/>
                 </div>
 
                 <div className="relative w-full max-w-md mx-auto">
@@ -166,10 +159,6 @@ export default function JeeHomePage() {
                     >
                         <Settings className="h-5 w-5" />
                     </Button>
-                </div>
-
-                <div className="w-full max-w-xs mx-auto flex flex-col gap-8">
-                    <TestCountdownTimer tests={testSchedule} />
                 </div>
             </div>
         </div>

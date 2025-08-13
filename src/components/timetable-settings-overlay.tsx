@@ -42,12 +42,12 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
 
     React.useEffect(() => {
         if (isOpen) {
-            const defaultSchedule = profile?.preparationPath === 'jee' ? defaultJeeSchedule : defaultAchieverSchedule;
+            const defaultSchedule = {};
             setTimetable(currentTimetable || defaultSchedule);
             setActiveKey(new Date().getDay());
             setSelectedDate(undefined);
         }
-    }, [isOpen, currentTimetable, profile]);
+    }, [isOpen, currentTimetable]);
 
     const handleSave = async () => {
         if (!user) return;
@@ -71,8 +71,7 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
             // based on the schedule for that day of the week.
             if (!timetable[specificDateKey]) {
                 const dayOfWeek = getDay(date);
-                const defaultScheduleForDay = profile?.preparationPath === 'jee' ? defaultJeeSchedule[dayOfWeek] : defaultAchieverSchedule[dayOfWeek];
-                const baseSchedule = timetable[dayOfWeek] || defaultScheduleForDay || [];
+                const baseSchedule = timetable[dayOfWeek] || [];
                 
                 const newScheduleForDate = JSON.parse(JSON.stringify(baseSchedule)).map((subject: CustomSubject) => ({
                     ...subject,

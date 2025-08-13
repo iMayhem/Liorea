@@ -109,7 +109,7 @@ export function AppHeader() {
                         </Button>
                     )}
                     <Button asChild variant="outline" size="sm">
-                        <Link href="/">
+                        <Link href="/home">
                             <Home className="mr-2 h-4 w-4" />
                             Home
                         </Link>
@@ -127,7 +127,7 @@ export function AppHeader() {
          <>
             <div className="mr-4 flex items-center">
               {isHomePage && (
-                <Link href="/" className="flex items-center space-x-2">
+                <Link href="/home" className="flex items-center space-x-2">
                   <AppLogo />
                   <span className="font-bold">Liorea</span>
                 </Link>
@@ -142,7 +142,7 @@ export function AppHeader() {
                  </Button>
                )}
                <Button asChild variant="outline" size="sm">
-                  <Link href="/">
+                  <Link href="/home">
                       <Home className="mr-2 h-4 w-4" />
                       Home
                   </Link>
@@ -170,7 +170,7 @@ export function AppHeader() {
       )
   }
 
-  const isHomePage = ['/neet-achiever-home', '/neet-home', '/jee-home', '/'].includes(pathname);
+  const isHomePage = pathname === '/home' || pathname === '/';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 supports-[backdrop-filter]:bg-background/60">

@@ -2,7 +2,7 @@
 'use client';
 
 import React, {useMemo, useState, useEffect} from 'react';
-import type {UserProgress, Subject, Task, PreparationPath, CustomTimetable, CustomSubject} from '@/lib/types';
+import type {UserProgress, Subject, Task, CustomTimetable, CustomSubject} from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -37,7 +37,6 @@ interface TimeTableViewProps {
   ) => void;
   onScoreSave: (day: string, subject: string, score: number) => void;
   isReadOnly: boolean;
-  preparationPath?: PreparationPath | null;
   userTimetable: CustomTimetable | null;
 }
 
@@ -96,7 +95,6 @@ export function TimeTableView({
   onTaskToggle,
   onScoreSave,
   isReadOnly,
-  preparationPath,
   userTimetable
 }: TimeTableViewProps) {
   const [showReward, setShowReward] = useState(false);

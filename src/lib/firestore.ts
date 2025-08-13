@@ -3,7 +3,7 @@
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, increment, orderBy, limit, Timestamp, deleteField } from 'firebase/firestore';
-import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PreparationPath, PrivateChatMessage, CustomTimetable } from './types';
+import type { UserProgress, TimeTableData, UserQuizProgress, UserProfile, PrivateChatMessage, CustomTimetable } from './types';
 import { generateInitialProgressForDate } from './data';
 import { getDocId } from './utils';
 import { format, startOfDay, endOfDay } from 'date-fns';
@@ -316,7 +316,6 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
       totalStudyHours: 0,
       dailyStreak: 0,
       mockScores: [],
-      preparationPath: null,
       createdAt: serverTimestamp(),
       status: { isStudying: false, isJamming: false, roomId: null },
     }, { merge: true });
@@ -416,17 +415,6 @@ export async function checkUsernameUnique(username: string): Promise<boolean> {
   const querySnapshot = await getDocs(q);
   return querySnapshot.empty;
 }
-
-/**
- * Sets the preparation path for a user.
- * @param uid - The user's ID.
- * @param path - The chosen preparation path.
- */
-export async function setUserPreparationPath(uid: string, path: PreparationPath): Promise<void> {
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, { preparationPath: path });
-}
-
 
 /**
  * Fetches and ranks users for the leaderboard based on study hours.

@@ -63,7 +63,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
   const timetable = React.useMemo(() => {
       if (!formattedDate || !profile) return {};
       // Pass the user's entire custom timetable object
-      return generateTimeTableForDate(formattedDate, profile.preparationPath, userTimetable);
+      return generateTimeTableForDate(formattedDate, userTimetable);
   }, [formattedDate, profile, userTimetable]);
 
 
@@ -108,7 +108,6 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       username={profile.username!}
       date={formattedDate}
       timetable={timetable}
-      preparationPath={profile.preparationPath}
       userTimetable={userTimetable}
     />
   );

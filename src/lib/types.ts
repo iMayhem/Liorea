@@ -153,13 +153,6 @@ export interface UserProfile {
     leaderboardVisibility?: 'visible' | 'anonymous' | 'hidden';
     createdAt: any; // Can be server timestamp
     lastSeen: any; // Can be server timestamp
-    preparationPath?: PreparationPath | null;
-    status?: {
-      isStudying: boolean;
-      isJamming?: boolean;
-      isBeastMode?: boolean;
-      roomId: string | null;
-    }
     customTimetable?: CustomTimetable;
     isBlocked?: boolean;
 }
@@ -183,4 +176,9 @@ export interface Report {
     imageUrl?: string | null;
     timestamp: any;
     status: 'open' | 'closed' | 'in-progress';
+}
+
+export interface GeneratedQuizData {
+  title: string;
+  questions: Question[];
 }

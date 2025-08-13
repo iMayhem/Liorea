@@ -5,7 +5,6 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
-import type { UserProfile } from '@/lib/types';
 
 export default function HomePage() {
   const router = useRouter();
@@ -21,29 +20,13 @@ export default function HomePage() {
       return;
     }
     
-    // After login, useAuth will handle the /set-username redirect.
-    // This page will now just handle redirecting to the correct home page or welcome page.
-    if (!profile?.preparationPath) {
-        router.push('/welcome');
+    if (!profile?.username) {
+        router.push('/set-username');
         return;
     }
     
-    // If everything is set, redirect to the correct home page.
-    switch (profile.preparationPath) {
-        case 'neet-achiever':
-          router.push('/neet-achiever-home');
-          break;
-        case 'neet-other':
-          router.push('/neet-home');
-          break;
-        case 'jee':
-          router.push('/jee-home');
-          break;
-        default:
-          // Fallback to the welcome page if path is somehow invalid
-          router.push('/welcome'); 
-          break;
-    }
+    // If everything is set, redirect to the new home page.
+    router.push('/home');
 
   }, [user, authLoading, profile, loadingProfile, router]);
 
