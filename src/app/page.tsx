@@ -113,7 +113,7 @@ export default function HomePage() {
       <AppHeader />
        <div className="flex-1 grid lg:grid-cols-[320px_1fr_320px] lg:gap-4">
             {/* Left Fixed Panel */}
-            <div className="hidden lg:block h-full p-4 pl-4 pr-0">
+            <div className="hidden lg:block sticky top-14 h-[calc(100vh-theme(height.14))] p-4 pl-4 pr-0">
                 <UserActivityList />
             </div>
 
