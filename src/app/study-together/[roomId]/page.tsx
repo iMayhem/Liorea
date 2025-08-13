@@ -11,7 +11,8 @@ import { SharedPomodoroTimer } from '@/components/shared-pomodoro-timer';
 import { CollaborativeNotepad } from '@/components/collaborative-notepad';
 import { GroupChat } from '@/components/group-chat';
 import { useStudyRoom } from '@/hooks/use-study-room';
-import { StudyRoomHeader } from '@/components/study-room-header';
+import { AppHeader } from '@/components/header';
+import { StudyRoomFooter } from '@/components/study-room-footer';
 
 
 export default function StudyRoomPage({ params }: { params: { roomId: string } }) {
@@ -70,7 +71,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
   if (authLoading || isJoining || !roomData || !user) {
     return (
       <div className="flex flex-col h-screen">
-        <StudyRoomHeader />
+        <AppHeader />
         <div className="flex-1 flex items-center justify-center bg-transparent">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -80,8 +81,8 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
   
   return (
     <div className="flex flex-col h-screen">
-      <StudyRoomHeader />
-      <main className="flex-1 overflow-auto pb-4">
+      <AppHeader />
+      <main className="flex-1 overflow-auto pb-20">
         <div className="container mx-auto h-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center gap-6">
                 {roomData.timerState && <SharedPomodoroTimer timerState={roomData.timerState} onUpdate={handleTimerUpdate} participants={participants} />}
@@ -109,6 +110,7 @@ export default function StudyRoomPage({ params }: { params: { roomId: string } }
             </motion.div>
         </div>
       </main>
+      <StudyRoomFooter />
     </div>
   );
 }

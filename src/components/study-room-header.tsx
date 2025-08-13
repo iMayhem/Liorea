@@ -1,4 +1,5 @@
-// src/components/study-room-header.tsx
+// This file is being renamed to src/components/study-room-footer.tsx
+// src/components/study-room-footer.tsx
 'use client';
 
 import * as React from 'react';
@@ -24,7 +25,7 @@ function formatTime(seconds: number) {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-export function StudyRoomHeader() {
+export function StudyRoomFooter() {
   const { 
       currentRoomId, 
       leaveRoom, 
@@ -53,7 +54,7 @@ export function StudyRoomHeader() {
   const hasActiveSound = activeSound && activeSound !== 'none';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 supports-[backdrop-filter]:bg-background/60">
+    <footer className="fixed bottom-0 z-50 w-full border-t bg-background/95 supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-primary font-mono">
@@ -168,6 +169,6 @@ export function StudyRoomHeader() {
                 </TooltipProvider>
             </div>
       </div>
-    </header>
+    </footer>
   );
 }
