@@ -78,11 +78,13 @@ export function UserActivityList() {
 
   if (loading) {
     return (
-        <Card className="w-full max-w-xs mx-auto shadow-md">
+        <Card className="w-full h-full shadow-md">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/> User Activity</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
@@ -92,12 +94,12 @@ export function UserActivityList() {
   }
 
   return (
-    <Card className="w-full max-w-xs mx-auto shadow-md">
-      <CardHeader>
+    <Card className="w-full h-full shadow-md flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/> User Activity</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-          <ScrollArea className="h-72">
+      <CardContent className="p-0 flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
             <div className="p-4 space-y-2">
             {sortedUsers.map(user => {
                 const { status, isOnline } = formatLastSeen(user.lastSeen);
