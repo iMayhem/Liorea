@@ -148,35 +148,6 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         });
     }, []);
 
-    // Effect to play sounds on participant changes
-    useEffect(() => {
-        if (isInitialJoinRef.current || !currentRoomId) {
-            isInitialJoinRef.current = false;
-            return;
-        }
-
-        const playSound = (soundId: string) => {
-            if (isBeastModeLocked) return;
-            const sound = document.getElementById(soundId) as HTMLAudioElement;
-            if (sound) {
-                sound.play().catch(error => {
-                    if (error.name !== 'AbortError') {
-                        console.error(`Error playing ${soundId}:`, error)
-                    }
-                });
-            }
-        };
-
-        const prevParticipants = JSON.parse(sessionStorage.getItem(`participants-${currentRoomId}`) || '[]');
-        if (participants.length > prevParticipants.length) {
-            playSound('join-sound');
-        } else if (participants.length < prevParticipants.length) {
-            playSound('leave-sound');
-        }
-        sessionStorage.setItem(`participants-${currentRoomId}`, JSON.stringify(participants));
-
-    }, [participants, currentRoomId, isBeastModeLocked]);
-
     const cleanupListeners = useCallback(() => {
         if (unsubscribeRoomRef.current) unsubscribeRoomRef.current();
         if (unsubscribeChatRef.current) unsubscribeChatRef.current();
