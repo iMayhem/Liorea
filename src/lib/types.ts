@@ -66,8 +66,8 @@ export interface Question {
 
 export interface QuizProgress {
     [questionNumber: number]: {
-        selected: string;
-        isCorrect: boolean;
+        selected?: string;
+        isCorrect?: boolean;
         bookmarked?: boolean;
     }
 }

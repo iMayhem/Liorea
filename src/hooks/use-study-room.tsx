@@ -81,6 +81,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     // Notepad state
     const [notepads, setNotepads] = useState<Notepads>({});
     const [activeNotepadId, setActiveNotepadId] = useState<string>('collaborative');
+    const notepadDebounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({});
 
     // Local state for ambient sound
     const [activeSound, setActiveSound] = useState<SoundType>('none');
@@ -95,48 +96,42 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
     const userHasLeftRef = useRef(false);
     const isInitialJoinRef = useRef(true);
 
-    // Effect for private chat notifications
-    useEffect(() => {
-        if (!user) {
-            setNewMessagesFrom(new Set());
-            return;
-        }
+	// Effect for private chat notifications (single realtime listener, no polling)
+	useEffect(() => {
+		let unsubscribe: (() => void) | undefined;
+		if (!user) {
+			setNewMessagesFrom(new Set());
+			return;
+		}
 
-        const checkMessages = async () => {
-            try {
-                const allUsers = await getAllUsers();
-                const otherUsers = allUsers.filter(u => u.uid !== user.uid);
-                
-                const updatedNewMessages = new Set<string>();
+		try {
+			const chatsCol = collection(db, 'userPrivateChats', user.uid, 'chats');
+			const qy = query(chatsCol, orderBy('lastMessageTimestamp', 'desc'));
+			unsubscribe = onSnapshot(qy, (snap) => {
+				const updated = new Set<string>();
+				snap.forEach((docSnap) => {
+					const data = docSnap.data() as any;
+					const partnerId = data.partnerId as string;
+					if (!partnerId) return;
+					const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${partnerId}`;
+					const lastSeenTimestampStr = localStorage.getItem(lastSeenKey);
+					const lastSeenTimestamp = lastSeenTimestampStr ? new Date(lastSeenTimestampStr).getTime() : 0;
+					const ts = data.lastMessageTimestamp;
+					const messageTimestamp = ts?.toDate ? ts.toDate().getTime() : (ts ? new Date(ts).getTime() : 0);
+					if (messageTimestamp > lastSeenTimestamp && data.lastSenderId !== user.uid) {
+						updated.add(partnerId);
+					}
+				});
+				setNewMessagesFrom(updated);
+			});
+		} catch (e) {
+			console.error('Failed to subscribe to private chat summaries', e);
+		}
 
-                for (const otherUser of otherUsers) {
-                    const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${otherUser.uid}`;
-                    const lastSeenTimestampStr = localStorage.getItem(lastSeenKey);
-                    const lastSeenTimestamp = lastSeenTimestampStr ? new Date(lastSeenTimestampStr).getTime() : 0;
-                    
-                    const chatRoomId = user.uid < otherUser.uid ? `${user.uid}_${otherUser.uid}` : `${otherUser.uid}_${user.uid}`;
-                    const lastMessage = await getLastPrivateMessage(chatRoomId);
-
-                    if (lastMessage && lastMessage.timestamp) {
-                         const messageTimestamp = lastMessage.timestamp.toDate ? lastMessage.timestamp.toDate().getTime() : new Date(lastMessage.timestamp).getTime();
-
-                        if (messageTimestamp > lastSeenTimestamp && lastMessage.senderId !== user.uid) {
-                            updatedNewMessages.add(otherUser.uid);
-                        }
-                    }
-                }
-                setNewMessagesFrom(updatedNewMessages);
-            } catch (error) {
-                console.error("Error checking for new private messages:", error);
-            }
-        };
-
-        const intervalId = setInterval(checkMessages, 10000); // Check every 10 seconds
-        checkMessages(); // Initial check
-
-        return () => clearInterval(intervalId);
-
-    }, [user]);
+		return () => {
+			if (unsubscribe) unsubscribe();
+		};
+	}, [user]);
 
     const clearChatNotification = useCallback((userId: string) => {
         const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${userId}`;
@@ -434,13 +429,20 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         const roomRef = doc(db, 'studyRooms', currentRoomId);
         const fieldPath = `notepads.${activeNotepadId}.content`;
-        try {
-            await updateDoc(roomRef, { [fieldPath]: content });
-        } catch (error) {
-             if ((error as any).code !== 'not-found') {
-                console.error("Failed to update notepad content:", error);
-            }
+        // Debounce to limit write rate while typing
+        const timerKey = `${currentRoomId}_${activeNotepadId}`;
+        if (notepadDebounceTimersRef.current[timerKey]) {
+            clearTimeout(notepadDebounceTimersRef.current[timerKey] as NodeJS.Timeout);
         }
+        notepadDebounceTimersRef.current[timerKey] = setTimeout(async () => {
+            try {
+                await updateDoc(roomRef, { [fieldPath]: content });
+            } catch (error) {
+                 if ((error as any).code !== 'not-found') {
+                    console.error("Failed to update notepad content:", error);
+                }
+            }
+        }, 500);
     }, [user, currentRoomId, activeNotepadId, notepads]);
     
     const handleNotepadNameChange = useCallback(async (newName: string) => {
@@ -513,6 +515,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         await addDoc(chatCollectionRef, messageData);
     }, [user, profile, currentRoomId]);
 
+    const lastTypingUpdateRef = useRef<number>(0);
     const handleTyping = useCallback(async (isTyping: boolean) => {
         if (!user || !profile?.username || !currentRoomId) return;
         const roomRef = doc(db, 'studyRooms', currentRoomId);
@@ -520,6 +523,9 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 
         try {
             if (isTyping) {
+                const now = Date.now();
+                if (now - lastTypingUpdateRef.current < 2000) return; // throttle to once per 2s
+                lastTypingUpdateRef.current = now;
                 await updateDoc(roomRef, { [typingField]: profile.username });
             } else {
                 await updateDoc(roomRef, { [typingField]: deleteField() });

@@ -216,17 +216,22 @@ export async function resetQuizProgress(
         return fullProgress; // No progress for this specific chapter
     }
     
-    // Iterate over questions and remove 'selected' and 'isCorrect' fields
+    // Iterate over questions and remove transient fields safely
     Object.keys(chapterProgress).forEach(questionNumberStr => {
         const questionNumber = parseInt(questionNumberStr, 10);
         const attempt = chapterProgress[questionNumber];
-        if (attempt) {
-            delete attempt.selected;
-            delete attempt.isCorrect;
-            // If the question only had non-bookmark data, remove it entirely
-            if (Object.keys(attempt).length === 0) {
-                 delete chapterProgress[questionNumber];
-            }
+        if (!attempt) return;
+        if ('selected' in attempt) {
+            (attempt as any).selected = undefined;
+            delete (attempt as any).selected;
+        }
+        if ('isCorrect' in attempt) {
+            (attempt as any).isCorrect = undefined;
+            delete (attempt as any).isCorrect;
+        }
+        if (Object.keys(attempt as Record<string, unknown>).length === 0) {
+            (chapterProgress as any)[questionNumber] = undefined;
+            delete (chapterProgress as any)[questionNumber];
         }
     });
 
@@ -428,8 +433,7 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
   if (type === 'study-hours-all-time') {
     q = query(usersRef, orderBy('totalStudyHours', 'desc'));
   } else {
-    // For daily, we'll have to fetch all users and calculate on the client.
-    // This is not ideal for performance with many users, but necessary without server-side aggregation.
+    // For daily, read both users and studyLogs once each (avoid N+1 getDoc per user)
     q = query(usersRef);
   }
 
@@ -442,26 +446,20 @@ export async function getLeaderboardData(type: 'study-hours-all-time' | 'study-h
 
   if (type === 'study-hours-daily') {
       const now = new Date();
-      const dayStart = startOfDay(now);
-      const dayEnd = endOfDay(now);
+      const todayKey = format(startOfDay(now), 'yyyy-MM-dd');
 
-      const dailyUsers = await Promise.all(users.map(async (user) => {
-          const studyLogRef = doc(db, 'studyLogs', user.uid);
-          const studyLogSnap = await getDoc(studyLogRef);
-          let dailyHours = 0;
-          if (studyLogSnap.exists()) {
-              const dailyData = studyLogSnap.data().daily || {};
-              for (const dateStr in dailyData) {
-                  const logDate = new Date(dateStr);
-                  if (logDate >= dayStart && logDate <= dayEnd) {
-                      dailyHours += dailyData[dateStr];
-                  }
-              }
-          }
-          return { ...user, totalStudyHours: dailyHours };
-      }));
+      // Single collection read for study logs
+      const studyLogsSnap = await getDocs(collection(db, 'studyLogs'));
+      const uidToDailySeconds: Record<string, number> = {};
+      studyLogsSnap.forEach((docSnap) => {
+          const data = docSnap.data() as any;
+          const seconds = data?.daily?.[todayKey] || 0;
+          uidToDailySeconds[docSnap.id] = seconds;
+      });
 
-      users = dailyUsers.sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
+      users = users
+        .map((user) => ({ ...user, totalStudyHours: uidToDailySeconds[user.uid] || 0 }))
+        .sort((a, b) => (b.totalStudyHours || 0) - (a.totalStudyHours || 0));
   }
   
   return users;
@@ -498,6 +496,30 @@ export async function sendPrivateMessage(
     }
 
     await addDoc(messagesRef, messageData);
+
+    // Maintain lightweight chat summary docs to avoid N+1 reads on clients.
+    // These summaries allow a single listener per user to detect new messages.
+    const senderSummaryRef = doc(db, 'userPrivateChats', senderId, 'chats', receiverId);
+    const receiverSummaryRef = doc(db, 'userPrivateChats', receiverId, 'chats', senderId);
+
+    const summaryPayload = {
+        partnerId: receiverId,
+        chatRoomId,
+        lastMessageTimestamp: serverTimestamp(),
+        lastSenderId: senderId,
+    } as any;
+
+    const summaryPayloadForReceiver = {
+        partnerId: senderId,
+        chatRoomId,
+        lastMessageTimestamp: serverTimestamp(),
+        lastSenderId: senderId,
+    } as any;
+
+    await Promise.all([
+        setDoc(senderSummaryRef, summaryPayload, { merge: true }),
+        setDoc(receiverSummaryRef, summaryPayloadForReceiver, { merge: true })
+    ]);
 }
 
 /**

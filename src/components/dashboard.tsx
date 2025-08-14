@@ -18,9 +18,10 @@ interface DashboardProps {
   date: string;
   timetable: TimeTableData;
   userTimetable: CustomTimetable | null;
+  showHeader?: boolean;
 }
 
-export function Dashboard({username, date, timetable, userTimetable}: DashboardProps) {
+export function Dashboard({username, date, timetable, userTimetable, showHeader = true}: DashboardProps) {
   const {user} = useAuth();
   const [myProgress, setMyProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,7 +121,7 @@ export function Dashboard({username, date, timetable, userTimetable}: DashboardP
   
   return (
     <div className="flex flex-col min-h-screen">
-      <AppHeader />
+      {showHeader && <AppHeader />}
       <motion.main
         initial={{opacity: 0}}
         animate={{opacity: 1}}
