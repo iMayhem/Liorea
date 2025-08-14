@@ -179,7 +179,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         setActiveSound('none'); // Turn off sound on leaving
 
         try {
-            await updateUserProfile(user.uid, { status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
+            await updateUserProfile(user.uid, { status: { isStudying: false, isWatching: false, roomId: null, isBeastMode: false } });
             const roomRef = doc(db, 'studyRooms', leavingRoomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
@@ -245,7 +245,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
                             // User is inactive, remove them
                             batch.update(roomRef, { participants: arrayRemove(p) });
                             const userDocRef = doc(db, 'users', p.uid);
-                            batch.update(userDocRef, { status: { isStudying: false, isJamming: false, roomId: null } });
+                            batch.update(userDocRef, { status: { isStudying: false, isWatching: false, roomId: null } });
                             changesMade = true;
                         }
                     }
@@ -289,7 +289,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
             return false;
         }
         
-        await updateUserProfile(user.uid, { status: { isStudying: true, isJamming: false, roomId: roomId }});
+        await updateUserProfile(user.uid, { status: { isStudying: true, isWatching: false, roomId: roomId }});
 
         const newParticipant: Participant = { 
             uid: user.uid, 
@@ -339,7 +339,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (currentRoomId && user && profile) {
                 const userStatus = profile.status;
-                const roomType = userStatus?.isStudying ? 'studyRooms' : 'jamRooms';
+                const roomType = userStatus?.isStudying ? 'studyRooms' : 'watchTogetherRooms';
                 if (!userStatus?.roomId) return;
                 
                  const payload = JSON.stringify({

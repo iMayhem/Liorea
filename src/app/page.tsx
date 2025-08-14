@@ -170,9 +170,9 @@ export default function HomePage() {
                         </Button>
                     </div>
                     <Button asChild variant="secondary">
-                        <Link href="/jamnight">
+                        <Link href="/watch-together">
                             <Music className="mr-2 h-4 w-4" />
-                            Jamnight
+                            Watch Together
                         </Link>
                     </Button>
                 </div>

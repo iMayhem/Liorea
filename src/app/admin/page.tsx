@@ -94,7 +94,7 @@ function UserManagement({ users, loading }: UserManagementProps) {
 
 interface Room {
     id: string;
-    type: 'study' | 'jam';
+    type: 'study' | 'watch';
     participants: any[];
 }
 
@@ -107,10 +107,10 @@ function RoomManagement({ rooms, loading }: RoomManagementProps) {
     const { toast } = useToast();
     const [deletingRoomId, setDeletingRoomId] = React.useState<string | null>(null);
 
-    const handleDeleteRoom = async (roomId: string, type: 'study' | 'jam') => {
+    const handleDeleteRoom = async (roomId: string, type: 'study' | 'watch') => {
         setDeletingRoomId(roomId);
         try {
-            const collectionName = type === 'study' ? 'studyRooms' : 'jamRooms';
+            const collectionName = type === 'study' ? 'studyRooms' : 'watchTogetherRooms';
             const roomRef = doc(db, collectionName, roomId);
             
             // Delete subcollections (like chats) first
@@ -258,13 +258,13 @@ function LeaderboardTools() {
 function ChatManagement() {
     const { toast } = useToast();
     const [isClearingStudy, setIsClearingStudy] = React.useState(false);
-    const [isClearingJam, setIsClearingJam] = React.useState(false);
+    const [isClearingWatch, setIsClearingWatch] = React.useState(false);
 
-    const handleClearAllChats = async (type: 'study' | 'jam') => {
-        const setIsClearing = type === 'study' ? setIsClearingStudy : setIsClearingJam;
+    const handleClearAllChats = async (type: 'study' | 'watch') => {
+        const setIsClearing = type === 'study' ? setIsClearingStudy : setIsClearingWatch;
         setIsClearing(true);
         
-        const collectionName = type === 'study' ? 'studyRooms' : 'jamRooms';
+        const collectionName = type === 'study' ? 'studyRooms' : 'watchTogetherRooms';
         
         try {
             const roomsSnapshot = await getDocs(collection(db, collectionName));
@@ -323,21 +323,21 @@ function ChatManagement() {
                 
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button variant="destructive" className="w-full" disabled={isClearingJam}>
-                            {isClearingJam ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
-                            Clear All Jamnight Chats
+                         <Button variant="destructive" className="w-full" disabled={isClearingWatch}>
+                            {isClearingWatch ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}
+                            Clear All Watch Together Chats
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete all chat messages from every single Jamnight Room. This action cannot be undone.
+                                This will permanently delete all chat messages from every single Watch Together Room. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleClearAllChats('jam')}>Yes, clear jamnight chats</AlertDialogAction>
+                            <AlertDialogAction onClick={() => handleClearAllChats('watch')}>Yes, clear watch chats</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
@@ -362,15 +362,15 @@ function GlobalUserEviction() {
             });
 
             // Clear participants from all jam rooms
-            const jamRoomsSnapshot = await getDocs(collection(db, 'jamRooms'));
-            jamRoomsSnapshot.forEach(roomDoc => {
+            const watchRoomsSnapshot = await getDocs(collection(db, 'watchTogetherRooms'));
+            watchRoomsSnapshot.forEach(roomDoc => {
                 batch.update(roomDoc.ref, { participants: [], typingUsers: {} });
             });
 
             // Reset status for all users
             const usersSnapshot = await getDocs(collection(db, 'users'));
             usersSnapshot.forEach(userDoc => {
-                batch.update(userDoc.ref, { status: { isStudying: false, isJamming: false, roomId: null } });
+                batch.update(userDoc.ref, { status: { isStudying: false, isWatching: false, roomId: null } });
             });
 
             await batch.commit();
@@ -403,7 +403,7 @@ function GlobalUserEviction() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will remove every user from every study and jamnight room and reset their online status. This action cannot be undone.
+                                This will remove every user from every study and watch together room and reset their online status. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -460,7 +460,7 @@ export default function AdminPage() {
         // Rooms listener
         setLoadingRooms(true);
         const studyRoomsQuery = collection(db, 'studyRooms');
-        const jamRoomsQuery = collection(db, 'jamRooms');
+        const watchRoomsQuery = collection(db, 'watchTogetherRooms');
 
         const unsubscribeStudyRooms = onSnapshot(studyRoomsQuery, (snapshot) => {
             const studyRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'study' as const, participants: doc.data().participants || []}));
@@ -468,9 +468,9 @@ export default function AdminPage() {
             setLoadingRooms(false);
         }, () => setLoadingRooms(false));
 
-        const unsubscribeJamRooms = onSnapshot(jamRoomsQuery, (snapshot) => {
-            const jamRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'jam' as const, participants: doc.data().participants || []}));
-            setRooms(prev => [...jamRooms, ...prev.filter(r => r.type !== 'jam')]);
+        const unsubscribeWatchRooms = onSnapshot(watchRoomsQuery, (snapshot) => {
+            const watchRooms = snapshot.docs.map(doc => ({ id: doc.id, type: 'watch' as const, participants: doc.data().participants || []}));
+            setRooms(prev => [...watchRooms, ...prev.filter(r => r.type !== 'watch')]);
             setLoadingRooms(false);
         }, () => setLoadingRooms(false));
 
@@ -479,7 +479,7 @@ export default function AdminPage() {
             unsubscribeReports();
             unsubscribeUsers();
             unsubscribeStudyRooms();
-            unsubscribeJamRooms();
+            unsubscribeWatchRooms();
         };
     }, [isAuthenticated]);
 

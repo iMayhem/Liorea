@@ -132,7 +132,7 @@ export interface StudyRoom extends DocumentData {
 }
 
 // Added for admin panel
-export interface JamRoomState {
+export interface WatchTogetherRoomState {
     currentVideoId: string;
     participants: Participant[];
 }

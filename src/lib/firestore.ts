@@ -317,7 +317,7 @@ export async function upsertUserProfile(uid: string, data: Partial<UserProfile>)
       dailyStreak: 0,
       mockScores: [],
       createdAt: serverTimestamp(),
-      status: { isStudying: false, isJamming: false, roomId: null },
+      status: { isStudying: false, isWatching: false, roomId: null },
     }, { merge: true });
   }
 }

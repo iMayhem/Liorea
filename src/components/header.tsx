@@ -25,7 +25,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const { toast } = useToast();
   const { changeBackground, isChanging, clearCustomBackground } = useBackground();
-  const [jamRoomParticipants, setJamRoomParticipants] = React.useState<Participant[]>([]);
+  const [watchTogetherParticipants, setWatchTogetherParticipants] = React.useState<Participant[]>([]);
 
 
   const handleBack = () => {
@@ -40,26 +40,26 @@ export function AppHeader() {
   };
 
   const isStudyRoom = pathname.startsWith('/study-together/');
-  const isJamRoom = pathname.startsWith('/jamnight/');
-  const roomId = isStudyRoom || isJamRoom ? pathname.split('/').pop() : null;
+  const isWatchRoom = pathname.startsWith('/watch-together/');
+  const roomId = isStudyRoom || isWatchRoom ? pathname.split('/').pop() : null;
 
   React.useEffect(() => {
-    if (!isJamRoom || !roomId) {
-        setJamRoomParticipants([]);
+    if (!isWatchRoom || !roomId) {
+        setWatchTogetherParticipants([]);
         return;
     }
-    const roomRef = doc(db, 'jamRooms', roomId);
+    const roomRef = doc(db, 'watchTogetherRooms', roomId);
     const unsubscribe = onSnapshot(roomRef, (doc) => {
         if (doc.exists()) {
-            setJamRoomParticipants(doc.data().participants || []);
+            setWatchTogetherParticipants(doc.data().participants || []);
         } else {
-            setJamRoomParticipants([]);
+            setWatchTogetherParticipants([]);
         }
     });
     return () => unsubscribe();
-  }, [isJamRoom, roomId]);
+  }, [isWatchRoom, roomId]);
   
-  const participants = isStudyRoom ? studyRoomParticipants : jamRoomParticipants;
+  const participants = isStudyRoom ? studyRoomParticipants : watchTogetherParticipants;
 
 
   const handleCopyRoomId = () => {
@@ -72,13 +72,13 @@ export function AppHeader() {
   };
   
   const getHeaderContent = () => {
-      if(isStudyRoom || isJamRoom) {
+      if(isStudyRoom || isWatchRoom) {
           return (
             <div className="flex w-full items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     {isStudyRoom && <Users className="h-6 w-6 text-primary" />}
-                    {isJamRoom && <Music className="h-6 w-6 text-primary" />}
-                    <span className="font-bold">{isStudyRoom ? "Study Room" : "Jamnight"}</span>
+                    {isWatchRoom && <Music className="h-6 w-6 text-primary" />}
+                    <span className="font-bold">{isStudyRoom ? "Study Room" : "Watch Together"}</span>
                 </div>
                 
                 <div className="flex-1 min-w-0">

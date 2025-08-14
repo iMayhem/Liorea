@@ -148,7 +148,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
     if(user && profile) {
         const userStatus = profile.status;
         if(userStatus?.roomId) {
-            const roomType = userStatus.isStudying ? 'studyRooms' : 'jamRooms';
+            const roomType = userStatus.isStudying ? 'studyRooms' : 'watchTogetherRooms';
             const roomRef = doc(db, roomType, userStatus.roomId);
             const roomSnap = await getDoc(roomRef);
             if(roomSnap.exists()){
@@ -159,7 +159,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
                 });
             }
         }
-        await updateUserProfile(user.uid, { lastSeen: new Date(), status: { isStudying: false, isJamming: false, roomId: null, isBeastMode: false } });
+        await updateUserProfile(user.uid, { lastSeen: new Date(), status: { isStudying: false, isWatching: false, roomId: null, isBeastMode: false } });
     }
     await signOut(auth);
   };
