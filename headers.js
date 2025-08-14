@@ -68,7 +68,21 @@ const staticAssetHeaders = [
   },
 ];
 
+// For Next.js image optimizer responses
+const imageAssetHeaders = [
+  ...securityHeaders,
+  {
+    key: 'Cache-Control',
+    value: CACHE_CONTROL_IMMUTABLE,
+  },
+  {
+    key: 'Access-Control-Allow-Origin',
+    value: '*',
+  },
+];
+
 module.exports = {
   headers,
-  staticAssetHeaders
+  staticAssetHeaders,
+  imageAssetHeaders
 }

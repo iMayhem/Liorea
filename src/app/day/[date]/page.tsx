@@ -109,6 +109,7 @@ export default function DayTrackerPage({params}: {params: {date: string}}) {
       date={formattedDate}
       timetable={timetable}
       userTimetable={userTimetable}
+      showHeader={false}
     />
   );
 }

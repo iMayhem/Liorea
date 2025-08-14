@@ -1,6 +1,6 @@
 
 import type {NextConfig} from 'next';
-const {headers, staticAssetHeaders} = require('./headers');
+const {headers, staticAssetHeaders, imageAssetHeaders} = require('./headers');
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -47,6 +47,11 @@ const nextConfig: NextConfig = {
       {
         source: '/_next/static/:path*',
         headers: staticAssetHeaders,
+      },
+      {
+        // Next image optimizer path
+        source: '/_next/image',
+        headers: imageAssetHeaders,
       }
     ];
   },
