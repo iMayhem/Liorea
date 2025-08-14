@@ -25,7 +25,7 @@ const defaultTasks = [
 
 const genericTasks = [{ id: 'task-1', label: 'Completed' }];
 
-const defaultWeeklySchedule: {[key: number]: CustomSubject[]} = {
+export const defaultWeeklySchedule: {[key: number]: CustomSubject[]} = {
   0: [{id: 'sub-1', name: 'Weekly Revision', tasks: genericTasks}, {id: 'sub-2', name: 'Backlog', tasks: genericTasks}], // Sunday
   1: [ // Monday
     {id: 'sub-1', name: 'Physics', tasks: defaultTasks},

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { X, Plus, Trash2, Edit, Check, Copy, Calendar as CalendarIcon } from 'lucide-react';
 import type { CustomTimetable, CustomSubject, CustomTask } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
-import { defaultAchieverSchedule, defaultJeeSchedule } from '@/lib/data';
+import { defaultWeeklySchedule } from '@/lib/data';
 import { saveUserTimetable } from '@/lib/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
@@ -42,8 +42,11 @@ export function TimetableSettingsOverlay({ isOpen, onOpenChange, currentTimetabl
 
     React.useEffect(() => {
         if (isOpen) {
-            const defaultSchedule = {};
-            setTimetable(currentTimetable || defaultSchedule);
+            // If currentTimetable is null or empty, use the default schedule.
+            const initialTimetable = currentTimetable && Object.keys(currentTimetable).length > 0
+                ? currentTimetable
+                : defaultWeeklySchedule;
+            setTimetable(initialTimetable);
             setActiveKey(new Date().getDay());
             setSelectedDate(undefined);
         }
