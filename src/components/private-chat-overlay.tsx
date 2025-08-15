@@ -263,7 +263,7 @@ function ChatView({
   );
 }
 
-export function PrivateChatOverlay() {
+export function PrivateChatOverlay({ audioRef }: { audioRef: React.RefObject<HTMLAudioElement>}) {
   const { isPrivateChatOpen, setIsPrivateChatOpen, clearChatNotification } = useStudyRoom();
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -282,60 +282,62 @@ export function PrivateChatOverlay() {
   }, [isPrivateChatOpen]);
 
   return (
-    <AnimatePresence>
-      {isPrivateChatOpen && (
-         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-white"
-            >
-            <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 z-10"
-                onClick={() => setIsPrivateChatOpen(false)}
-            >
-                <X className="h-8 w-8" />
-                <span className="sr-only">Close Private Chat</span>
-            </Button>
-            
-            <motion.div 
-              className="w-full max-w-4xl h-full flex flex-col"
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              transition={{ type: 'tween', duration: 0.2}}
-            >
-              {!selectedUser ? (
-                <div className="h-full flex flex-col pt-12">
-                    <div className="p-4 pt-4 shrink-0 text-center">
-                        <div className="relative">
-                            <Input
-                                placeholder="Search for a user..."
-                                className="pl-4 bg-background/50"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <div className="p-4 flex-1 overflow-hidden">
-                        <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
-                    </div>
-                </div>
-                ) : (
-                <div className="h-full pt-12">
-                    <ChatView 
-                        recipient={selectedUser} 
-                        onBack={() => setSelectedUser(null)}
-                    />
-                </div>
-              )}
-            </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <AnimatePresence>
+        {isPrivateChatOpen && (
+           <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-white"
+              >
+              <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/10 z-10"
+                  onClick={() => setIsPrivateChatOpen(false)}
+              >
+                  <X className="h-8 w-8" />
+                  <span className="sr-only">Close Private Chat</span>
+              </Button>
+              
+              <motion.div 
+                className="w-full max-w-4xl h-full flex flex-col"
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                transition={{ type: 'tween', duration: 0.2}}
+              >
+                {!selectedUser ? (
+                  <div className="h-full flex flex-col pt-12">
+                      <div className="p-4 pt-4 shrink-0 text-center">
+                          <div className="relative">
+                              <Input
+                                  placeholder="Search for a user..."
+                                  className="pl-4 bg-background/50"
+                                  value={searchQuery}
+                                  onChange={(e) => setSearchQuery(e.target.value)}
+                              />
+                          </div>
+                      </div>
+                      <div className="p-4 flex-1 overflow-hidden">
+                          <UserList onSelectUser={handleSelectUser} searchQuery={searchQuery}/>
+                      </div>
+                  </div>
+                  ) : (
+                  <div className="h-full pt-12">
+                      <ChatView 
+                          recipient={selectedUser} 
+                          onBack={() => setSelectedUser(null)}
+                      />
+                  </div>
+                )}
+              </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <audio ref={audioRef} src="https://firebasestorage.googleapis.com/v0/b/neet-trackr.firebasestorage.app/o/sounds%2Fding.mp3?alt=media&token=c71ed344-e701-4c53-8769-8d938141cadc" preload="auto"></audio>
+    </>
   );
 }
-

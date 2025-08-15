@@ -56,7 +56,7 @@ const StudyRoomContext = createContext<StudyRoomContextType | undefined>(undefin
 
 const TIME_LOG_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function StudyRoomProvider({ children }: { children: ReactNode }) {
+export function StudyRoomProvider({ children, privateMessageAudioRef }: { children: ReactNode, privateMessageAudioRef: React.RefObject<HTMLAudioElement> }) {
     const { user, profile } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
@@ -108,21 +108,38 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 			const chatsCol = collection(db, 'userPrivateChats', user.uid, 'chats');
 			const qy = query(chatsCol, orderBy('lastMessageTimestamp', 'desc'));
 			unsubscribe = onSnapshot(qy, (snap) => {
+                let shouldPlaySound = false;
 				const updated = new Set<string>();
-				snap.forEach((docSnap) => {
-					const data = docSnap.data() as any;
-					const partnerId = data.partnerId as string;
-					if (!partnerId) return;
-					const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${partnerId}`;
-					const lastSeenTimestampStr = localStorage.getItem(lastSeenKey);
-					const lastSeenTimestamp = lastSeenTimestampStr ? new Date(lastSeenTimestampStr).getTime() : 0;
-					const ts = data.lastMessageTimestamp;
-					const messageTimestamp = ts?.toDate ? ts.toDate().getTime() : (ts ? new Date(ts).getTime() : 0);
-					if (messageTimestamp > lastSeenTimestamp && data.lastSenderId !== user.uid) {
-						updated.add(partnerId);
-					}
-				});
-				setNewMessagesFrom(updated);
+				snap.docChanges().forEach((change) => { // Only process changes
+                    if (change.type === 'added' || change.type === 'modified') {
+                        const data = change.doc.data() as any;
+                        const partnerId = data.partnerId as string;
+                        if (!partnerId) return;
+
+                        const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${partnerId}`;
+                        const lastSeenTimestampStr = localStorage.getItem(lastSeenKey);
+                        const lastSeenTimestamp = lastSeenTimestampStr ? new Date(lastSeenTimestampStr).getTime() : 0;
+                        const ts = data.lastMessageTimestamp;
+                        const messageTimestamp = ts?.toDate ? ts.toDate().getTime() : (ts ? new Date(ts).getTime() : 0);
+                        
+                        if (messageTimestamp > lastSeenTimestamp && data.lastSenderId !== user.uid) {
+                            updated.add(partnerId);
+                            // Check if this is a genuinely new message to play sound for
+                            if (!newMessagesFrom.has(partnerId)) {
+                                shouldPlaySound = true;
+                            }
+                        }
+                    }
+                });
+
+                // Merge new notifications with existing ones
+                setNewMessagesFrom(prev => {
+                    const combined = new Set([...Array.from(prev), ...Array.from(updated)]);
+                     if (shouldPlaySound && privateMessageAudioRef.current) {
+                        privateMessageAudioRef.current.play().catch(e => console.error("Audio play failed:", e));
+                    }
+                    return combined;
+                });
 			});
 		} catch (e) {
 			console.error('Failed to subscribe to private chat summaries', e);
@@ -131,7 +148,7 @@ export function StudyRoomProvider({ children }: { children: ReactNode }) {
 		return () => {
 			if (unsubscribe) unsubscribe();
 		};
-	}, [user]);
+	}, [user, newMessagesFrom, privateMessageAudioRef]);
 
     const clearChatNotification = useCallback((userId: string) => {
         const lastSeenKey = `${LAST_SEEN_KEY_PREFIX}${userId}`;
