@@ -26,7 +26,6 @@ const fontHeading = Space_Grotesk({
 // Create a new component to consume the background context
 function AppBodyContent({ children }: { children: React.ReactNode }) {
   const { backgroundImage } = useBackground();
-  const privateMessageAudioRef = React.useRef<HTMLAudioElement>(null);
   
   return (
     <div
@@ -50,7 +49,7 @@ function AppBodyContent({ children }: { children: React.ReactNode }) {
           themes={["dark", "theme-blue", "theme-zinc"]}
       >
         <AuthProvider>
-          <StudyRoomProvider privateMessageAudioRef={privateMessageAudioRef}>
+          <StudyRoomProvider>
               <div className="relative flex min-h-screen flex-col">
                   <div className="flex-1">
                       {children}
@@ -58,7 +57,7 @@ function AppBodyContent({ children }: { children: React.ReactNode }) {
               </div>
               <PersistentAmbientSound />
               <LockModeOverlay />
-              <PrivateChatOverlay audioRef={privateMessageAudioRef} />
+              <PrivateChatOverlay />
               <LeaderboardOverlay />
           </StudyRoomProvider>
         </AuthProvider>
