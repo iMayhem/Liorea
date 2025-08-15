@@ -1,4 +1,4 @@
-
+ 
 import type {NextConfig} from 'next';
 const {headers} = require('./headers');
 
