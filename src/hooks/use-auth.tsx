@@ -32,12 +32,8 @@ export function AuthProvider({children}: {children: ReactNode}) {
   }, [profile]);
 
   const fetchProfile = useCallback(async (currentUser: any, forceRefresh = false) => {
-    // 1. STRICT SAFETY: If no user ID, stop immediately.
-    if (!currentUser || !currentUser.id) {
-        return null;
-    }
+    if (!currentUser || !currentUser.id) return null;
     
-    // 2. CACHE CHECK: If we have this exact user cached, return it (unless forcing refresh)
     if (!forceRefresh && profileRef.current && profileRef.current.uid === currentUser.id) {
         return profileRef.current;
     }
@@ -45,7 +41,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
     setLoadingProfile(true);
     
     try {
-        // 3. DATABASE FETCH
         const { data } = await supabase
             .from('users')
             .select('*')
@@ -53,11 +48,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
             .single();
         
         if (data) {
-            // 4. SECURITY CHECK: Verify the data belongs to the logged-in user
-            if (data.id !== currentUser.id) {
-                console.error("CRITICAL: ID Mismatch", data.id, currentUser.id);
-                return null;
-            }
+            if (data.id !== currentUser.id) return null;
 
             const p = {
                 uid: data.id,
@@ -72,7 +63,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
             if (mounted.current) setProfile(p);
             return p;
         } else {
-            // 5. CREATE PROFILE (Only if missing)
             const googleAvatar = currentUser.user_metadata?.avatar_url;
             const defaultAvatar = `https://api.dicebear.com/9.x/initials/svg?seed=${currentUser.email}`;
             
@@ -114,7 +104,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return null;
   }, [user, fetchProfile]);
 
-  // Auth Listener
   useEffect(() => {
     mounted.current = true;
     const initAuth = async () => {
@@ -133,7 +122,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
       if (!mounted.current) return;
       if (session?.user) {
         setUser(session.user);
-        // Check if profile ID mismatches session ID
         if (!profileRef.current || profileRef.current.uid !== session.user.id) {
              await fetchProfile(session.user);
         }
@@ -147,7 +135,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return () => { mounted.current = false; subscription.unsubscribe(); };
   }, [fetchProfile]);
 
-  // Presence
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase.channel('global_presence');
@@ -159,16 +146,19 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // --- SIGN IN WITH GOOGLE ---
+  // --- STRICT URL LOGIN ---
   const signInWithGoogle = async () => {
     const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    
+    // THIS IS THE FIX:
+    // Instead of using 'window.location.origin' (which might be a temporary 6921... url),
+    // we explicitly force the main domain for production.
     const origin = isLocal ? 'http://localhost:3000' : 'https://liorea.netlify.app';
     
     await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { 
             redirectTo: `${origin}/auth/callback`,
-            // FORCE ACCOUNT SELECTION
             queryParams: {
                 prompt: 'select_account',
                 access_type: 'offline'
@@ -182,8 +172,8 @@ export function AuthProvider({children}: {children: ReactNode}) {
     setUser(null);
     setProfile(null);
     profileRef.current = null;
-    // Hard reload to clear any lingering states
-    window.location.href = '/login';
+    // Force main domain on logout too
+    window.location.href = 'https://liorea.netlify.app/login';
   };
 
   const exposedUser = user ? { ...user, uid: user.id } : null;
