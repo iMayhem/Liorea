@@ -2,20 +2,27 @@ import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@s
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || '';
-  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
-  const isMainDomain = hostname === 'liorea.netlify.app';
+  // --- 1. DOMAIN ENFORCER ---
+  // Get the current domain name (host)
+  const host = request.headers.get('host') || '';
+  
+  // Define what is allowed
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+  const isMainDomain = host === 'liorea.netlify.app';
 
-  // --- 1. STRICT DOMAIN ENFORCEMENT ---
-  // If the user is NOT on localhost AND NOT on 'liorea.netlify.app'
-  // (e.g. they are on '6921...netlify.app' or 'master--...app')
-  // Redirect them immediately to the main site.
+  // If the user is NOT on Localhost AND NOT on the Main Domain...
+  // (This catches all those random number URLs like 6921...netlify.app)
   if (!isLocalhost && !isMainDomain) {
-    const cleanUrl = new URL(request.nextUrl.pathname + request.nextUrl.search, 'https://liorea.netlify.app');
-    return NextResponse.redirect(cleanUrl);
+    // Create the correct URL
+    const correctUrl = new URL(
+      request.nextUrl.pathname + request.nextUrl.search, 
+      'https://liorea.netlify.app'
+    );
+    // Force the browser to go there immediately
+    return NextResponse.redirect(correctUrl);
   }
 
-  // --- 2. SUPABASE SESSION HANDLER ---
+  // --- 2. SUPABASE SESSION HANDLER (Standard) ---
   let response = NextResponse.next({
     request: {
       headers: request.headers,
