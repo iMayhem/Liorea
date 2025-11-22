@@ -27,7 +27,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const mounted = useRef(false);
   const profileRef = useRef<UserProfile | null>(null);
 
-  // Keep ref synced
   useEffect(() => {
     profileRef.current = profile;
   }, [profile]);
@@ -35,7 +34,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const fetchProfile = useCallback(async (currentUser: any) => {
     if (!currentUser || !currentUser.id) return null;
     
-    // Cache check (Skipped if profileRef is null, which refreshProfile ensures)
     if (profileRef.current && profileRef.current.uid === currentUser.id) {
         return profileRef.current;
     }
@@ -63,7 +61,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
             if (mounted.current) setProfile(p);
             return p;
         } else {
-            // Create profile if missing
             const googleAvatar = currentUser.user_metadata?.avatar_url;
             const defaultAvatar = `https://api.dicebear.com/9.x/initials/svg?seed=${currentUser.email}`;
             
@@ -75,21 +72,19 @@ export function AuthProvider({children}: {children: ReactNode}) {
                 username: null 
             };
             
-            const { error } = await supabase.from('users').insert(newProfile);
-            if (!error) {
-                const p = {
-                    uid: newProfile.id,
-                    username: null,
-                    email: newProfile.email,
-                    photoURL: newProfile.photo_url,
-                    lastSeen: newProfile.last_seen
-                };
-                if (mounted.current) setProfile(p);
-                return p;
-            }
+            await supabase.from('users').insert(newProfile);
+            const p = {
+                uid: newProfile.id,
+                username: null,
+                email: newProfile.email,
+                photoURL: newProfile.photo_url,
+                lastSeen: newProfile.last_seen
+            };
+            if (mounted.current) setProfile(p);
+            return p;
         }
     } catch (error) {
-        console.error("[Auth] Fetch Error:", error);
+        console.error("[Auth] Profile error:", error);
     } finally {
         if (mounted.current) setLoadingProfile(false);
     }
@@ -98,7 +93,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-        // FORCE REFRESH: Clear ref so next fetch actually goes to DB
         profileRef.current = null; 
         await fetchProfile(user);
     }
@@ -125,7 +119,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
       if (session?.user) {
         setUser(session.user);
-        // Only fetch if we are missing profile
         if (!profileRef.current) await fetchProfile(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -141,7 +134,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
     };
   }, [fetchProfile]);
 
-  // Presence
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase.channel('global_presence');
@@ -153,15 +145,22 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // Main Domain Redirect
+  // --- FIXED SIGN IN LOGIC ---
   const signInWithGoogle = async () => {
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    
+    // FORCE the main domain for production, regardless of what URL we are currently on.
     const origin = isLocal ? 'http://localhost:3000' : 'https://liorea.netlify.app';
     const redirectUrl = `${origin}/auth/callback`;
     
+    console.log("[Auth] Redirecting to:", redirectUrl);
+
     await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: redirectUrl }
+        options: { 
+            redirectTo: redirectUrl,
+            // This ensures user always lands on liorea.netlify.app after Google
+        }
     });
   };
 
