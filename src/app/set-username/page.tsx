@@ -59,29 +59,27 @@ export default function SetUsernamePage() {
         setIsSaving(true);
         
         try {
-            // 1. Update DB
             const { error } = await updateUserProfile(user.uid, { username });
-            
-            if (error) {
-                throw new Error(error);
-            }
+            if (error) throw new Error(error);
 
-            // 2. Refresh Profile to get new data
-            await refreshProfile(); 
+            // CRITICAL: Wait for the new profile data
+            const newProfile = await refreshProfile(); 
             
-            toast({ title: 'Username Set!', description: `Welcome, ${username}!` });
-            
-            // 3. Redirect only after success
-            router.push('/'); 
+            // Verify we actually have the username in local state now
+            if (newProfile && newProfile.username) {
+                toast({ title: 'Username Set!', description: `Welcome, ${username}!` });
+                router.push('/'); 
+            } else {
+                // If update failed or didn't reflect yet, reload page to force fresh state
+                window.location.href = '/';
+            }
             
         } catch (error: any) {
-            console.error("Save error:", error);
             toast({ 
                 title: 'Error', 
-                description: error.message || 'Could not save username. Please try another.', 
+                description: 'Could not save username. Please try again.', 
                 variant: 'destructive' 
             });
-            // Reset status to force re-check or re-entry
             setStatus('idle');
         } finally {
             setIsSaving(false);

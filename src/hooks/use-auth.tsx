@@ -13,7 +13,7 @@ interface AuthContextType {
   loadingProfile: boolean;
   signInWithGoogle: () => Promise<void>;
   logout: () => void;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<UserProfile | null>; // Updated signature
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,34 +31,25 @@ export function AuthProvider({children}: {children: ReactNode}) {
     profileRef.current = profile;
   }, [profile]);
 
-  const fetchProfile = useCallback(async (currentUser: any) => {
-    // 1. STRICT SAFETY CHECK: If no ID, stop immediately.
-    if (!currentUser || !currentUser.id) {
-        console.warn("[Auth] Aborting fetch: No User ID");
-        return null;
-    }
+  const fetchProfile = useCallback(async (currentUser: any, forceRefresh = false) => {
+    if (!currentUser || !currentUser.id) return null;
     
-    if (profileRef.current && profileRef.current.uid === currentUser.id) {
+    // Skip if cached and not forcing refresh
+    if (!forceRefresh && profileRef.current && profileRef.current.uid === currentUser.id) {
         return profileRef.current;
     }
 
     setLoadingProfile(true);
     
     try {
-        console.log("[Auth] Fetching profile for ID:", currentUser.id);
-
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('users')
             .select('*')
             .eq('id', currentUser.id)
             .single();
         
         if (data) {
-            // 2. DOUBLE CHECK: Ensure the data we got back actually belongs to this user
-            if (data.id !== currentUser.id) {
-                console.error("[Auth] CRITICAL: Database returned wrong user!", data.id, "vs", currentUser.id);
-                return null;
-            }
+            if (data.id !== currentUser.id) return null;
 
             const p = {
                 uid: data.id,
@@ -73,33 +64,33 @@ export function AuthProvider({children}: {children: ReactNode}) {
             if (mounted.current) setProfile(p);
             return p;
         } else {
-            console.log("[Auth] Creating new profile...");
+            // Create profile logic
             const googleAvatar = currentUser.user_metadata?.avatar_url;
             const defaultAvatar = `https://api.dicebear.com/9.x/initials/svg?seed=${currentUser.email}`;
             
             const newProfile = {
-                id: currentUser.id, // Explicitly set ID
+                id: currentUser.id,
                 email: currentUser.email,
                 photo_url: googleAvatar || defaultAvatar,
                 last_seen: new Date().toISOString(),
-                username: null
+                username: null 
             };
             
-            const { error: insertError } = await supabase.from('users').insert(newProfile);
-            if (insertError) console.error("[Auth] Create Error:", insertError);
-            
-            const p = {
-                uid: newProfile.id,
-                username: null,
-                email: newProfile.email,
-                photoURL: newProfile.photo_url,
-                lastSeen: newProfile.last_seen
-            };
-            if (mounted.current) setProfile(p);
-            return p;
+            const { error } = await supabase.from('users').insert(newProfile);
+            if (!error) {
+                const p = {
+                    uid: newProfile.id,
+                    username: null,
+                    email: newProfile.email,
+                    photoURL: newProfile.photo_url,
+                    lastSeen: newProfile.last_seen
+                };
+                if (mounted.current) setProfile(p);
+                return p;
+            }
         }
     } catch (error) {
-        console.error("[Auth] Profile error:", error);
+        console.error("[Auth] Error:", error);
     } finally {
         if (mounted.current) setLoadingProfile(false);
     }
@@ -108,14 +99,15 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-        profileRef.current = null; 
-        await fetchProfile(user);
+        profileRef.current = null; // Clear cache
+        return await fetchProfile(user, true); // Force fetch
     }
+    return null;
   }, [user, fetchProfile]);
 
+  // Auth Listener
   useEffect(() => {
     mounted.current = true;
-
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (mounted.current) {
@@ -126,18 +118,12 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
       }
     };
-
     initAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted.current) return;
-
       if (session?.user) {
         setUser(session.user);
-        // Only fetch if we don't have a profile OR if the IDs don't match
-        if (!profileRef.current || profileRef.current.uid !== session.user.id) {
-             await fetchProfile(session.user);
-        }
+        if (!profileRef.current) await fetchProfile(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
@@ -145,13 +131,10 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
       }
     });
-
-    return () => {
-      mounted.current = false;
-      subscription.unsubscribe();
-    };
+    return () => { mounted.current = false; subscription.unsubscribe(); };
   }, [fetchProfile]);
 
+  // Presence
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase.channel('global_presence');
@@ -166,11 +149,9 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const signInWithGoogle = async () => {
     const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const origin = isLocal ? 'http://localhost:3000' : 'https://liorea.netlify.app';
-    const redirectUrl = `${origin}/auth/callback`;
-    
     await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: redirectUrl }
+        options: { redirectTo: `${origin}/auth/callback` }
     });
   };
 
@@ -185,11 +166,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
   const exposedUser = user ? { ...user, uid: user.id } : null;
 
   if (loading) {
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
