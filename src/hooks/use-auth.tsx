@@ -32,7 +32,11 @@ export function AuthProvider({children}: {children: ReactNode}) {
   }, [profile]);
 
   const fetchProfile = useCallback(async (currentUser: any) => {
-    if (!currentUser || !currentUser.id) return null;
+    // 1. STRICT SAFETY CHECK: If no ID, stop immediately.
+    if (!currentUser || !currentUser.id) {
+        console.warn("[Auth] Aborting fetch: No User ID");
+        return null;
+    }
     
     if (profileRef.current && profileRef.current.uid === currentUser.id) {
         return profileRef.current;
@@ -41,13 +45,21 @@ export function AuthProvider({children}: {children: ReactNode}) {
     setLoadingProfile(true);
     
     try {
-        const { data } = await supabase
+        console.log("[Auth] Fetching profile for ID:", currentUser.id);
+
+        const { data, error } = await supabase
             .from('users')
             .select('*')
             .eq('id', currentUser.id)
             .single();
         
         if (data) {
+            // 2. DOUBLE CHECK: Ensure the data we got back actually belongs to this user
+            if (data.id !== currentUser.id) {
+                console.error("[Auth] CRITICAL: Database returned wrong user!", data.id, "vs", currentUser.id);
+                return null;
+            }
+
             const p = {
                 uid: data.id,
                 username: data.username,
@@ -61,18 +73,20 @@ export function AuthProvider({children}: {children: ReactNode}) {
             if (mounted.current) setProfile(p);
             return p;
         } else {
+            console.log("[Auth] Creating new profile...");
             const googleAvatar = currentUser.user_metadata?.avatar_url;
             const defaultAvatar = `https://api.dicebear.com/9.x/initials/svg?seed=${currentUser.email}`;
             
             const newProfile = {
-                id: currentUser.id,
+                id: currentUser.id, // Explicitly set ID
                 email: currentUser.email,
                 photo_url: googleAvatar || defaultAvatar,
                 last_seen: new Date().toISOString(),
-                username: null 
+                username: null
             };
             
-            await supabase.from('users').insert(newProfile);
+            const { error: insertError } = await supabase.from('users').insert(newProfile);
+            if (insertError) console.error("[Auth] Create Error:", insertError);
             
             const p = {
                 uid: newProfile.id,
@@ -120,7 +134,10 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
       if (session?.user) {
         setUser(session.user);
-        if (!profileRef.current) await fetchProfile(session.user);
+        // Only fetch if we don't have a profile OR if the IDs don't match
+        if (!profileRef.current || profileRef.current.uid !== session.user.id) {
+             await fetchProfile(session.user);
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
@@ -146,24 +163,14 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // --- CONSTANT URL LOGIN ---
   const signInWithGoogle = async () => {
-    // Check if we are on localhost
     const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    
-    // If local, stay local. 
-    // If ANYWHERE else (random numbers, master branch, main site), force main site.
     const origin = isLocal ? 'http://localhost:3000' : 'https://liorea.netlify.app';
-    
     const redirectUrl = `${origin}/auth/callback`;
     
-    console.log("[Auth] Forcing login redirect to:", redirectUrl);
-
     await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { 
-            redirectTo: redirectUrl
-        }
+        options: { redirectTo: redirectUrl }
     });
   };
 
