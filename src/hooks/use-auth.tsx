@@ -73,6 +73,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
             };
             
             await supabase.from('users').insert(newProfile);
+            
             const p = {
                 uid: newProfile.id,
                 username: null,
@@ -145,21 +146,23 @@ export function AuthProvider({children}: {children: ReactNode}) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // --- FIXED SIGN IN LOGIC ---
+  // --- CONSTANT URL LOGIN ---
   const signInWithGoogle = async () => {
+    // Check if we are on localhost
     const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     
-    // FORCE the main domain for production, regardless of what URL we are currently on.
+    // If local, stay local. 
+    // If ANYWHERE else (random numbers, master branch, main site), force main site.
     const origin = isLocal ? 'http://localhost:3000' : 'https://liorea.netlify.app';
+    
     const redirectUrl = `${origin}/auth/callback`;
     
-    console.log("[Auth] Redirecting to:", redirectUrl);
+    console.log("[Auth] Forcing login redirect to:", redirectUrl);
 
     await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { 
-            redirectTo: redirectUrl,
-            // This ensures user always lands on liorea.netlify.app after Google
+            redirectTo: redirectUrl
         }
     });
   };

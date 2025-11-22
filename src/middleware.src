@@ -2,6 +2,20 @@ import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@s
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const hostname = request.headers.get('host') || '';
+  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+  const isMainDomain = hostname === 'liorea.netlify.app';
+
+  // --- 1. STRICT DOMAIN ENFORCEMENT ---
+  // If the user is NOT on localhost AND NOT on 'liorea.netlify.app'
+  // (e.g. they are on '6921...netlify.app' or 'master--...app')
+  // Redirect them immediately to the main site.
+  if (!isLocalhost && !isMainDomain) {
+    const cleanUrl = new URL(request.nextUrl.pathname + request.nextUrl.search, 'https://liorea.netlify.app');
+    return NextResponse.redirect(cleanUrl);
+  }
+
+  // --- 2. SUPABASE SESSION HANDLER ---
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -38,6 +52,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - /auth (auth routes)
+     * - images
+     */
     '/((?!_next/static|_next/image|favicon.ico|auth/.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
