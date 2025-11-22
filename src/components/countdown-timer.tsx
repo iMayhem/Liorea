@@ -1,0 +1,87 @@
+// src/components/countdown-timer.tsx
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface CountdownTimerProps {
+  targetDate: string;
+  title: string;
+}
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+const calculateTimeLeft = (targetDate: string): TimeLeft | null => {
+  const difference = +new Date(targetDate) - +new Date();
+  let timeLeft: TimeLeft | null = null;
+
+  if (difference > 0) {
+    timeLeft = {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+    };
+  }
+
+  return timeLeft;
+};
+
+export function CountdownTimer({ targetDate, title }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Set initial time left on client mount to avoid hydration mismatch
+    setTimeLeft(calculateTimeLeft(targetDate));
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft(targetDate));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  if (!isClient) {
+    return <Skeleton className="h-[108px] w-full" />
+  }
+
+  if (!timeLeft) {
+    return (
+        <Card className="text-center p-4">
+            <h2 className="text-xl font-bold font-heading">The exam date has passed!</h2>
+        </Card>
+    );
+  }
+
+  return (
+    <Card className="p-2 w-full max-w-xs">
+      <h2 className="text-md font-bold text-center mb-2 font-heading tracking-tight">{title}</h2>
+      <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.days).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Days</div>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.hours).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Hours</div>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.minutes).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Minutes</div>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/50">
+          <div className="text-xl font-bold">{String(timeLeft.seconds).padStart(2, '0')}</div>
+          <div className="text-xs text-muted-foreground">Seconds</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
