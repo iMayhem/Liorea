@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { Sound } from '@/lib/sounds';
 import * as LucideIcons from 'lucide-react';
 import { Button } from '../ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Slider } from '../ui/slider';
+import { Volume2 } from 'lucide-react';
 
 interface SoundscapeMixerProps {
   sounds: Sound[];
@@ -13,12 +13,8 @@ interface SoundscapeMixerProps {
 
 export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
-  const [activeSounds, setActiveSounds] = useState<Record<string, boolean>>(() =>
-    sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: false }), {})
-  );
-  const [volumes, setVolumes] = useState<Record<string, number>>(() =>
-    sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: 0.5 }), {})
-  );
+  const [activeSoundId, setActiveSoundId] = useState<string | null>(null);
+  const [masterVolume, setMasterVolume] = useState(0.5);
 
   useEffect(() => {
     sounds.forEach(sound => {
@@ -37,12 +33,17 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
         audioRefs.current.clear();
     };
   }, [sounds]);
-
+  
   const fade = (audio: HTMLAudioElement, to: 'in' | 'out', volume: number) => {
     const targetVolume = to === 'in' ? volume : 0;
-    const initialVolume = to === 'in' ? 0 : audio.volume;
-    const duration = 500;
+    const initialVolume = audio.volume;
+    const duration = 500; 
     const intervalTime = 50;
+    if (duration <= 0) {
+      audio.volume = targetVolume;
+      if (to === 'out') audio.pause();
+      return;
+    }
     const step = (targetVolume - initialVolume) / (duration / intervalTime);
 
     if (to === 'in' && audio.paused) {
@@ -50,76 +51,83 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
       audio.play().catch(e => console.error("Audio play failed:", e));
     }
     
-    const fadeInterval = setInterval(() => {
+    let currentInterval: NodeJS.Timeout | null = null;
+    currentInterval = setInterval(() => {
         const newVolume = audio.volume + step;
         if ((step > 0 && newVolume >= targetVolume) || (step < 0 && newVolume <= targetVolume)) {
             audio.volume = targetVolume;
             if (to === 'out') {
                 audio.pause();
             }
-            clearInterval(fadeInterval);
+            if (currentInterval) clearInterval(currentInterval);
         } else {
             audio.volume = newVolume;
         }
     }, intervalTime);
   };
 
+  const toggleSound = (soundId: string) => {
+    // If the clicked sound is already active, stop it.
+    if (activeSoundId === soundId) {
+      const audio = audioRefs.current.get(soundId);
+      if (audio) fade(audio, 'out', masterVolume);
+      setActiveSoundId(null);
+      return;
+    }
 
-  const toggleSound = (sound: Sound) => {
-    const audio = audioRefs.current.get(sound.id);
-    if (!audio) return;
-
-    const wasActive = activeSounds[sound.id];
-    const newActiveState = !wasActive;
+    // If another sound is active, stop it first.
+    if (activeSoundId) {
+      const oldAudio = audioRefs.current.get(activeSoundId);
+      if (oldAudio) fade(oldAudio, 'out', masterVolume);
+    }
     
-    setActiveSounds(prev => ({ ...prev, [sound.id]: newActiveState }));
-
-    if (newActiveState) {
-      fade(audio, 'in', volumes[sound.id]);
-    } else {
-      fade(audio, 'out', volumes[sound.id]);
+    // Start the new sound.
+    const newAudio = audioRefs.current.get(soundId);
+    if (newAudio) {
+      fade(newAudio, 'in', masterVolume);
+      setActiveSoundId(soundId);
     }
   };
 
-  const handleVolumeChange = (soundId: string, newVolume: number) => {
-    setVolumes(prev => ({ ...prev, [soundId]: newVolume }));
-    const audio = audioRefs.current.get(soundId);
-    if (audio && !audio.paused) {
+  const handleVolumeChange = (newVolume: number) => {
+    setMasterVolume(newVolume);
+    if (activeSoundId) {
+      const audio = audioRefs.current.get(activeSoundId);
+      if (audio && !audio.paused) {
         audio.volume = newVolume;
+      }
     }
   }
-  
+
   return (
     <div className="flex items-center gap-2">
-    {sounds.map(sound => {
-        const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
-        const isActive = activeSounds[sound.id];
-        return (
-            <Popover key={sound.id}>
-                <PopoverTrigger asChild>
-                    <Button 
-                        variant="ghost"
-                        size="icon" 
-                        className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
-                        data-state={isActive ? 'active' : 'inactive'}
-                        onClick={() => toggleSound(sound)}
-                    >
-                            <Icon className="w-6 h-6" />
-                    </Button>
-                </PopoverTrigger>
-                {isActive && (
-                    <PopoverContent className="w-40" side="top" align="center">
-                        <Slider
-                            defaultValue={[volumes[sound.id]]}
-                            max={1}
-                            step={0.05}
-                            onValueChange={([value]) => handleVolumeChange(sound.id, value)}
-                        />
-                    </PopoverContent>
-                )}
-            </Popover>
-        );
-    })}
+      {sounds.map(sound => {
+          const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
+          const isActive = activeSoundId === sound.id;
+          return (
+            <Button 
+                key={sound.id}
+                variant="ghost"
+                size="icon" 
+                className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
+                data-state={isActive ? 'active' : 'inactive'}
+                onClick={() => toggleSound(sound.id)}
+            >
+              <Icon className="w-6 h-6" />
+            </Button>
+          );
+      })}
+      {activeSoundId && (
+        <div className="flex items-center gap-2 w-32 ml-4">
+            <Volume2 className="w-5 h-5 text-white/70"/>
+            <Slider
+                defaultValue={[masterVolume]}
+                max={1}
+                step={0.05}
+                onValueChange={([value]) => handleVolumeChange(value)}
+            />
+        </div>
+      )}
     </div>
   );
 }
