@@ -22,8 +22,7 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
-
+  
   useEffect(() => {
     try {
         const storedUser = localStorage.getItem('liorea-username');
@@ -33,7 +32,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
         console.error("Could not access localStorage", e);
     }
-    setIsInitialized(true);
   }, []);
 
   const setUsername = useCallback((name: string | null) => {
@@ -54,7 +52,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!username || !isInitialized) return;
+    if (!username) return;
 
     const sendHeartbeat = () => {
       fetch(`${WORKER_URL}/heartbeat`, {
@@ -81,7 +79,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(heartbeatInterval);
       clearInterval(statusInterval);
     };
-  }, [username, isInitialized]);
+  }, [username]);
 
   const value = useMemo(() => ({
     username,
@@ -91,7 +89,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <PresenceContext.Provider value={value}>
-      {isInitialized ? children : null}
+      {children}
     </PresenceContext.Provider>
   );
 };
