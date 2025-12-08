@@ -1,6 +1,9 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+// 1. Import usePathname to know where the user is
+import { usePathname } from 'next/navigation';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
@@ -8,7 +11,7 @@ export interface OnlineUser {
   username: string;
   status?: 'Online' | 'Offline';
   last_seen?: number; 
-  total_study_time?: number; // Matches Leaderboard component
+  total_study_time?: number; 
 }
 
 interface PresenceContextType {
@@ -22,6 +25,9 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  
+  // 2. Get the current URL path
+  const pathname = usePathname();
   
   useEffect(() => {
     try {
@@ -54,7 +60,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!username) return;
 
-    // 1. Heartbeat (Keeps user "Online" on the screen)
+    // 1. Heartbeat: Keeps you "Online" anywhere on the site
     const sendHeartbeat = () => {
       fetch(`${WORKER_URL}/heartbeat`, {
         method: "POST",
@@ -63,8 +69,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       }).catch(error => console.error("Heartbeat failed:", error));
     };
     
-    // 2. Study Update (Adds 5 minutes to score)
+    // 2. Study Update: NOW CHECKS IF YOU ARE IN THE STUDY ROOM
     const updateStudyTime = () => {
+       // >>> CRITICAL CHECK: Only update if on /study-together <<<
+       if (pathname !== '/study-together') {
+         console.log("Not in study room, skipping timer update.");
+         return; 
+       }
+
+       console.log("In study room, updating timer +5 mins...");
        fetch(`${WORKER_URL}/study/update`, {
         method: "POST",
         body: JSON.stringify({ username }),
@@ -77,7 +90,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       fetch(`${WORKER_URL}/status`)
         .then(res => res.json())
         .then((users: any[]) => {
-            // Convert database minutes to seconds for the UI
             const formattedUsers = users.map(u => ({
                 ...u,
                 total_study_time: (u.total_minutes || 0) * 60 
@@ -87,20 +99,19 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         .catch(error => console.error("Failed to check online users:", error));
     };
 
-    // Initial run immediately when page loads
+    // Initial run
     sendHeartbeat();
     checkOnlineUsers();
 
     // --- TIMERS ---
     
-    // Keep user online: Run every 1 minute
+    // Heartbeat runs every 60s (keeps you Green/Online)
     const heartbeatInterval = setInterval(sendHeartbeat, 60000); 
     
-    // Update Score: Run every 5 minutes (300,000 milliseconds)
-    // This saves your database limits!
+    // Study Timer runs every 5 minutes (Only counts if on /study-together)
     const studyTimeInterval = setInterval(updateStudyTime, 300000); 
     
-    // Refresh List: Run every 10 seconds to see if others joined
+    // Refresh List runs every 10 seconds
     const statusInterval = setInterval(checkOnlineUsers, 10000); 
 
     return () => {
@@ -108,7 +119,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(studyTimeInterval);
       clearInterval(statusInterval);
     };
-  }, [username]);
+  // 3. Add pathname to dependencies so the effect updates when you change pages
+  }, [username, pathname]);
 
   const value = useMemo(() => ({
     username,
