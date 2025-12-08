@@ -21,7 +21,7 @@ const mockUsers = [
 
 export default function LioreaClient() {
   const nextYear = new Date().getFullYear() + 1;
-  const jeeTargetDate = new Date(`${nextYear}-04-04T09:00:00`);
+  const jeeTargetDate = new Date(`${nextYear}-01-24T09:00:00`);
   const neetTargetDate = new Date(`${nextYear}-05-05T14:00:00`);
 
   return (
