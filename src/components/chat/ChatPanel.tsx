@@ -45,7 +45,7 @@ export default function ChatPanel() {
 
 
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[500px] w-full">
+    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full">
       <CardHeader className="p-4 border-b border-white/20">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
