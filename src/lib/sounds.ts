@@ -33,7 +33,7 @@ export const sounds: Sound[] = [
   { 
     id: 'ocean', 
     name: 'Ocean', 
-    file: '/sounds/forest.mp3', 
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/ocean.mp3', 
     icon: 'Waves' 
   },
 ];
