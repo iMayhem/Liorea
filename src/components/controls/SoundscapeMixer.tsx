@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import type { Sound } from '@/lib/sounds';
@@ -7,6 +6,13 @@ import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
 import { Volume2 } from 'lucide-react';
 import { useFocus } from '@/context/FocusContext';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 
 interface SoundscapeMixerProps {
   sounds: Sound[];
@@ -113,34 +119,42 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      {sounds.map(sound => {
-          const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
-          const isActive = (activeSoundId === sound.id) || (sound.id === 'focus-mode' && isFocusMode);
-          return (
-            <Button 
-                key={sound.id}
-                variant="ghost"
-                size="icon" 
-                className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
-                data-state={isActive ? 'active' : 'inactive'}
-                onClick={() => toggleSound(sound.id)}
-            >
-              <Icon className="w-6 h-6" />
-            </Button>
-          );
-      })}
-      {activeSoundId && !isFocusMode && (
-        <div className="flex items-center gap-2 w-32 ml-4">
-            <Volume2 className="w-5 h-5 text-white/70"/>
-            <Slider
-                defaultValue={[masterVolume]}
-                max={1}
-                step={0.05}
-                onValueChange={([value]) => handleVolumeChange(value)}
-            />
-        </div>
-      )}
-    </div>
+    <TooltipProvider>
+      <div className="flex items-center gap-2">
+        {sounds.map(sound => {
+            const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
+            const isActive = (activeSoundId === sound.id) || (sound.id === 'focus-mode' && isFocusMode);
+            return (
+              <Tooltip key={sound.id}>
+                <TooltipTrigger asChild>
+                  <Button 
+                      variant="ghost"
+                      size="icon" 
+                      className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
+                      data-state={isActive ? 'active' : 'inactive'}
+                      onClick={() => toggleSound(sound.id)}
+                  >
+                    <Icon className="w-6 h-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{sound.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+        })}
+        {activeSoundId && !isFocusMode && (
+          <div className="flex items-center gap-2 w-32 ml-4">
+              <Volume2 className="w-5 h-5 text-white/70"/>
+              <Slider
+                  defaultValue={[masterVolume]}
+                  max={1}
+                  step={0.05}
+                  onValueChange={([value]) => handleVolumeChange(value)}
+              />
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
