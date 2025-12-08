@@ -32,7 +32,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => setShowAuthForm(true)}
-              className="w-full bg-primary/80 hover:bg-primary text-white text-lg"
+              className="w-full bg-accent/80 hover:bg-accent text-white text-lg"
             >
               Sign up
             </Button>
