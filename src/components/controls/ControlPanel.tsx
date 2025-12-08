@@ -15,7 +15,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import Leaderboard from '../study/Leaderboard';
-import StudyGrid from '../study/StudyGrid';
 
 
 export default function ControlPanel() {
@@ -48,11 +47,10 @@ export default function ControlPanel() {
                         <SheetHeader>
                         <SheetTitle>Study Hall</SheetTitle>
                         <SheetDescription>
-                            See who's online and check the leaderboard.
+                            Check the leaderboard.
                         </SheetDescription>
                         </SheetHeader>
                         <div className="py-4 space-y-8">
-                           <StudyGrid users={onlineUsers} />
                            <Leaderboard users={onlineUsers} />
                         </div>
                     </SheetContent>
