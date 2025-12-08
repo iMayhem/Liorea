@@ -7,7 +7,7 @@ interface StudyGridProps {
   users: OnlineUser[];
 }
 
-const formatTime = (seconds: number) => {
+const formatTime = (seconds: number = 0) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     return `${h}h ${m}m`;
@@ -26,18 +26,18 @@ export default function StudyGrid({ users }: StudyGridProps) {
   const onlineUsers = users.filter(u => u.status === 'Online');
   
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {onlineUsers.map((user) => {
         return (
-          <Card key={user.username} className="overflow-hidden bg-card/50">
-            <CardContent className="p-2 flex flex-col items-center justify-center gap-1 text-center">
-              <Avatar className="w-10 h-10 border-2 border-primary">
-                 <AvatarFallback className={`${getUserColor(user.username)} text-white text-xs`}>{user.username.charAt(0)}</AvatarFallback>
+          <Card key={user.username} className="overflow-hidden bg-card/50 backdrop-blur-sm border-white/20">
+            <CardContent className="p-3 flex flex-col items-center justify-center gap-2 text-center">
+              <Avatar className="w-16 h-16 border-2 border-primary">
+                 <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
               </Avatar>
-              <p className="font-semibold truncate w-full text-xs">{user.username}</p>
+              <p className="font-semibold truncate w-full text-sm">{user.username}</p>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3"/>
-                  <span className="text-[10px]">{formatTime(user.total_study_time || 0)}</span>
+                  <span>{formatTime(user.total_study_time)}</span>
               </div>
             </CardContent>
           </Card>
