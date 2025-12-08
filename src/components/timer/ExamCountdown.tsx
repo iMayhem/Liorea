@@ -11,7 +11,7 @@ interface ExamCountdownProps {
 
 const calculateTimeLeft = (targetDate: Date) => {
   const difference = +targetDate - +new Date();
-  let timeLeft = {};
+  let timeLeft: { [key: string]: number } = {};
 
   if (difference > 0) {
     timeLeft = {
@@ -26,23 +26,23 @@ const calculateTimeLeft = (targetDate: Date) => {
 };
 
 export default function ExamCountdown({ examName, targetDate }: ExamCountdownProps) {
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetDate));
+  const [timeLeft, setTimeLeft] = useState<{ [key: string]: number }>({});
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    setIsClient(true);
+    setTimeLeft(calculateTimeLeft(targetDate));
+
+    const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft(targetDate));
     }, 1000);
 
-    return () => clearTimeout(timer);
-  });
+    return () => clearInterval(timer);
+  }, [targetDate]);
 
   const timerComponents: JSX.Element[] = [];
 
   Object.keys(timeLeft).forEach((interval) => {
-    if (!timeLeft[interval as keyof typeof timeLeft] && timeLeft[interval as keyof typeof timeLeft] !==0) {
-      return;
-    }
-
     timerComponents.push(
       <div key={interval} className="flex flex-col items-center">
         <span className="text-3xl font-bold">
@@ -52,6 +52,24 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
       </div>
     );
   });
+
+  if (!isClient) {
+      return (
+        <Card className="bg-transparent border-0 shadow-none text-white">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Target className="text-accent" />
+              {examName} Countdown
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="grid grid-cols-4 gap-2 text-center h-[52px]">
+              {/* Placeholder for server render */}
+            </div>
+          </CardContent>
+        </Card>
+      );
+  }
 
   return (
     <Card className="bg-transparent border-0 shadow-none text-white">
