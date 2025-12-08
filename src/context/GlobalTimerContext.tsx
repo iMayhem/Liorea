@@ -22,7 +22,7 @@ export const GlobalTimerProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchStartTime = useCallback(async () => {
-    setIsLoading(true);
+    // No need to set isLoading to true here, only on initial mount.
     try {
       const response = await fetch(`${WORKER_URL}/timer/status`);
       if (response.ok) {
@@ -30,22 +30,26 @@ export const GlobalTimerProvider = ({ children }: { children: ReactNode }) => {
         // Assuming the worker returns startTime in milliseconds
         setStartTime(data.startTime || Date.now()); 
       } else {
-        setStartTime(Date.now());
+        // Fallback to local time if server fails
+        if (startTime === 0) setStartTime(Date.now());
       }
     } catch (error) {
       console.error("Failed to fetch timer status, using local time.", error);
-      setStartTime(Date.now());
+      if (startTime === 0) setStartTime(Date.now());
     } finally {
-        setIsLoading(false);
+        // Only set loading to false on the initial fetch
+        if (isLoading) setIsLoading(false);
     }
-  }, []);
+  }, [isLoading, startTime]);
 
   useEffect(() => {
+    // This effect runs only once on mount to get the initial start time.
     fetchStartTime();
-  }, [fetchStartTime]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || startTime === 0) return;
 
     const interval = setInterval(() => {
       const now = Date.now();
