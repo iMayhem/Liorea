@@ -20,7 +20,6 @@ export default function StudyTogetherPage() {
       <main className="container mx-auto pt-24 pb-12 px-4">
         <div className="grid grid-cols-1">
           <div className="lg:col-span-2">
-            <h1 className="text-3xl font-bold mb-6">Study Hall</h1>
             <StudyGrid users={mockUsers} />
           </div>
         </div>
