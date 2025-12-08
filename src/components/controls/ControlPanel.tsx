@@ -2,9 +2,8 @@
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Music, Wand2, Trophy } from 'lucide-react';
+import { Music, Trophy } from 'lucide-react';
 import SoundscapeMixer from './SoundscapeMixer';
-import WorkspaceSuggester from '@/components/ai/WorkspaceSuggester';
 import Leaderboard from '@/components/study/Leaderboard';
 import { sounds } from '@/lib/sounds';
 
@@ -54,20 +53,6 @@ export default function ControlPanel({ leaderboardUsers }: ControlPanelProps) {
                   <Leaderboard users={leaderboardUsers} />
                 </div>
             </SheetContent>
-        </Sheet>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white bg-primary/30 hover:bg-primary/50 hover:text-white rounded-full">
-              <Wand2 />
-              <span className="sr-only">Get a Suggestion</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="bg-background/90 backdrop-blur-xl w-full md:w-[400px] text-foreground">
-            <SheetHeader>
-              <SheetTitle>Get a Workspace Suggestion</SheetTitle>
-            </SheetHeader>
-            <WorkspaceSuggester />
-          </SheetContent>
         </Sheet>
       </div>
     </div>
