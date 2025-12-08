@@ -1,39 +1,73 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import { backgrounds as availableBackgrounds, Background } from '@/lib/backgrounds';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
+
+export type Background = {
+  id: string;
+  name: string;
+  url: string;
+};
 
 interface BackgroundContextType {
   backgrounds: Background[];
-  currentBackground: Background;
+  currentBackground: Background | null;
   setCurrentBackgroundById: (id: string) => void;
   cycleBackground: () => void;
 }
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
 
+const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+
 export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
-  const [currentBackground, setCurrentBackground] = useState<Background>(availableBackgrounds[0]);
+  const [backgrounds, setBackgrounds] = useState<Background[]>([]);
+  const [currentBackground, setCurrentBackground] = useState<Background | null>(null);
+
+  useEffect(() => {
+    async function loadBackgrounds() {
+      try {
+        const response = await fetch(WORKER_URL);
+        const files: { filename: string; url: string }[] = await response.json();
+        
+        const fetchedBackgrounds = files
+          .filter(file => !file.filename.endsWith('/'))
+          .map(file => ({
+            id: file.filename,
+            name: file.filename.replace('background/', '').split('.')[0].replace(/[-_]/g, ' '),
+            url: file.url,
+          }));
+
+        if (fetchedBackgrounds.length > 0) {
+          setBackgrounds(fetchedBackgrounds);
+          setCurrentBackground(fetchedBackgrounds[0]);
+        }
+      } catch (error) {
+        console.error("Failed to load backgrounds from worker:", error);
+      }
+    }
+    loadBackgrounds();
+  }, []);
 
   const setCurrentBackgroundById = (id: string) => {
-    const newBg = availableBackgrounds.find(bg => bg.id === id);
+    const newBg = backgrounds.find(bg => bg.id === id);
     if (newBg) {
       setCurrentBackground(newBg);
     }
   };
 
   const cycleBackground = () => {
-    const currentIndex = availableBackgrounds.findIndex(bg => bg.id === currentBackground.id);
-    const nextIndex = (currentIndex + 1) % availableBackgrounds.length;
-    setCurrentBackground(availableBackgrounds[nextIndex]);
+    if (!currentBackground || backgrounds.length === 0) return;
+    const currentIndex = backgrounds.findIndex(bg => bg.id === currentBackground.id);
+    const nextIndex = (currentIndex + 1) % backgrounds.length;
+    setCurrentBackground(backgrounds[nextIndex]);
   };
   
   const value = useMemo(() => ({
-    backgrounds: availableBackgrounds,
+    backgrounds,
     currentBackground,
     setCurrentBackgroundById,
     cycleBackground
-  }), [currentBackground]);
+  }), [backgrounds, currentBackground]);
 
   return (
     <BackgroundContext.Provider value={value}>

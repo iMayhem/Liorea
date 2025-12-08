@@ -11,6 +11,7 @@ import { mockUsers } from '@/lib/mock-data';
 import { useBackground } from '@/context/BackgroundContext';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { Skeleton } from './ui/skeleton';
 
 export default function LioreaClient() {
   const { currentBackground } = useBackground();
@@ -21,13 +22,17 @@ export default function LioreaClient() {
   return (
     <>
       <div className="absolute inset-0 bg-background transition-all duration-1000">
-        <Image
-          key={currentBackground.id}
-          src={currentBackground.url}
-          alt={currentBackground.name}
-          fill
-          className="object-cover animate-in fade-in-50"
-        />
+        {currentBackground ? (
+          <Image
+            key={currentBackground.id}
+            src={currentBackground.url}
+            alt={currentBackground.name}
+            fill
+            className="object-cover animate-in fade-in-50"
+          />
+        ) : (
+          <Skeleton className="h-full w-full" />
+        )}
         <div className="absolute inset-0 bg-black/50" />
       </div>
       <Header />

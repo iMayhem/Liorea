@@ -5,17 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle } from 'lucide-react';
-import { backgrounds } from '@/lib/backgrounds';
 import Image from 'next/image';
+import { useBackground } from '@/context/BackgroundContext';
 
 
 export default function BackgroundManagement() {
+  const { backgrounds } = useBackground();
   
   return (
     <Card>
       <CardHeader>
         <CardTitle>Background Management</CardTitle>
-        <CardDescription>Add, remove, or update background images available to users.</CardDescription>
+        <CardDescription>Backgrounds are fetched dynamically from your Cloudflare worker.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -33,7 +34,7 @@ export default function BackgroundManagement() {
                 <TableCell>
                     <Image src={bg.url} alt={bg.name} width={100} height={56} className="rounded-md object-cover" />
                 </TableCell>
-                <TableCell className="font-medium">{bg.name}</TableCell>
+                <TableCell className="font-medium capitalize">{bg.name}</TableCell>
                 <TableCell>
                     <a href={bg.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate w-32">
                         {bg.url}
@@ -59,7 +60,7 @@ export default function BackgroundManagement() {
                     </Button>
                 </div>
                  <p className="text-sm text-muted-foreground mt-2">
-                    Editing and adding backgrounds is disabled in this demo.
+                    Please upload new images to your R2 bucket to add them.
                 </p>
             </div>
       </CardFooter>
