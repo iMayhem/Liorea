@@ -61,6 +61,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         headers: { "Content-Type": "application/json" }
       }).catch(error => console.error("Heartbeat failed:", error));
     };
+    
+    const updateStudyTime = () => {
+       fetch(`${WORKER_URL}/study/update`, {
+        method: "POST",
+        body: JSON.stringify({ username }),
+        headers: { "Content-Type": "application/json" }
+      }).catch(error => console.error("Study time update failed:", error));
+    }
 
     const checkOnlineUsers = () => {
       fetch(`${WORKER_URL}/status`)
@@ -72,11 +80,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     sendHeartbeat();
     checkOnlineUsers();
 
-    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
-    const statusInterval = setInterval(checkOnlineUsers, 10000);
+    const heartbeatInterval = setInterval(sendHeartbeat, 30000); // 30s for presence
+    const studyTimeInterval = setInterval(updateStudyTime, 30000); // 30s for study time
+    const statusInterval = setInterval(checkOnlineUsers, 10000); // 10s for fetching all users
 
     return () => {
       clearInterval(heartbeatInterval);
+      clearInterval(studyTimeInterval);
       clearInterval(statusInterval);
     };
   }, [username]);
