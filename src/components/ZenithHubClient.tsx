@@ -7,6 +7,7 @@ import DigitalClock from '@/components/clock/DigitalClock';
 import PomodoroTimer from '@/components/timer/PomodoroTimer';
 import ControlPanel from '@/components/controls/ControlPanel';
 import { videos } from '@/lib/videos';
+import ClientOnly from './ClientOnly';
 
 export default function ZenithHubClient() {
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(videos[0].url);
@@ -21,7 +22,9 @@ export default function ZenithHubClient() {
           <PomodoroTimer />
         </div>
       </main>
-      <ControlPanel onVideoSelect={setSelectedVideoUrl} onSuggestionSelect={setSelectedVideoUrl} />
+      <ClientOnly>
+        <ControlPanel onVideoSelect={setSelectedVideoUrl} onSuggestionSelect={setSelectedVideoUrl} />
+      </ClientOnly>
     </>
   );
 }
