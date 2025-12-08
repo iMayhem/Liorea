@@ -23,7 +23,7 @@ export const sounds: Sound[] = [
   { 
     id: 'fireplace', 
     name: 'Fireplace', 
-    file: '/sounds/fireplace.mp3', 
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/fire.mp3', 
     icon: 'Flame' 
   },
   { 
