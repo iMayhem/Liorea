@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Terminal } from 'lucide-react';
-import Header from '../layout/Header';
 
 interface AuthFormProps {
   onLogin: (username: string) => void;
@@ -40,24 +39,29 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        if (isLogin) {
-            toast({
-              title: 'Login Successful',
-              description: 'Welcome back!',
-            });
-            onLogin(username);
-        } else {
-            toast({
-              title: 'Sign Up Successful',
-              description: 'You can now log in.',
-            });
-            setIsLogin(true); // Switch to login view after successful signup
-            setPassword(''); // Clear password field
-        }
-      } else {
+      if (!response.ok || !data.success) {
         throw new Error(data.error || 'Something went wrong');
       }
+
+      // If signup was successful, show toast, switch to login view, and stop.
+      if (!isLogin) {
+          toast({
+            title: 'Sign Up Successful',
+            description: 'You can now log in with your new credentials.',
+          });
+          setIsLogin(true);
+          setPassword('');
+          setIsLoading(false);
+          return; // IMPORTANT: Stop execution here
+      }
+
+      // This part will only run for a successful login
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back!',
+      });
+      onLogin(username);
+
     } catch (err: any) {
       setError(err.message);
     } finally {
