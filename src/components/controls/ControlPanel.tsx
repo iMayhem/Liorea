@@ -6,12 +6,12 @@ import { Music, Trophy, Image as ImageIcon } from 'lucide-react';
 import SoundscapeMixer from './SoundscapeMixer';
 import Leaderboard from '@/components/study/Leaderboard';
 import { sounds } from '@/lib/sounds';
-import { User } from '@/lib/mock-data';
+import { OnlineUser } from '@/context/PresenceContext';
 import { useBackground } from '@/context/BackgroundContext';
 
 
 interface ControlPanelProps {
-  leaderboardUsers: User[];
+  leaderboardUsers: OnlineUser[];
 }
 
 export default function ControlPanel({ leaderboardUsers }: ControlPanelProps) {

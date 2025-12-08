@@ -7,14 +7,14 @@ import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from './ClientOnly';
 import PresencePanel from './study/PresencePanel';
 import ExamCountdown from './timer/ExamCountdown';
-import { mockUsers } from '@/lib/mock-data';
 import { useBackground } from '@/context/BackgroundContext';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
+import { usePresence } from '@/context/PresenceContext';
 
 export default function LioreaClient() {
   const { currentBackground } = useBackground();
+  const { onlineUsers } = usePresence();
   const nextYear = new Date().getFullYear() + 1;
   const jeeTargetDate = new Date(`${nextYear}-01-24T09:00:00`);
   const neetTargetDate = new Date(`${nextYear}-05-05T14:00:00`);
@@ -38,7 +38,7 @@ export default function LioreaClient() {
 
       <div className="fixed left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
         <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
-            <PresencePanel users={mockUsers} />
+            <PresencePanel users={onlineUsers} />
         </div>
       </div>
 
@@ -57,7 +57,7 @@ export default function LioreaClient() {
       </main>
       <ClientOnly>
         <ControlPanel 
-          leaderboardUsers={mockUsers} 
+          leaderboardUsers={onlineUsers} 
         />
       </ClientOnly>
     </>

@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { NotificationProvider } from '@/context/NotificationContext';
 import { BackgroundProvider } from '@/context/BackgroundContext';
+import { PresenceProvider } from '@/context/PresenceContext';
 
 export const metadata: Metadata = {
   title: 'Liorea',
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <BackgroundProvider>
           <NotificationProvider>
-            {children}
+            <PresenceProvider>
+              {children}
+            </PresenceProvider>
           </NotificationProvider>
         </BackgroundProvider>
         <Toaster />
