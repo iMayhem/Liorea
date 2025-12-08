@@ -21,7 +21,7 @@ export default function Header() {
       "bg-transparent"
     )}>
       <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className={cn(
+        <Link href="/home" className={cn(
           "flex items-center gap-2 text-xl font-bold tracking-tight",
           'text-white'
         )}>
