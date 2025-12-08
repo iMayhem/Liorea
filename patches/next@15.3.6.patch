@@ -1,0 +1,40 @@
+diff --git a/node_modules/next/package.json b/node_modules/next/package.json
+index 5815610..88f7808 100644
+--- a/node_modules/next/package.json
++++ b/node_modules/next/package.json
+@@ -31,6 +31,9 @@
+     "start": "next start"
+   },
+   "bin": "dist/bin/next",
++  "workerd": {
++    "compatibilityFlags": ["nodejs_compat"]
++  },
+   "files": [
+     "dist",
+     "!dist/server/lib/squoosh/**/*.wasm",
+diff --git a/node_modules/next/dist/server/web/adapter.js b/node_modules/next/dist/server/web/adapter.js
+index f30f146..d222e96 100644
+--- a/node_modules/next/dist/server/web/adapter.js
++++ b/node_modules/next/dist/server/web/adapter.js
+@@ -10,7 +10,7 @@
+ // necessary for Next.js to render `/` but not necessary for other routes.
+ // See: https://github.com/vercel/next.js/blob/88a53198/packages/next/src/server/web/sandbox/index.ts#L41-L44
+ if (process.env.NODE_ENV !== "development") {
+-    process.env.NODE_ENV = "production";
++    // process.env.NODE_ENV = "production";
+ }
+ async function adapter(request) {
+     const url = new URL(request.url);
+diff --git a/node_modules/next/dist/server/web/sandbox.js b/node_modules/next/dist/server/web/sandbox.js
+index 451480f..e3a4e9b 100644
+--- a/node_modules/next/dist/server/web/sandbox.js
++++ b-node_modules/next/dist-server/web/sandbox.js
+@@ -38,7 +38,7 @@
+     // It's exposed by the edge runtime but we want to use the one that is
+     // in the user's project.
+     delete globalThis.React;
+-    process.env.NODE_ENV = process.env.NODE_ENV_POLYFILL ?? "production";
++    // process.env.NODE_ENV = process.env.NODE_ENV_POLYFILL ?? "production";
+     const { run  } = require("next/dist/server/web/entry-point");
+     return run({
+         distDir: __dirname,
