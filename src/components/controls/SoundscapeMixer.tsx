@@ -6,6 +6,7 @@ import * as LucideIcons from 'lucide-react';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
 import { Volume2 } from 'lucide-react';
+import { useFocus } from '@/context/FocusContext';
 
 interface SoundscapeMixerProps {
   sounds: Sound[];
@@ -15,22 +16,23 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const [activeSoundId, setActiveSoundId] = useState<string | null>(null);
   const [masterVolume, setMasterVolume] = useState(0.5);
+  const { toggleFocusMode, isFocusMode } = useFocus();
 
   useEffect(() => {
     sounds.forEach(sound => {
-        if (!audioRefs.current.has(sound.id)) {
-            const audio = new Audio(sound.file);
-            audio.loop = true;
-            audioRefs.current.set(sound.id, audio);
-        }
+      if (sound.file && !audioRefs.current.has(sound.id)) {
+        const audio = new Audio(sound.file);
+        audio.loop = true;
+        audioRefs.current.set(sound.id, audio);
+      }
     });
 
     return () => {
-        audioRefs.current.forEach(audio => {
-            audio.pause();
-            audio.src = '';
-        });
-        audioRefs.current.clear();
+      audioRefs.current.forEach(audio => {
+        audio.pause();
+        audio.src = '';
+      });
+      audioRefs.current.clear();
     };
   }, [sounds]);
   
@@ -67,7 +69,20 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   };
 
   const toggleSound = (soundId: string) => {
-    // If the clicked sound is already active, stop it.
+    if (soundId === 'focus-mode') {
+        toggleFocusMode();
+        // If a sound is playing, stop it when focus mode is activated
+        if (activeSoundId && !isFocusMode) {
+            const audio = audioRefs.current.get(activeSoundId);
+            if (audio) fade(audio, 'out', masterVolume);
+            setActiveSoundId(null);
+        }
+        return;
+    }
+    
+    // If focus mode is on, don't play sounds
+    if (isFocusMode) return;
+
     if (activeSoundId === soundId) {
       const audio = audioRefs.current.get(soundId);
       if (audio) fade(audio, 'out', masterVolume);
@@ -75,13 +90,11 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
       return;
     }
 
-    // If another sound is active, stop it first.
     if (activeSoundId) {
       const oldAudio = audioRefs.current.get(activeSoundId);
       if (oldAudio) fade(oldAudio, 'out', masterVolume);
     }
     
-    // Start the new sound.
     const newAudio = audioRefs.current.get(soundId);
     if (newAudio) {
       fade(newAudio, 'in', masterVolume);
@@ -103,7 +116,7 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
     <div className="flex items-center gap-2">
       {sounds.map(sound => {
           const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
-          const isActive = activeSoundId === sound.id;
+          const isActive = (activeSoundId === sound.id) || (sound.id === 'focus-mode' && isFocusMode);
           return (
             <Button 
                 key={sound.id}
@@ -117,7 +130,7 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
             </Button>
           );
       })}
-      {activeSoundId && (
+      {activeSoundId && !isFocusMode && (
         <div className="flex items-center gap-2 w-32 ml-4">
             <Volume2 className="w-5 h-5 text-white/70"/>
             <Slider

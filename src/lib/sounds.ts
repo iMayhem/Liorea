@@ -9,7 +9,7 @@ export const sounds: Sound[] = [
   { 
     id: 'focus-mode', 
     name: 'Focus', 
-    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/coffee.mp3', 
+    file: '', // No file for focus mode
     icon: 'Eye' 
   },
   { 

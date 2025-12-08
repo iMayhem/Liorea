@@ -5,6 +5,8 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { BackgroundProvider } from '@/context/BackgroundContext';
 import { PresenceProvider } from '@/context/PresenceContext';
 import BackgroundDisplay from '@/components/layout/BackgroundDisplay';
+import { FocusProvider } from '@/context/FocusContext';
+import FocusOverlay from '@/components/layout/FocusOverlay';
 
 export const metadata: Metadata = {
   title: 'Liorea',
@@ -24,11 +26,14 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <BackgroundProvider>
           <BackgroundDisplay />
-          <NotificationProvider>
-            <PresenceProvider>
-              {children}
-            </PresenceProvider>
-          </NotificationProvider>
+          <FocusProvider>
+            <FocusOverlay />
+            <NotificationProvider>
+              <PresenceProvider>
+                {children}
+              </PresenceProvider>
+            </NotificationProvider>
+          </FocusProvider>
         </BackgroundProvider>
         <Toaster />
       </body>
