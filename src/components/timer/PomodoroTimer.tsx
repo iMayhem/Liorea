@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Play, Pause, RotateCcw } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 
 export default function PomodoroTimer() {
   const [minutes, setMinutes] = useState(25);
@@ -17,6 +16,12 @@ export default function PomodoroTimer() {
   const totalDuration = (isBreak ? breakDuration : workDuration) * 60;
   const timeRemaining = minutes * 60 + seconds;
   const progress = totalDuration > 0 ? ((totalDuration - timeRemaining) / totalDuration) * 100 : 0;
+
+  const radius = 80;
+  const stroke = 8;
+  const normalizedRadius = radius - stroke * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -70,11 +75,42 @@ export default function PomodoroTimer() {
   return (
     <Card className="bg-black/30 backdrop-blur-md border-white/20 text-white w-full max-w-sm mx-auto">
       <CardContent className="flex flex-col items-center gap-3 pt-6">
-        <div className="text-sm font-medium">{isBreak ? 'Break Time' : 'Focus Time'}</div>
-        <div className="text-4xl font-mono font-bold">
-          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        <div className="relative flex flex-col items-center justify-center w-44 h-44">
+            <svg
+                height={radius * 2}
+                width={radius * 2}
+                className="-rotate-90"
+            >
+                <circle
+                    className="text-muted/20"
+                    stroke="currentColor"
+                    fill="transparent"
+                    strokeWidth={stroke}
+                    r={normalizedRadius}
+                    cx={radius}
+                    cy={radius}
+                />
+                <circle
+                    className="text-accent transition-all duration-300"
+                    stroke="currentColor"
+                    fill="transparent"
+                    strokeWidth={stroke}
+                    strokeDasharray={`${circumference} ${circumference}`}
+                    style={{ strokeDashoffset }}
+                    r={normalizedRadius}
+                    cx={radius}
+                    cy={radius}
+                    strokeLinecap="round"
+                />
+            </svg>
+            <div className="absolute flex flex-col items-center justify-center">
+                <div className="text-sm font-medium uppercase tracking-widest">{isBreak ? 'Break' : 'Focus'}</div>
+                <div className="text-4xl font-mono font-bold">
+                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                </div>
+            </div>
         </div>
-        <Progress value={progress} className="w-full h-1 bg-white/20 [&>div]:bg-accent" />
+
         <div className="flex gap-2">
           <Button onClick={toggle} variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full w-10 h-10">
             {isActive ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
