@@ -5,6 +5,7 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { BackgroundProvider } from '@/context/BackgroundContext';
 import { PresenceProvider } from '@/context/PresenceContext';
 import BackgroundDisplay from '@/components/layout/BackgroundDisplay';
+import PageWrapper from '@/components/layout/PageWrapper';
 
 export const metadata: Metadata = {
   title: 'Liorea',
@@ -26,7 +27,9 @@ export default function RootLayout({
           <BackgroundDisplay />
           <NotificationProvider>
             <PresenceProvider>
-              {children}
+              <PageWrapper>
+                {children}
+              </PageWrapper>
             </PresenceProvider>
           </NotificationProvider>
         </BackgroundProvider>
