@@ -13,7 +13,7 @@ export default function StudyTogetherPage() {
   const { onlineUsers } = usePresence();
   return (
     <ChatProvider>
-      <div className="min-h-screen bg-transparent text-foreground">
+      <div className="bg-transparent text-foreground">
         <Header />
         <main className="container mx-auto h-screen pt-16 pb-16 px-4 flex items-center justify-center">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 w-full max-w-7xl">
