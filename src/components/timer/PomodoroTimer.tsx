@@ -64,10 +64,8 @@ export default function PomodoroTimer() {
   }, [isActive, seconds, minutes, isBreak, workDuration, breakDuration, timeRemaining]);
 
   useEffect(() => {
-    if (!isActive) {
-        reset();
-    }
-  }, [workDuration, breakDuration, reset, isActive]);
+    reset();
+  }, [workDuration, breakDuration, reset]);
 
   return (
     <Card className="bg-black/30 backdrop-blur-md border-white/20 text-white w-full max-w-md mx-auto">

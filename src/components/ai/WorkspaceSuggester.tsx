@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Wand2 } from 'lucide-react';
-import { videos } from '@/lib/videos';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -20,15 +19,10 @@ const formSchema = z.object({
 });
 
 type Suggestion = {
-  videoBackgroundSuggestion: string;
   soundscapeMixSuggestion: string;
 };
 
-interface WorkspaceSuggesterProps {
-    onSuggestionSelect: (videoUrl: string) => void;
-}
-
-export default function WorkspaceSuggester({ onSuggestionSelect }: WorkspaceSuggesterProps) {
+export default function WorkspaceSuggester() {
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -55,26 +49,6 @@ export default function WorkspaceSuggester({ onSuggestionSelect }: WorkspaceSugg
       setIsLoading(false);
     }
   }
-
-  const applySuggestion = () => {
-    if (suggestion) {
-      const videoName = suggestion.videoBackgroundSuggestion.toLowerCase();
-      const foundVideo = videos.find(v => videoName.includes(v.name.toLowerCase()));
-      if (foundVideo) {
-        onSuggestionSelect(foundVideo.url);
-        toast({
-          title: "Environment Updated",
-          description: `Background set to ${foundVideo.name}.`
-        })
-      } else {
-        toast({
-            variant: "destructive",
-            title: "Background not found",
-            description: "Could not find a matching video background.",
-        })
-      }
-    }
-  };
 
   return (
     <div className="p-4 space-y-6 h-full overflow-y-auto">
@@ -147,14 +121,9 @@ export default function WorkspaceSuggester({ onSuggestionSelect }: WorkspaceSugg
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold">Video Background</h4>
-              <p className="text-muted-foreground">{suggestion.videoBackgroundSuggestion}</p>
-            </div>
-            <div>
               <h4 className="font-semibold">Soundscape Mix</h4>
               <p className="text-muted-foreground">{suggestion.soundscapeMixSuggestion}</p>
             </div>
-            <Button onClick={applySuggestion} className="w-full">Apply Background</Button>
           </CardContent>
         </Card>
       )}

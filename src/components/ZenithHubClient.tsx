@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from 'react';
 import Header from '@/components/layout/Header';
-import VideoBackground from '@/components/layout/VideoBackground';
 import DigitalClock from '@/components/clock/DigitalClock';
 import PomodoroTimer from '@/components/timer/PomodoroTimer';
 import ControlPanel from '@/components/controls/ControlPanel';
-import { videos } from '@/lib/videos';
 import ClientOnly from './ClientOnly';
 
 const mockUsers = [
@@ -21,11 +18,9 @@ const mockUsers = [
 ];
 
 export default function ZenithHubClient() {
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(videos[0].url);
-
   return (
     <>
-      <VideoBackground src={selectedVideoUrl} />
+      <div className="absolute inset-0 bg-background transition-colors duration-1000"></div>
       <Header />
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
         <div className="flex flex-col items-center gap-8 text-center">
@@ -35,8 +30,6 @@ export default function ZenithHubClient() {
       </main>
       <ClientOnly>
         <ControlPanel 
-          onVideoSelect={setSelectedVideoUrl} 
-          onSuggestionSelect={setSelectedVideoUrl}
           leaderboardUsers={mockUsers} 
         />
       </ClientOnly>

@@ -3,7 +3,7 @@
 /**
  * @fileOverview This file defines a Genkit flow for providing personalized workspace environment suggestions.
  *
- * The flow takes task, mood, and focus level as input and suggests optimal video background and soundscape mix.
+ * The flow takes task, mood, and focus level as input and suggests an optimal soundscape mix.
  *
  * @exported personalizedWorkspaceSuggestion - The main function to trigger the flow.
  * @exported PersonalizedWorkspaceSuggestionInput - The input type for the personalizedWorkspaceSuggestion function.
@@ -21,7 +21,6 @@ const PersonalizedWorkspaceSuggestionInputSchema = z.object({
 export type PersonalizedWorkspaceSuggestionInput = z.infer<typeof PersonalizedWorkspaceSuggestionInputSchema>;
 
 const PersonalizedWorkspaceSuggestionOutputSchema = z.object({
-  videoBackgroundSuggestion: z.string().describe('Suggested video background for the workspace.'),
   soundscapeMixSuggestion: z.string().describe('Suggested soundscape mix for the workspace.'),
 });
 export type PersonalizedWorkspaceSuggestionOutput = z.infer<typeof PersonalizedWorkspaceSuggestionOutputSchema>;
@@ -36,7 +35,7 @@ const prompt = ai.definePrompt({
   output: {schema: PersonalizedWorkspaceSuggestionOutputSchema},
   prompt: `You are an AI assistant designed to suggest optimal workspace environments.
 
-  Based on the user's task, mood, and desired focus level, recommend a video background and a soundscape mix to enhance their concentration and productivity.
+  Based on the user's task, mood, and desired focus level, recommend a soundscape mix to enhance their concentration and productivity.
 
   Task: {{{task}}}
   Mood: {{{mood}}}
@@ -44,7 +43,6 @@ const prompt = ai.definePrompt({
 
   Consider a serene palette of blues and greens, complemented by warm accent lighting, when making your suggestions.
 
-  Video Background Suggestion:
   Soundscape Mix Suggestion: `,
 });
 
