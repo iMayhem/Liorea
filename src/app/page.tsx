@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -6,11 +7,14 @@ import AuthForm from '@/components/auth/AuthForm';
 import { usePresence } from '@/context/PresenceContext';
 import { BookOpenCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useBackground } from '@/context/BackgroundContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LandingPage() {
   const router = useRouter();
   const { username, setUsername } = usePresence();
   const [showAuthForm, setShowAuthForm] = useState(false);
+  const { isLoading: isBackgroundLoading } = useBackground();
 
   const handleLoginSuccess = (username: string) => {
     setUsername(username);
@@ -24,6 +28,10 @@ export default function LandingPage() {
       setShowAuthForm(true);
     }
   };
+
+  if (isBackgroundLoading) {
+    return <Skeleton className="h-screen w-screen bg-transparent" />;
+  }
 
   return (
     <div className="min-h-screen text-white">
