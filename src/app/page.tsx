@@ -14,9 +14,6 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen text-white">
       <div className="relative z-10 flex flex-col items-center justify-center text-center p-4 min-h-screen">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8 text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary">
-          Welcome to Liorea
-        </h1>
         <Button
           size="lg"
           onClick={goToHome}
