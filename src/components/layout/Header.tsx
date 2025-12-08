@@ -19,7 +19,7 @@ export default function Header() {
           "text-2xl font-bold tracking-tight",
           'text-white'
         )}>
-          Zenith Hub
+          Liorea
         </Link>
         <nav>
           <Link href="/study-together" className={cn(

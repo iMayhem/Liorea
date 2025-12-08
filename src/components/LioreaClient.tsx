@@ -17,7 +17,7 @@ const mockUsers = [
   { id: 8, name: 'Hannah', avatarImageId: 'user-avatar-8', studyTime: 55 },
 ];
 
-export default function ZenithHubClient() {
+export default function LioreaClient() {
   return (
     <>
       <div className="absolute inset-0 bg-background transition-colors duration-1000"></div>

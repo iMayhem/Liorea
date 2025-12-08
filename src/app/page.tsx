@@ -1,5 +1,5 @@
-import ZenithHubClient from "@/components/ZenithHubClient";
+import LioreaClient from "@/components/LioreaClient";
 
 export default function Home() {
-  return <ZenithHubClient />;
+  return <LioreaClient />;
 }

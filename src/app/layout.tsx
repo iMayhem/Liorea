@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Zenith Hub',
+  title: 'Liorea',
   description: 'Your personalized virtual workspace for focus and productivity.',
 };
 
