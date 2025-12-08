@@ -37,7 +37,7 @@ export default function StudyGrid({ users }: StudyGridProps) {
               <p className="font-semibold truncate w-full">{user.username}</p>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3"/>
-                  <span>{formatTime(user.totalStudyTime || 0)}</span>
+                  <span>{formatTime(user.total_study_time || 0)}</span>
               </div>
             </CardContent>
           </Card>

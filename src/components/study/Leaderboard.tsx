@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Award, Clock } from 'lucide-react';
+import { Award, Clock, Trophy } from 'lucide-react';
 import { OnlineUser } from '@/context/PresenceContext';
 
 interface LeaderboardProps {
@@ -23,7 +23,7 @@ const getUserColor = (username: string) => {
 };
 
 export default function Leaderboard({ users }: LeaderboardProps) {
-  const sortedUsers = [...users].sort((a, b) => (b.totalStudyTime || 0) - (a.totalStudyTime || 0));
+  const sortedUsers = [...users].sort((a, b) => (b.total_study_time || 0) - (a.total_study_time || 0));
 
   const getRankColor = (rank: number) => {
     if (rank === 0) return 'text-yellow-400';
@@ -33,7 +33,13 @@ export default function Leaderboard({ users }: LeaderboardProps) {
   }
 
   return (
-    <Card>
+    <Card className="bg-black/30 backdrop-blur-md border border-white/20 text-white">
+        <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+                <Trophy className="text-accent w-4 h-4" />
+                Leaderboard
+            </CardTitle>
+        </CardHeader>
       <CardContent className="p-4 space-y-4">
         {sortedUsers.map((user, index) => {
           return (
@@ -49,7 +55,7 @@ export default function Leaderboard({ users }: LeaderboardProps) {
               </div>
               <div className="font-mono text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {formatTime(user.totalStudyTime || 0)}
+                {formatTime(user.total_study_time || 0)}
               </div>
             </div>
           )

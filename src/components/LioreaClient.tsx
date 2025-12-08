@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
 import { useMemo } from 'react';
 import { useBackground } from '@/context/BackgroundContext';
+import Leaderboard from './study/Leaderboard';
 
 export default function LioreaClient() {
   const { error } = useBackground();
@@ -38,8 +39,11 @@ export default function LioreaClient() {
       <Header />
 
       <div className="fixed left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
-        <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
-            <PresencePanel users={onlineUsers} />
+        <div className="space-y-4">
+            <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
+                <PresencePanel users={onlineUsers} />
+            </div>
+            <Leaderboard users={onlineUsers} />
         </div>
       </div>
 
