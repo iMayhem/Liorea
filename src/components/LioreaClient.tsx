@@ -8,16 +8,15 @@ import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from './ClientOnly';
 import PresencePanel from './study/PresencePanel';
 import ExamCountdown from './timer/ExamCountdown';
-import { useBackground } from '@/context/BackgroundContext';
-import Image from 'next/image';
-import { Skeleton } from './ui/skeleton';
 import { usePresence } from '@/context/PresenceContext';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
 import { useMemo } from 'react';
+import BackgroundDisplay from './layout/BackgroundDisplay';
+import { useBackground } from '@/context/BackgroundContext';
 
 export default function LioreaClient() {
-  const { currentBackground, isLoading, error } = useBackground();
+  const { error } = useBackground();
   const { onlineUsers } = usePresence();
   const nextYear = new Date().getFullYear() + 1;
   
@@ -27,20 +26,7 @@ export default function LioreaClient() {
 
   return (
     <>
-      <div className="absolute inset-0 transition-all duration-1000">
-        {isLoading || !currentBackground ? (
-          <Skeleton className="h-full w-full" />
-        ) : (
-          <Image
-            key={currentBackground.id}
-            src={currentBackground.url}
-            alt={currentBackground.name}
-            fill
-            className="object-cover animate-in fade-in-50"
-            priority
-          />
-        )}
-      </div>
+      <BackgroundDisplay />
 
       {error && (
          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
