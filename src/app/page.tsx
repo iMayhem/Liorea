@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -19,8 +18,7 @@ export default function LandingPage() {
           onClick={goToHome}
           className="bg-black/20 hover:bg-black/40 text-white border border-white/30 backdrop-blur-md text-lg px-8 py-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
-          Enter Workspace
-          <ArrowRight className="ml-2 w-5 h-5" />
+          Login
         </Button>
       </div>
     </div>
