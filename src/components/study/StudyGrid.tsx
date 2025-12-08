@@ -15,9 +15,11 @@ const formatTime = (seconds: number) => {
 };
 
 export default function StudyGrid({ users }: StudyGridProps) {
+  const onlineUsers = users.filter(u => u.status === 'Online');
+  
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-      {users.map((user, index) => {
+      {onlineUsers.map((user, index) => {
         const avatarUrl = PlaceHolderImages[index % PlaceHolderImages.length]?.imageUrl || '';
         return (
           <Card key={user.username} className="overflow-hidden">

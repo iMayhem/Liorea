@@ -6,8 +6,9 @@ const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export interface OnlineUser {
   username: string;
+  status?: 'Online' | 'Offline';
+  last_seen?: number; 
   totalStudyTime?: number; 
-  lastSeen?: string; 
 }
 
 interface PresenceContextType {
