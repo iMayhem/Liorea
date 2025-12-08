@@ -89,13 +89,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     onlineUsers,
   }), [username, setUsername, onlineUsers]);
 
-  if (!isInitialized) {
-      return null;
-  }
-
   return (
     <PresenceContext.Provider value={value}>
-      {children}
+      {isInitialized ? children : null}
     </PresenceContext.Provider>
   );
 };
