@@ -5,6 +5,7 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { BackgroundProvider } from '@/context/BackgroundContext';
 import { PresenceProvider } from '@/context/PresenceContext';
 import BackgroundDisplay from '@/components/layout/BackgroundDisplay';
+import { GlobalTimerProvider } from '@/context/GlobalTimerContext';
 
 export const metadata: Metadata = {
   title: 'Liorea',
@@ -26,7 +27,9 @@ export default function RootLayout({
           <BackgroundDisplay />
           <NotificationProvider>
             <PresenceProvider>
+              <GlobalTimerProvider>
                 {children}
+              </GlobalTimerProvider>
             </PresenceProvider>
           </NotificationProvider>
         </BackgroundProvider>

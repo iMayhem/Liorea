@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Users, Timer, Activity, Send } from 'lucide-react';
+import { Users, Timer, Activity, Send, RotateCcw } from 'lucide-react';
 import UserManagement from './UserManagement';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
@@ -9,12 +9,14 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/context/NotificationContext';
 import BackgroundManagement from './BackgroundManagement';
+import { useGlobalTimer } from '@/context/GlobalTimerContext';
 
 
 export default function AdminDashboard() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const { toast } = useToast();
   const { addNotification } = useNotifications();
+  const { elapsedTime, resetGlobalTimer, isResetting } = useGlobalTimer();
 
   const handleSendGlobalNotification = () => {
     if (notificationMessage.trim()) {
@@ -27,10 +29,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleResetTimer = async () => {
+    await resetGlobalTimer();
+    toast({
+        title: "Global Timer Reset",
+        description: "The global study session timer has been reset to 0.",
+    });
+  };
+
+  const formatTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
   return (
     <div className="w-full space-y-8">
         <h1 className="text-3xl font-bold text-center mb-8">Admin Dashboard</h1>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-card/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -72,6 +89,26 @@ export default function AdminDashboard() {
                         users currently online
                     </p>
                 </CardContent>
+            </Card>
+             <Card className="bg-card/80 backdrop-blur-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Global Session Timer
+                    </CardTitle>
+                    <Timer className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold font-mono">{formatTime(elapsedTime)}</div>
+                     <p className="text-xs text-muted-foreground">
+                        Total session duration
+                    </p>
+                </CardContent>
+                <CardFooter>
+                     <Button onClick={handleResetTimer} disabled={isResetting} size="sm" variant="destructive">
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        {isResetting ? 'Resetting...' : 'Reset Timer'}
+                    </Button>
+                </CardFooter>
             </Card>
         </div>
         <Card className="bg-card/80 backdrop-blur-sm">
