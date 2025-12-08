@@ -79,7 +79,7 @@ export default function ControlPanel() {
 
             <div>
                 <Button variant="destructive" size="sm" onClick={handleLeave} className="bg-red-600/80 hover:bg-red-600 text-white rounded-full px-4">
-                    <LogOut className="mr-2 h-5 w-5" />
+                    <LogOut className="mr-2 h-6 w-6" />
                     Leave
                 </Button>
             </div>
