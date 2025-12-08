@@ -3,7 +3,6 @@
 
 import Header from '@/components/layout/Header';
 import PomodoroTimer from '@/components/timer/PomodoroTimer';
-import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from './ClientOnly';
 import PresencePanel from './study/PresencePanel';
 import ExamCountdown from './timer/ExamCountdown';
@@ -58,11 +57,6 @@ export default function LioreaClient() {
           </div>
         </div>
       </main>
-      <ClientOnly>
-        <ControlPanel 
-          leaderboardUsers={onlineUsers} 
-        />
-      </ClientOnly>
     </>
   );
 }
