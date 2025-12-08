@@ -67,64 +67,61 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
 
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-      <Header />
-      <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>{isLogin ? 'Welcome Back!' : 'Join Liorea'}</CardTitle>
-          <CardDescription>{isLogin ? 'Log in to continue your session.' : 'Sign up to join the study community.'}</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleAuth}>
-          <CardContent className="space-y-4">
-            {error && (
-                <Alert variant="destructive">
-                    <Terminal className="h-4 w-4" />
-                    <AlertTitle>{isLogin ? 'Login' : 'Sign-up'} Failed</AlertTitle>
-                    <AlertDescription>
-                        {error}
-                    </AlertDescription>
-                </Alert>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Choose a username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={isLoading}
-                className="bg-background/50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                className="bg-background/50"
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (isLogin ? 'Logging in...' : 'Signing up...') : (isLogin ? 'Log In' : 'Sign Up')}
-            </Button>
-            <p className="text-xs text-center text-muted-foreground">
-                {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-                <button type="button" onClick={() => { setIsLogin(!isLogin); setError(null); }} className="underline font-semibold hover:text-primary">
-                    {isLogin ? 'Sign up' : 'Log in'}
-                </button>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+    <Card className="w-full max-w-sm bg-black/20 backdrop-blur-md border border-white/30 text-white shadow-lg">
+      <CardHeader>
+        <CardTitle>{isLogin ? 'Welcome Back!' : 'Join Liorea'}</CardTitle>
+        <CardDescription>{isLogin ? 'Log in to continue your session.' : 'Sign up to join the study community.'}</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleAuth}>
+        <CardContent className="space-y-4">
+          {error && (
+              <Alert variant="destructive">
+                  <Terminal className="h-4 w-4" />
+                  <AlertTitle>{isLogin ? 'Login' : 'Sign-up'} Failed</AlertTitle>
+                  <AlertDescription>
+                      {error}
+                  </AlertDescription>
+              </Alert>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="Choose a username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              disabled={isLoading}
+              className="bg-transparent border-white/30 placeholder:text-white/70"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              className="bg-transparent border-white/30 placeholder:text-white/70"
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex-col gap-4">
+          <Button type="submit" className="w-full bg-primary/80 hover:bg-primary text-white" disabled={isLoading}>
+            {isLoading ? (isLogin ? 'Logging in...' : 'Signing up...') : (isLogin ? 'Log In' : 'Sign Up')}
+          </Button>
+          <p className="text-xs text-center text-white/80">
+              {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+              <button type="button" onClick={() => { setIsLogin(!isLogin); setError(null); }} className="underline font-semibold hover:text-white">
+                  {isLogin ? 'Sign up' : 'Log in'}
+              </button>
+          </p>
+        </CardFooter>
+      </form>
+    </Card>
   );
 }
