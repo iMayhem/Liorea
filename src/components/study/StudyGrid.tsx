@@ -29,15 +29,15 @@ export default function StudyGrid({ users }: StudyGridProps) {
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
       {onlineUsers.map((user) => {
         return (
-          <Card key={user.username} className="overflow-hidden">
-            <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center">
-              <Avatar className="w-16 h-16 border-2 border-primary">
-                 <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
+          <Card key={user.username} className="overflow-hidden bg-card/50">
+            <CardContent className="p-2 flex flex-col items-center justify-center gap-1 text-center">
+              <Avatar className="w-10 h-10 border-2 border-primary">
+                 <AvatarFallback className={`${getUserColor(user.username)} text-white text-xs`}>{user.username.charAt(0)}</AvatarFallback>
               </Avatar>
-              <p className="font-semibold truncate w-full">{user.username}</p>
+              <p className="font-semibold truncate w-full text-xs">{user.username}</p>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3"/>
-                  <span>{formatTime(user.total_study_time || 0)}</span>
+                  <span className="text-[10px]">{formatTime(user.total_study_time || 0)}</span>
               </div>
             </CardContent>
           </Card>
