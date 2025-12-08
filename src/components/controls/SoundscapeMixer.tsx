@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { Sound } from '@/lib/sounds';
 import * as LucideIcons from 'lucide-react';
 import { Button } from '../ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Slider } from '../ui/slider';
 
 interface SoundscapeMixerProps {
   sounds: Sound[];
@@ -14,9 +16,11 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   const [activeSounds, setActiveSounds] = useState<Record<string, boolean>>(() =>
     sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: false }), {})
   );
+  const [volumes, setVolumes] = useState<Record<string, number>>(() =>
+    sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: 0.5 }), {})
+  );
 
   useEffect(() => {
-    // This effect ensures audio elements are created on the client
     sounds.forEach(sound => {
         if (!audioRefs.current.has(sound.id)) {
             const audio = new Audio(sound.file);
@@ -26,20 +30,18 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
     });
 
     return () => {
-        // Cleanup audio elements to prevent memory leaks
         audioRefs.current.forEach(audio => {
             audio.pause();
             audio.src = '';
         });
         audioRefs.current.clear();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sounds]);
 
-  const fade = (audio: HTMLAudioElement, to: 'in' | 'out') => {
-    const targetVolume = to === 'in' ? 0.5 : 0;
-    const initialVolume = audio.volume;
-    const duration = 500; // 0.5 seconds
+  const fade = (audio: HTMLAudioElement, to: 'in' | 'out', volume: number) => {
+    const targetVolume = to === 'in' ? volume : 0;
+    const initialVolume = to === 'in' ? 0 : audio.volume;
+    const duration = 500;
     const intervalTime = 50;
     const step = (targetVolume - initialVolume) / (duration / intervalTime);
 
@@ -68,31 +70,54 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
     if (!audio) return;
 
     const wasActive = activeSounds[sound.id];
+    const newActiveState = !wasActive;
+    
+    setActiveSounds(prev => ({ ...prev, [sound.id]: newActiveState }));
 
-    if (wasActive) {
-      fade(audio, 'out');
+    if (newActiveState) {
+      fade(audio, 'in', volumes[sound.id]);
     } else {
-      fade(audio, 'in');
+      fade(audio, 'out', volumes[sound.id]);
     }
-
-    setActiveSounds(prev => ({ ...prev, [sound.id]: !wasActive }));
   };
+
+  const handleVolumeChange = (soundId: string, newVolume: number) => {
+    setVolumes(prev => ({ ...prev, [soundId]: newVolume }));
+    const audio = audioRefs.current.get(soundId);
+    if (audio && !audio.paused) {
+        audio.volume = newVolume;
+    }
+  }
   
   return (
     <div className="flex items-center gap-2">
     {sounds.map(sound => {
         const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
+        const isActive = activeSounds[sound.id];
         return (
-        <Button 
-            key={sound.id}
-            variant="ghost"
-            size="icon" 
-            className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
-            onClick={() => toggleSound(sound)}
-            data-state={activeSounds[sound.id] ? 'active' : 'inactive'}
-        >
-                <Icon className="w-6 h-6" />
-        </Button>
+            <Popover key={sound.id}>
+                <PopoverTrigger asChild>
+                    <Button 
+                        variant="ghost"
+                        size="icon" 
+                        className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
+                        data-state={isActive ? 'active' : 'inactive'}
+                        onClick={() => toggleSound(sound)}
+                    >
+                            <Icon className="w-6 h-6" />
+                    </Button>
+                </PopoverTrigger>
+                {isActive && (
+                    <PopoverContent className="w-40" side="top" align="center">
+                        <Slider
+                            defaultValue={[volumes[sound.id]]}
+                            max={1}
+                            step={0.05}
+                            onValueChange={([value]) => handleVolumeChange(sound.id, value)}
+                        />
+                    </PopoverContent>
+                )}
+            </Popover>
         );
     })}
     </div>
