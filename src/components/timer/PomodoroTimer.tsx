@@ -1,105 +1,140 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useGlobalTimer } from '@/context/GlobalTimerContext';
-import { Maximize, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Play, Pause, RefreshCw } from 'lucide-react';
+import * as Tone from 'tone';
 
 export default function PomodoroTimer() {
-  const { elapsedTime } = useGlobalTimer();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [workMinutes, setWorkMinutes] = useState(25);
+  const [breakMinutes, setBreakMinutes] = useState(5);
+  const [mode, setMode] = useState<'work' | 'break'>('work');
+  const [isActive, setIsActive] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(workMinutes * 60);
 
-
-  const totalDuration = 50 * 60; // 50 minutes in seconds
-  const timeRemaining = totalDuration - (elapsedTime % totalDuration);
-  
-  const minutes = Math.floor(timeRemaining / 60);
-  const seconds = timeRemaining % 60;
-
-  const progress = totalDuration > 0 ? ((totalDuration - timeRemaining) / totalDuration) * 100 : 0;
-
-  const radius = isFullscreen ? 200 : 150;
-  const stroke = isFullscreen ? 14 : 12;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  const toggleFullscreen = () => {
-    if (!cardRef.current) return;
-
-    if (!document.fullscreenElement) {
-        cardRef.current.requestFullscreen().catch(err => {
-            alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-        });
-    } else {
-        document.exitFullscreen();
-    }
-  };
-  
-  const handleFullscreenChange = () => {
-    setIsFullscreen(!!document.fullscreenElement);
-  };
+  const synth = useRef<Tone.Synth | null>(null);
 
   useEffect(() => {
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
+    // Initialize synth on the client
+    if (typeof window !== 'undefined' && !synth.current) {
+      synth.current = new Tone.Synth().toDestination();
+    }
   }, []);
 
+  useEffect(() => {
+    const newSeconds = (mode === 'work' ? workMinutes : breakMinutes) * 60;
+    setSecondsLeft(newSeconds);
+  }, [workMinutes, breakMinutes, mode]);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const interval = setInterval(() => {
+      setSecondsLeft(prevSeconds => {
+        if (prevSeconds <= 1) {
+          // Play a sound when the timer finishes
+          synth.current?.triggerAttackRelease("C5", "8n");
+          
+          const nextMode = mode === 'work' ? 'break' : 'work';
+          const nextDuration = (nextMode === 'work' ? workMinutes : breakMinutes) * 60;
+          setMode(nextMode);
+          return nextDuration;
+        }
+        return prevSeconds - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isActive, mode, workMinutes, breakMinutes]);
+
+  const toggleTimer = () => {
+    setIsActive(!isActive);
+  };
+
+  const resetTimer = () => {
+    setIsActive(false);
+    setMode('work');
+    setSecondsLeft(workMinutes * 60);
+  };
+
+  const totalDuration = (mode === 'work' ? workMinutes : breakMinutes) * 60;
+  const progress = totalDuration > 0 ? ((totalDuration - secondsLeft) / totalDuration) * 100 : 0;
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const handleWorkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value > 0) {
+      setWorkMinutes(value);
+      if (mode === 'work' && !isActive) {
+        setSecondsLeft(value * 60);
+      }
+    }
+  };
+
+  const handleBreakChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value > 0) {
+      setBreakMinutes(value);
+      if (mode === 'break' && !isActive) {
+        setSecondsLeft(value * 60);
+      }
+    }
+  };
+
+
   return (
-    <Card 
-        ref={cardRef}
-        className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full max-w-md mx-auto transition-all duration-300"
-    >
-      <CardContent className="relative flex flex-col items-center gap-4 pt-6 text-center">
-         <button onClick={toggleFullscreen} className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">
-            <Maximize className="w-5 h-5" />
-         </button>
-
-         <div className="text-center">
-            <h2 className="text-xl font-bold uppercase tracking-widest text-accent">Global Session</h2>
-            <p className="text-xs text-white/60">Syncs automatically every 50 mins</p>
-        </div>
-
-        <div className="relative flex flex-col items-center justify-center" style={{ width: radius*2, height: radius * 2}}>
-            <svg
-                height={radius * 2}
-                width={radius * 2}
-                className="-rotate-90"
-            >
-                <circle
-                    className="text-white/10"
-                    stroke="currentColor"
-                    fill="transparent"
-                    strokeWidth={stroke}
-                    r={normalizedRadius}
-                    cx={radius}
-                    cy={radius}
-                />
-                <circle
-                    className="text-primary transition-all duration-300"
-                    stroke="currentColor"
-                    fill="transparent"
-                    strokeWidth={stroke}
-                    strokeDasharray={`${circumference} ${circumference}`}
-                    style={{ strokeDashoffset }}
-                    r={normalizedRadius}
-                    cx={radius}
-                    cy={radius}
-                    strokeLinecap="round"
-                />
-            </svg>
-            <div className="absolute flex flex-col items-center justify-center">
-                <div className={`font-mono font-bold text-white tracking-tighter ${isFullscreen ? 'text-8xl' : 'text-7xl'}`}>
-                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                </div>
+    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full max-w-sm mx-auto shadow-lg">
+      <CardContent className="flex flex-col items-center gap-6 p-6 text-center">
+        <h2 className="text-lg font-semibold uppercase tracking-wider text-white/80">Focus Time</h2>
+        
+        <div className="w-full">
+            <div className="font-mono text-7xl font-bold text-white tracking-tighter mb-4">
+                {formatTime(secondsLeft)}
             </div>
+            <Progress value={progress} className="h-1 bg-white/20 [&>div]:bg-white" />
         </div>
 
-        <div className="flex items-center gap-2 text-sm uppercase text-white/60 tracking-widest">
-            <Clock className="w-4 h-4"/>
-            <span>Time Remaining</span>
+        <div className="flex items-center gap-4">
+            <Button onClick={toggleTimer} variant="ghost" size="icon" className="w-12 h-12 rounded-full hover:bg-white/10">
+                {isActive ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+            </Button>
+            <Button onClick={resetTimer} variant="ghost" size="icon" className="w-12 h-12 rounded-full hover:bg-white/10">
+                <RefreshCw className="w-6 h-6" />
+            </Button>
+        </div>
+
+        <div className="flex items-center justify-center gap-6 text-sm text-white/70">
+            <div className="flex items-center gap-2">
+                <label htmlFor="work-duration">Work:</label>
+                <Input
+                    id="work-duration"
+                    type="number"
+                    value={workMinutes}
+                    onChange={handleWorkChange}
+                    className="w-14 h-8 bg-transparent border-0 border-b rounded-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={isActive}
+                />
+                <span>min</span>
+            </div>
+             <div className="flex items-center gap-2">
+                <label htmlFor="break-duration">Break:</label>
+                <Input
+                    id="break-duration"
+                    type="number"
+                    value={breakMinutes}
+                    onChange={handleBreakChange}
+                    className="w-14 h-8 bg-transparent border-0 border-b rounded-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={isActive}
+                />
+                <span>min</span>
+            </div>
         </div>
       </CardContent>
     </Card>
