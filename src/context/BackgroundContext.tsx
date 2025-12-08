@@ -32,20 +32,26 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     async function loadFiles() {
+      console.log('[DEBUG] Starting to load files from worker...');
       try {
         const response = await fetch(WORKER_URL);
+        console.log('[DEBUG] Worker response received:', response);
+
         if (!response.ok) {
           throw new Error(`Worker responded with status ${response.status}`);
         }
+        
         const files: R2File[] = await response.json();
+        console.log('[DEBUG] Parsed files from worker:', files);
         
         if (!Array.isArray(files)) {
-          console.error("Worker did not return a valid JSON array.");
+          console.error("[DEBUG] Worker did not return a valid JSON array.");
           return;
         }
 
         const validFiles = files.filter(file => !file.filename.endsWith('/'));
         setAllFiles(validFiles);
+        console.log('[DEBUG] Set all valid files:', validFiles);
 
         const fetchedBackgrounds = validFiles
           .filter(file => file.filename.startsWith('background/'))
@@ -54,15 +60,21 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
             name: file.filename.replace('background/', '').split('.')[0].replace(/[-_]/g, ' '),
             url: file.url,
           }));
+        
+        console.log('[DEBUG] Filtered background images:', fetchedBackgrounds);
 
         if (fetchedBackgrounds.length > 0) {
           setBackgrounds(fetchedBackgrounds);
           if (!currentBackground) {
             setCurrentBackground(fetchedBackgrounds[0]);
+            console.log('[DEBUG] Set initial background:', fetchedBackgrounds[0]);
           }
+        } else {
+            console.log('[DEBUG] No background images found in worker response.');
         }
+        console.log('[DEBUG] File loading process finished.');
       } catch (error) {
-        console.error("Failed to load files from worker:", error);
+        console.error("[DEBUG] Failed to load files from worker:", error);
       }
     }
     loadFiles();
