@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
@@ -18,70 +19,70 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   );
 
   useEffect(() => {
-    if (isInitialized) {
+    const createPlayers = async () => {
+        await Tone.start();
         sounds.forEach(sound => {
           if (!players.current.has(sound.id)) {
             const player = new Tone.Player({
               url: sound.file,
               loop: true,
-              autostart: volumes[sound.id] > 0,
-              volume: volumes[sound.id] > 0 ? (volumes[sound.id] / 100) * 40 - 40 : -Infinity,
+              volume: -Infinity,
+              fadeIn: 0.5,
+              fadeOut: 0.5,
             }).toDestination();
             players.current.set(sound.id, player);
           }
         });
-    }
+        setIsInitialized(true);
+        console.log("Audio context and players initialized.");
+    };
+
+    createPlayers();
 
     return () => {
-      if (isInitialized) {
-        players.current.forEach(player => player.dispose());
-        players.current.clear();
-      }
+      players.current.forEach(player => player.dispose());
+      players.current.clear();
+      console.log("Players disposed.");
     };
-  }, [sounds, isInitialized, volumes]);
+  }, [sounds]);
 
   const handleVolumeChange = (id: string, value: number) => {
-    const newVolumes = { ...volumes, [id]: value };
-    setVolumes(newVolumes);
+    if (!isInitialized) return;
+
+    setVolumes(prev => ({ ...prev, [id]: value }));
     const player = players.current.get(id);
+
     if (player) {
-      if (value === 0) {
-        player.volume.value = -Infinity;
+      if (value > 0) {
+        const db = (value / 100) * 40 - 40; // Convert 0-100 to -40dB to 0dB range
+        player.volume.rampTo(db, 0.1);
+        if (player.state !== 'started') {
+          player.start();
+        }
       } else {
-        const db = (value / 100) * 40 - 40;
-        player.volume.value = db;
-        if(player.state !== 'started') player.start();
+        player.volume.rampTo(-Infinity, 0.5);
       }
     }
   };
   
-  const startAudio = async () => {
-    if(!isInitialized) {
-      await Tone.start();
-      setIsInitialized(true);
-      console.log("Audio context started");
-    }
-  };
-
   return (
-    <div className="p-4" onClick={startAudio}>
-        {!isInitialized && <p className='text-center text-muted-foreground'>Click here to enable audio</p>}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="p-4 w-96">
+        {!isInitialized && <p className='text-center text-muted-foreground'>Initializing audio...</p>}
+        <div className="grid grid-cols-4 gap-4">
         {sounds.map(sound => {
             const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
             return (
-            <Card key={sound.id} className="flex flex-col items-center gap-2 p-4">
-                <Icon className="w-8 h-8 text-primary" />
-                <span className="font-medium">{sound.name}</span>
-                <Slider
-                disabled={!isInitialized}
-                value={[volumes[sound.id]]}
-                onValueChange={([val]) => handleVolumeChange(sound.id, val)}
-                max={100}
-                step={1}
-                className="w-full"
-                />
-            </Card>
+            <div key={sound.id} className="flex flex-col items-center gap-2">
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="w-16 h-16 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    onClick={() => handleVolumeChange(sound.id, volumes[sound.id] > 0 ? 0 : 50)}
+                >
+                     <Icon className="w-8 h-8" />
+                </Button>
+                <span className="text-xs text-white/80">{sound.name}</span>
+            </div>
             );
         })}
         </div>
