@@ -11,9 +11,11 @@ import { useBackground } from '@/context/BackgroundContext';
 import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
 import { usePresence } from '@/context/PresenceContext';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Terminal } from 'lucide-react';
 
 export default function LioreaClient() {
-  const { currentBackground } = useBackground();
+  const { currentBackground, isLoading, error } = useBackground();
   const { onlineUsers } = usePresence();
   const nextYear = new Date().getFullYear() + 1;
   const jeeTargetDate = new Date(`${nextYear}-01-24T09:00:00`);
@@ -22,18 +24,32 @@ export default function LioreaClient() {
   return (
     <>
       <div className="absolute inset-0 transition-all duration-1000">
-        {currentBackground ? (
+        {isLoading || !currentBackground ? (
+          <Skeleton className="h-full w-full" />
+        ) : (
           <Image
             key={currentBackground.id}
             src={currentBackground.url}
             alt={currentBackground.name}
             fill
             className="object-cover animate-in fade-in-50"
+            priority
           />
-        ) : (
-          <Skeleton className="h-full w-full" />
         )}
       </div>
+
+      {error && (
+         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
+            <Alert variant="destructive">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Background Error</AlertTitle>
+                <AlertDescription>
+                    Could not load backgrounds from the worker: {error}
+                </AlertDescription>
+            </Alert>
+         </div>
+      )}
+
       <Header />
 
       <div className="fixed left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
@@ -50,7 +66,7 @@ export default function LioreaClient() {
       </div>
 
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
-        <div className="flex flex-col items-center gap-6 text-center">
+        <div className="flex flex-col items-center gap-4 text-center">
           <DigitalClock />
           <PomodoroTimer />
         </div>

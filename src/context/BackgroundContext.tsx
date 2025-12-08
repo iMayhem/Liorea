@@ -19,28 +19,39 @@ interface BackgroundContextType {
   setCurrentBackgroundById: (id: string) => void;
   cycleBackground: () => void;
   allFiles: R2File[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev/";
+const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
   const [allFiles, setAllFiles] = useState<R2File[]>([]);
   const [backgrounds, setBackgrounds] = useState<Background[]>([]);
   const [currentBackground, setCurrentBackground] = useState<Background | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadFiles() {
       console.log('[DEBUG] Starting to load files from worker...');
       try {
-        const response = await fetch(WORKER_URL);
+        const response = await fetch(`${WORKER_URL}/`);
         console.log('[DEBUG] Worker response received:', response);
 
         if (!response.ok) {
           throw new Error(`Worker responded with status ${response.status}`);
         }
         
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            const text = await response.text(); 
+            console.error("[DEBUG] Worker response was not JSON:", text);
+            throw new Error("Received invalid data format from server");
+        }
+
         const files: R2File[] = await response.json();
         console.log('[DEBUG] Parsed files from worker:', files);
         
@@ -73,8 +84,11 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
             console.log('[DEBUG] No background images found in worker response.');
         }
         console.log('[DEBUG] File loading process finished.');
-      } catch (error) {
-        console.error("[DEBUG] Failed to load files from worker:", error);
+      } catch (err: any) {
+        console.error("[DEBUG] Failed to load files from worker:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadFiles();
@@ -100,8 +114,11 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     currentBackground,
     setCurrentBackgroundById,
     cycleBackground,
-    allFiles
-  }), [backgrounds, currentBackground, allFiles]);
+    allFiles,
+    isLoading,
+    error,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [backgrounds, currentBackground, allFiles, isLoading, error]);
 
   return (
     <BackgroundContext.Provider value={value}>
