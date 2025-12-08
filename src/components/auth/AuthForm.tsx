@@ -30,9 +30,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
     setError(null);
 
     const endpoint = isLogin ? 'login' : 'signup';
-    const successTitle = isLogin ? 'Login Successful' : 'Sign Up Successful';
-    const successDescription = isLogin ? 'Welcome back!' : 'You can now log in.';
-
+    
     try {
       const response = await fetch(`${WORKER_URL}/auth/${endpoint}`, {
         method: 'POST',
@@ -43,11 +41,20 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast({
-          title: successTitle,
-          description: successDescription,
-        });
-        onLogin(username);
+        if (isLogin) {
+            toast({
+              title: 'Login Successful',
+              description: 'Welcome back!',
+            });
+            onLogin(username);
+        } else {
+            toast({
+              title: 'Sign Up Successful',
+              description: 'You can now log in.',
+            });
+            setIsLogin(true); // Switch to login view after successful signup
+            setPassword(''); // Clear password field
+        }
       } else {
         throw new Error(data.error || 'Something went wrong');
       }
