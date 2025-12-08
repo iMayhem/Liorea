@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/context/NotificationContext';
+import BackgroundManagement from './BackgroundManagement';
 
 
 export default function AdminDashboard() {
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
                 </Button>
             </CardFooter>
         </Card>
+        <BackgroundManagement />
         <UserManagement />
     </div>
   );

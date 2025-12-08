@@ -2,11 +2,12 @@
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Music, Trophy } from 'lucide-react';
+import { Music, Trophy, Image as ImageIcon } from 'lucide-react';
 import SoundscapeMixer from './SoundscapeMixer';
 import Leaderboard from '@/components/study/Leaderboard';
 import { sounds } from '@/lib/sounds';
 import { User } from '@/lib/mock-data';
+import { useBackground } from '@/context/BackgroundContext';
 
 
 interface ControlPanelProps {
@@ -14,6 +15,7 @@ interface ControlPanelProps {
 }
 
 export default function ControlPanel({ leaderboardUsers }: ControlPanelProps) {
+  const { cycleBackground } = useBackground();
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20">
       <div className="flex items-center gap-2 p-2 rounded-full bg-black/30 backdrop-blur-md border border-white/20 shadow-lg">
@@ -31,6 +33,12 @@ export default function ControlPanel({ leaderboardUsers }: ControlPanelProps) {
             <SoundscapeMixer sounds={sounds} />
           </SheetContent>
         </Sheet>
+        
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" onClick={cycleBackground}>
+            <ImageIcon />
+            <span className="sr-only">Change Background</span>
+        </Button>
+
         <Sheet>
             <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full">
