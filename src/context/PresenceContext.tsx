@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
@@ -11,17 +11,50 @@ export interface OnlineUser {
 }
 
 interface PresenceContextType {
-  username: string;
+  username: string | null;
+  setUsername: (name: string | null) => void;
   onlineUsers: OnlineUser[];
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
-  const [username] = useState('User_' + Math.floor(Math.random() * 1000));
+  const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    try {
+        const storedUser = localStorage.getItem('liorea-username');
+        if (storedUser) {
+            setUsernameState(storedUser);
+        }
+    } catch (e) {
+        console.error("Could not access localStorage", e);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  const setUsername = useCallback((name: string | null) => {
+    setUsernameState(name);
+    if (name) {
+        try {
+            localStorage.setItem('liorea-username', name);
+        } catch (e) {
+             console.error("Could not access localStorage", e);
+        }
+    } else {
+        try {
+            localStorage.removeItem('liorea-username');
+        } catch (e) {
+            console.error("Could not access localStorage", e);
+        }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!username || !isInitialized) return;
+
     const sendHeartbeat = () => {
       fetch(`${WORKER_URL}/heartbeat`, {
         method: "POST",
@@ -47,12 +80,17 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(heartbeatInterval);
       clearInterval(statusInterval);
     };
-  }, [username]);
+  }, [username, isInitialized]);
 
   const value = useMemo(() => ({
     username,
+    setUsername,
     onlineUsers,
-  }), [username, onlineUsers]);
+  }), [username, setUsername, onlineUsers]);
+
+  if (!isInitialized) {
+      return null;
+  }
 
   return (
     <PresenceContext.Provider value={value}>

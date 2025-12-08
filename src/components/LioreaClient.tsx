@@ -14,13 +14,16 @@ import { Skeleton } from './ui/skeleton';
 import { usePresence } from '@/context/PresenceContext';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
+import { useMemo } from 'react';
 
 export default function LioreaClient() {
   const { currentBackground, isLoading, error } = useBackground();
   const { onlineUsers } = usePresence();
   const nextYear = new Date().getFullYear() + 1;
-  const jeeTargetDate = new Date(`${nextYear}-01-24T09:00:00`);
-  const neetTargetDate = new Date(`${nextYear}-05-05T14:00:00`);
+  
+  const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-24T09:00:00`), [nextYear]);
+  const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-05T14:00:00`), [nextYear]);
+
 
   return (
     <>
@@ -67,9 +70,11 @@ export default function LioreaClient() {
       </div>
 
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
-        <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex flex-col items-center gap-2 text-center">
           <DigitalClock />
-          <PomodoroTimer />
+          <div className="w-80">
+            <PomodoroTimer />
+          </div>
         </div>
       </main>
       <ClientOnly>
