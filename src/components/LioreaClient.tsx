@@ -43,7 +43,6 @@ export default function LioreaClient() {
             <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
                 <PresencePanel users={onlineUsers} />
             </div>
-            <Leaderboard users={onlineUsers} />
         </div>
       </div>
 

@@ -6,8 +6,18 @@ import SoundscapeMixer from './SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
 import { useGlobalTimer } from '@/context/GlobalTimerContext';
 import { usePresence } from '@/context/PresenceContext';
-import { Clock, Users, LogOut } from 'lucide-react';
+import { Clock, Users, LogOut, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import Leaderboard from '../study/Leaderboard';
+import StudyGrid from '../study/StudyGrid';
 
 
 export default function ControlPanel() {
@@ -42,6 +52,25 @@ export default function ControlPanel() {
                     <Users className="w-4 h-4" />
                     <span>{onlineUsers.length}</span>
                  </div>
+                 <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-white/70 hover:bg-white/10 hover:text-white rounded-full">
+                            <Trophy className="w-5 h-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="bg-black/30 backdrop-blur-xl border-r-white/20 text-white w-[380px] sm:w-[540px] pt-10">
+                        <SheetHeader>
+                        <SheetTitle>Study Hall</SheetTitle>
+                        <SheetDescription>
+                            See who's online and check the leaderboard.
+                        </SheetDescription>
+                        </SheetHeader>
+                        <div className="py-4 space-y-8">
+                           <StudyGrid users={onlineUsers} />
+                           <Leaderboard users={onlineUsers} />
+                        </div>
+                    </SheetContent>
+                </Sheet>
             </div>
             
             <div className="flex-1 flex justify-center">

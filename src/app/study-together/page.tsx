@@ -7,7 +7,7 @@ import ClientOnly from '@/components/ClientOnly';
 import { usePresence } from '@/context/PresenceContext';
 import { ChatProvider } from '@/context/ChatContext';
 import ChatPanel from '@/components/chat/ChatPanel';
-import GlobalTimer from '@/components/timer/GlobalTimer';
+import PomodoroTimer from '@/components/timer/PomodoroTimer';
 
 export default function StudyTogetherPage() {
   const { onlineUsers } = usePresence();
@@ -18,7 +18,9 @@ export default function StudyTogetherPage() {
         <main className="container mx-auto pt-24 pb-20 px-4 flex items-center justify-center min-h-screen">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 w-full max-w-6xl">
             <div className="lg:col-span-3 flex items-center justify-center">
-              <GlobalTimer />
+                <div className="w-80">
+                    <PomodoroTimer />
+                </div>
             </div>
             <div className="lg:col-span-2">
                 <ChatPanel />
