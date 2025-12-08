@@ -1,5 +1,4 @@
 import Header from '@/components/layout/Header';
-import Leaderboard from '@/components/study/Leaderboard';
 import StudyGrid from '@/components/study/StudyGrid';
 
 const mockUsers = [
@@ -19,14 +18,10 @@ export default function StudyTogetherPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="container mx-auto pt-24 pb-12 px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1">
           <div className="lg:col-span-2">
             <h1 className="text-3xl font-bold mb-6">Study Hall</h1>
             <StudyGrid users={mockUsers} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold mb-6">Leaderboard</h1>
-            <Leaderboard users={mockUsers} />
           </div>
         </div>
       </main>
