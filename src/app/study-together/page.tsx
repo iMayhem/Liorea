@@ -1,6 +1,6 @@
-
 "use client";
 
+import { useEffect } from 'react'; // Added import
 import Header from '@/components/layout/Header';
 import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from '@/components/ClientOnly';
@@ -10,7 +10,13 @@ import ChatPanel from '@/components/chat/ChatPanel';
 import StudyGrid from '@/components/study/StudyGrid';
 
 export default function StudyTogetherPage() {
-  const { onlineUsers } = usePresence();
+  const { onlineUsers, joinSession } = usePresence();
+
+  // Auto-join when entering this page
+  useEffect(() => {
+    joinSession();
+  }, [joinSession]);
+
   return (
     <ChatProvider>
       <div className="bg-transparent text-foreground">
