@@ -4,12 +4,7 @@ import * as React from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 
-interface StudyCalendarProps {
-    month: Date;
-    onMonthChange: (date: Date) => void;
-}
-
-export default function StudyCalendar({ month, onMonthChange }: StudyCalendarProps) {
+export default function StudyCalendar() {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
 
   return (
@@ -19,8 +14,6 @@ export default function StudyCalendar({ month, onMonthChange }: StudyCalendarPro
             mode="single"
             selected={date}
             onSelect={setDate}
-            month={month}
-            onMonthChange={onMonthChange}
             className="p-3"
             classNames={{
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
@@ -28,7 +21,7 @@ export default function StudyCalendar({ month, onMonthChange }: StudyCalendarPro
                 caption: "flex justify-center pt-1 relative items-center",
                 caption_label: "text-sm font-medium",
                 nav: "space-x-1 flex items-center",
-                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hidden",
+                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
                 table: "w-full border-collapse space-y-1",
                 head_row: "flex",
                 head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
