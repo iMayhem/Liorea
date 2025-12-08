@@ -50,7 +50,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
             description: 'You can now log in with your new credentials.',
           });
           setIsLogin(true);
-          setPassword('');
+setPassword('');
           setIsLoading(false);
           return; // IMPORTANT: Stop execution here
       }
@@ -73,7 +73,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
   return (
     <Card className="w-full max-w-sm bg-black/10 backdrop-blur-md border border-white/30 text-white shadow-lg">
       <CardHeader>
-        <CardTitle>{isLogin ? 'Welcome Back!' : 'Join Liorea'}</CardTitle>
+        <CardTitle>{isLogin ? 'Liorea' : 'Join Liorea'}</CardTitle>
         <CardDescription>{isLogin ? 'Log in to continue your session.' : 'Sign up to join the study community.'}</CardDescription>
       </CardHeader>
       <form onSubmit={handleAuth}>

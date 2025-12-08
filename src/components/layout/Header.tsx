@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell, BookOpen, Home } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ export default function Header() {
           "flex items-center gap-2 text-xl font-bold tracking-tight",
           'text-white'
         )}>
-          <BookOpen className="w-7 h-7" />
+          <BookOpenCheck className="w-7 h-7" />
           Liorea
         </Link>
         <nav className="flex items-center gap-2">
