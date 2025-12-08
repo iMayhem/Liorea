@@ -33,7 +33,7 @@ export default function Leaderboard({ users }: LeaderboardProps) {
   }
 
   return (
-    <Card className="bg-black/20 backdrop-blur-md border border-white/20 text-white">
+    <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
         <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base flex items-center gap-2">
                 <Trophy className="text-accent w-4 h-4" />

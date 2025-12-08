@@ -26,7 +26,7 @@ export default function StudyGrid({ users }: StudyGridProps) {
   const onlineUsers = users.filter(u => u.status === 'Online');
   
   return (
-    <Card className="bg-black/20 backdrop-blur-md border border-white/30 text-white w-full h-[500px]">
+    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full h-[500px]">
         <CardHeader className="p-4 border-b border-white/20">
             <CardTitle className="text-base flex items-center gap-2">
                 <Users className="w-5 h-5" />

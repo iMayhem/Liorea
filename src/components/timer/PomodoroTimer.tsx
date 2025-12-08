@@ -50,7 +50,7 @@ export default function PomodoroTimer() {
   return (
     <Card 
         ref={cardRef}
-        className="bg-black/20 backdrop-blur-md border border-white/30 text-white w-full max-w-md mx-auto transition-all duration-300"
+        className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full max-w-md mx-auto transition-all duration-300"
     >
       <CardContent className="relative flex flex-col items-center gap-4 pt-6 text-center">
          <button onClick={toggleFullscreen} className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">

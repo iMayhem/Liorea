@@ -71,7 +71,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
 
 
   return (
-    <Card className="w-full max-w-sm bg-black/20 backdrop-blur-md border border-white/30 text-white shadow-lg">
+    <Card className="w-full max-w-sm bg-black/10 backdrop-blur-md border border-white/30 text-white shadow-lg">
       <CardHeader>
         <CardTitle>{isLogin ? 'Welcome Back!' : 'Join Liorea'}</CardTitle>
         <CardDescription>{isLogin ? 'Log in to continue your session.' : 'Sign up to join the study community.'}</CardDescription>

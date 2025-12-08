@@ -78,7 +78,7 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
             onClick={() => toggleSound(sound.id)}
             data-state={activeSounds[sound.id] ? 'active' : 'inactive'}
         >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-6 h-6" />
         </Button>
         );
     })}

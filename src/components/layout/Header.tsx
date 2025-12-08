@@ -25,14 +25,14 @@ export default function Header() {
           "flex items-center gap-2 text-xl font-bold tracking-tight",
           'text-white'
         )}>
-          <BookOpen className="w-6 h-6" />
+          <BookOpen className="w-7 h-7" />
           Liorea
         </Link>
         <nav className="flex items-center gap-2">
            <Popover>
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full relative">
-                    <Bell />
+                    <Bell className="w-5 h-5" />
                     {unreadCount > 0 && (
                         <span className="absolute top-0 right-0 flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -87,14 +87,14 @@ export default function Header() {
             "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
             'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
           )}>
-            <Home className="w-4 h-4 text-accent" />
+            <Home className="w-5 h-5 text-accent" />
             Home
           </Link>
           <Link href="/study-together" className={cn(
             "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
             'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
           )}>
-            <Sparkles className="w-4 h-4 text-accent" />
+            <Sparkles className="w-5 h-5 text-accent" />
             Study Together
           </Link>
         </nav>

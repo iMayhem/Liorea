@@ -23,7 +23,7 @@ export default function BackgroundManagement() {
   }
   
   return (
-    <Card className="bg-black/20 backdrop-blur-sm">
+    <Card className="bg-black/10 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>Cloudflare R2 File Management</CardTitle>
         <CardDescription>All files from your Cloudflare R2 bucket worker.</CardDescription>
