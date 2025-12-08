@@ -16,9 +16,13 @@ export default function StudyTogetherPage() {
       <div className="bg-transparent text-foreground">
         <Header />
         <main className="container mx-auto h-screen pt-16 pb-16 px-4 flex items-center">
-          <div className="w-full max-w-4xl mx-auto space-y-8">
-            <StudyGrid users={onlineUsers} />
-            <ChatPanel />
+          <div className="w-full mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+            <div className="lg:col-span-3 w-full">
+               <StudyGrid users={onlineUsers} />
+            </div>
+            <div className="lg:col-span-2 w-full">
+              <ChatPanel />
+            </div>
           </div>
         </main>
         <ClientOnly>
