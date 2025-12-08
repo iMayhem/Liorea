@@ -2,8 +2,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
-// 1. Import usePathname to know where the user is
-import { usePathname } from 'next/navigation';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
@@ -18,6 +16,10 @@ interface PresenceContextType {
   username: string | null;
   setUsername: (name: string | null) => void;
   onlineUsers: OnlineUser[];
+  // New controls for the session
+  isStudying: boolean;
+  joinSession: () => void;
+  leaveSession: () => void;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -25,16 +27,18 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  // Default to false, but check localStorage in useEffect
+  const [isStudying, setIsStudying] = useState(false);
   
-  // 2. Get the current URL path
-  const pathname = usePathname();
-  
+  // 1. Load saved data on startup
   useEffect(() => {
     try {
         const storedUser = localStorage.getItem('liorea-username');
-        if (storedUser) {
-            setUsernameState(storedUser);
-        }
+        if (storedUser) setUsernameState(storedUser);
+
+        // Check if we were already studying (persistence on refresh)
+        const sessionState = localStorage.getItem('liorea-is-studying');
+        if (sessionState === 'true') setIsStudying(true);
     } catch (e) {
         console.error("Could not access localStorage", e);
     }
@@ -45,22 +49,45 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         try {
             localStorage.setItem('liorea-username', name);
-        } catch (e) {
-             console.error("Could not access localStorage", e);
+        } catch(e) {
+            console.error("Could not access localStorage", e);
         }
     } else {
         try {
             localStorage.removeItem('liorea-username');
+            // If logging out, also stop studying
+            setIsStudying(false);
+            localStorage.removeItem('liorea-is-studying');
         } catch (e) {
             console.error("Could not access localStorage", e);
         }
     }
   }, []);
 
+  // 2. Functions to Join/Leave (Discord style)
+  const joinSession = useCallback(() => {
+    setIsStudying(true);
+    try {
+        localStorage.setItem('liorea-is-studying', 'true');
+    } catch(e) {
+        console.error("Could not access localStorage", e);
+    }
+    console.log("Joined Study Session");
+  }, []);
+
+  const leaveSession = useCallback(() => {
+    setIsStudying(false);
+    try {
+        localStorage.setItem('liorea-is-studying', 'false');
+    } catch(e) {
+        console.error("Could not access localStorage", e);
+    }
+    console.log("Left Study Session");
+  }, []);
+
   useEffect(() => {
     if (!username) return;
 
-    // 1. Heartbeat: Keeps you "Online" anywhere on the site
     const sendHeartbeat = () => {
       fetch(`${WORKER_URL}/heartbeat`, {
         method: "POST",
@@ -69,15 +96,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       }).catch(error => console.error("Heartbeat failed:", error));
     };
     
-    // 2. Study Update: NOW CHECKS IF YOU ARE IN THE STUDY ROOM
+    // 3. The Timer Logic
     const updateStudyTime = () => {
-       // >>> CRITICAL CHECK: Only update if on /study-together <<<
-       if (pathname !== '/study-together') {
-         console.log("Not in study room, skipping timer update.");
+       // Only count if the switch is ON
+       if (!isStudying) {
          return; 
        }
 
-       console.log("In study room, updating timer +5 mins...");
+       console.log("Studying in background... +5 mins added.");
        fetch(`${WORKER_URL}/study/update`, {
         method: "POST",
         body: JSON.stringify({ username }),
@@ -85,7 +111,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       }).catch(error => console.error("Study time update failed:", error));
     }
 
-    // 3. Check Status (Get list of users and scores)
     const checkOnlineUsers = () => {
       fetch(`${WORKER_URL}/status`)
         .then(res => res.json())
@@ -99,19 +124,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         .catch(error => console.error("Failed to check online users:", error));
     };
 
-    // Initial run
+    // Run immediately
     sendHeartbeat();
     checkOnlineUsers();
 
-    // --- TIMERS ---
-    
-    // Heartbeat runs every 60s (keeps you Green/Online)
+    // Intervals
     const heartbeatInterval = setInterval(sendHeartbeat, 60000); 
-    
-    // Study Timer runs every 5 minutes (Only counts if on /study-together)
-    const studyTimeInterval = setInterval(updateStudyTime, 300000); 
-    
-    // Refresh List runs every 10 seconds
+    const studyTimeInterval = setInterval(updateStudyTime, 300000); // 5 Minutes
     const statusInterval = setInterval(checkOnlineUsers, 10000); 
 
     return () => {
@@ -119,14 +138,16 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(studyTimeInterval);
       clearInterval(statusInterval);
     };
-  // 3. Add pathname to dependencies so the effect updates when you change pages
-  }, [username, pathname]);
+  }, [username, isStudying]); // Re-run if isStudying changes
 
   const value = useMemo(() => ({
     username,
     setUsername,
     onlineUsers,
-  }), [username, setUsername, onlineUsers]);
+    isStudying,
+    joinSession,
+    leaveSession
+  }), [username, setUsername, onlineUsers, isStudying, joinSession, leaveSession]);
 
   return (
     <PresenceContext.Provider value={value}>
