@@ -178,6 +178,6 @@
   background: rgba(10, 10, 15, 0.25);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  animation: glassReveal 0.7s ease-in-out forwards;
+  animation: glassReveal 0.2s ease-in-out forwards;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
