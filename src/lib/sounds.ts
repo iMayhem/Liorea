@@ -9,14 +9,12 @@ export const sounds: Sound[] = [
   { 
     id: 'focus-mode', 
     name: 'Focus', 
-    // You can upload your other files to R2 and replace this link later
-    file: '/sounds/cafe.mp3', 
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/coffee.mp3', 
     icon: 'Eye' 
   },
   { 
     id: 'rain', 
     name: 'Rain', 
-    // This is the link from your screenshot!
     file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/rain.mp3', 
     icon: 'CloudRain' 
   },
@@ -29,7 +27,7 @@ export const sounds: Sound[] = [
   { 
     id: 'cafe', 
     name: 'Cafe', 
-    file: '/sounds/cafe.mp3', 
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/coffee.mp3', 
     icon: 'Coffee' 
   },
   { 
