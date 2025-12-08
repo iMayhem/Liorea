@@ -66,15 +66,15 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   };
   
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
     {sounds.map(sound => {
         const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
         return (
         <Button 
             key={sound.id}
-            variant={activeSounds[sound.id] ? "secondary" : "ghost"}
+            variant="ghost"
             size="icon" 
-            className="text-white hover:bg-white/20 hover:text-white rounded-full data-[state=active]:bg-white/20"
+            className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
             onClick={() => toggleSound(sound.id)}
             data-state={activeSounds[sound.id] ? 'active' : 'inactive'}
         >
