@@ -1,12 +1,10 @@
-
 "use client";
 
 import { Button } from '@/components/ui/button';
 import SoundscapeMixer from './SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
-import { useGlobalTimer } from '@/context/GlobalTimerContext';
 import { usePresence } from '@/context/PresenceContext';
-import { Clock, Users, LogOut, Trophy } from 'lucide-react';
+import { Users, LogOut, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Sheet,
@@ -21,19 +19,8 @@ import StudyGrid from '../study/StudyGrid';
 
 
 export default function ControlPanel() {
-  const { elapsedTime } = useGlobalTimer();
   const { onlineUsers } = usePresence();
   const router = useRouter();
-
-  const formatTime = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    if (hours > 0) {
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    }
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
 
   const handleLeave = () => {
     router.push('/home');
@@ -44,12 +31,8 @@ export default function ControlPanel() {
       <div className="bg-black/10 backdrop-blur-md border-t border-white/20 shadow-lg">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <div className="flex items-center gap-6 text-sm text-white/80">
-                 <div className="flex items-center gap-2 font-mono bg-black/20 text-white/80 px-3 py-1 rounded-full">
-                    <Clock className="w-5 h-5" />
-                    <span>{formatTime(elapsedTime)}</span>
-                 </div>
                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
+                    <Users className="w-6 h-6" />
                     <span>{onlineUsers.length}</span>
                  </div>
             </div>
