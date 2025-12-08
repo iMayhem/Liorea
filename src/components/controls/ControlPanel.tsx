@@ -2,11 +2,10 @@
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Music, Wand2, Trophy, Users } from 'lucide-react';
+import { Music, Wand2, Trophy } from 'lucide-react';
 import SoundscapeMixer from './SoundscapeMixer';
 import WorkspaceSuggester from '@/components/ai/WorkspaceSuggester';
 import Leaderboard from '@/components/study/Leaderboard';
-import PresencePanel from '@/components/study/PresencePanel';
 import { sounds } from '@/lib/sounds';
 
 type User = {
@@ -55,22 +54,6 @@ export default function ControlPanel({ leaderboardUsers }: ControlPanelProps) {
                   <Leaderboard users={leaderboardUsers} />
                 </div>
             </SheetContent>
-        </Sheet>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full">
-              <Users />
-              <span className="sr-only">Online Users</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="bg-background/90 backdrop-blur-xl w-full md:w-[400px] text-foreground">
-            <SheetHeader>
-              <SheetTitle>Online Users</SheetTitle>
-            </SheetHeader>
-            <div className="py-4">
-              <PresencePanel users={leaderboardUsers} />
-            </div>
-          </SheetContent>
         </Sheet>
         <Sheet>
           <SheetTrigger asChild>

@@ -5,6 +5,7 @@ import DigitalClock from '@/components/clock/DigitalClock';
 import PomodoroTimer from '@/components/timer/PomodoroTimer';
 import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from './ClientOnly';
+import PresencePanel from './study/PresencePanel';
 
 const mockUsers = [
   { id: 1, name: 'Alex', avatarImageId: 'user-avatar-1', studyTime: 4 * 60 + 25, status: 'online' },
@@ -22,6 +23,13 @@ export default function LioreaClient() {
     <>
       <div className="absolute inset-0 bg-background transition-colors duration-1000"></div>
       <Header />
+
+      <div className="fixed left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
+        <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
+            <PresencePanel users={mockUsers} />
+        </div>
+      </div>
+
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
         <div className="flex flex-col items-center gap-8 text-center">
           <DigitalClock />
