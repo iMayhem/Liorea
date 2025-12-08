@@ -3,14 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-
-type User = {
-  id: number;
-  name: string;
-  avatarImageId: string;
-  status: 'online' | 'offline';
-  lastSeen?: string;
-};
+import { User } from '@/lib/mock-data';
 
 interface PresencePanelProps {
   users: User[];

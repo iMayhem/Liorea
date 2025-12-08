@@ -3,13 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-
-type User = {
-  id: number;
-  name: string;
-  avatarImageId: string;
-  studyTime: number; // in minutes
-};
+import { User } from '@/lib/mock-data';
 
 interface StudyGridProps {
   users: User[];

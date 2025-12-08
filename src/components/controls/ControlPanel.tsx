@@ -6,15 +6,8 @@ import { Music, Trophy } from 'lucide-react';
 import SoundscapeMixer from './SoundscapeMixer';
 import Leaderboard from '@/components/study/Leaderboard';
 import { sounds } from '@/lib/sounds';
+import { User } from '@/lib/mock-data';
 
-type User = {
-  id: number;
-  name: string;
-  avatarImageId: string;
-  studyTime: number; // in minutes
-  status: 'online' | 'offline';
-  lastSeen?: string;
-};
 
 interface ControlPanelProps {
   leaderboardUsers: User[];
