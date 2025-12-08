@@ -12,7 +12,6 @@ import { usePresence } from '@/context/PresenceContext';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
 import { useMemo } from 'react';
-import BackgroundDisplay from './layout/BackgroundDisplay';
 import { useBackground } from '@/context/BackgroundContext';
 
 export default function LioreaClient() {
@@ -26,8 +25,6 @@ export default function LioreaClient() {
 
   return (
     <>
-      <BackgroundDisplay />
-
       {error && (
          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
             <Alert variant="destructive">

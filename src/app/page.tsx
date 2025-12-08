@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { BookOpen, ArrowRight } from 'lucide-react';
-import BackgroundDisplay from '@/components/layout/BackgroundDisplay';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -14,7 +13,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <BackgroundDisplay />
       <div className="relative z-10 flex flex-col items-center justify-center text-center p-4 min-h-screen bg-black/30">
         <div className="p-4 bg-primary/20 border border-primary/30 rounded-full mb-6">
             <BookOpen className="w-12 h-12 text-primary" />
