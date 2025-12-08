@@ -8,8 +8,11 @@ import { Send } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useChat } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+
+const USER_COLORS = [
+  'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
+];
 
 export default function ChatPanel() {
   const { messages, sendMessage } = useChat();
@@ -23,6 +26,11 @@ export default function ChatPanel() {
       sendMessage(newMessage);
       setNewMessage('');
     }
+  };
+  
+  const getUserColor = (username: string) => {
+    const charCodeSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return USER_COLORS[charCodeSum % USER_COLORS.length];
   };
 
   useEffect(() => {
@@ -44,14 +52,12 @@ export default function ChatPanel() {
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="p-4 space-y-4">
             {messages.map((msg, index) => {
-               const avatarUrl = PlaceHolderImages[msg.username.charCodeAt(0) % PlaceHolderImages.length]?.imageUrl || '';
               const isCurrentUser = msg.username === username;
               return (
                 <div key={index} className={`flex items-start gap-3 ${isCurrentUser ? 'justify-end' : ''}`}>
                    {!isCurrentUser && (
                      <Avatar className="w-8 h-8 border-2 border-primary">
-                        <AvatarImage src={avatarUrl} alt={msg.username} data-ai-hint="person portrait" />
-                        <AvatarFallback>{msg.username.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className={`${getUserColor(msg.username)} text-white`}>{msg.username.charAt(0)}</AvatarFallback>
                     </Avatar>
                    )}
                   <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>

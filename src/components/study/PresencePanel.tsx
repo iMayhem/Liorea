@@ -1,9 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-import { OnlineUser, usePresence } from '@/context/PresenceContext';
+import { OnlineUser } from '@/context/PresenceContext';
 
 interface PresencePanelProps {
   users: OnlineUser[];
@@ -20,6 +19,15 @@ const getTimeAgo = (timestamp?: number) => {
     return `${daysAgo}d ago`;
 }
 
+const USER_COLORS = [
+  'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
+];
+
+const getUserColor = (username: string) => {
+    const charCodeSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return USER_COLORS[charCodeSum % USER_COLORS.length];
+};
+
 export default function PresencePanel({ users }: PresencePanelProps) {
 
   return (
@@ -30,15 +38,13 @@ export default function PresencePanel({ users }: PresencePanelProps) {
       <CardContent className="p-4 pt-0">
         <ScrollArea className="h-72">
             <div className="space-y-4">
-            {users.map((user, index) => {
-            const avatarUrl = PlaceHolderImages[index % PlaceHolderImages.length]?.imageUrl || '';
+            {users.map((user) => {
             const isOnline = user.status === 'Online';
             return (
                 <div key={user.username} className="flex items-center gap-3">
                 <div className="relative">
                     <Avatar className="w-9 h-9">
-                    <AvatarImage src={avatarUrl} alt={user.username} data-ai-hint="person portrait" />
-                    <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <span className={cn(
                         "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-background",
