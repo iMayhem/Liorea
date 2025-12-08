@@ -33,7 +33,6 @@ export default function LioreaClient() {
         ) : (
           <Skeleton className="h-full w-full" />
         )}
-        <div className="absolute inset-0 bg-black/50" />
       </div>
       <Header />
 
@@ -44,7 +43,7 @@ export default function LioreaClient() {
       </div>
 
       <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
-        <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full space-y-4">
+        <div className="space-y-4">
             <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
             <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
         </div>

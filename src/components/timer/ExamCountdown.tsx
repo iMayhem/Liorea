@@ -31,6 +31,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
 
   useEffect(() => {
     setIsClient(true);
+    // Calculate initial time left only on the client
     setTimeLeft(calculateTimeLeft(targetDate));
 
     const timer = setInterval(() => {
@@ -40,13 +41,14 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
     return () => clearInterval(timer);
   }, [targetDate]);
 
+
   const timerComponents: JSX.Element[] = [];
 
   Object.keys(timeLeft).forEach((interval) => {
     timerComponents.push(
       <div key={interval} className="flex flex-col items-center">
         <span className="text-3xl font-bold">
-            {String(timeLeft[interval as keyof typeof timeLeft]).padStart(2, '0')}
+            {String(timeLeft[interval as keyof typeof timeLeft] ?? '00').padStart(2, '0')}
         </span>
         <span className="text-xs uppercase text-muted-foreground">{interval}</span>
       </div>
@@ -55,7 +57,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
 
   if (!isClient) {
       return (
-        <Card className="bg-transparent border-0 shadow-none text-white">
+        <Card className="bg-black/30 backdrop-blur-md border border-white/20 text-white">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="text-accent" />
@@ -72,7 +74,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
   }
 
   return (
-    <Card className="bg-transparent border-0 shadow-none text-white">
+    <Card className="bg-black/30 backdrop-blur-md border border-white/20 text-white">
       <CardHeader className="p-4 pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Target className="text-accent" />
