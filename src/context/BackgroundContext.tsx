@@ -23,7 +23,7 @@ interface BackgroundContextType {
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev/";
 
 export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
   const [allFiles, setAllFiles] = useState<R2File[]>([]);
@@ -58,6 +58,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     loadFiles();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setCurrentBackgroundById = (id: string) => {
