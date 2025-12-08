@@ -15,7 +15,7 @@ export default function StudyTogetherPage() {
     <ChatProvider>
       <div className="min-h-screen bg-transparent text-foreground">
         <Header />
-        <main className="container mx-auto pt-20 pb-16 px-4 flex items-center justify-center">
+        <main className="container mx-auto h-screen pt-16 pb-16 px-4 flex items-center justify-center">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 w-full max-w-7xl">
             <div className="lg:col-span-3 flex items-center justify-center">
                 <PomodoroTimer />
