@@ -19,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 export default function UserManagement() {
@@ -62,7 +61,7 @@ export default function UserManagement() {
     };
 
   return (
-    <Card>
+    <Card className="bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>User Management</CardTitle>
         <CardDescription>Manage user roles, block users, and perform other administrative actions.</CardDescription>
@@ -70,7 +69,7 @@ export default function UserManagement() {
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableHead>Username</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
@@ -79,11 +78,11 @@ export default function UserManagement() {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className="hover:bg-muted/50 border-gray-500/50">
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>
                   <Select value={user.role} onValueChange={(value) => handleRoleChange(user.id, value as 'user' | 'mod' | 'helper')}>
-                    <SelectTrigger className="w-[120px]">
+                    <SelectTrigger className="w-[120px] bg-background/50">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>

@@ -35,7 +35,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>Admin Login</CardTitle>
         <CardDescription>Please enter your credentials to access the admin panel.</CardDescription>
@@ -51,6 +51,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              className="bg-background/50"
             />
           </div>
           <div className="space-y-2">
@@ -62,6 +63,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="bg-background/50"
             />
           </div>
         </CardContent>

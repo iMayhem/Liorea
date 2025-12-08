@@ -29,9 +29,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="w-full space-y-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Admin Dashboard</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Total Users
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Average Study Time
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Active Sessions
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
                 </CardContent>
             </Card>
         </div>
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>Global Notifications</CardTitle>
                 <CardDescription>Send a message to all active users.</CardDescription>
@@ -84,6 +84,7 @@ export default function AdminDashboard() {
                     placeholder="Type your notification message here..."
                     value={notificationMessage}
                     onChange={(e) => setNotificationMessage(e.target.value)}
+                    className="bg-background/50"
                 />
             </CardContent>
             <CardFooter>
