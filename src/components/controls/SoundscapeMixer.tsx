@@ -2,10 +2,9 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { Slider } from '@/components/ui/slider';
 import type { Sound } from '@/lib/sounds';
 import * as LucideIcons from 'lucide-react';
-import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 
 interface SoundscapeMixerProps {
   sounds: Sound[];
@@ -14,8 +13,8 @@ interface SoundscapeMixerProps {
 export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
   const players = useRef<Map<string, Tone.Player>>(new Map());
   const [isInitialized, setIsInitialized] = useState(false);
-  const [volumes, setVolumes] = useState<Record<string, number>>(() =>
-    sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: 0 }), {})
+  const [activeSounds, setActiveSounds] = useState<Record<string, boolean>>(() =>
+    sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: false }), {})
   );
 
   useEffect(() => {
@@ -34,58 +33,55 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
           }
         });
         setIsInitialized(true);
-        console.log("Audio context and players initialized.");
     };
 
-    createPlayers();
+    if (typeof window !== 'undefined') {
+        createPlayers();
+    }
 
     return () => {
       players.current.forEach(player => player.dispose());
       players.current.clear();
-      console.log("Players disposed.");
     };
   }, [sounds]);
 
-  const handleVolumeChange = (id: string, value: number) => {
+  const toggleSound = (id: string) => {
     if (!isInitialized) return;
 
-    setVolumes(prev => ({ ...prev, [id]: value }));
     const player = players.current.get(id);
+    if (!player) return;
 
-    if (player) {
-      if (value > 0) {
-        const db = (value / 100) * 40 - 40; // Convert 0-100 to -40dB to 0dB range
+    const wasActive = activeSounds[id];
+    
+    if (wasActive) {
+        player.volume.rampTo(-Infinity, 0.5);
+    } else {
+        const db = -15; // Set a default comfortable volume
         player.volume.rampTo(db, 0.1);
         if (player.state !== 'started') {
-          player.start();
+            player.start();
         }
-      } else {
-        player.volume.rampTo(-Infinity, 0.5);
-      }
     }
+    setActiveSounds(prev => ({...prev, [id]: !wasActive}));
   };
   
   return (
-    <div className="p-4 w-96">
-        {!isInitialized && <p className='text-center text-muted-foreground'>Initializing audio...</p>}
-        <div className="grid grid-cols-4 gap-4">
-        {sounds.map(sound => {
-            const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
-            return (
-            <div key={sound.id} className="flex flex-col items-center gap-2">
-                <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="w-16 h-16 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    onClick={() => handleVolumeChange(sound.id, volumes[sound.id] > 0 ? 0 : 50)}
-                >
-                     <Icon className="w-8 h-8" />
-                </Button>
-                <span className="text-xs text-white/80">{sound.name}</span>
-            </div>
-            );
-        })}
-        </div>
+    <div className="flex gap-2">
+    {sounds.map(sound => {
+        const Icon = LucideIcons[sound.icon as keyof typeof LucideIcons] as React.ElementType;
+        return (
+        <Button 
+            key={sound.id}
+            variant={activeSounds[sound.id] ? "secondary" : "ghost"}
+            size="icon" 
+            className="text-white hover:bg-white/20 hover:text-white rounded-full data-[state=active]:bg-white/20"
+            onClick={() => toggleSound(sound.id)}
+            data-state={activeSounds[sound.id] ? 'active' : 'inactive'}
+        >
+                <Icon className="w-5 h-5" />
+        </Button>
+        );
+    })}
     </div>
   );
 }
