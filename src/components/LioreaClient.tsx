@@ -2,7 +2,6 @@
 "use client";
 
 import Header from '@/components/layout/Header';
-import DigitalClock from '@/components/clock/DigitalClock';
 import PomodoroTimer from '@/components/timer/PomodoroTimer';
 import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from './ClientOnly';
@@ -54,7 +53,6 @@ export default function LioreaClient() {
 
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
         <div className="flex flex-col items-center gap-2 text-center">
-          <DigitalClock />
           <div className="w-80">
             <PomodoroTimer />
           </div>
