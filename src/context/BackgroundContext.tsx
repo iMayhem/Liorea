@@ -8,11 +8,17 @@ export type Background = {
   url: string;
 };
 
+export type R2File = {
+  filename: string;
+  url: string;
+}
+
 interface BackgroundContextType {
   backgrounds: Background[];
   currentBackground: Background | null;
   setCurrentBackgroundById: (id: string) => void;
   cycleBackground: () => void;
+  allFiles: R2File[];
 }
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
@@ -20,17 +26,21 @@ const BackgroundContext = createContext<BackgroundContextType | undefined>(undef
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
+  const [allFiles, setAllFiles] = useState<R2File[]>([]);
   const [backgrounds, setBackgrounds] = useState<Background[]>([]);
   const [currentBackground, setCurrentBackground] = useState<Background | null>(null);
 
   useEffect(() => {
-    async function loadBackgrounds() {
+    async function loadFiles() {
       try {
         const response = await fetch(WORKER_URL);
-        const files: { filename: string; url: string }[] = await response.json();
+        const files: R2File[] = await response.json();
         
-        const fetchedBackgrounds = files
-          .filter(file => !file.filename.endsWith('/'))
+        const validFiles = files.filter(file => !file.filename.endsWith('/'));
+        setAllFiles(validFiles);
+
+        const fetchedBackgrounds = validFiles
+          .filter(file => file.filename.startsWith('background/'))
           .map(file => ({
             id: file.filename,
             name: file.filename.replace('background/', '').split('.')[0].replace(/[-_]/g, ' '),
@@ -39,13 +49,15 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
 
         if (fetchedBackgrounds.length > 0) {
           setBackgrounds(fetchedBackgrounds);
-          setCurrentBackground(fetchedBackgrounds[0]);
+          if (!currentBackground) {
+            setCurrentBackground(fetchedBackgrounds[0]);
+          }
         }
       } catch (error) {
-        console.error("Failed to load backgrounds from worker:", error);
+        console.error("Failed to load files from worker:", error);
       }
     }
-    loadBackgrounds();
+    loadFiles();
   }, []);
 
   const setCurrentBackgroundById = (id: string) => {
@@ -66,8 +78,9 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     backgrounds,
     currentBackground,
     setCurrentBackgroundById,
-    cycleBackground
-  }), [backgrounds, currentBackground]);
+    cycleBackground,
+    allFiles
+  }), [backgrounds, currentBackground, allFiles]);
 
   return (
     <BackgroundContext.Provider value={value}>

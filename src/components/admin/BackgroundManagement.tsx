@@ -4,44 +4,56 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Music, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useBackground } from '@/context/BackgroundContext';
 
 
 export default function BackgroundManagement() {
-  const { backgrounds } = useBackground();
+  const { allFiles } = useBackground();
+
+  const getFileIcon = (filename: string) => {
+    if (filename.startsWith('background/')) {
+        return <ImageIcon className="w-5 h-5 text-muted-foreground" />;
+    }
+    if (filename.startsWith('sounds/')) {
+        return <Music className="w-5 h-5 text-muted-foreground" />;
+    }
+    return null;
+  }
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Background Management</CardTitle>
-        <CardDescription>Backgrounds are fetched dynamically from your Cloudflare worker.</CardDescription>
+        <CardTitle>Cloudflare R2 File Management</CardTitle>
+        <CardDescription>All files from your Cloudflare R2 bucket worker.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Preview</TableHead>
-              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Filename</TableHead>
               <TableHead>URL</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {backgrounds.map((bg) => (
-              <TableRow key={bg.id}>
+            {allFiles.map((file) => (
+              <TableRow key={file.filename}>
                 <TableCell>
-                    <Image src={bg.url} alt={bg.name} width={100} height={56} className="rounded-md object-cover" />
+                    {getFileIcon(file.filename)}
                 </TableCell>
-                <TableCell className="font-medium capitalize">{bg.name}</TableCell>
+                <TableCell className="font-medium">
+                    {file.filename}
+                </TableCell>
                 <TableCell>
-                    <a href={bg.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate w-32">
-                        {bg.url}
+                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate w-32">
+                        {file.url}
                     </a>
                 </TableCell>
                 <TableCell className="text-right">
-                    <Button variant="outline" size="sm" disabled>Edit</Button>
+                    <Button variant="outline" size="sm" disabled>Manage</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -50,17 +62,9 @@ export default function BackgroundManagement() {
       </CardContent>
        <CardFooter className="border-t pt-6">
             <div className="w-full">
-                <h3 className="text-lg font-semibold mb-2">Add New Background</h3>
-                <div className="flex gap-2">
-                    <Input placeholder="Background Name" className="max-w-xs" disabled />
-                    <Input placeholder="Image URL" className="flex-grow" disabled />
-                    <Button disabled>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add
-                    </Button>
-                </div>
+                <h3 className="text-lg font-semibold mb-2">Upload New File</h3>
                  <p className="text-sm text-muted-foreground mt-2">
-                    Please upload new images to your R2 bucket to add them.
+                    Please upload new files to your R2 bucket. They will appear here automatically.
                 </p>
             </div>
       </CardFooter>
