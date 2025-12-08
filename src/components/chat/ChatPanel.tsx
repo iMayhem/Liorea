@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Send } from 'lucide-react';
+import { Send, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useChat } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
@@ -44,9 +45,12 @@ export default function ChatPanel() {
 
 
   return (
-    <Card className="bg-black/30 backdrop-blur-md border border-white/20 text-white flex flex-col h-[70vh] max-h-[600px]">
+    <Card className="bg-black/20 backdrop-blur-md border border-white/30 text-white flex flex-col h-[70vh] max-h-[500px] w-full">
       <CardHeader className="p-4 border-b border-white/20">
-        <CardTitle className="text-base">Study Room Chat</CardTitle>
+        <CardTitle className="text-base flex items-center gap-2">
+          <MessageSquare className="w-5 h-5" />
+          Group Chat
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-grow">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
@@ -61,7 +65,7 @@ export default function ChatPanel() {
                     </Avatar>
                    )}
                   <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-                     <div className={`rounded-lg px-3 py-2 max-w-xs ${isCurrentUser ? 'bg-primary/80 text-primary-foreground' : 'bg-white/20'}`}>
+                     <div className={`rounded-lg px-3 py-2 max-w-xs ${isCurrentUser ? 'bg-primary/80 text-primary-foreground' : 'bg-black/30'}`}>
                         {!isCurrentUser && <p className="text-xs font-bold text-accent mb-1">{msg.username}</p>}
                         <p className="text-sm">{msg.message}</p>
                      </div>
@@ -76,12 +80,12 @@ export default function ChatPanel() {
         <form onSubmit={handleSendMessage} className="flex w-full space-x-2">
           <Input
             type="text"
-            placeholder="Type a message..."
-            className="bg-transparent border-white/30 focus-visible:ring-accent"
+            placeholder="Type your message..."
+            className="bg-black/30 border-white/30 focus-visible:ring-accent placeholder:text-white/60"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />
-          <Button type="submit" size="icon" variant="secondary" className="bg-accent/80 hover:bg-accent text-white">
+          <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-white flex-shrink-0">
             <Send className="h-4 w-4" />
           </Button>
         </form>

@@ -1,10 +1,10 @@
+
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Music, Trophy, Image as ImageIcon } from 'lucide-react';
+import { Music, Image as ImageIcon } from 'lucide-react';
 import SoundscapeMixer from './SoundscapeMixer';
-import Leaderboard from '@/components/study/Leaderboard';
 import { sounds } from '@/lib/sounds';
 import { OnlineUser } from '@/context/PresenceContext';
 import { useBackground } from '@/context/BackgroundContext';
@@ -39,22 +39,6 @@ export default function ControlPanel({ leaderboardUsers }: ControlPanelProps) {
             <span className="sr-only">Change Background</span>
         </Button>
 
-        <Sheet>
-            <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full">
-                    <Trophy />
-                    <span className="sr-only">Leaderboard</span>
-                </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="bg-background/90 backdrop-blur-xl w-full md:w-[400px] text-foreground">
-                <SheetHeader>
-                    <SheetTitle>Leaderboard</SheetTitle>
-                </SheetHeader>
-                <div className="py-4">
-                  <Leaderboard users={leaderboardUsers} />
-                </div>
-            </SheetContent>
-        </Sheet>
       </div>
     </div>
   );
