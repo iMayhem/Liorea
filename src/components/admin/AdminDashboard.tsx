@@ -1,12 +1,35 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Users, Timer, Activity } from 'lucide-react';
+"use client";
+
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
+import { Users, Timer, Activity, Send } from 'lucide-react';
 import UserManagement from './UserManagement';
+import { Textarea } from '../ui/textarea';
+import { Button } from '../ui/button';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/context/NotificationContext';
+
 
 export default function AdminDashboard() {
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const { toast } = useToast();
+  const { addNotification } = useNotifications();
+
+  const handleSendGlobalNotification = () => {
+    if (notificationMessage.trim()) {
+      addNotification(notificationMessage.trim());
+      toast({
+        title: "Global Notification Sent",
+        description: "Your message has been sent to all users.",
+      });
+      setNotificationMessage('');
+    }
+  };
+
   return (
-    <div className="w-full">
-        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+    <div className="w-full space-y-8">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -50,6 +73,25 @@ export default function AdminDashboard() {
                 </CardContent>
             </Card>
         </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Global Notifications</CardTitle>
+                <CardDescription>Send a message to all active users.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Textarea
+                    placeholder="Type your notification message here..."
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                />
+            </CardContent>
+            <CardFooter>
+                <Button onClick={handleSendGlobalNotification}>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send to All
+                </Button>
+            </CardFooter>
+        </Card>
         <UserManagement />
     </div>
   );
