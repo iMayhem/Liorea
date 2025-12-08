@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
@@ -57,6 +58,7 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         
         if (!Array.isArray(files)) {
           console.error("[DEBUG] Worker did not return a valid JSON array.");
+          setError("Received invalid data from worker.");
           return;
         }
 
@@ -77,8 +79,9 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
         if (fetchedBackgrounds.length > 0) {
           setBackgrounds(fetchedBackgrounds);
           if (!currentBackground) {
-            setCurrentBackground(fetchedBackgrounds[0]);
-            console.log('[DEBUG] Set initial background:', fetchedBackgrounds[0]);
+            const randomIndex = Math.floor(Math.random() * fetchedBackgrounds.length);
+            setCurrentBackground(fetchedBackgrounds[randomIndex]);
+            console.log('[DEBUG] Set initial random background:', fetchedBackgrounds[randomIndex]);
           }
         } else {
             console.log('[DEBUG] No background images found in worker response.');
