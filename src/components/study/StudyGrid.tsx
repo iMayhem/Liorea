@@ -37,7 +37,7 @@ export default function StudyGrid({ users }: StudyGridProps) {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {onlineUsers.map((user) => {
             return (
-            <Card key={user.username} className="overflow-hidden bg-card/50 backdrop-blur-sm border-white/20">
+            <Card key={user.username} className="overflow-hidden bg-black/20 backdrop-blur-sm border-white/20">
                 <CardContent className="p-3 flex flex-col items-center justify-center gap-2 text-center">
                 <Avatar className="w-16 h-16 border-2 border-primary">
                     <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>

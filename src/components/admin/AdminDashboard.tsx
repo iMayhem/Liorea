@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     <div className="w-full space-y-8">
         <h1 className="text-3xl font-bold text-center mb-8">Admin Dashboard</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-card/80 backdrop-blur-sm">
+            <Card className="bg-black/20 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Total Users
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-            <Card className="bg-card/80 backdrop-blur-sm">
+            <Card className="bg-black/20 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Average Study Time
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-            <Card className="bg-card/80 backdrop-blur-sm">
+            <Card className="bg-black/20 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Active Sessions
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-             <Card className="bg-card/80 backdrop-blur-sm">
+             <Card className="bg-black/20 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Global Session Timer
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
                 </CardFooter>
             </Card>
         </div>
-        <Card className="bg-card/80 backdrop-blur-sm">
+        <Card className="bg-black/20 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle>Global Notifications</CardTitle>
                 <CardDescription>Send a message to all active users.</CardDescription>

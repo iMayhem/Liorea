@@ -6,8 +6,9 @@ export type Sound = {
   icon: keyof typeof import("lucide-react");
 };
 export const sounds: Sound[] = [
+  { id: 'focus-mode', name: 'Focus', file: '/sounds/cafe.mp3', icon: 'Eye' },
   { id: 'rain', name: 'Rain', file: '/sounds/rain.mp3', icon: 'CloudRain' },
-  { id: 'forest', name: 'Forest', file: '/sounds/forest.mp3', icon: 'Trees' },
-  { id: 'cafe', name: 'Cafe', file: '/sounds/cafe.mp3', icon: 'Coffee' },
   { id: 'fireplace', name: 'Fireplace', file: '/sounds/fireplace.mp3', icon: 'Flame' },
+  { id: 'cafe', name: 'Cafe', file: '/sounds/cafe.mp3', icon: 'Coffee' },
+  { id: 'ocean', name: 'Ocean', file: '/sounds/forest.mp3', icon: 'Waves' },
 ];

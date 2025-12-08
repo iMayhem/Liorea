@@ -31,7 +31,7 @@ const getUserColor = (username: string) => {
 export default function PresencePanel({ users }: PresencePanelProps) {
 
   return (
-    <Card className="bg-transparent border-0 shadow-none">
+    <Card className="bg-black/20 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
         <CardHeader className="p-4">
             <CardTitle className="text-base text-white">All Users ({users.length})</CardTitle>
         </CardHeader>

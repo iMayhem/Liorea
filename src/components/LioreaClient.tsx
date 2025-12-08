@@ -40,9 +40,7 @@ export default function LioreaClient() {
 
       <div className="fixed left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
         <div className="space-y-4">
-            <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
-                <PresencePanel users={onlineUsers} />
-            </div>
+            <PresencePanel users={onlineUsers} />
         </div>
       </div>
 

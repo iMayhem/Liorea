@@ -44,7 +44,7 @@ export default function ControlPanel() {
       <div className="bg-black/30 backdrop-blur-md border-t border-white/20 shadow-lg">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <div className="flex items-center gap-6 text-sm text-white/80">
-                 <div className="flex items-center gap-2 font-mono">
+                 <div className="flex items-center gap-2 font-mono bg-black/20 text-white/80 px-3 py-1 rounded-full">
                     <Clock className="w-4 h-4" />
                     <span>{formatTime(elapsedTime)}</span>
                  </div>
@@ -52,7 +52,10 @@ export default function ControlPanel() {
                     <Users className="w-4 h-4" />
                     <span>{onlineUsers.length}</span>
                  </div>
-                 <Sheet>
+            </div>
+            
+            <div className="flex-1 flex justify-center items-center gap-4">
+                <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-white/70 hover:bg-white/10 hover:text-white rounded-full">
                             <Trophy className="w-5 h-5" />
@@ -71,9 +74,6 @@ export default function ControlPanel() {
                         </div>
                     </SheetContent>
                 </Sheet>
-            </div>
-            
-            <div className="flex-1 flex justify-center">
                 <SoundscapeMixer sounds={sounds} />
             </div>
 
