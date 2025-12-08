@@ -18,11 +18,12 @@ import Leaderboard from '../study/Leaderboard';
 
 
 export default function ControlPanel() {
-  const { onlineUsers } = usePresence();
+  const { onlineUsers, leaveSession } = usePresence(); // Import leaveSession
   const router = useRouter();
 
   const handleLeave = () => {
-    router.push('/home');
+    leaveSession(); // Turn off the "studying" switch
+    router.push('/home'); // Go back home
   };
   
   const onlineUserCount = onlineUsers.filter(u => u.status === 'Online').length;
@@ -34,7 +35,7 @@ export default function ControlPanel() {
             <div className="flex items-center gap-6 text-sm text-white/80">
                  <div className="flex items-center gap-2">
                     <Users className="w-6 h-6" />
-                    <span>{onlineUserCount}</span>
+                    <span>{onlineUsers.length}</span>
                  </div>
             </div>
             
