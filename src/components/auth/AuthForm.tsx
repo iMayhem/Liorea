@@ -21,15 +21,20 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLogin, setIsLogin] = useState(true);
   const { toast } = useToast();
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
+    const endpoint = isLogin ? 'login' : 'signup';
+    const successTitle = isLogin ? 'Login Successful' : 'Sign Up Successful';
+    const successDescription = isLogin ? 'Welcome back!' : 'You can now log in.';
+
     try {
-      const response = await fetch(`${WORKER_URL}/auth/signup`, {
+      const response = await fetch(`${WORKER_URL}/auth/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -39,8 +44,8 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
 
       if (response.ok && data.success) {
         toast({
-          title: 'Sign Up Successful',
-          description: 'You can now log in.',
+          title: successTitle,
+          description: successDescription,
         });
         onLogin(username);
       } else {
@@ -53,20 +58,21 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
       <Header />
       <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Welcome to Liorea</CardTitle>
-          <CardDescription>Sign up to join the study community.</CardDescription>
+          <CardTitle>{isLogin ? 'Welcome Back!' : 'Join Liorea'}</CardTitle>
+          <CardDescription>{isLogin ? 'Log in to continue your session.' : 'Sign up to join the study community.'}</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSignUp}>
+        <form onSubmit={handleAuth}>
           <CardContent className="space-y-4">
             {error && (
                 <Alert variant="destructive">
                     <Terminal className="h-4 w-4" />
-                    <AlertTitle>Sign-up Failed</AlertTitle>
+                    <AlertTitle>{isLogin ? 'Login' : 'Sign-up'} Failed</AlertTitle>
                     <AlertDescription>
                         {error}
                     </AlertDescription>
@@ -90,7 +96,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
               <Input
                 id="password"
                 type="password"
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -99,10 +105,16 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing up...' : 'Sign Up'}
+              {isLoading ? (isLogin ? 'Logging in...' : 'Signing up...') : (isLogin ? 'Log In' : 'Sign Up')}
             </Button>
+            <p className="text-xs text-center text-muted-foreground">
+                {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+                <button type="button" onClick={() => { setIsLogin(!isLogin); setError(null); }} className="underline font-semibold hover:text-primary">
+                    {isLogin ? 'Sign up' : 'Log in'}
+                </button>
+            </p>
           </CardFooter>
         </form>
       </Card>
