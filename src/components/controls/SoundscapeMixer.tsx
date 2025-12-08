@@ -1,7 +1,6 @@
 
 "use client";
 import { useState, useEffect, useRef } from 'react';
-import * as Tone from 'tone';
 import type { Sound } from '@/lib/sounds';
 import * as LucideIcons from 'lucide-react';
 import { Button } from '../ui/button';
@@ -11,63 +10,72 @@ interface SoundscapeMixerProps {
 }
 
 export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
-  const players = useRef<Map<string, Tone.Player>>(new Map());
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const [activeSounds, setActiveSounds] = useState<Record<string, boolean>>(() =>
     sounds.reduce((acc, sound) => ({ ...acc, [sound.id]: false }), {})
   );
-  const isInitializing = useRef(false);
 
   useEffect(() => {
-    // Ensure this runs only once.
-    if (!isInitializing.current) {
-      isInitializing.current = true;
-      // We only need to start the audio context, not create all players upfront.
-      Tone.start();
-    }
+    // This effect ensures audio elements are created on the client
+    sounds.forEach(sound => {
+        if (!audioRefs.current.has(sound.id)) {
+            const audio = new Audio(sound.file);
+            audio.loop = true;
+            audioRefs.current.set(sound.id, audio);
+        }
+    });
 
     return () => {
-      // Cleanup players on component unmount
-      players.current.forEach(player => player.dispose());
-      players.current.clear();
+        // Cleanup audio elements to prevent memory leaks
+        audioRefs.current.forEach(audio => {
+            audio.pause();
+            audio.src = '';
+        });
+        audioRefs.current.clear();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const fade = (audio: HTMLAudioElement, to: 'in' | 'out') => {
+    const targetVolume = to === 'in' ? 0.5 : 0;
+    const initialVolume = audio.volume;
+    const duration = 500; // 0.5 seconds
+    const intervalTime = 50;
+    const step = (targetVolume - initialVolume) / (duration / intervalTime);
+
+    if (to === 'in' && audio.paused) {
+      audio.volume = 0;
+      audio.play().catch(e => console.error("Audio play failed:", e));
+    }
+    
+    const fadeInterval = setInterval(() => {
+        const newVolume = audio.volume + step;
+        if ((step > 0 && newVolume >= targetVolume) || (step < 0 && newVolume <= targetVolume)) {
+            audio.volume = targetVolume;
+            if (to === 'out') {
+                audio.pause();
+            }
+            clearInterval(fadeInterval);
+        } else {
+            audio.volume = newVolume;
+        }
+    }, intervalTime);
+  };
+
+
   const toggleSound = (sound: Sound) => {
+    const audio = audioRefs.current.get(sound.id);
+    if (!audio) return;
+
     const wasActive = activeSounds[sound.id];
-    
-    // If turning the sound OFF
+
     if (wasActive) {
-      const player = players.current.get(sound.id);
-      if (player) {
-        player.volume.rampTo(-Infinity, 0.5);
-      }
-      setActiveSounds(prev => ({...prev, [sound.id]: false}));
-      return;
+      fade(audio, 'out');
+    } else {
+      fade(audio, 'in');
     }
 
-    // If turning the sound ON
-    setActiveSounds(prev => ({...prev, [sound.id]: true}));
-    
-    // If player already exists, just fade it in.
-    const existingPlayer = players.current.get(sound.id);
-    if (existingPlayer) {
-      existingPlayer.volume.rampTo(-15, 0.1);
-      return;
-    }
-
-    // If player doesn't exist, create it and have it autostart.
-    // This is the key fix: `autostart: true` waits for the buffer to load
-    // before playing, preventing the error.
-    const player = new Tone.Player({
-      url: sound.file,
-      loop: true,
-      autostart: true,
-      volume: -15,
-      fadeIn: 0.5,
-      fadeOut: 0.5,
-    }).toDestination();
-    
-    players.current.set(sound.id, player);
+    setActiveSounds(prev => ({ ...prev, [sound.id]: !wasActive }));
   };
   
   return (
