@@ -34,7 +34,7 @@ export default function LandingPage() {
               onClick={() => setShowAuthForm(true)}
               className="w-full bg-google-blue hover:bg-google-blue/90 text-white text-lg"
             >
-              Sign up
+              Start
             </Button>
           </div>
         )}
