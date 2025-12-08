@@ -24,6 +24,8 @@ export default function ControlPanel() {
   const handleLeave = () => {
     router.push('/home');
   };
+  
+  const onlineUserCount = onlineUsers.filter(u => u.status === 'Online').length;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20">
@@ -32,7 +34,7 @@ export default function ControlPanel() {
             <div className="flex items-center gap-6 text-sm text-white/80">
                  <div className="flex items-center gap-2">
                     <Users className="w-6 h-6" />
-                    <span>{onlineUsers.length}</span>
+                    <span>{onlineUserCount}</span>
                  </div>
             </div>
             
