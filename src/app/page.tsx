@@ -9,12 +9,20 @@ import { Button } from '@/components/ui/button';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { setUsername } = usePresence();
+  const { username, setUsername } = usePresence();
   const [showAuthForm, setShowAuthForm] = useState(false);
 
   const handleLoginSuccess = (username: string) => {
     setUsername(username);
     router.push('/home');
+  };
+  
+  const handleStart = () => {
+    if (username) {
+      router.push('/home');
+    } else {
+      setShowAuthForm(true);
+    }
   };
 
   return (
@@ -31,7 +39,7 @@ export default function LandingPage() {
             </div>
             <Button
               size="lg"
-              onClick={() => setShowAuthForm(true)}
+              onClick={handleStart}
               className="w-full bg-google-blue hover:bg-google-blue/90 text-white text-lg"
             >
               Start
