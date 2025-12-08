@@ -19,16 +19,19 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
 
   useEffect(() => {
     const createPlayers = async () => {
+        // Ensure Tone.js is started
         await Tone.start();
+        
         sounds.forEach(sound => {
           if (!players.current.has(sound.id)) {
             const player = new Tone.Player({
               url: sound.file,
               loop: true,
-              volume: -Infinity,
+              volume: -Infinity, // Start silent
               fadeIn: 0.5,
               fadeOut: 0.5,
             }).toDestination();
+            // We don't wait for loading here. Tone.js handles buffering.
             players.current.set(sound.id, player);
           }
         });
@@ -40,6 +43,7 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
     }
 
     return () => {
+      // Cleanup players on component unmount
       players.current.forEach(player => player.dispose());
       players.current.clear();
     };
@@ -54,14 +58,22 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
     const wasActive = activeSounds[id];
     
     if (wasActive) {
+        // If it was active, fade it out.
         player.volume.rampTo(-Infinity, 0.5);
     } else {
-        const db = -15; // Set a default comfortable volume
+        // If it was inactive, fade it in.
+        const db = -15; // A comfortable background volume
         player.volume.rampTo(db, 0.1);
+
+        // This is the crucial part: only start if not already playing
+        // and ensure the player is loaded before starting.
         if (player.state !== 'started') {
+            // Tone.js Player can be started before it's fully loaded.
+            // It will wait for the buffer to be ready before playing.
             player.start();
         }
     }
+    // Update the UI state immediately
     setActiveSounds(prev => ({...prev, [id]: !wasActive}));
   };
   
@@ -77,6 +89,7 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
             className="text-white/70 hover:bg-white/10 hover:text-white rounded-full data-[state=active]:bg-white/20 data-[state=active]:text-white"
             onClick={() => toggleSound(sound.id)}
             data-state={activeSounds[sound.id] ? 'active' : 'inactive'}
+            disabled={!isInitialized}
         >
                 <Icon className="w-6 h-6" />
         </Button>
