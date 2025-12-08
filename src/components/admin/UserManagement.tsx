@@ -5,8 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockUsers as initialUsers, User } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { MoreHorizontal, UserX, Edit, Trash2, Send } from 'lucide-react';
@@ -19,41 +17,47 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { usePresence } from '@/context/PresenceContext';
+import { OnlineUser } from '@/context/PresenceContext';
 
 export default function UserManagement() {
-    const [users, setUsers] = useState<User[]>(initialUsers);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const { onlineUsers: users } = usePresence();
+    const [editingUser, setEditingUser] = useState<OnlineUser | null>(null);
     const [newUsername, setNewUsername] = useState('');
     const { toast } = useToast();
 
-    const handleRoleChange = (userId: number, role: 'user' | 'mod' | 'helper') => {
-        setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
-        toast({ title: "Role Updated", description: `User role has been changed to ${role}.` });
-    };
-
-    const handleBlockUser = (userId: number) => {
-        setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !u.isBlocked } : u));
-        const user = users.find(u => u.id === userId);
-        toast({ title: user?.isBlocked ? "User Unblocked" : "User Blocked", description: `${user?.name} has been ${user?.isBlocked ? 'unblocked' : 'blocked'}.` });
+    const handleBlockUser = (userName: string) => {
+        toast({ 
+            variant: "destructive",
+            title: "Action Not Implemented", 
+            description: `Blocking functionality is not yet connected to the backend.` 
+        });
     };
     
-    const startEditing = (user: User) => {
+    const startEditing = (user: OnlineUser) => {
         setEditingUser(user);
-        setNewUsername(user.name);
+        setNewUsername(user.username);
     };
 
     const handleUsernameChange = () => {
         if (editingUser && newUsername.trim()) {
-            setUsers(users.map(u => u.id === editingUser.id ? { ...u, name: newUsername.trim() } : u));
-            toast({ title: "Username Changed", description: `Username updated to ${newUsername.trim()}.` });
+            toast({
+                variant: "destructive",
+                title: "Action Not Implemented",
+                description: `Changing usernames is not yet connected to the backend.`
+            });
             setEditingUser(null);
             setNewUsername('');
         }
     };
     
     const handleClearChat = (userName: string) => {
-        toast({ title: "Chat Cleared", description: `Chat logs for ${userName} have been cleared.` });
+        toast({ 
+            variant: "destructive",
+            title: "Action Not Implemented", 
+            description: `Clearing chat is not yet connected to the backend.` 
+        });
     };
 
     const handleSendNotification = (userName: string) => {
@@ -64,35 +68,24 @@ export default function UserManagement() {
     <Card className="bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>User Management</CardTitle>
-        <CardDescription>Manage user roles, block users, and perform other administrative actions.</CardDescription>
+        <CardDescription>View all registered users and perform administrative actions.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Username</TableHead>
-              <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Last Seen</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id} className="hover:bg-muted/50 border-gray-500/50">
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>
-                  <Select value={user.role} onValueChange={(value) => handleRoleChange(user.id, value as 'user' | 'mod' | 'helper')}>
-                    <SelectTrigger className="w-[120px] bg-background/50">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="mod">Moderator</SelectItem>
-                      <SelectItem value="helper">Helper</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>{user.isBlocked ? 'Blocked' : 'Active'}</TableCell>
+              <TableRow key={user.username} className="hover:bg-muted/50 border-gray-500/50">
+                <TableCell className="font-medium">{user.username}</TableCell>
+                <TableCell>{user.status}</TableCell>
+                <TableCell>{user.last_seen ? new Date(user.last_seen).toLocaleString() : 'N/A'}</TableCell>
                 <TableCell className="text-right">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -106,15 +99,15 @@ export default function UserManagement() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 <span>Change Username</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleBlockUser(user.id)}>
+                            <DropdownMenuItem onClick={() => handleBlockUser(user.username)}>
                                 <UserX className="mr-2 h-4 w-4" />
-                                <span>{user.isBlocked ? 'Unblock' : 'Block'} User</span>
+                                <span>Block User</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleClearChat(user.name)}>
+                            <DropdownMenuItem onClick={() => handleClearChat(user.username)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Clear Chat</span>
                             </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => handleSendNotification(user.name)}>
+                             <DropdownMenuItem onClick={() => handleSendNotification(user.username)}>
                                 <Send className="mr-2 h-4 w-4" />
                                 <span>Send Notification</span>
                             </DropdownMenuItem>
@@ -130,7 +123,7 @@ export default function UserManagement() {
              <AlertDialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Change Username for {editingUser.name}</AlertDialogTitle>
+                        <AlertDialogTitle>Change Username for {editingUser.username}</AlertDialogTitle>
                         <AlertDialogDescription>
                             Enter the new username below. This action cannot be undone.
                         </AlertDialogDescription>
