@@ -79,7 +79,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
         <CardTitle className="text-base flex items-center gap-2">
           <Target className="text-accent w-4 h-4" />
           {examName} Countdown
-        </Title>
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
         {timerComponents.length ? (
