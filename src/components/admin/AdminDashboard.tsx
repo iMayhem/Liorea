@@ -93,5 +93,9 @@ export default function AdminDashboard() {
                     Send to All
                 </Button>
             </CardFooter>
-        </C<ctrl61><file>src/components/timer/GlobalTimer.tsx</file>
-    <content><![CDATA[
+        </Card>
+        <UserManagement />
+        <BackgroundManagement />
+    </div>
+  );
+}
