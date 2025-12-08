@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell, BookOpen } from 'lucide-react';
+import { Sparkles, Bell, BookOpen, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -83,6 +83,13 @@ export default function Header() {
             </PopoverContent>
         </Popover>
 
+          <Link href="/home" className={cn(
+            "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
+            'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
+          )}>
+            <Home className="w-4 h-4 text-accent" />
+            Home
+          </Link>
           <Link href="/study-together" className={cn(
             "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
             'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
