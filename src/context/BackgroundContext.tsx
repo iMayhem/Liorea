@@ -34,8 +34,16 @@ export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
     async function loadFiles() {
       try {
         const response = await fetch(WORKER_URL);
+        if (!response.ok) {
+          throw new Error(`Worker responded with status ${response.status}`);
+        }
         const files: R2File[] = await response.json();
         
+        if (!Array.isArray(files)) {
+          console.error("Worker did not return a valid JSON array.");
+          return;
+        }
+
         const validFiles = files.filter(file => !file.filename.endsWith('/'));
         setAllFiles(validFiles);
 
