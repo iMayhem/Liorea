@@ -21,11 +21,11 @@ export default function DigitalClock({ formatString = 'HH:mm:ss' }: DigitalClock
   }, []);
 
   if (!time) {
-    return <div className="text-6xl md:text-8xl font-bold text-white tabular-nums tracking-tighter h-[72px] md:h-[96px]"></div>;
+    return <div className="text-5xl md:text-7xl font-bold text-white tabular-nums tracking-tighter h-[60px] md:h-[84px]"></div>;
   }
 
   return (
-    <div className="text-6xl md:text-8xl font-bold text-white tabular-nums tracking-tighter" style={{ textShadow: '0 0 20px rgba(0,0,0,0.5)' }}>
+    <div className="text-5xl md:text-7xl font-bold text-white tabular-nums tracking-tighter" style={{ textShadow: '0 0 20px rgba(0,0,0,0.5)' }}>
       {format(time, formatString)}
     </div>
   );

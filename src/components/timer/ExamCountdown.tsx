@@ -47,7 +47,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
   Object.keys(timeLeft).forEach((interval) => {
     timerComponents.push(
       <div key={interval} className="flex flex-col items-center">
-        <span className="text-3xl font-bold">
+        <span className="text-2xl font-bold">
             {String(timeLeft[interval as keyof typeof timeLeft] ?? '00').padStart(2, '0')}
         </span>
         <span className="text-xs uppercase text-muted-foreground">{interval}</span>
@@ -59,13 +59,13 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
       return (
         <Card className="bg-black/30 backdrop-blur-md border border-white/20 text-white">
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Target className="text-accent" />
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="text-accent w-4 h-4" />
               {examName} Countdown
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="grid grid-cols-4 gap-2 text-center h-[52px]">
+            <div className="grid grid-cols-4 gap-2 text-center h-[44px]">
               {/* Placeholder for server render */}
             </div>
           </CardContent>
@@ -76,8 +76,8 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
   return (
     <Card className="bg-black/30 backdrop-blur-md border border-white/20 text-white">
       <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Target className="text-accent" />
+        <CardTitle className="text-base flex items-center gap-2">
+          <Target className="text-accent w-4 h-4" />
           {examName} Countdown
         </CardTitle>
       </CardHeader>
@@ -87,7 +87,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
                 {timerComponents}
             </div>
         ) : (
-          <p className="text-center text-lg font-semibold text-accent">The exam has started!</p>
+          <p className="text-center text-sm font-semibold text-accent">The exam has started!</p>
         )}
       </CardContent>
     </Card>

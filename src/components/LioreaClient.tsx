@@ -21,7 +21,7 @@ export default function LioreaClient() {
 
   return (
     <>
-      <div className="absolute inset-0 bg-background transition-all duration-1000">
+      <div className="absolute inset-0 transition-all duration-1000">
         {currentBackground ? (
           <Image
             key={currentBackground.id}
@@ -50,7 +50,7 @@ export default function LioreaClient() {
       </div>
 
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
-        <div className="flex flex-col items-center gap-8 text-center">
+        <div className="flex flex-col items-center gap-6 text-center">
           <DigitalClock />
           <PomodoroTimer />
         </div>

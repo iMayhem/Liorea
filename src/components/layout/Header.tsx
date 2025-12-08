@@ -22,10 +22,10 @@ export default function Header() {
     )}>
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className={cn(
-          "flex items-center gap-2 text-2xl font-bold tracking-tight",
+          "flex items-center gap-2 text-xl font-bold tracking-tight",
           'text-white'
         )}>
-          <BookOpen className="w-7 h-7" />
+          <BookOpen className="w-6 h-6" />
           Liorea
         </Link>
         <nav className="flex items-center gap-2">
@@ -84,10 +84,10 @@ export default function Header() {
         </Popover>
 
           <Link href="/study-together" className={cn(
-            "flex items-center gap-2 py-2 px-4 rounded-full transition-colors",
+            "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
             'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
           )}>
-            <Sparkles className="w-5 h-5 text-accent" />
+            <Sparkles className="w-4 h-4 text-accent" />
             Study Together
           </Link>
         </nav>

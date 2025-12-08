@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
@@ -68,32 +68,30 @@ export default function PomodoroTimer() {
   }, [workDuration, breakDuration, reset]);
 
   return (
-    <Card className="bg-black/30 backdrop-blur-md border-white/20 text-white w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-center text-xl">{isBreak ? 'Break Time' : 'Focus Time'}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center gap-4">
-        <div className="text-5xl font-mono font-bold">
+    <Card className="bg-black/30 backdrop-blur-md border-white/20 text-white w-full max-w-sm mx-auto">
+      <CardContent className="flex flex-col items-center gap-3 pt-6">
+        <div className="text-sm font-medium">{isBreak ? 'Break Time' : 'Focus Time'}</div>
+        <div className="text-4xl font-mono font-bold">
           {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
         </div>
-        <Progress value={progress} className="w-full h-2 bg-white/20 [&>div]:bg-accent" />
-        <div className="flex gap-4">
-          <Button onClick={toggle} variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full w-12 h-12">
-            {isActive ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+        <Progress value={progress} className="w-full h-1 bg-white/20 [&>div]:bg-accent" />
+        <div className="flex gap-2">
+          <Button onClick={toggle} variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full w-10 h-10">
+            {isActive ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
           </Button>
-          <Button onClick={reset} variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full w-12 h-12">
-            <RotateCcw className="w-6 h-6" />
+          <Button onClick={reset} variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full w-10 h-10">
+            <RotateCcw className="w-5 h-5" />
           </Button>
         </div>
-        <div className="flex gap-4 items-center text-sm pt-4">
+        <div className="flex gap-4 items-center text-xs pt-2">
           <div>
             <label htmlFor="work-duration">Work: </label>
-            <input id="work-duration" type="number" value={workDuration} onChange={(e) => setWorkDuration(Math.max(1, Number(e.target.value)))} className="w-12 bg-transparent border-b border-white/50 text-center" />
+            <input id="work-duration" type="number" value={workDuration} onChange={(e) => setWorkDuration(Math.max(1, Number(e.target.value)))} className="w-10 bg-transparent border-b border-white/50 text-center" />
             <span className="ml-1">min</span>
           </div>
           <div>
             <label htmlFor="break-duration">Break: </label>
-            <input id="break-duration" type="number" value={breakDuration} onChange={(e) => setBreakDuration(Math.max(1, Number(e.target.value)))} className="w-12 bg-transparent border-b border-white/50 text-center" />
+            <input id="break-duration" type="number" value={breakDuration} onChange={(e) => setBreakDuration(Math.max(1, Number(e.target.value)))} className="w-10 bg-transparent border-b border-white/50 text-center" />
             <span className="ml-1">min</span>
           </div>
         </div>

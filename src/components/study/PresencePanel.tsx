@@ -19,7 +19,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
   return (
     <Card className="bg-transparent border-0 shadow-none">
         <CardHeader className="p-4">
-            <CardTitle className="text-lg text-white">Online Users</CardTitle>
+            <CardTitle className="text-base text-white">Online Users</CardTitle>
         </CardHeader>
       <CardContent className="p-4 pt-0">
         <ScrollArea className="h-72">
@@ -28,19 +28,19 @@ export default function PresencePanel({ users }: PresencePanelProps) {
             const avatarUrl = PlaceHolderImages.find(p => p.id === user.avatarImageId)?.imageUrl || '';
             const isOnline = user.status === 'online';
             return (
-                <div key={user.id} className="flex items-center gap-4">
+                <div key={user.id} className="flex items-center gap-3">
                 <div className="relative">
-                    <Avatar className="w-10 h-10">
+                    <Avatar className="w-9 h-9">
                     <AvatarImage src={avatarUrl} alt={user.name} data-ai-hint="person portrait" />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <span className={cn(
-                    "absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-background",
+                    "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-background",
                     isOnline ? 'bg-green-500' : 'bg-gray-500'
                     )} />
                 </div>
                 <div className="flex-grow">
-                    <p className="font-semibold text-white">{user.name}</p>
+                    <p className="font-semibold text-white text-sm">{user.name}</p>
                     <p className={cn("text-xs", isOnline ? 'text-green-400' : 'text-muted-foreground')}>
                     {isOnline ? 'Online' : `Last seen ${user.lastSeen}`}
                     </p>
