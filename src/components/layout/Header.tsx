@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell } from 'lucide-react';
+import { Sparkles, Bell, BookDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,10 @@ export default function Header() {
     )}>
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className={cn(
-          "text-2xl font-bold tracking-tight",
+          "flex items-center gap-2 text-2xl font-bold tracking-tight",
           'text-white'
         )}>
+          <BookDown className="w-7 h-7" />
           Liorea
         </Link>
         <nav className="flex items-center gap-2">
