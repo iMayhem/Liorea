@@ -2,7 +2,6 @@
 "use client";
 
 import Header from '@/components/layout/Header';
-import PomodoroTimer from '@/components/timer/PomodoroTimer';
 import ClientOnly from './ClientOnly';
 import PresencePanel from './study/PresencePanel';
 import ExamCountdown from './timer/ExamCountdown';
@@ -12,6 +11,7 @@ import { Terminal } from 'lucide-react';
 import { useMemo } from 'react';
 import { useBackground } from '@/context/BackgroundContext';
 import Leaderboard from './study/Leaderboard';
+import StudyCalendar from './study/StudyCalendar';
 
 export default function LioreaClient() {
   const { error } = useBackground();
@@ -54,7 +54,7 @@ export default function LioreaClient() {
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="w-80">
-            <PomodoroTimer />
+            <StudyCalendar />
           </div>
         </div>
       </main>

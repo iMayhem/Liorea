@@ -181,3 +181,28 @@
   animation: glassReveal 0.2s ease-in-out forwards;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.theme-blue .rdp {
+    --rdp-cell-size: 40px;
+    --rdp-caption-font-size: 18px;
+    --rdp-accent-color: hsl(var(--primary-hsl));
+    --rdp-background-color: hsl(var(--primary-hsl) / 0.1);
+    --rdp-accent-color-dark: hsl(var(--primary-hsl));
+    --rdp-background-color-dark: hsl(var(--primary-hsl) / 0.1);
+    --rdp-outline: 2px solid hsl(var(--primary-hsl));
+    --rdp-outline-selected: 3px solid hsl(var(--primary-hsl));
+    --rdp-selected-color: hsl(var(--primary-foreground));
+}
+
+.theme-blue .rdp-head_cell {
+    color: hsl(var(--muted-foreground));
+}
+
+.theme-blue .rdp-day_today:not(.rdp-day_selected) {
+    background-color: hsl(var(--accent) / 0.8) !important;
+    color: hsl(var(--accent-foreground)) !important;
+}
+
+.theme-blue .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+    background-color: hsl(var(--accent)) !important;
+}
