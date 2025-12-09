@@ -1,62 +1,88 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { db } from '@/lib/firebase';
+import { ref, onValue, push, serverTimestamp } from 'firebase/database';
 
 export interface Notification {
-  id: number;
+  id: string;
   message: string;
   timestamp: number;
-  read: boolean;
+  read?: boolean;
 }
 
 interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (message: string) => void;
-  markAsRead: (id: number) => void;
+  addNotification: (message: string) => Promise<void>;
+  markAsRead: (id: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [readIds, setReadIds] = useState<string[]>([]);
 
+  // 1. Load "Read" status from Local Storage
   useEffect(() => {
     try {
-      const storedNotifications = localStorage.getItem('liorea-notifications');
-      if (storedNotifications) {
-        setNotifications(JSON.parse(storedNotifications));
-      }
-    } catch (error) {
-      console.error("Could not load notifications from localStorage", error);
-    }
+      const localRead = localStorage.getItem('liorea-read-notifications');
+      if (localRead) setReadIds(JSON.parse(localRead));
+    } catch (e) {}
   }, []);
 
+  // 2. LISTEN TO FIREBASE (Realtime)
   useEffect(() => {
+    const notificationsRef = ref(db, 'notifications');
+
+    // onValue triggers instantly whenever data changes in Firebase
+    const unsubscribe = onValue(notificationsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const loadedNotifications = Object.entries(data).map(([key, value]: [string, any]) => ({
+          id: key,
+          message: value.message,
+          timestamp: value.timestamp,
+        }));
+        
+        // Sort by newest first
+        loadedNotifications.sort((a, b) => b.timestamp - a.timestamp);
+        setNotifications(loadedNotifications);
+      } else {
+        setNotifications([]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 3. SEND TO FIREBASE
+  const addNotification = async (message: string) => {
     try {
-      localStorage.setItem('liorea-notifications', JSON.stringify(notifications));
+      const notificationsRef = ref(db, 'notifications');
+      await push(notificationsRef, {
+        message,
+        timestamp: serverTimestamp() // Uses server time to be accurate
+      });
     } catch (error) {
-      console.error("Could not save notifications to localStorage", error);
+      console.error("Failed to add notification via Firebase", error);
     }
-  }, [notifications]);
-
-  const addNotification = (message: string) => {
-    const newNotification: Notification = {
-      id: Date.now(),
-      message,
-      timestamp: Date.now(),
-      read: false,
-    };
-    setNotifications(prev => [newNotification, ...prev]);
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+  // 4. Mark as Read (Local)
+  const markAsRead = (id: string) => {
+    const newReadIds = [...readIds, id];
+    setReadIds(newReadIds);
+    localStorage.setItem('liorea-read-notifications', JSON.stringify(newReadIds));
   };
+
+  const displayedNotifications = notifications.map(n => ({
+    ...n,
+    read: readIds.includes(n.id)
+  }));
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification, markAsRead }}>
+    <NotificationContext.Provider value={{ notifications: displayedNotifications, addNotification, markAsRead }}>
       {children}
     </NotificationContext.Provider>
   );
@@ -64,8 +90,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
+  if (context === undefined) throw new Error('useNotifications error');
   return context;
 };

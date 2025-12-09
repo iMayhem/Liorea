@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
+// Cloudflare Worker URL
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export interface OnlineUser {
@@ -32,34 +31,24 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [isStudying, setIsStudying] = useState(false);
-  const pathname = usePathname();
   const { toast } = useToast();
   
-  // Load initial state
   useEffect(() => {
-    try {
-        const storedUser = localStorage.getItem('liorea-username');
-        if (storedUser) setUsernameState(storedUser);
-    } catch (e) { console.error(e); }
+    const storedUser = localStorage.getItem('liorea-username');
+    if (storedUser) setUsernameState(storedUser);
   }, []);
 
   const setUsername = useCallback((name: string | null) => {
     setUsernameState(name);
-    if (name) {
-      localStorage.setItem('liorea-username', name);
-    } else {
+    if (name) localStorage.setItem('liorea-username', name);
+    else {
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
     }
   }, []);
 
-  const joinSession = useCallback(() => {
-    setIsStudying(true);
-  }, []);
-
-  const leaveSession = useCallback(() => {
-    setIsStudying(false);
-  }, []);
+  const joinSession = useCallback(() => setIsStudying(true), []);
+  const leaveSession = useCallback(() => setIsStudying(false), []);
 
   const updateStatusMessage = useCallback(async (msg: string) => {
     if (!username) return;
@@ -69,9 +58,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             body: JSON.stringify({ username, status_text: msg }),
             headers: { 'Content-Type': 'application/json' }
         });
-        // Optimistic update
+        // Optimistic UI update
         setOnlineUsers(prev => prev.map(u => u.username === username ? { ...u, status_text: msg } : u));
-        toast({ title: "Status Updated", description: "Your status is visible for 24 hours." });
+        toast({ title: "Status Updated" });
     } catch (e) { console.error(e); }
   }, [username, toast]);
 
@@ -86,89 +75,63 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         const data = await res.json();
         if (data.success) {
             setUsername(newName);
-            toast({ title: "Username Changed", description: `You are now known as ${newName}` });
             return true;
-        } else {
-            toast({ variant: "destructive", title: "Error", description: data.error });
-            return false;
         }
+        return false;
     } catch (e) { return false; }
-  }, [username, setUsername, toast]);
+  }, [username, setUsername]);
 
-  // 1. General Presence Heartbeat (Runs always when logged in)
+  // 1. PRESENCE HEARTBEAT (Cloudflare)
   useEffect(() => {
-    if (!username) return;
+    if (!username || isStudying) return; // If studying, the timer loop handles the heartbeat
     
-    const sendPresence = () => {
+    const sendHeartbeat = () => {
+      if (document.hidden) return; // Optimization: Don't ping if tab is hidden
       fetch(`${WORKER_URL}/heartbeat`, { 
           method: "POST", 
           body: JSON.stringify({ username }), 
           headers: { "Content-Type": "application/json" } 
-      }).catch(console.error);
+      }).catch(()=>{});
     };
-
-    sendPresence(); // Send immediately
-    const interval = setInterval(sendPresence, 30000); // Every 30s
+    
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 60000); // 1 minute interval
     return () => clearInterval(interval);
-  }, [username]);
+  }, [username, isStudying]);
 
-  // 2. Study Time Accumulator (Runs ONLY when isStudying is true)
+  // 2. STUDY TIMER (Cloudflare)
   useEffect(() => {
     if (!username || !isStudying) return;
 
-    const logStudyMinute = () => {
+    const logMinute = () => {
+       // This endpoint counts +1 minute AND updates 'last_seen'
        fetch(`${WORKER_URL}/study/update`, { 
            method: "POST", 
            body: JSON.stringify({ username }), 
            headers: { "Content-Type": "application/json" } 
-       }).catch((e) => {
-           console.error("Network error, study time not counted for this minute", e);
-           // Logic: If internet fails, this fetch fails, time isn't counted. Correct behavior.
-       });
+       }).catch(()=>{});
     };
 
-    // Log immediately on join
-    logStudyMinute();
-
-    // Log every 60 seconds
-    const interval = setInterval(logStudyMinute, 60000);
-
+    logMinute();
+    const interval = setInterval(logMinute, 60000); 
     return () => clearInterval(interval);
   }, [username, isStudying]);
 
-  // 3. Handle Tab Close / Browser Exit (Try to capture partial time or cleanup)
+  // 3. FETCH LEADERBOARD (Cloudflare Polling)
   useEffect(() => {
-      const handleBeforeUnload = () => {
-          if (username && isStudying) {
-              // sendBeacon is more reliable than fetch during page unload
-              const blob = new Blob([JSON.stringify({ username })], { type: 'application/json' });
-              navigator.sendBeacon(`${WORKER_URL}/study/update`, blob);
-          }
-      };
-
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [username, isStudying]);
-
-  // 4. Poll for Leaderboard/Online Users Data
-  useEffect(() => {
-    const checkOnlineUsers = () => {
+    const fetchStatus = () => {
+      if (document.hidden) return; // Save Cloudflare reads
       fetch(`${WORKER_URL}/status`)
         .then(res => res.json())
         .then((users: any[]) => {
-            const formattedUsers = users.map(u => ({ 
-                ...u, 
-                total_study_time: (u.total_minutes || 0) * 60 // Convert server minutes to seconds for display
-            }));
-            setOnlineUsers(formattedUsers);
-        })
-        .catch(console.error);
+            const formatted = users.map(u => ({ ...u, total_study_time: (u.total_minutes || 0) * 60 }));
+            setOnlineUsers(formatted);
+        }).catch(()=>{});
     };
-
-    checkOnlineUsers(); // Initial fetch
-    const statusInterval = setInterval(checkOnlineUsers, 5000); // Check every 5s for live updates
-
-    return () => clearInterval(statusInterval);
+    
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 20000); // Poll every 20s
+    return () => clearInterval(interval);
   }, []);
 
   const value = useMemo(() => ({
@@ -180,8 +143,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
 export const usePresence = () => {
     const c = useContext(PresenceContext);
-    if (c === undefined) {
-        throw new Error("usePresence must be used within a PresenceProvider");
-    }
+    if (c === undefined) throw new Error("usePresence error");
     return c;
 };
