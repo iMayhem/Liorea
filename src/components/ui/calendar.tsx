@@ -19,23 +19,26 @@ function Calendar({
       className={cn("p-0", className)}
       fixedWeeks
       classNames={{
-        months: "space-y-4",
+        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "hidden", // We use our custom header
-        nav: "hidden",     // We use our custom navigation
+        caption: "hidden",
+        nav: "hidden",
         table: "w-full border-collapse space-y-1",
-        head_row: "",
-        head_cell: "text-white/40 rounded-md w-8 font-medium text-[0.8rem] uppercase tracking-wide",
-        row: "", 
-        cell: "p-0", 
+        head_row: "flex",
+        head_cell:
+          "text-white/40 rounded-md w-9 font-medium text-[0.8rem] uppercase tracking-wide",
+        row: "flex w-full mt-2",
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
-          "h-8 w-8 p-0 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
+          "h-9 w-9 p-0 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
         ),
-        day_selected: "bg-white text-black hover:bg-white hover:text-black font-bold shadow-lg shadow-white/20",
+        day_selected:
+          "bg-white text-black hover:bg-white hover:text-black font-bold shadow-lg shadow-white/20",
         day_today: "bg-white/10 text-white font-semibold ring-1 ring-white/30",
         day_outside: "text-white/20 opacity-50",
         day_disabled: "text-white/10 opacity-30",
-        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_range_middle:
+          "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
       }}
