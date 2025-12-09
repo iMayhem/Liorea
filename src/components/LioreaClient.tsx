@@ -2,24 +2,37 @@
 "use client";
 
 import Header from '@/components/layout/Header';
-import ClientOnly from './ClientOnly';
 import PresencePanel from './study/PresencePanel';
 import ExamCountdown from './timer/ExamCountdown';
 import { usePresence } from '@/context/PresenceContext';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useBackground } from '@/context/BackgroundContext';
-import Leaderboard from './study/Leaderboard';
 import StudyCalendar from './study/StudyCalendar';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from './ui/skeleton';
 
 export default function LioreaClient() {
-  const { error } = useBackground();
-  const { onlineUsers } = usePresence();
+  const { error, isLoading: isBackgroundLoading } = useBackground();
+  const { onlineUsers, username } = usePresence();
+  const router = useRouter();
   const nextYear = new Date().getFullYear() + 1;
   
   const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-24T09:00:00`), [nextYear]);
   const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-05T14:00:00`), [nextYear]);
+
+  useEffect(() => {
+    // If the background is done loading and we find there's no user, redirect.
+    if (!isBackgroundLoading && !username) {
+        router.push('/');
+    }
+  }, [isBackgroundLoading, username, router]);
+
+  // Show a loading skeleton while we're waiting for user/background data
+  if (isBackgroundLoading || !username) {
+    return <Skeleton className="h-screen w-screen bg-transparent" />;
+  }
 
   return (
     <>
