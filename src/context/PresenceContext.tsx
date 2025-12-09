@@ -1,16 +1,19 @@
+
+
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
-import { db } from '@/lib/firebase';
-import { ref, onValue, set, onDisconnect, serverTimestamp, increment, update } from 'firebase/database';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
+// Cloudflare Worker URL
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export interface OnlineUser {
   username: string;
-  status: 'Online' | 'Offline';
-  total_study_time: number; 
+  status?: 'Online' | 'Offline';
+  last_seen?: number; 
+  total_study_time?: number; 
   status_text?: string; 
 }
 
@@ -31,7 +34,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [isStudying, setIsStudying] = useState(false);
-  const unsavedMinutesRef = useRef(0);
+  const pathname = usePathname();
   const { toast } = useToast();
   
   useEffect(() => {
@@ -43,152 +46,121 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     setUsernameState(name);
     if (name) localStorage.setItem('liorea-username', name);
     else {
-        if (username) set(ref(db, `/status/${username}`), null);
+        // If logging out, tell server we left
+        if (username) {
+            fetch(`${WORKER_URL}/user/leave`, {
+                method: "POST",
+                body: JSON.stringify({ username }),
+                headers: { "Content-Type": "application/json" }
+            }).catch(()=>{});
+        }
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
     }
   }, [username]);
 
-  // 1. REALTIME PRESENCE + SYNC SAVED STATUS
+  const joinSession = useCallback(() => setIsStudying(true), []);
+  
+  const leaveSession = useCallback(() => {
+      setIsStudying(false);
+      // Immediately tell server we stopped studying (optional, usually heartbeat timeout handles it)
+  }, []);
+
+  const updateStatusMessage = useCallback(async (msg: string) => {
+    if (!username) return;
+    try {
+        await fetch(`${WORKER_URL}/user/status`, {
+            method: 'POST',
+            body: JSON.stringify({ username, status_text: msg }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        setOnlineUsers(prev => prev.map(u => u.username === username ? { ...u, status_text: msg } : u));
+        toast({ title: "Status Updated" });
+    } catch (e) { console.error(e); }
+  }, [username, toast]);
+
+  const renameUser = useCallback(async (newName: string) => {
+    if (!username) return false;
+    try {
+        const res = await fetch(`${WORKER_URL}/user/rename`, {
+            method: 'POST',
+            body: JSON.stringify({ oldUsername: username, newUsername: newName }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            setUsername(newName);
+            return true;
+        }
+        return false;
+    } catch (e) { return false; }
+  }, [username, setUsername]);
+
+  // 1. PRESENCE HEARTBEAT + TAB CLOSE HANDLER
   useEffect(() => {
     if (!username) return;
-
-    const userStatusRef = ref(db, `/status/${username}`);
-    const connectionRef = ref(db, '.info/connected');
-
-    const unsubscribe = onValue(connectionRef, async (snap) => {
-        if (snap.val() === true) {
-            // A. Fetch saved status from Cloudflare (Persistent DB)
-            let savedStatus = "";
-            try {
-                const res = await fetch(`${WORKER_URL}/user/status?username=${username}`);
-                const data = await res.json();
-                if (data.status_text) savedStatus = data.status_text;
-            } catch (e) { console.error("Could not fetch saved status"); }
-
-            // B. Set Online in Firebase with that saved status
-            update(userStatusRef, {
-                state: 'online',
-                last_changed: serverTimestamp(),
-                username: username,
-                status_text: savedStatus // Restores your status on reload!
-            });
-
-            onDisconnect(userStatusRef).remove();
-        }
-    });
-
-    return () => unsubscribe();
-  }, [username]);
-
-
-  // 2. STUDY TIMER LOGIC (Batched)
-  useEffect(() => {
-    if (!username || !isStudying) return;
-
-    const flushMinutes = () => {
-        const amount = unsavedMinutesRef.current;
-        if (amount > 0) {
-            // Update Cloudflare (Persistent Record)
-            const today = new Date().toISOString().split('T')[0];
-            fetch(`${WORKER_URL}/study/update`, {
-                method: "POST",
-                body: JSON.stringify({ username }), // Worker handles logic
-                headers: { "Content-Type": "application/json" }
-            }).catch(()=>{});
-
-            // Update Firebase (Realtime View)
-            set(ref(db, `/timers/${username}/total_minutes`), increment(amount)); 
-            
-            unsavedMinutesRef.current = 0;
-        }
+    
+    // Normal Heartbeat (Every 60s)
+    const sendHeartbeat = () => {
+      if (document.hidden) return; 
+      fetch(`${WORKER_URL}/heartbeat`, { 
+          method: "POST", 
+          body: JSON.stringify({ username }), 
+          headers: { "Content-Type": "application/json" } 
+      }).catch(()=>{});
     };
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 60000); 
 
-    update(ref(db, `/status/${username}`), { is_studying: true });
-
-    // Loop: Update local UI every 1 min, flush to server every 5 min
-    const interval = setInterval(() => {
-        unsavedMinutesRef.current += 1;
-
-        // Optimistic UI Update
-        setOnlineUsers(prev => {
-            const updated = prev.map(user => 
-                user.username === username ? { ...user, total_study_time: user.total_study_time + 60 } : user
-            );
-            return updated.sort((a, b) => b.total_study_time - a.total_study_time);
-        });
-
-        // Flush to DB/Firebase every 5 mins
-        if (unsavedMinutesRef.current >= 5) flushMinutes();
-
-    }, 60000);
-
-    const handleBeforeUnload = () => { flushMinutes(); update(ref(db, `/status/${username}`), { is_studying: false }); };
+    // TAB CLOSE / BROWSER CLOSE HANDLER
+    const handleBeforeUnload = () => {
+        // Prepare data blob
+        const blob = new Blob([JSON.stringify({ username })], { type: 'application/json' });
+        // Use sendBeacon - it survives the page close
+        navigator.sendBeacon(`${WORKER_URL}/user/leave`, blob);
+    };
+    
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
         clearInterval(interval);
         window.removeEventListener('beforeunload', handleBeforeUnload);
-        flushMinutes();
-        if (username) update(ref(db, `/status/${username}`), { is_studying: false });
     };
-  }, [username, isStudying]);
-
-
-  // 3. FETCH LEADERBOARD (Realtime Listener)
-  useEffect(() => {
-    const statusRef = ref(db, '/status');
-    const timersRef = ref(db, '/timers');
-
-    const unsub = onValue(statusRef, (statusSnap) => {
-        const statusData = statusSnap.val() || {};
-        onValue(timersRef, (timerSnap) => {
-            const timerData = timerSnap.val() || {};
-            const usersList: OnlineUser[] = Object.keys(statusData).map((key) => {
-                let minutes = timerData[key]?.total_minutes || 0;
-                if (key === username) minutes += unsavedMinutesRef.current; // Add local buffer
-
-                return {
-                    username: key,
-                    status: 'Online',
-                    total_study_time: minutes * 60, 
-                    status_text: statusData[key].status_text || ""
-                };
-            });
-            usersList.sort((a, b) => b.total_study_time - a.total_study_time);
-            setOnlineUsers(usersList);
-        }, { onlyOnce: true });
-    });
-    return () => unsub();
   }, [username]);
 
+  // 2. STUDY TIMER
+  useEffect(() => {
+    if (!username || !isStudying) return;
 
-  // --- ACTIONS ---
+    const logMinute = () => {
+       fetch(`${WORKER_URL}/study/update`, { 
+           method: "POST", 
+           body: JSON.stringify({ username }), 
+           headers: { "Content-Type": "application/json" } 
+       }).catch(()=>{});
+    };
 
-  const joinSession = useCallback(() => setIsStudying(true), []);
-  const leaveSession = useCallback(() => setIsStudying(false), []);
+    logMinute();
+    const interval = setInterval(logMinute, 60000); 
+    return () => clearInterval(interval);
+  }, [username, isStudying]);
 
-  const updateStatusMessage = useCallback(async (msg: string) => {
-    if (!username) return;
+  // 3. FETCH LEADERBOARD
+  useEffect(() => {
+    const fetchStatus = () => {
+      if (document.hidden) return; 
+      fetch(`${WORKER_URL}/status`)
+        .then(res => res.json())
+        .then((users: any[]) => {
+            const formatted = users.map(u => ({ ...u, total_study_time: (u.total_minutes || 0) * 60 }));
+            setOnlineUsers(formatted);
+        }).catch(()=>{});
+    };
     
-    // 1. Update Realtime (Instant)
-    const statusRef = ref(db, `/status/${username}`);
-    await update(statusRef, { status_text: msg });
-
-    // 2. Ping Database (Persistent)
-    fetch(`${WORKER_URL}/user/status`, {
-        method: 'POST',
-        body: JSON.stringify({ username, status_text: msg }),
-        headers: { 'Content-Type': 'application/json' }
-    }).catch(e => console.error("DB Ping failed", e));
-
-    toast({ title: "Status Updated" });
-  }, [username, toast]);
-
-  const renameUser = useCallback(async (newName: string) => {
-      setUsername(newName);
-      return true;
-  }, [setUsername]);
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 20000); 
+    return () => clearInterval(interval);
+  }, [pathname, username]);
 
   const value = useMemo(() => ({
     username, setUsername, onlineUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
