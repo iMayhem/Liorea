@@ -172,11 +172,28 @@
   }
 }
 
+/* --- CALENDAR STYLES FROM LIOREA --- */
 .study-day-modifier:not([aria-selected]) {
     font-weight: bold;
+    color: white !important;
+    position: relative;
+    z-index: 1;
 }
+
+.study-day-modifier:not([aria-selected])::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background-color: #4ade80; /* Green dot for activity */
+    border-radius: 50%;
+}
+
 .study-day-modifier:not([aria-selected]):hover {
-    background-color: hsl(var(--accent)) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .dark .card, .theme-blue .card, .theme-zinc .card {
@@ -194,10 +211,7 @@
     --rdp-caption-font-size: 18px;
     --rdp-accent-color: hsl(var(--primary-hsl));
     --rdp-background-color: hsl(var(--primary-hsl) / 0.1);
-    --rdp-accent-color-dark: hsl(var(--primary-hsl));
-    --rdp-background-color-dark: hsl(var(--primary-hsl) / 0.1);
     --rdp-outline: 2px solid hsl(var(--primary-hsl));
-    --rdp-outline-selected: 3px solid hsl(var(--primary-hsl));
     --rdp-selected-color: hsl(var(--primary-foreground));
 }
 
@@ -206,10 +220,10 @@
 }
 
 .theme-blue .rdp-day_today:not(.rdp-day_selected) {
-    background-color: hsl(var(--accent) / 0.8) !important;
+    background-color: hsl(var(--accent) / 0.5) !important;
     color: hsl(var(--accent-foreground)) !important;
 }
 
 .theme-blue .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-    background-color: hsl(var(--accent)) !important;
+    background-color: hsl(var(--accent) / 0.5) !important;
 }
