@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Users } from 'lucide-react';
 import { StudyUser } from '@/context/PresenceContext';
 import { ScrollArea } from '../ui/scroll-area';
@@ -43,6 +43,7 @@ export default function StudyGrid({ users }: StudyGridProps) {
                 <Card key={user.username} className="overflow-hidden bg-black/20 backdrop-blur-sm border-white/20">
                     <CardContent className="p-3 flex flex-col items-center justify-center gap-2 text-center">
                     <Avatar className="w-16 h-16 border-2 border-primary">
+                        <AvatarImage src={user.photoURL} alt={user.username} />
                         <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <p className="font-semibold truncate w-full text-sm">{user.username}</p>

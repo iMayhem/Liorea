@@ -8,7 +8,7 @@ import { Send, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useChat } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const USER_COLORS = [
   'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
@@ -77,6 +77,7 @@ export default function ChatPanel() {
                 <div key={index} className={`flex items-start gap-3 ${isCurrentUser ? 'justify-end' : ''}`}>
                    {!isCurrentUser && (
                      <Avatar className="w-8 h-8 border-2 border-primary shrink-0">
+                        <AvatarImage src={msg.photoURL} alt={msg.username} />
                         <AvatarFallback className={`${getUserColor(msg.username)} text-white`}>{msg.username.charAt(0)}</AvatarFallback>
                     </Avatar>
                    )}
