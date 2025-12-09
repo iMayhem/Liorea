@@ -105,7 +105,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
         {step === 'google' && (
             <Button 
                 onClick={handleGoogleStart} 
-                className="w-full bg-white text-black hover:bg-white/90 font-bold py-6 flex items-center gap-3"
+                className="w-full bg-white text-black hover:bg-white/90 font-bold py-6 flex items-center gap-3 transition-transform hover:scale-[1.02]"
                 disabled={isLoading}
             >
                 {isLoading ? "Checking..." : (
@@ -118,35 +118,41 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
         )}
 
         {step === 'username' && (
-            <form onSubmit={handleFinalizeSignup} className="space-y-4 animate-in fade-in slide-in-from-right-4">
+            <form onSubmit={handleFinalizeSignup} className="space-y-6 animate-in fade-in slide-in-from-right-8 pt-2">
                 <div className="space-y-2">
                     <Input 
                         autoFocus
                         placeholder="e.g. study_wizard" 
                         value={customUsername}
                         onChange={(e) => setCustomUsername(e.target.value)}
-                        className="bg-black/20 border-white/20 text-white placeholder:text-white/40"
+                        className="bg-black/20 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-offset-0 focus-visible:ring-white/50"
                     />
-                    <p className="text-xs text-white/50">This will be your display name on the leaderboard.</p>
+                    <p className="text-xs text-white/50 text-center">This will be your display name on the leaderboard.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button 
-                        type="button" variant="ghost" 
-                        onClick={() => setStep('google')}
-                        disabled={isLoading}
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                    </Button>
+                
+                {/* Updated Layout: Stacked buttons for center alignment */}
+                <div className="flex flex-col items-center gap-3">
                     <Button 
                         type="submit" 
-                        className="flex-1 bg-accent hover:bg-accent/90 text-white"
+                        className="w-full bg-white text-black hover:bg-white/90 font-bold h-11 transition-all shadow-lg shadow-white/10"
                         disabled={isLoading || customUsername.length < 3}
                     >
-                        {isLoading ? "Creating..." : (
+                        {isLoading ? (
+                            "Creating Account..."
+                        ) : (
                             <>
                                 Start Studying <ArrowRight className="ml-2 w-4 h-4" />
                             </>
                         )}
+                    </Button>
+                    
+                    <Button 
+                        type="button" variant="link" 
+                        onClick={() => setStep('google')}
+                        disabled={isLoading}
+                        className="text-white/50 hover:text-white text-xs h-auto p-0"
+                    >
+                        <ArrowLeft className="w-3 h-3 mr-1" /> Back to Login
                     </Button>
                 </div>
             </form>
