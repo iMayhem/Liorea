@@ -19,6 +19,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'google' | 'username'>('google');
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [googlePhoto, setGooglePhoto] = useState<string | null>(null);
   const [customUsername, setCustomUsername] = useState('');
   const { toast } = useToast();
 
@@ -32,10 +33,11 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
       if (!user.email) throw new Error("No email found.");
 
       if (user.photoURL) localStorage.setItem('liorea-user-image', user.photoURL);
+      setGooglePhoto(user.photoURL);
 
       const res = await fetch(`${WORKER_URL}/auth/google-check`, {
           method: 'POST',
-          body: JSON.stringify({ email: user.email }),
+          body: JSON.stringify({ email: user.email, photoURL: user.photoURL }),
           headers: { 'Content-Type': 'application/json' }
       });
       const data = await res.json();
@@ -67,7 +69,8 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
               method: 'POST',
               body: JSON.stringify({ 
                   email: googleEmail, 
-                  username: customUsername.trim() 
+                  username: customUsername.trim(),
+                  photoURL: googlePhoto
               }),
               headers: { 'Content-Type': 'application/json' }
           });

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Award, Clock, Trophy } from 'lucide-react';
 import { StudyUser } from '@/context/PresenceContext';
 
@@ -49,6 +49,7 @@ export default function Leaderboard({ users }: LeaderboardProps) {
                 {index < 3 ? <Award className="w-5 h-5" /> : <span className="text-sm">#{index + 1}</span>}
               </div>
               <Avatar className="w-10 h-10">
+                <AvatarImage src={user.photoURL} alt={user.username} />
                 <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-grow">

@@ -166,7 +166,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     .map((u: any) => ({
                         username: u.username,
                         total_study_time: (u.total_minutes || 0) * 60,
-                        status: 'Online'
+                        status: 'Online',
+                        photoURL: u.photoURL
                     }));
                  setHistoricalLeaderboard(formatted);
              }
