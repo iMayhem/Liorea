@@ -10,12 +10,35 @@ export function NavigationEvents() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // This hook now simply sets loading to false when navigation completes.
     setLoading(false);
   }, [pathname, searchParams]);
-  
-  // This is a bit of a hack to detect when a route change starts
-  // It relies on the fact that the `a` tag click will happen before the route change
+
   useEffect(() => {
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    const handleStateChange = () => {
+      // Check if the URL has actually changed before triggering the loader.
+      if (window.location.pathname !== pathname) {
+        setLoading(true);
+      }
+    };
+
+    // Monkey-patch history.pushState to trigger the loader.
+    history.pushState = function (...args) {
+      handleStateChange();
+      return originalPushState.apply(history, args);
+    };
+    
+    // Also handle browser back/forward navigation.
+    const handlePopState = () => {
+        handleStateChange();
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    // This handles clicks on Next.js <Link> components.
     const handleLinkClick = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
         const anchor = target.closest('a');
@@ -31,10 +54,13 @@ export function NavigationEvents() {
     document.addEventListener('click', handleLinkClick);
 
     return () => {
-        document.removeEventListener('click', handleLinkClick);
-    }
-  }, []);
-
+      // Restore original history methods on cleanup.
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('click', handleLinkClick);
+    };
+  }, [pathname]);
 
   return loading ? <PageLoader /> : null;
 }
