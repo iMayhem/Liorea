@@ -1,8 +1,8 @@
-
 "use client"
 
 import * as React from "react"
 import { DayPicker } from "react-day-picker"
+
 import { cn } from "@/lib/utils"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
@@ -16,19 +16,21 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-0", className)}
+      className={cn("p-3", className)}
       fixedWeeks
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "hidden",
+        caption: "hidden", 
         nav: "hidden",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
           "text-white/40 rounded-md w-9 font-medium text-[0.8rem] uppercase tracking-wide",
-        row: "", // This is the critical fix: removed all classes.
-        cell: "p-0", // This is the critical fix: removed all classes.
+        // --- FIX IS HERE: Added 'flex w-full mt-2' back to row ---
+        row: "flex w-full mt-2", 
+        // --- FIX IS HERE: Added sizing and centering to cell ---
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           "h-9 w-9 p-0 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
         ),
