@@ -33,11 +33,11 @@ export default function RootLayout({
           <BackgroundDisplay />
           <FocusProvider>
             <FocusOverlay />
-            <NotificationProvider>
-              <PresenceProvider>
+            <PresenceProvider>
+              <NotificationProvider>
                 {children}
-              </PresenceProvider>
-            </NotificationProvider>
+              </NotificationProvider>
+            </PresenceProvider>
           </FocusProvider>
         </BackgroundProvider>
         <Toaster />
