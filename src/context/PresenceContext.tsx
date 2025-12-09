@@ -12,6 +12,7 @@ export interface StudyUser {
   username: string;
   total_study_time: number; // In Seconds
   status: 'Online';
+  photoURL?: string;
 }
 
 // Type 2: People in the Community (Sidebar)
@@ -21,14 +22,18 @@ export interface CommunityUser {
   last_seen: number;
   status_text?: string;
   is_studying: boolean; 
+  photoURL?: string;
 }
 
 interface PresenceContextType {
   username: string | null;
+  userImage: string | null;
   setUsername: (name: string | null) => void;
+  
   studyUsers: StudyUser[];
   communityUsers: CommunityUser[];
   leaderboardUsers: StudyUser[];
+  
   isStudying: boolean;
   joinSession: () => void;
   leaveSession: () => void;
@@ -40,17 +45,22 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
+  const [userImage, setUserImage] = useState<string | null>(null);
+
   const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
   const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
   const [historicalLeaderboard, setHistoricalLeaderboard] = useState<StudyUser[]>([]);
-  const [isStudying, setIsStudying] = useState(false);
   
+  const [isStudying, setIsStudying] = useState(false);
   const unsavedMinutesRef = useRef(0);
   const { toast } = useToast();
 
+  // 1. INITIALIZATION
   useEffect(() => {
     const storedUser = localStorage.getItem('liorea-username');
+    const storedImage = localStorage.getItem('liorea-user-image');
     if (storedUser) setUsernameState(storedUser);
+    if (storedImage) setUserImage(storedImage);
   }, []);
 
   const setUsername = useCallback((name: string | null) => {
@@ -58,6 +68,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         localStorage.setItem('liorea-username', name);
     } else {
+        // Logout Logic
         if (username) {
             remove(ref(db, `/study_room_presence/${username}`));
             update(ref(db, `/community_presence/${username}`), { 
@@ -67,11 +78,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             });
         }
         localStorage.removeItem('liorea-username');
+        localStorage.removeItem('liorea-user-image');
+        setUserImage(null);
         setIsStudying(false);
     }
   }, [username]);
 
-  // --- 1. GLOBAL COMMUNITY PRESENCE ---
+  // --- 2. GLOBAL COMMUNITY PRESENCE (Sidebar) ---
   useEffect(() => {
     if (!username) return;
     const commRef = ref(db, `/community_presence/${username}`);
@@ -88,6 +101,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
             update(commRef, {
                 username: username,
+                photoURL: userImage || "",
                 status: 'Online',
                 last_seen: serverTimestamp(),
                 status_text: savedStatus,
@@ -101,9 +115,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         }
     });
     return () => unsubscribe();
-  }, [username]);
+  }, [username, userImage]);
 
-  // --- 2. ACTIVE STUDY LOGIC ---
+  // --- 3. ACTIVE STUDY LOGIC ---
   useEffect(() => {
     if (!username) return;
 
@@ -123,6 +137,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
             set(studyRef, {
                 username: username,
+                photoURL: userImage || "",
                 total_study_time: initialSeconds,
                 status: 'Online'
             });
@@ -143,11 +158,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
              update(commRef, { is_studying: false }).catch(() => {});
         }
     };
-  }, [username, isStudying]);
+  }, [username, isStudying, userImage]);
 
-  // --- 3. DATA LISTENERS ---
-  
-  // A. FETCH LEADERBOARD
+
+  // --- 4. DATA LISTENERS ---
+
+  // A. FETCH HISTORICAL LEADERBOARD
   useEffect(() => {
      const fetchLeaderboard = async () => {
          try {
@@ -171,7 +187,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
      return () => clearInterval(interval);
   }, []);
 
-  // B. LISTEN TO LIVE ROOM
+  // B. LISTEN TO LIVE STUDY ROOM
   useEffect(() => {
     const roomRef = ref(db, '/study_room_presence');
     return onValue(roomRef, (snapshot: any) => {
@@ -179,6 +195,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         if (data) {
             const list: StudyUser[] = Object.values(data).map((u: any) => ({
                 username: u.username,
+                photoURL: u.photoURL,
                 total_study_time: Number(u.total_study_time) || 0, 
                 status: 'Online'
             }));
@@ -190,20 +207,37 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // C. LISTEN TO COMMUNITY
+  // C. LISTEN TO COMMUNITY (With Deduplication Fix)
   useEffect(() => {
     const globalRef = ref(db, '/community_presence');
     return onValue(globalRef, (snapshot: any) => {
         const data = snapshot.val();
         if (data) {
-            const list: CommunityUser[] = Object.values(data).map((u: any) => ({
+            const rawList = Object.values(data).map((u: any) => ({
                 username: u.username,
+                photoURL: u.photoURL,
                 status: u.status || 'Offline',
                 last_seen: u.last_seen || Date.now(),
                 status_text: u.status_text || "",
                 is_studying: u.is_studying || false
             }));
-            
+
+            // Deduplicate users (Keep the one that is ONLINE or NEWEST)
+            const uniqueMap = new Map<string, CommunityUser>();
+            rawList.forEach((user: any) => {
+                const existing = uniqueMap.get(user.username);
+                if (!existing) {
+                    uniqueMap.set(user.username, user);
+                } else {
+                    const isNewer = user.last_seen > existing.last_seen;
+                    const isOnline = user.status === 'Online';
+                    if (isOnline || (isNewer && existing.status !== 'Online')) {
+                        uniqueMap.set(user.username, user);
+                    }
+                }
+            });
+
+            const list = Array.from(uniqueMap.values());
             list.sort((a, b) => {
                 if (a.status === 'Online' && b.status !== 'Online') return -1;
                 if (a.status !== 'Online' && b.status === 'Online') return 1;
@@ -216,23 +250,35 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // D. MERGE LEADERBOARD
+  // D. MERGE LEADERBOARD (Historical + Live)
   const leaderboardUsers = useMemo(() => {
       const map = new Map<string, StudyUser>();
+      
       historicalLeaderboard.forEach(user => map.set(user.username, user));
       studyUsers.forEach(user => map.set(user.username, user));
+      
+      // Add photos from community list if missing
+      communityUsers.forEach(user => {
+          if (map.has(user.username)) {
+              const existing = map.get(user.username)!;
+              if (!existing.photoURL && user.photoURL) {
+                  existing.photoURL = user.photoURL;
+              }
+          }
+      });
+
       return Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
-  }, [historicalLeaderboard, studyUsers]);
+  }, [historicalLeaderboard, studyUsers, communityUsers]);
 
 
-  // --- 4. TIMER & SAVE LOGIC (FIXED) ---
+  // --- 5. TIMER & SAVE LOGIC (With Accumulator Bug Fix) ---
   useEffect(() => {
     if (!username || !isStudying) return;
 
     const flushToCloudflare = () => {
         const minutesToAdd = unsavedMinutesRef.current;
         if (minutesToAdd > 0) {
-            // FIX: Reset immediately to prevent accumulation bug
+            // FIX: Reset immediately to prevent infinite accumulation
             unsavedMinutesRef.current = 0;
             
             fetch(`${WORKER_URL}/study/update`, {
@@ -257,6 +303,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username, isStudying]);
 
 
+  // --- ACTIONS ---
+
   const joinSession = useCallback(() => setIsStudying(true), []);
   const leaveSession = useCallback(() => setIsStudying(false), []);
 
@@ -271,16 +319,41 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Status Updated" });
   }, [username, toast]);
 
+  // FIX: Rename with cleanup
   const renameUser = useCallback(async (newName: string) => {
-      setUsername(newName);
-      return true;
-  }, [setUsername]);
+      if (!username) return false;
+      const oldName = username;
+
+      try {
+          // 1. Tell Cloudflare to move D1 history
+          await fetch(`${WORKER_URL}/user/rename`, {
+              method: 'POST',
+              body: JSON.stringify({ oldUsername: oldName, newUsername: newName }),
+              headers: { 'Content-Type': 'application/json' }
+          });
+
+          // 2. Cleanup Firebase Ghosts immediately
+          await remove(ref(db, `/community_presence/${oldName}`));
+          if (isStudying) {
+              await remove(ref(db, `/study_room_presence/${oldName}`));
+          }
+
+          // 3. Update Local State
+          setUsername(newName);
+          return true;
+
+      } catch (e) {
+          console.error("Rename failed", e);
+          toast({ variant: "destructive", title: "Rename failed", description: "Could not update server." });
+          return false;
+      }
+  }, [username, isStudying, setUsername, toast]);
 
   const value = useMemo(() => ({
-    username, setUsername, 
+    username, userImage, setUsername,
     studyUsers, leaderboardUsers, communityUsers, 
     isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
-  }), [username, setUsername, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
+  }), [username, userImage, setUsername, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };
