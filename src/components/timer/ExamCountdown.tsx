@@ -50,7 +50,6 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
         <span className="text-2xl font-bold">
             {String(timeLeft[interval as keyof typeof timeLeft] ?? '00').padStart(2, '0')}
         </span>
-        <span className="text-xs uppercase text-muted-foreground">{interval}</span>
       </div>
     );
   });
