@@ -13,11 +13,11 @@ import StudyGrid from '@/components/study/StudyGrid';
 export default function StudyTogetherPage() {
   const { onlineUsers, joinSession, leaveSession } = usePresence();
 
+  // Automatically start counting time when this page loads
   useEffect(() => {
-    // Join the session when the component mounts
     joinSession();
 
-    // Leave the session when the component unmounts
+    // Stop counting time when user navigates away from this component
     return () => {
       leaveSession();
     };
