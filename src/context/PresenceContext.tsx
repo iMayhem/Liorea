@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
-// Type 1: People in the Study Room (Active Timer)
 export interface StudyUser {
   username: string;
   total_study_time: number; // In Seconds
@@ -15,7 +14,6 @@ export interface StudyUser {
   photoURL?: string;
 }
 
-// Type 2: People in the Community (Sidebar)
 export interface CommunityUser {
   username: string;
   status: 'Online' | 'Offline';
@@ -163,18 +161,21 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   // --- 4. DATA LISTENERS ---
 
-  // A. FETCH HISTORICAL LEADERBOARD
+  // A. FETCH LEADERBOARD (D1)
   useEffect(() => {
      const fetchLeaderboard = async () => {
          try {
              const res = await fetch(`${WORKER_URL}/leaderboard`);
              if (res.ok) {
                  const data = await res.json();
-                 const formatted: StudyUser[] = data.map((u: any) => ({
-                     username: u.username,
-                     total_study_time: (u.total_minutes || 0) * 60,
-                     status: 'Online'
-                 }));
+                 // FILTER: Block bad data
+                 const formatted: StudyUser[] = data
+                    .filter((u: any) => u && u.username)
+                    .map((u: any) => ({
+                        username: u.username,
+                        total_study_time: (u.total_minutes || 0) * 60,
+                        status: 'Online'
+                    }));
                  setHistoricalLeaderboard(formatted);
              }
          } catch (e) {
@@ -193,12 +194,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     return onValue(roomRef, (snapshot: any) => {
         const data = snapshot.val();
         if (data) {
-            const list: StudyUser[] = Object.values(data).map((u: any) => ({
-                username: u.username,
-                photoURL: u.photoURL,
-                total_study_time: Number(u.total_study_time) || 0, 
-                status: 'Online'
-            }));
+            const list: StudyUser[] = Object.values(data)
+                // FILTER: Block bad data
+                .filter((u: any) => u && u.username)
+                .map((u: any) => ({
+                    username: u.username,
+                    photoURL: u.photoURL,
+                    total_study_time: Number(u.total_study_time) || 0, 
+                    status: 'Online'
+                }));
             list.sort((a, b) => b.total_study_time - a.total_study_time);
             setStudyUsers(list);
         } else {
@@ -207,22 +211,24 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // C. LISTEN TO COMMUNITY (With Deduplication Fix)
+  // C. LISTEN TO COMMUNITY (With Deduplication)
   useEffect(() => {
     const globalRef = ref(db, '/community_presence');
     return onValue(globalRef, (snapshot: any) => {
         const data = snapshot.val();
         if (data) {
-            const rawList = Object.values(data).map((u: any) => ({
-                username: u.username,
-                photoURL: u.photoURL,
-                status: u.status || 'Offline',
-                last_seen: u.last_seen || Date.now(),
-                status_text: u.status_text || "",
-                is_studying: u.is_studying || false
-            }));
+            const rawList = Object.values(data)
+                // FILTER: Block bad data
+                .filter((u: any) => u && u.username)
+                .map((u: any) => ({
+                    username: u.username,
+                    photoURL: u.photoURL,
+                    status: u.status || 'Offline',
+                    last_seen: u.last_seen || Date.now(),
+                    status_text: u.status_text || "",
+                    is_studying: u.is_studying || false
+                }));
 
-            // Deduplicate users (Keep the one that is ONLINE or NEWEST)
             const uniqueMap = new Map<string, CommunityUser>();
             rawList.forEach((user: any) => {
                 const existing = uniqueMap.get(user.username);
@@ -250,16 +256,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // D. MERGE LEADERBOARD (Historical + Live)
+  // D. MERGE LEADERBOARD
   const leaderboardUsers = useMemo(() => {
       const map = new Map<string, StudyUser>();
+      historicalLeaderboard.forEach(user => { if(user.username) map.set(user.username, user); });
+      studyUsers.forEach(user => { if(user.username) map.set(user.username, user); });
       
-      historicalLeaderboard.forEach(user => map.set(user.username, user));
-      studyUsers.forEach(user => map.set(user.username, user));
-      
-      // Add photos from community list if missing
       communityUsers.forEach(user => {
-          if (map.has(user.username)) {
+          if (user.username && map.has(user.username)) {
               const existing = map.get(user.username)!;
               if (!existing.photoURL && user.photoURL) {
                   existing.photoURL = user.photoURL;
@@ -271,14 +275,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [historicalLeaderboard, studyUsers, communityUsers]);
 
 
-  // --- 5. TIMER & SAVE LOGIC (With Accumulator Bug Fix) ---
+  // --- 5. TIMER & SAVE LOGIC (FIXED) ---
   useEffect(() => {
     if (!username || !isStudying) return;
 
     const flushToCloudflare = () => {
         const minutesToAdd = unsavedMinutesRef.current;
         if (minutesToAdd > 0) {
-            // FIX: Reset immediately to prevent infinite accumulation
+            // FIX: Reset immediately to prevent accumulation bug
             unsavedMinutesRef.current = 0;
             
             fetch(`${WORKER_URL}/study/update`, {
@@ -303,8 +307,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username, isStudying]);
 
 
-  // --- ACTIONS ---
-
   const joinSession = useCallback(() => setIsStudying(true), []);
   const leaveSession = useCallback(() => setIsStudying(false), []);
 
@@ -319,26 +321,24 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Status Updated" });
   }, [username, toast]);
 
-  // FIX: Rename with cleanup
   const renameUser = useCallback(async (newName: string) => {
       if (!username) return false;
       const oldName = username;
 
       try {
-          // 1. Tell Cloudflare to move D1 history
+          // Tell Cloudflare to move history
           await fetch(`${WORKER_URL}/user/rename`, {
               method: 'POST',
               body: JSON.stringify({ oldUsername: oldName, newUsername: newName }),
               headers: { 'Content-Type': 'application/json' }
           });
 
-          // 2. Cleanup Firebase Ghosts immediately
+          // Cleanup Firebase
           await remove(ref(db, `/community_presence/${oldName}`));
           if (isStudying) {
               await remove(ref(db, `/study_room_presence/${oldName}`));
           }
 
-          // 3. Update Local State
           setUsername(newName);
           return true;
 

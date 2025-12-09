@@ -13,6 +13,7 @@ export interface ChatMessage {
   username: string;
   message: string;
   timestamp: number;
+  photoURL?: string;
 }
 
 interface ChatContextType {
@@ -25,25 +26,22 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const { username } = usePresence();
+  const { username, userImage } = usePresence();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   
-  // Track the timestamp of the last loaded message to bridge History and Live
   const lastLoadedTimestamp = useRef<number>(0);
   const isHistoryLoaded = useRef(false);
 
-  // 1. LOAD HISTORY (From Cloudflare D1 - Cheap & Big Storage)
+  // 1. LOAD HISTORY (D1)
   useEffect(() => {
     const loadHistory = async () => {
       try {
         const res = await fetch(`${WORKER_URL}/chat/history?room=${CHAT_ROOM}`);
         if (res.ok) {
           const historyData: ChatMessage[] = await res.json();
-          
           if (historyData.length > 0) {
             setMessages(historyData);
-            // Update our tracker so we don't duplicate these from Firebase
             const lastMsg = historyData[historyData.length - 1];
             if (lastMsg.timestamp) {
                 lastLoadedTimestamp.current = lastMsg.timestamp;
@@ -54,7 +52,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         console.error("Failed to load D1 history:", error);
       } finally {
         isHistoryLoaded.current = true;
-        // Start listening to Firebase ONLY after history checks are done
         startFirebaseListener(); 
       }
     };
@@ -62,77 +59,58 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     loadHistory();
   }, []);
 
-  // 2. LISTEN LIVE (From Firebase - Instant Speed)
+  // 2. LISTEN LIVE (Firebase)
   const startFirebaseListener = useCallback(() => {
-    // We only want new messages that come AFTER our D1 history
     const chatRef = ref(db, 'chats');
-    // If we have history, start after it. If not, just get the last 1.
+    
     const q = isHistoryLoaded.current && lastLoadedTimestamp.current > 0
         ? query(chatRef, orderByChild('timestamp'), startAfter(lastLoadedTimestamp.current))
-        : query(chatRef, limitToLast(1));
+        : query(chatRef, limitToLast(50));
 
     const unsubscribe = onChildAdded(q, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             setMessages((prev) => {
-                // Deduplication check: Ensure we don't add the same message twice
-                // (Comparing by timestamp + username is usually unique enough for chat)
-                const exists = prev.some(m => m.timestamp === data.timestamp && m.message === data.message);
+                const exists = prev.some(m => Math.abs(m.timestamp - data.timestamp) < 500 && m.message === data.message);
                 if (exists) return prev;
                 return [...prev, { ...data, id: snapshot.key }];
             });
         }
     });
 
-    return unsubscribe; // Cleanup function not returned here directly due to useEffect structure below
+    return unsubscribe;
   }, []);
 
-
-  // 3. SEND MESSAGE (Write to Both)
+  // 3. SEND MESSAGE
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim() || !username) return;
 
-    const timestamp = Date.now();
-    const msgData = { username, message, timestamp };
-
-    // A. Send to Firebase (For Instant UI updates for everyone)
-    // This triggers the 'onChildAdded' above immediately
     push(ref(db, 'chats'), {
-        ...msgData,
-        timestamp: serverTimestamp() // Use server time for ordering
+        username,
+        message,
+        photoURL: userImage || "",
+        timestamp: serverTimestamp() 
     });
 
-    // B. Send to Cloudflare D1 (For Long-term Storage)
-    // We do this silently in the background. Even if it fails, the chat works.
     fetch(`${WORKER_URL}/chat/send`, {
         method: "POST",
         body: JSON.stringify({ room_id: CHAT_ROOM, username, message }),
         headers: { "Content-Type": "application/json" }
-    }).catch(e => console.error("Background backup failed:", e));
+    }).catch(e => console.error("D1 Backup failed:", e));
 
-  }, [username]);
+  }, [username, userImage]);
   
-  // Mock typing for now
   const sendTypingEvent = useCallback(async () => {}, []);
 
   const value = useMemo(() => ({
-    messages,
-    sendMessage,
-    typingUsers,
-    sendTypingEvent,
+    messages, sendMessage, typingUsers, sendTypingEvent,
   }), [messages, sendMessage, typingUsers, sendTypingEvent]);
 
-  return (
-    <ChatContext.Provider value={value}>
-      {children}
-    </ChatContext.Provider>
-  );
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
 
 export const useChat = () => {
   const context = useContext(ChatContext);
-  if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
-  }
+  if (context === undefined) throw new Error('useChat error');
   return context;
 };

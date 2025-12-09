@@ -31,10 +31,8 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
       
       if (!user.email) throw new Error("No email found.");
 
-      // Save photo immediately
       if (user.photoURL) localStorage.setItem('liorea-user-image', user.photoURL);
 
-      // Check Cloudflare if user exists
       const res = await fetch(`${WORKER_URL}/auth/google-check`, {
           method: 'POST',
           body: JSON.stringify({ email: user.email }),
@@ -43,11 +41,9 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
       const data = await res.json();
 
       if (data.exists) {
-          // USER EXISTS: Log them in immediately
           toast({ title: 'Welcome back!', description: `Signed in as ${data.username}` });
           onLogin(data.username);
       } else {
-          // NEW USER: Show username input
           setGoogleEmail(user.email);
           setStep('username'); 
       }
@@ -60,7 +56,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
     }
   };
 
-  // 2. FINALIZE SIGNUP (Custom Username)
+  // 2. FINALIZE SIGNUP
   const handleFinalizeSignup = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!customUsername.trim()) return;
@@ -103,7 +99,6 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
       
       <CardContent className="space-y-4">
         
-        {/* STEP 1: GOOGLE BUTTON */}
         {step === 'google' && (
             <Button 
                 onClick={handleGoogleStart} 
@@ -119,7 +114,6 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
             </Button>
         )}
 
-        {/* STEP 2: USERNAME INPUT */}
         {step === 'username' && (
             <form onSubmit={handleFinalizeSignup} className="space-y-4 animate-in fade-in slide-in-from-right-4">
                 <div className="space-y-2">
