@@ -9,8 +9,37 @@ import { usePresence } from '@/context/PresenceContext';
 import { ChatProvider } from '@/context/ChatContext';
 import ChatPanel from '@/components/chat/ChatPanel';
 import StudyGrid from '@/components/study/StudyGrid';
-import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const loadingContainerVariants = {
+  start: {
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+  end: {
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+};
+
+const loadingCircleVariants = {
+  start: {
+    y: "0%",
+  },
+  end: {
+    y: "100%",
+  },
+};
+
+const loadingCircleTransition = {
+  duration: 0.5,
+  repeat: Infinity,
+  repeatType: "reverse" as const,
+  ease: "easeInOut",
+};
+
 
 export default function StudyTogetherPage() {
   const { onlineUsers, joinSession, leaveSession } = usePresence();
@@ -39,9 +68,30 @@ export default function StudyTogetherPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-4 text-white"
+          className="flex flex-col items-center gap-6 text-white"
         >
-          <Loader2 className="w-12 h-12 animate-spin text-accent" />
+            <motion.div
+                className="flex justify-around items-center w-16 h-8"
+                variants={loadingContainerVariants}
+                initial="start"
+                animate="end"
+            >
+                <motion.span
+                    className="block w-3 h-3 bg-accent rounded-full"
+                    variants={loadingCircleVariants}
+                    transition={loadingCircleTransition}
+                />
+                <motion.span
+                    className="block w-3 h-3 bg-accent rounded-full"
+                    variants={loadingCircleVariants}
+                    transition={loadingCircleTransition}
+                />
+                <motion.span
+                    className="block w-3 h-3 bg-accent rounded-full"
+                    variants={loadingCircleVariants}
+                    transition={loadingCircleTransition}
+                />
+            </motion.div>
           <h1 className="text-2xl font-semibold">Joining study room...</h1>
         </motion.div>
       </div>
