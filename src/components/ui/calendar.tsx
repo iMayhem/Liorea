@@ -18,7 +18,7 @@ function Calendar({
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col space-y-4",
-        month: "space-y-4",
+        month: "hidden", // Hides the entire month grid
         caption: "hidden", // We use our custom header
         nav: "hidden",     // We use our custom navigation
         table: "w-full border-collapse space-y-1",
