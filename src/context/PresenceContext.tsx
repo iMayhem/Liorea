@@ -26,8 +26,11 @@ export interface CommunityUser {
 interface PresenceContextType {
   username: string | null;
   setUsername: (name: string | null) => void;
-  studyUsers: StudyUser[];
-  communityUsers: CommunityUser[];
+  
+  studyUsers: StudyUser[];        // Only people currently studying
+  communityUsers: CommunityUser[]; // Everyone who visited
+  leaderboardUsers: StudyUser[];   // All-time top performers (Active + Offline)
+  
   isStudying: boolean;
   joinSession: () => void;
   leaveSession: () => void;
@@ -39,11 +42,13 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
+  
   const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
   const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
-  const [isStudying, setIsStudying] = useState(false);
+  // Raw data from D1
+  const [historicalLeaderboard, setHistoricalLeaderboard] = useState<StudyUser[]>([]);
   
-  // Ref to track minutes accumulated locally before sending to Cloudflare
+  const [isStudying, setIsStudying] = useState(false);
   const unsavedMinutesRef = useRef(0);
   const { toast } = useToast();
 
@@ -70,10 +75,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [username]);
 
-  // --- 1. GLOBAL COMMUNITY PRESENCE (Sidebar) ---
+  // --- 1. GLOBAL COMMUNITY PRESENCE ---
   useEffect(() => {
     if (!username) return;
-
     const commRef = ref(db, `/community_presence/${username}`);
     const connectionRef = ref(db, '.info/connected');
 
@@ -100,12 +104,10 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             });
         }
     });
-
     return () => unsubscribe();
   }, [username]);
 
-
-  // --- 2. ACTIVE STUDY LOGIC (Persistence Added Here) ---
+  // --- 2. ACTIVE STUDY LOGIC ---
   useEffect(() => {
     if (!username) return;
 
@@ -114,19 +116,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
     const initializeStudySession = async () => {
         if (isStudying) {
-            // A. Fetch existing minutes from Cloudflare D1
             let initialSeconds = 0;
             try {
                 const res = await fetch(`${WORKER_URL}/study/stats?username=${username}`);
                 const data = await res.json();
                 if (data.total_minutes) {
-                    initialSeconds = data.total_minutes * 60; // Convert to seconds for Firebase
+                    initialSeconds = data.total_minutes * 60; 
                 }
-            } catch (e) {
-                console.error("Failed to fetch persistent stats", e);
-            }
+            } catch (e) {}
 
-            // B. Set Firebase with the stored total
             set(studyRef, {
                 username: username,
                 total_study_time: initialSeconds,
@@ -136,7 +134,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             update(commRef, { is_studying: true });
             onDisconnect(studyRef).remove();
         } else {
-            // Leave logic
             remove(studyRef);
             update(commRef, { is_studying: false });
         }
@@ -152,8 +149,35 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [username, isStudying]);
 
-
   // --- 3. DATA LISTENERS ---
+  
+  // A. FETCH PERMANENT LEADERBOARD (From D1)
+  useEffect(() => {
+     const fetchLeaderboard = async () => {
+         try {
+             const res = await fetch(`${WORKER_URL}/leaderboard`);
+             if (res.ok) {
+                 const data = await res.json();
+                 // Convert minutes (D1) to seconds (UI standard)
+                 const formatted: StudyUser[] = data.map((u: any) => ({
+                     username: u.username,
+                     total_study_time: (u.total_minutes || 0) * 60,
+                     status: 'Online' // Just for type compatibility
+                 }));
+                 setHistoricalLeaderboard(formatted);
+             }
+         } catch (e) {
+             console.error("Leaderboard fetch failed", e);
+         }
+     };
+
+     // Fetch on mount and every 60 seconds to keep fresh
+     fetchLeaderboard();
+     const interval = setInterval(fetchLeaderboard, 60000);
+     return () => clearInterval(interval);
+  }, []);
+
+  // B. LISTEN TO LIVE STUDY ROOM
   useEffect(() => {
     const roomRef = ref(db, '/study_room_presence');
     return onValue(roomRef, (snapshot: any) => {
@@ -161,7 +185,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         if (data) {
             const list: StudyUser[] = Object.values(data).map((u: any) => ({
                 username: u.username,
-                // Ensure we have a number
                 total_study_time: Number(u.total_study_time) || 0, 
                 status: 'Online'
             }));
@@ -173,6 +196,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  // C. LISTEN TO COMMUNITY
   useEffect(() => {
     const globalRef = ref(db, '/community_presence');
     return onValue(globalRef, (snapshot: any) => {
@@ -198,46 +222,51 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  // --- 4. MERGE LEADERBOARD (Historical + Live) ---
+  const leaderboardUsers = useMemo(() => {
+      // 1. Create a Map of the historical data
+      const map = new Map<string, StudyUser>();
+      
+      historicalLeaderboard.forEach(user => {
+          map.set(user.username, user);
+      });
 
-  // --- 4. TIMER & SAVE LOGIC ---
+      // 2. Override with Live Data (because it's more accurate/recent)
+      studyUsers.forEach(user => {
+          map.set(user.username, user);
+      });
+
+      // 3. Convert back to array and sort
+      return Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
+  }, [historicalLeaderboard, studyUsers]);
+
+
+  // --- 5. TIMER & SAVE LOGIC ---
   useEffect(() => {
     if (!username || !isStudying) return;
 
-    // Flush to Cloudflare D1
     const flushToCloudflare = () => {
         const minutesToAdd = unsavedMinutesRef.current;
         if (minutesToAdd > 0) {
             fetch(`${WORKER_URL}/study/update`, {
                 method: "POST",
-                // Send the exact amount of minutes accumulated
                 body: JSON.stringify({ username, minutes: minutesToAdd }), 
                 headers: { "Content-Type": "application/json" }
             }).then(res => {
-                if (res.ok) {
-                    // Only reset if successful
-                    unsavedMinutesRef.current = 0;
-                }
+                if (res.ok) unsavedMinutesRef.current = 0;
             }).catch(e => console.error("Failed to save to D1", e));
         }
     };
 
     const interval = setInterval(() => {
-        // 1. Update Firebase UI (Seconds) - Everyone sees this live
         const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
         set(myStudyTimeRef, increment(60)); 
-        
-        // 2. Accumulate Minutes for D1
         unsavedMinutesRef.current += 1;
-
-        // 3. Flush every 5 minutes
-        if (unsavedMinutesRef.current >= 5) {
-            flushToCloudflare();
-        }
-    }, 60000); // Run every 60 seconds
+        if (unsavedMinutesRef.current >= 5) flushToCloudflare();
+    }, 60000); 
 
     return () => {
         clearInterval(interval);
-        // Force save on unmount (leaving page)
         flushToCloudflare();
     };
   }, [username, isStudying]);
@@ -264,9 +293,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(() => ({
     username, setUsername, 
-    studyUsers, communityUsers, 
+    studyUsers,        // For Grid (Only Active)
+    leaderboardUsers,  // For Trophy (Active + Offline)
+    communityUsers,    // For Sidebar
     isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
-  }), [username, setUsername, studyUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
+  }), [username, setUsername, studyUsers, communityUsers, leaderboardUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };

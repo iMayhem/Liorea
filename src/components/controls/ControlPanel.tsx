@@ -18,12 +18,13 @@ import Leaderboard from '../study/Leaderboard';
 
 
 export default function ControlPanel() {
-  const { studyUsers, leaveSession } = usePresence(); // Changed onlineUsers to studyUsers
+  // Grab leaderboardUsers here
+  const { studyUsers, leaderboardUsers, leaveSession } = usePresence();
   const router = useRouter();
 
   const handleLeave = () => {
-    leaveSession(); // Stop the timer immediately
-    router.push('/home'); // Navigate away
+    leaveSession(); 
+    router.push('/home'); 
   };
   
   return (
@@ -33,8 +34,8 @@ export default function ControlPanel() {
             <div className="flex items-center gap-6 text-sm text-white/80">
                  <div className="flex items-center gap-2">
                     <Users className="w-6 h-6" />
-                    {/* Count of people actively studying */}
-                    <span>{studyUsers.length}</span> 
+                    {/* Count only ACTIVE users */}
+                    <span>{studyUsers.length}</span>
                  </div>
             </div>
             
@@ -47,13 +48,14 @@ export default function ControlPanel() {
                     </SheetTrigger>
                     <SheetContent side="left" className="bg-black/20 backdrop-blur-xl border-r-white/20 text-white w-[380px] sm:w-[540px] pt-10">
                         <SheetHeader>
-                        <SheetTitle>Study Hall</SheetTitle>
+                        <SheetTitle>Leaderboard (All Time)</SheetTitle>
                         <SheetDescription>
-                            Check the leaderboard.
+                            Top students by total focus time.
                         </SheetDescription>
                         </SheetHeader>
                         <div className="py-4 space-y-8">
-                           <Leaderboard users={studyUsers} />
+                           {/* Pass the MERGED leaderboard here */}
+                           <Leaderboard users={leaderboardUsers} />
                         </div>
                     </SheetContent>
                 </Sheet>
