@@ -26,11 +26,9 @@ export interface CommunityUser {
 interface PresenceContextType {
   username: string | null;
   setUsername: (name: string | null) => void;
-  
-  studyUsers: StudyUser[];        // Only people currently studying
-  communityUsers: CommunityUser[]; // Everyone who visited
-  leaderboardUsers: StudyUser[];   // All-time top performers (Active + Offline)
-  
+  studyUsers: StudyUser[];
+  communityUsers: CommunityUser[];
+  leaderboardUsers: StudyUser[];
   isStudying: boolean;
   joinSession: () => void;
   leaveSession: () => void;
@@ -42,13 +40,11 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
-  
   const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
   const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
-  // Raw data from D1
   const [historicalLeaderboard, setHistoricalLeaderboard] = useState<StudyUser[]>([]);
-  
   const [isStudying, setIsStudying] = useState(false);
+  
   const unsavedMinutesRef = useRef(0);
   const { toast } = useToast();
 
@@ -151,18 +147,17 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   // --- 3. DATA LISTENERS ---
   
-  // A. FETCH PERMANENT LEADERBOARD (From D1)
+  // A. FETCH LEADERBOARD
   useEffect(() => {
      const fetchLeaderboard = async () => {
          try {
              const res = await fetch(`${WORKER_URL}/leaderboard`);
              if (res.ok) {
                  const data = await res.json();
-                 // Convert minutes (D1) to seconds (UI standard)
                  const formatted: StudyUser[] = data.map((u: any) => ({
                      username: u.username,
                      total_study_time: (u.total_minutes || 0) * 60,
-                     status: 'Online' // Just for type compatibility
+                     status: 'Online'
                  }));
                  setHistoricalLeaderboard(formatted);
              }
@@ -171,13 +166,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
          }
      };
 
-     // Fetch on mount and every 60 seconds to keep fresh
      fetchLeaderboard();
      const interval = setInterval(fetchLeaderboard, 60000);
      return () => clearInterval(interval);
   }, []);
 
-  // B. LISTEN TO LIVE STUDY ROOM
+  // B. LISTEN TO LIVE ROOM
   useEffect(() => {
     const roomRef = ref(db, '/study_room_presence');
     return onValue(roomRef, (snapshot: any) => {
@@ -222,38 +216,29 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // --- 4. MERGE LEADERBOARD (Historical + Live) ---
+  // D. MERGE LEADERBOARD
   const leaderboardUsers = useMemo(() => {
-      // 1. Create a Map of the historical data
       const map = new Map<string, StudyUser>();
-      
-      historicalLeaderboard.forEach(user => {
-          map.set(user.username, user);
-      });
-
-      // 2. Override with Live Data (because it's more accurate/recent)
-      studyUsers.forEach(user => {
-          map.set(user.username, user);
-      });
-
-      // 3. Convert back to array and sort
+      historicalLeaderboard.forEach(user => map.set(user.username, user));
+      studyUsers.forEach(user => map.set(user.username, user));
       return Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
   }, [historicalLeaderboard, studyUsers]);
 
 
-  // --- 5. TIMER & SAVE LOGIC ---
+  // --- 4. TIMER & SAVE LOGIC (FIXED) ---
   useEffect(() => {
     if (!username || !isStudying) return;
 
     const flushToCloudflare = () => {
         const minutesToAdd = unsavedMinutesRef.current;
         if (minutesToAdd > 0) {
+            // FIX: Reset immediately to prevent accumulation bug
+            unsavedMinutesRef.current = 0;
+            
             fetch(`${WORKER_URL}/study/update`, {
                 method: "POST",
                 body: JSON.stringify({ username, minutes: minutesToAdd }), 
                 headers: { "Content-Type": "application/json" }
-            }).then(res => {
-                if (res.ok) unsavedMinutesRef.current = 0;
             }).catch(e => console.error("Failed to save to D1", e));
         }
     };
@@ -293,11 +278,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(() => ({
     username, setUsername, 
-    studyUsers,        // For Grid (Only Active)
-    leaderboardUsers,  // For Trophy (Active + Offline)
-    communityUsers,    // For Sidebar
+    studyUsers, leaderboardUsers, communityUsers, 
     isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
-  }), [username, setUsername, studyUsers, communityUsers, leaderboardUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
+  }), [username, setUsername, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };
