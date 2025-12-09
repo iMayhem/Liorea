@@ -65,8 +65,8 @@ export default function LioreaClient() {
       </div>
 
       <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
+        <WelcomePanel />
         <div className="flex flex-col items-center gap-2 text-center">
-          <WelcomePanel />
           <div className="w-80">
             <StudyCalendar />
           </div>
