@@ -61,7 +61,7 @@ export default function LioreaClient() {
           </div>
 
           {/* Center Column */}
-          <div className="flex flex-col items-center justify-center gap-8 md:col-span-2 w-full">
+          <div className="flex flex-col items-center justify-center gap-8 md:col-span-1 w-full">
             <WelcomePanel />
             <div className="flex flex-col gap-4 w-full max-w-sm">
                 <StatusPanel />
@@ -69,16 +69,15 @@ export default function LioreaClient() {
             </div>
           </div>
           
+           {/* Right Column */}
+          <div className="hidden md:block">
+            <div className="space-y-4">
+                <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
+                <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
+            </div>
+          </div>
         </div>
       </main>
-      
-      {/* Right side for desktop, hidden on mobile */}
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden lg:block">
-        <div className="space-y-4">
-            <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
-            <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
-        </div>
-      </div>
     </>
   );
 }
