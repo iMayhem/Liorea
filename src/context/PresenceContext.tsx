@@ -42,6 +42,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         try {
             localStorage.setItem('liorea-username', name);
+            // When a new user logs in, add them to the onlineUsers list immediately
+            // This prevents the user from seeing their own "is typing" message
+            if (!onlineUsers.some(u => u.username === name)) {
+                setOnlineUsers(prev => [...prev, { username: name, status: 'Online', total_study_time: 0 }]);
+            }
         } catch(e) {
             console.error("Could not access localStorage", e);
         }
@@ -52,7 +57,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             console.error("Could not access localStorage", e);
         }
     }
-  }, []);
+  }, [onlineUsers]);
 
   useEffect(() => {
     if (!username) return;
@@ -67,11 +72,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     
     const updateStudyTime = () => {
        if (pathname !== '/study-together') {
-         console.log("Not in study room, skipping timer update.");
          return; 
        }
 
-       console.log("In study room, updating timer +5 mins...");
        fetch(`${WORKER_URL}/study/update`, {
         method: "POST",
         body: JSON.stringify({ username }),
@@ -95,8 +98,10 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     // Run immediately
     sendHeartbeat();
     checkOnlineUsers();
-    // Also run study time update immediately if on the right page
-    updateStudyTime();
+    
+    if (pathname === '/study-together') {
+      updateStudyTime();
+    }
 
     // Intervals
     const heartbeatInterval = setInterval(sendHeartbeat, 60000); 

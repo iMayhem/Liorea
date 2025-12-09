@@ -16,7 +16,7 @@ const USER_COLORS = [
 ];
 
 export default function ChatPanel() {
-  const { messages, sendMessage } = useChat();
+  const { messages, sendMessage, sendTypingEvent, typingUsers } = useChat();
   const { username } = usePresence();
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -33,6 +33,11 @@ export default function ChatPanel() {
     const charCodeSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
     return USER_COLORS[charCodeSum % USER_COLORS.length];
   };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setNewMessage(e.target.value);
+      sendTypingEvent();
+  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -41,7 +46,14 @@ export default function ChatPanel() {
          viewport.scrollTop = viewport.scrollHeight;
        }
     }
-  }, [messages]);
+  }, [messages, typingUsers]);
+
+  const getTypingMessage = () => {
+    if (typingUsers.length === 0) return null;
+    if (typingUsers.length === 1) return `${typingUsers[0]} is typing...`;
+    if (typingUsers.length === 2) return `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
+    return 'Several people are typing...';
+  };
 
 
   return (
@@ -52,7 +64,7 @@ export default function ChatPanel() {
           Group Chat
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-grow">
+      <CardContent className="p-0 flex-grow relative">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="p-4 space-y-4">
             {messages.map((msg, index) => {
@@ -75,6 +87,11 @@ export default function ChatPanel() {
             })}
           </div>
         </ScrollArea>
+        {typingUsers.length > 0 && (
+            <div className="absolute bottom-2 left-4 text-xs text-muted-foreground italic animate-pulse">
+                {getTypingMessage()}
+            </div>
+        )}
       </CardContent>
       <CardFooter className="p-4 border-t border-white/20">
         <form onSubmit={handleSendMessage} className="flex w-full space-x-2">
@@ -83,7 +100,7 @@ export default function ChatPanel() {
             placeholder="Type your message..."
             className="bg-black/30 border-white/30 focus-visible:ring-accent placeholder:text-white/60"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
           />
           <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-white flex-shrink-0">
             <Send className="h-4 w-4" />
