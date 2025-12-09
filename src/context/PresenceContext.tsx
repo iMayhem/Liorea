@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
 import { ref, onValue, set, onDisconnect, serverTimestamp, increment, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
@@ -29,9 +29,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [isStudying, setIsStudying] = useState(false);
+  
+  // Track minutes locally to batch updates (Front: 1min, Back: 5min)
+  const unsavedMinutesRef = useRef(0);
+  
   const { toast } = useToast();
   
-  // 1. Initialize User from Local Storage
+  // 1. Initialize User
   useEffect(() => {
     const storedUser = localStorage.getItem('liorea-username');
     if (storedUser) setUsernameState(storedUser);
@@ -42,17 +46,16 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         localStorage.setItem('liorea-username', name);
     } else {
-        // Logout Cleanup
         if (username) {
             const userStatusRef = ref(db, `/status/${username}`);
-            set(userStatusRef, null); // Remove from Firebase
+            set(userStatusRef, null); 
         }
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
     }
   }, [username]);
 
-  // 2. REALTIME PRESENCE (Online Status)
+  // 2. REALTIME PRESENCE
   useEffect(() => {
     if (!username) return;
 
@@ -61,43 +64,73 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onValue(connectionRef, (snap) => {
         if (snap.val() === true) {
-            // We are connected. Set status to Online.
             update(userStatusRef, {
                 state: 'online',
                 last_changed: serverTimestamp(),
                 username: username,
             });
-
-            // MAGIC LINE: If internet dies or tab closes, delete this node on server.
             onDisconnect(userStatusRef).remove();
         }
     });
 
-    return () => {
-        unsubscribe();
-        // If unmounting but not closing (e.g. logging out), remove manually
-        // set(userStatusRef, null); 
-    };
+    return () => unsubscribe();
   }, [username]);
 
 
-  // 3. STUDY TIMER LOGIC
+  // 3. STUDY TIMER LOGIC (Batched)
   useEffect(() => {
     if (!username || !isStudying) return;
 
-    // Update status to show "Studying"
+    // Helper to send pending minutes to server
+    const flushMinutes = () => {
+        const amount = unsavedMinutesRef.current;
+        if (amount > 0) {
+            const timerRef = ref(db, `/timers/${username}/total_minutes`);
+            set(timerRef, increment(amount)); // Send batch
+            unsavedMinutesRef.current = 0;    // Reset local buffer
+        }
+    };
+
     update(ref(db, `/status/${username}`), { is_studying: true });
 
-    // Loop: Add 1 minute every 60 seconds
+    // Run every 60 seconds
     const interval = setInterval(() => {
-        const timerRef = ref(db, `/timers/${username}/total_minutes`);
-        // Atomic increment (safe against lag)
-        set(timerRef, increment(1));
+        // 1. Increment local buffer
+        unsavedMinutesRef.current += 1;
+
+        // 2. Update UI Immediately (Optimistic)
+        setOnlineUsers(prev => {
+            const updated = prev.map(user => {
+                if (user.username === username) {
+                    return { ...user, total_study_time: user.total_study_time + 60 };
+                }
+                return user;
+            });
+            // Re-sort to keep leaderboard jumping live
+            return updated.sort((a, b) => b.total_study_time - a.total_study_time);
+        });
+
+        // 3. Check if it's time to sync with Backend (Every 5 mins)
+        if (unsavedMinutesRef.current >= 5) {
+            flushMinutes();
+        }
+
     }, 60000);
+
+    // Safety: Flush on tab close
+    const handleBeforeUnload = () => {
+        flushMinutes();
+        update(ref(db, `/status/${username}`), { is_studying: false });
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
         clearInterval(interval);
-        // When stopping study, update status
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        
+        // Flush remaining time on unmount/stop
+        flushMinutes();
+        
         if (username) {
              update(ref(db, `/status/${username}`), { is_studying: false });
         }
@@ -105,38 +138,41 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username, isStudying]);
 
 
-  // 4. FETCH LEADERBOARD & USERS (Realtime Listener)
+  // 4. FETCH LEADERBOARD (Realtime Listener)
   useEffect(() => {
     const statusRef = ref(db, '/status');
     const timersRef = ref(db, '/timers');
 
-    // Listen for changes
     const unsub = onValue(statusRef, (statusSnap) => {
         const statusData = statusSnap.val() || {};
         
-        // Fetch timers once to combine data
         onValue(timersRef, (timerSnap) => {
             const timerData = timerSnap.val() || {};
             
             const usersList: OnlineUser[] = Object.keys(statusData).map((key) => {
-                const minutes = timerData[key]?.total_minutes || 0;
+                let minutes = timerData[key]?.total_minutes || 0;
+                
+                // CRITICAL: If this is ME, add the unsaved local buffer
+                // This ensures the server data doesn't "overwrite" my local progress visually
+                if (key === username) {
+                    minutes += unsavedMinutesRef.current;
+                }
+
                 return {
                     username: key,
                     status: 'Online',
-                    total_study_time: minutes * 60, // Convert to seconds for UI
+                    total_study_time: minutes * 60, 
                     status_text: statusData[key].status_text || ""
                 };
             });
 
-            // Sort by Study Time (Highest first)
             usersList.sort((a, b) => b.total_study_time - a.total_study_time);
-            
             setOnlineUsers(usersList);
         }, { onlyOnce: true });
     });
 
     return () => unsub();
-  }, []);
+  }, [username]); // Depend on username so we know who "ME" is
 
 
   // --- ACTIONS ---
@@ -152,8 +188,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username, toast]);
 
   const renameUser = useCallback(async (newName: string) => {
-      // In NoSQL without auth, we just switch the local name.
-      // (Old data stays under old name, new data under new name)
       setUsername(newName);
       return true;
   }, [setUsername]);
