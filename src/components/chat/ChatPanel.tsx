@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -20,6 +19,7 @@ export default function ChatPanel() {
   const { username } = usePresence();
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +39,9 @@ export default function ChatPanel() {
       sendTypingEvent();
   };
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollAreaRef.current) {
-       const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-       if (viewport) {
-         viewport.scrollTop = viewport.scrollHeight;
-       }
-    }
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typingUsers]);
 
   const getTypingMessage = () => {
@@ -55,50 +51,59 @@ export default function ChatPanel() {
     return 'Several people are typing...';
   };
 
-
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full">
-      <CardHeader className="p-4 border-b border-white/20">
+    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full shadow-xl">
+      <CardHeader className="p-4 border-b border-white/20 shrink-0">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
           Group Chat
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-grow relative">
-        <ScrollArea className="h-full" ref={scrollAreaRef}>
+      
+      {/* 
+         CRITICAL FIX: 
+         flex-1: Takes up remaining space.
+         min-h-0: Prevents the container from expanding beyond the parent's height limit.
+         This forces the ScrollArea to actually scroll instead of stretching the card.
+      */}
+      <CardContent className="p-0 flex-1 min-h-0 relative">
+        <ScrollArea className="h-full w-full pr-4" ref={scrollAreaRef}>
           <div className="p-4 space-y-4">
             {messages.map((msg, index) => {
               const isCurrentUser = msg.username === username;
               return (
                 <div key={index} className={`flex items-start gap-3 ${isCurrentUser ? 'justify-end' : ''}`}>
                    {!isCurrentUser && (
-                     <Avatar className="w-8 h-8 border-2 border-primary">
+                     <Avatar className="w-8 h-8 border-2 border-primary shrink-0">
                         <AvatarFallback className={`${getUserColor(msg.username)} text-white`}>{msg.username.charAt(0)}</AvatarFallback>
                     </Avatar>
                    )}
                   <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-                     <div className={`rounded-lg px-3 py-2 max-w-xs ${isCurrentUser ? 'bg-primary/80 text-primary-foreground' : 'bg-black/30'}`}>
+                     <div className={`rounded-lg px-3 py-2 max-w-[240px] break-words ${isCurrentUser ? 'bg-primary/80 text-primary-foreground' : 'bg-black/30'}`}>
                         {!isCurrentUser && <p className="text-xs font-bold text-accent mb-1">{msg.username}</p>}
-                        <p className="text-sm">{msg.message}</p>
+                        <p className="text-sm leading-relaxed">{msg.message}</p>
                      </div>
                   </div>
                 </div>
               );
             })}
+            <div ref={bottomRef} />
           </div>
         </ScrollArea>
+        
         {typingUsers.length > 0 && (
-            <div className="absolute bottom-2 left-4 text-xs text-muted-foreground italic animate-pulse">
+            <div className="absolute bottom-2 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded">
                 {getTypingMessage()}
             </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 border-t border-white/20">
+
+      <CardFooter className="p-4 border-t border-white/20 shrink-0">
         <form onSubmit={handleSendMessage} className="flex w-full space-x-2">
           <Input
             type="text"
             placeholder="Type your message..."
-            className="bg-transparent border-white/30 focus-visible:ring-accent placeholder:text-white/60"
+            className="bg-black/30 border-white/30 focus-visible:ring-accent placeholder:text-white/60"
             value={newMessage}
             onChange={handleInputChange}
           />
