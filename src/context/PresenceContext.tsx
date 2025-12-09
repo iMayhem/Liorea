@@ -12,7 +12,7 @@ export interface OnlineUser {
   status?: 'Online' | 'Offline';
   last_seen?: number; 
   total_study_time?: number; 
-  status_text?: string; // New field for the message
+  status_text?: string; 
 }
 
 interface PresenceContextType {
@@ -35,12 +35,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const { toast } = useToast();
   
+  // Load initial state
   useEffect(() => {
     try {
         const storedUser = localStorage.getItem('liorea-username');
         if (storedUser) setUsernameState(storedUser);
-        const sessionState = localStorage.getItem('liorea-is-studying');
-        if (sessionState === 'true') setIsStudying(true);
     } catch (e) { console.error(e); }
   }, []);
 
@@ -51,21 +50,17 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     } else {
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
-        localStorage.removeItem('liorea-is-studying');
     }
   }, []);
 
   const joinSession = useCallback(() => {
     setIsStudying(true);
-    localStorage.setItem('liorea-is-studying', 'true');
   }, []);
 
   const leaveSession = useCallback(() => {
     setIsStudying(false);
-    localStorage.setItem('liorea-is-studying', 'false');
   }, []);
 
-  // NEW: Update Status Message
   const updateStatusMessage = useCallback(async (msg: string) => {
     if (!username) return;
     try {
@@ -80,7 +75,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) { console.error(e); }
   }, [username, toast]);
 
-  // NEW: Rename User
   const renameUser = useCallback(async (newName: string) => {
     if (!username) return false;
     try {
@@ -101,31 +95,81 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) { return false; }
   }, [username, setUsername, toast]);
 
+  // 1. General Presence Heartbeat (Runs always when logged in)
   useEffect(() => {
     if (!username) return;
-    const sendHeartbeat = () => {
-      fetch(`${WORKER_URL}/heartbeat`, { method: "POST", body: JSON.stringify({ username }), headers: { "Content-Type": "application/json" } }).catch(console.error);
+    
+    const sendPresence = () => {
+      fetch(`${WORKER_URL}/heartbeat`, { 
+          method: "POST", 
+          body: JSON.stringify({ username }), 
+          headers: { "Content-Type": "application/json" } 
+      }).catch(console.error);
     };
-    const updateStudyTime = () => {
-       if (!isStudying) return;
-       fetch(`${WORKER_URL}/study/update`, { method: "POST", body: JSON.stringify({ username }), headers: { "Content-Type": "application/json" } }).catch(console.error);
-    }
+
+    sendPresence(); // Send immediately
+    const interval = setInterval(sendPresence, 30000); // Every 30s
+    return () => clearInterval(interval);
+  }, [username]);
+
+  // 2. Study Time Accumulator (Runs ONLY when isStudying is true)
+  useEffect(() => {
+    if (!username || !isStudying) return;
+
+    const logStudyMinute = () => {
+       fetch(`${WORKER_URL}/study/update`, { 
+           method: "POST", 
+           body: JSON.stringify({ username }), 
+           headers: { "Content-Type": "application/json" } 
+       }).catch((e) => {
+           console.error("Network error, study time not counted for this minute", e);
+           // Logic: If internet fails, this fetch fails, time isn't counted. Correct behavior.
+       });
+    };
+
+    // Log immediately on join
+    logStudyMinute();
+
+    // Log every 60 seconds
+    const interval = setInterval(logStudyMinute, 60000);
+
+    return () => clearInterval(interval);
+  }, [username, isStudying]);
+
+  // 3. Handle Tab Close / Browser Exit (Try to capture partial time or cleanup)
+  useEffect(() => {
+      const handleBeforeUnload = () => {
+          if (username && isStudying) {
+              // sendBeacon is more reliable than fetch during page unload
+              const blob = new Blob([JSON.stringify({ username })], { type: 'application/json' });
+              navigator.sendBeacon(`${WORKER_URL}/study/update`, blob);
+          }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [username, isStudying]);
+
+  // 4. Poll for Leaderboard/Online Users Data
+  useEffect(() => {
     const checkOnlineUsers = () => {
-      fetch(`${WORKER_URL}/status`).then(res => res.json()).then((users: any[]) => {
-            const formattedUsers = users.map(u => ({ ...u, total_study_time: (u.total_minutes || 0) * 60 }));
+      fetch(`${WORKER_URL}/status`)
+        .then(res => res.json())
+        .then((users: any[]) => {
+            const formattedUsers = users.map(u => ({ 
+                ...u, 
+                total_study_time: (u.total_minutes || 0) * 60 // Convert server minutes to seconds for display
+            }));
             setOnlineUsers(formattedUsers);
-        }).catch(console.error);
+        })
+        .catch(console.error);
     };
 
-    sendHeartbeat();
-    checkOnlineUsers();
+    checkOnlineUsers(); // Initial fetch
+    const statusInterval = setInterval(checkOnlineUsers, 5000); // Check every 5s for live updates
 
-    const heartbeatInterval = setInterval(sendHeartbeat, 60000); 
-    const studyTimeInterval = setInterval(updateStudyTime, 300000); 
-    const statusInterval = setInterval(checkOnlineUsers, 10000); 
-
-    return () => { clearInterval(heartbeatInterval); clearInterval(studyTimeInterval); clearInterval(statusInterval); };
-  }, [username, pathname, isStudying]);
+    return () => clearInterval(statusInterval);
+  }, []);
 
   const value = useMemo(() => ({
     username, setUsername, onlineUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
