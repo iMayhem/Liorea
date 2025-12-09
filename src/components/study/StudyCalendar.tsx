@@ -30,7 +30,7 @@ export default function StudyCalendar() {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex justify-center">
         <Calendar
             mode="single"
             selected={date}
@@ -43,7 +43,7 @@ export default function StudyCalendar() {
                 nav: "hidden", // Hide default nav buttons
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                 month: "space-y-4",
-                table: "w-full border-collapse space-y-1",
+                table: "border-collapse space-y-1",
                 head_row: "flex",
                 head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
                 row: "flex w-full mt-2",
