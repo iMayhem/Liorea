@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { OnlineUser } from '@/context/PresenceContext';
+import { Users } from 'lucide-react';
+import { Button } from '../ui/button';
 
 interface PresencePanelProps {
   users: OnlineUser[];
@@ -29,14 +31,19 @@ const getUserColor = (username: string) => {
 };
 
 export default function PresencePanel({ users }: PresencePanelProps) {
+  const onlineCount = users.filter(u => u.status === 'Online').length;
 
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg max-w-xs w-full">
-        <CardHeader className="p-4">
-            <CardTitle className="text-base text-white">All Users ({users.length})</CardTitle>
+    <Card className="glass-panel-2 bg-black/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg w-72 h-[500px]">
+        <CardHeader className="flex flex-row items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+                <Users className="text-white/80 w-5 h-5" />
+                <CardTitle className="text-lg text-white font-semibold">Community</CardTitle>
+            </div>
+            <Button variant="secondary" size="sm" className="bg-black/20 text-white/80 text-xs h-7 px-3 rounded-full">{onlineCount} Online</Button>
         </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <ScrollArea className="h-72">
+      <CardContent className="p-0">
+        <ScrollArea className="h-[420px] px-4">
             <div className="space-y-4">
             {users.map((user) => {
             const isOnline = user.status === 'Online';
@@ -54,7 +61,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                 <div className="flex-grow">
                     <p className="font-semibold text-white text-sm">{user.username}</p>
                     <p className={cn("text-xs", isOnline ? "text-green-400" : "text-gray-400")}>
-                      {isOnline ? 'Online' : `Offline (${getTimeAgo(user.last_seen)})`}
+                      {isOnline ? 'Online' : `Offline`}
                     </p>
                 </div>
                 </div>
