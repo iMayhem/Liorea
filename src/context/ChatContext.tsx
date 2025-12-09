@@ -85,6 +85,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim() || !username) return;
 
+    // 1. Send to Firebase (Instant)
     push(ref(db, 'chats'), {
         username,
         message,
@@ -92,9 +93,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         timestamp: serverTimestamp() 
     });
 
+    // 2. Backup to Cloudflare D1 (Permanent)
     fetch(`${WORKER_URL}/chat/send`, {
         method: "POST",
-        body: JSON.stringify({ room_id: CHAT_ROOM, username, message }),
+        // UPDATED: Now sending photoURL to the worker
+        body: JSON.stringify({ 
+            room_id: CHAT_ROOM, 
+            username, 
+            message, 
+            photoURL: userImage || "" 
+        }),
         headers: { "Content-Type": "application/json" }
     }).catch(e => console.error("D1 Backup failed:", e));
 
