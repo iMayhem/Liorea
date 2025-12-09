@@ -47,6 +47,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
             <div className="space-y-4">
             {users.map((user) => {
             const isOnline = user.status === 'Online';
+            const lastSeen = getTimeAgo(user.last_seen);
             return (
                 <div key={user.username} className="flex items-center gap-3">
                 <div className="relative">
@@ -66,7 +67,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                        </p>
                     ) : (
                        <p className={cn("text-xs", isOnline ? "text-green-400" : "text-gray-400")}>
-                         {isOnline ? 'Online' : `Offline`}
+                         {isOnline ? 'Online' : (lastSeen || 'Offline')}
                        </p>
                     )}
                 </div>
