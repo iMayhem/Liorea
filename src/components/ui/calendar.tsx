@@ -27,7 +27,7 @@ function Calendar({
         head_row: "flex",
         head_cell:
           "text-white/40 rounded-md w-9 font-medium text-[0.8rem] uppercase tracking-wide",
-        row: "w-full mt-2",
+        row: "w-full",
         cell: "h-9 w-9 text-center text-sm p-0",
         day: cn(
           "h-9 w-9 p-0 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
