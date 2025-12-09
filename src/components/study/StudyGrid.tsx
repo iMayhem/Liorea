@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Clock, Users } from 'lucide-react';
 import { OnlineUser } from '@/context/PresenceContext';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface StudyGridProps {
   users: OnlineUser[];
@@ -33,25 +34,27 @@ export default function StudyGrid({ users }: StudyGridProps) {
                 Study Room ({onlineUsers.length})
             </CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {onlineUsers.map((user) => {
-            return (
-            <Card key={user.username} className="overflow-hidden bg-black/20 backdrop-blur-sm border-white/20">
-                <CardContent className="p-3 flex flex-col items-center justify-center gap-2 text-center">
-                <Avatar className="w-16 h-16 border-2 border-primary">
-                    <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <p className="font-semibold truncate w-full text-sm">{user.username}</p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3"/>
-                    <span>{formatTime(user.total_study_time)}</span>
-                </div>
-                </CardContent>
-            </Card>
-            );
-        })}
-        </div>
+      <CardContent className="p-4 h-[calc(480px-61px)]">
+        <ScrollArea className="h-full">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {onlineUsers.map((user) => {
+                return (
+                <Card key={user.username} className="overflow-hidden bg-black/20 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-3 flex flex-col items-center justify-center gap-2 text-center">
+                    <Avatar className="w-16 h-16 border-2 border-primary">
+                        <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <p className="font-semibold truncate w-full text-sm">{user.username}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3"/>
+                        <span>{formatTime(user.total_study_time)}</span>
+                    </div>
+                    </CardContent>
+                </Card>
+                );
+            })}
+            </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
