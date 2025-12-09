@@ -53,15 +53,15 @@ export default function LioreaClient() {
       <Header />
 
       <main className="relative z-1 min-h-screen flex items-center justify-center text-white p-4">
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8 items-center">
           
           {/* Left Column */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex justify-start md:col-span-1 lg:col-span-1">
             <PresencePanel users={onlineUsers} />
           </div>
 
           {/* Center Column */}
-          <div className="flex flex-col items-center justify-center gap-8 md:col-span-1 w-full">
+          <div className="flex flex-col items-center justify-center gap-8 md:col-span-2 lg:col-span-3 w-full -mt-16">
             <WelcomePanel />
             <div className="flex flex-col gap-4 w-full max-w-sm">
                 <StatusPanel />
@@ -70,7 +70,7 @@ export default function LioreaClient() {
           </div>
           
            {/* Right Column */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex justify-end md:col-span-1 lg:col-span-1">
             <div className="space-y-4">
                 <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
                 <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
