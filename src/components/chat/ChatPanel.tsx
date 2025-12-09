@@ -19,8 +19,7 @@ export default function ChatPanel() {
   const { username } = usePresence();
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
+  
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim()) {
@@ -38,11 +37,6 @@ export default function ChatPanel() {
       setNewMessage(e.target.value);
       sendTypingEvent();
   };
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typingUsers]);
 
   const getTypingMessage = () => {
     if (typingUsers.length === 0) return null;
@@ -87,7 +81,6 @@ export default function ChatPanel() {
                 </div>
               );
             })}
-            <div ref={bottomRef} />
           </div>
         </ScrollArea>
         
