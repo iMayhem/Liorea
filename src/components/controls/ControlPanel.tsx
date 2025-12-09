@@ -18,15 +18,14 @@ import Leaderboard from '../study/Leaderboard';
 
 
 export default function ControlPanel() {
-  const { onlineUsers } = usePresence();
+  const { onlineUsers, leaveSession } = usePresence();
   const router = useRouter();
 
   const handleLeave = () => {
-    router.push('/home'); // Go back home
+    leaveSession(); // Stop the timer immediately
+    router.push('/home'); // Navigate away
   };
   
-  const onlineUserCount = onlineUsers.filter(u => u.status === 'Online').length;
-
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20">
       <div className="bg-black/10 backdrop-blur-md border-t border-white/20 shadow-lg">
@@ -62,7 +61,7 @@ export default function ControlPanel() {
 
             <div>
                 <Button variant="destructive" size="sm" onClick={handleLeave} className="bg-red-600/80 hover:bg-red-600 text-white rounded-full px-4">
-                    <LogOut className="mr-2 h-6 w-6" />
+                    <LogOut className="mr-2 h-4 w-4" />
                     Leave
                 </Button>
             </div>
