@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Award, Clock, Trophy } from 'lucide-react';
-import { OnlineUser } from '@/context/PresenceContext';
+import { StudyUser } from '@/context/PresenceContext';
 
 interface LeaderboardProps {
-  users: OnlineUser[];
+  users: StudyUser[];
 }
 
 const formatTime = (seconds: number) => {
@@ -23,6 +23,7 @@ const getUserColor = (username: string) => {
 };
 
 export default function Leaderboard({ users }: LeaderboardProps) {
+  // Sort users by time (highest first)
   const sortedUsers = [...users].sort((a, b) => (b.total_study_time || 0) - (a.total_study_time || 0));
 
   const getRankColor = (rank: number) => {
@@ -60,6 +61,9 @@ export default function Leaderboard({ users }: LeaderboardProps) {
             </div>
           )
         })}
+        {sortedUsers.length === 0 && (
+            <p className="text-center text-white/50 text-sm">No one is studying right now.</p>
+        )}
       </CardContent>
     </Card>
   );

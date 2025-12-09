@@ -18,7 +18,7 @@ import Leaderboard from '../study/Leaderboard';
 
 
 export default function ControlPanel() {
-  const { onlineUsers, leaveSession } = usePresence();
+  const { studyUsers, leaveSession } = usePresence(); // Changed onlineUsers to studyUsers
   const router = useRouter();
 
   const handleLeave = () => {
@@ -33,7 +33,8 @@ export default function ControlPanel() {
             <div className="flex items-center gap-6 text-sm text-white/80">
                  <div className="flex items-center gap-2">
                     <Users className="w-6 h-6" />
-                    <span>{onlineUsers.length}</span>
+                    {/* Count of people actively studying */}
+                    <span>{studyUsers.length}</span> 
                  </div>
             </div>
             
@@ -52,7 +53,7 @@ export default function ControlPanel() {
                         </SheetDescription>
                         </SheetHeader>
                         <div className="py-4 space-y-8">
-                           <Leaderboard users={onlineUsers} />
+                           <Leaderboard users={studyUsers} />
                         </div>
                     </SheetContent>
                 </Sheet>

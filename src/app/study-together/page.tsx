@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -42,7 +41,7 @@ const loadingCircleTransition = {
 
 
 export default function StudyTogetherPage() {
-  const { onlineUsers, joinSession, leaveSession } = usePresence();
+  const { studyUsers, joinSession, leaveSession } = usePresence(); // Changed onlineUsers to studyUsers
   const [isJoining, setIsJoining] = useState(true);
 
   useEffect(() => {
@@ -52,7 +51,7 @@ export default function StudyTogetherPage() {
     // Show a "joining" state for a short period for better UX
     const timer = setTimeout(() => {
       setIsJoining(false);
-    }, 1500); // 1.5 second transition
+    }, 1500); 
 
     // On component unmount, stop counting time and clear timer
     return () => {
@@ -110,7 +109,7 @@ export default function StudyTogetherPage() {
             className="w-full mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8 items-start"
           >
             <div className="lg:col-span-3 w-full">
-               <StudyGrid users={onlineUsers} />
+               <StudyGrid users={studyUsers} />
             </div>
             <div className="lg:col-span-2 w-full">
               <ChatPanel />

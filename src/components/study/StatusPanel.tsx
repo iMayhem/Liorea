@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { usePresence } from "@/context/PresenceContext";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Smile } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 
 export default function StatusPanel() {
-  const { username, updateStatusMessage, onlineUsers } = usePresence();
+  const { username, updateStatusMessage, communityUsers } = usePresence();
   
-  const myUser = onlineUsers.find(u => u.username === username);
+  const myUser = communityUsers.find(u => u.username === username);
   const currentStatus = myUser?.status_text || "";
 
   const [isEditingStatus, setIsEditingStatus] = useState(false);

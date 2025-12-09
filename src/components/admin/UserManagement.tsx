@@ -19,11 +19,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { usePresence } from '@/context/PresenceContext';
-import { OnlineUser } from '@/context/PresenceContext';
+import { CommunityUser } from '@/context/PresenceContext'; // Changed to CommunityUser
 
 export default function UserManagement() {
-    const { onlineUsers: users } = usePresence();
-    const [editingUser, setEditingUser] = useState<OnlineUser | null>(null);
+    // Show everyone in the community list
+    const { communityUsers: users } = usePresence(); 
+    const [editingUser, setEditingUser] = useState<CommunityUser | null>(null);
     const [newUsername, setNewUsername] = useState('');
     const { toast } = useToast();
 
@@ -35,7 +36,7 @@ export default function UserManagement() {
         });
     };
     
-    const startEditing = (user: OnlineUser) => {
+    const startEditing = (user: CommunityUser) => {
         setEditingUser(user);
         setNewUsername(user.username);
     };

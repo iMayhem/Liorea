@@ -1,4 +1,3 @@
-
 "use client";
 
 import Header from '@/components/layout/Header';
@@ -17,7 +16,7 @@ import StatusPanel from './study/StatusPanel';
 
 export default function LioreaClient() {
   const { error, isLoading: isBackgroundLoading } = useBackground();
-  const { onlineUsers, username } = usePresence();
+  const { communityUsers, username } = usePresence(); // Changed onlineUsers to communityUsers
   const router = useRouter();
   const nextYear = new Date().getFullYear() + 1;
   
@@ -57,7 +56,7 @@ export default function LioreaClient() {
           
           {/* Left Column */}
           <div className="hidden md:flex justify-start md:col-span-1 lg:col-span-1">
-            <PresencePanel users={onlineUsers} />
+            <PresencePanel users={communityUsers} />
           </div>
 
           {/* Center Column */}

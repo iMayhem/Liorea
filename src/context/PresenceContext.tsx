@@ -7,18 +7,32 @@ import { useToast } from '@/hooks/use-toast';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
-export interface OnlineUser {
+// Type 1: People in the Study Room (Active Timer)
+export interface StudyUser {
+  username: string;
+  total_study_time: number;
+  status: 'Online';
+}
+
+// Type 2: People in the Community (Sidebar)
+export interface CommunityUser {
   username: string;
   status: 'Online' | 'Offline';
-  total_study_time: number; // in seconds
-  status_text?: string; 
+  last_seen: number;
+  status_text?: string;
+  is_studying: boolean; // True if they are inside the Study Room
 }
 
 interface PresenceContextType {
   username: string | null;
   setUsername: (name: string | null) => void;
-  onlineUsers: OnlineUser[];
+  
+  // Two separate lists
+  studyUsers: StudyUser[];
+  communityUsers: CommunityUser[];
+  
   isStudying: boolean;
+  
   joinSession: () => void;
   leaveSession: () => void;
   updateStatusMessage: (msg: string) => Promise<void>;
@@ -29,15 +43,16 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  
+  // State for the two lists
+  const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
+  const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
+  
   const [isStudying, setIsStudying] = useState(false);
-  
-  // Local buffer to reduce Cloudflare writes
   const unsavedMinutesRef = useRef(0);
-  
   const { toast } = useToast();
-  
-  // 1. Initialize User
+
+  // 1. INITIALIZATION (Load username from storage)
   useEffect(() => {
     const storedUser = localStorage.getItem('liorea-username');
     if (storedUser) setUsernameState(storedUser);
@@ -48,101 +63,146 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         localStorage.setItem('liorea-username', name);
     } else {
-        // Explicit Logout
+        // Logout Logic
         if (username) {
-            // Remove from Firebase immediately
+            // Remove from Study Room
             remove(ref(db, `/study_room_presence/${username}`));
+            // Mark as Offline in Community
+            update(ref(db, `/community_presence/${username}`), { 
+                status: 'Offline', 
+                last_seen: serverTimestamp(),
+                is_studying: false
+            });
         }
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
     }
   }, [username]);
 
-  // 2. REALTIME PRESENCE (THE FIX)
-  // This handles the "Study Room" list. 
+  // 2. GLOBAL COMMUNITY PRESENCE (Always On)
   useEffect(() => {
     if (!username) return;
 
-    // We only track presence if the user is explicitly "Studying" (joined the room)
-    if (!isStudying) {
-        // Ensure we are removed if we are not studying
-        remove(ref(db, `/study_room_presence/${username}`));
-        return;
-    }
-
-    const presenceRef = ref(db, `/study_room_presence/${username}`);
+    const commRef = ref(db, `/community_presence/${username}`);
     const connectionRef = ref(db, '.info/connected');
 
     const unsubscribe = onValue(connectionRef, async (snap) => {
         if (snap.val() === true) {
-            // A. Fetch persistent status from Cloudflare (so you don't look empty)
+            // Fetch saved status text from Cloudflare
             let savedStatus = "";
-            let savedMinutes = 0;
-            
-            // Optional: Fetch initial minutes from Cloudflare to sync total time
-            // For now, we assume Firebase holds the live session data or starts at 0 for session
             try {
                 const res = await fetch(`${WORKER_URL}/user/status?username=${username}`);
                 const data = await res.json();
                 if (data.status_text) savedStatus = data.status_text;
-            } catch (e) { console.error("DB Fetch Error", e); }
+            } catch (e) {}
 
-            // B. Add myself to the Study Room list
-            set(presenceRef, {
+            // Set user as ONLINE in Global Community
+            update(commRef, {
                 username: username,
                 status: 'Online',
-                joined_at: serverTimestamp(),
+                last_seen: serverTimestamp(),
                 status_text: savedStatus,
-                // We initialize session time here, or pull total from DB if needed
-                total_study_time: 0 
             });
 
-            // C. THE MAGIC: Server-side auto-delete on disconnect
-            // This runs on Google's servers if your internet cuts or tab closes
-            onDisconnect(presenceRef).remove();
-        }
-    });
-
-    return () => {
-        unsubscribe();
-        // If the component unmounts (navigating away), remove manually
-        if (username) remove(presenceRef);
-    };
-  }, [username, isStudying]); // Depend on isStudying so we join/leave based on button clicks
-
-
-  // 3. LISTEN TO STUDY ROOM (Update UI)
-  useEffect(() => {
-    const roomRef = ref(db, '/study_room_presence');
-
-    const unsubscribe = onValue(roomRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            const usersList: OnlineUser[] = Object.values(data).map((u: any) => ({
-                username: u.username,
-                status: 'Online',
-                // Use the time from Firebase, or 0
-                total_study_time: u.total_study_time || 0, 
-                status_text: u.status_text || ""
-            }));
-            
-            // Sort by time (highest first)
-            usersList.sort((a, b) => b.total_study_time - a.total_study_time);
-            setOnlineUsers(usersList);
-        } else {
-            setOnlineUsers([]);
+            // On Disconnect: Set to OFFLINE (Do not remove node)
+            onDisconnect(commRef).update({
+                status: 'Offline',
+                last_seen: serverTimestamp(),
+                is_studying: false 
+            });
         }
     });
 
     return () => unsubscribe();
+  }, [username]);
+
+
+  // 3. ACTIVE STUDY PRESENCE (Only when "Studying")
+  useEffect(() => {
+    if (!username) return;
+
+    const studyRef = ref(db, `/study_room_presence/${username}`);
+    const commRef = ref(db, `/community_presence/${username}`);
+
+    if (isStudying) {
+        // A. Add to Study Room List
+        set(studyRef, {
+            username: username,
+            total_study_time: 0, // Starts at 0 for this session
+            status: 'Online'
+        });
+        
+        // B. Update Community List to show "Studying" icon
+        update(commRef, { is_studying: true });
+
+        // C. Disconnect logic
+        onDisconnect(studyRef).remove();
+    } else {
+        // User clicked Leave
+        remove(studyRef);
+        update(commRef, { is_studying: false });
+    }
+
+    return () => {
+        if (!isStudying && username) {
+             remove(studyRef);
+             update(commRef, { is_studying: false }).catch(() => {});
+        }
+    };
+  }, [username, isStudying]);
+
+
+  // 4. READ DATA: Study Users List
+  useEffect(() => {
+    const roomRef = ref(db, '/study_room_presence');
+    return onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const list: StudyUser[] = Object.values(data).map((u: any) => ({
+                username: u.username,
+                total_study_time: u.total_study_time || 0,
+                status: 'Online'
+            }));
+            list.sort((a, b) => b.total_study_time - a.total_study_time);
+            setStudyUsers(list);
+        } else {
+            setStudyUsers([]);
+        }
+    });
+  }, []);
+
+  // 5. READ DATA: Community Users List
+  useEffect(() => {
+    const globalRef = ref(db, '/community_presence');
+    return onValue(globalRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const list: CommunityUser[] = Object.values(data).map((u: any) => ({
+                username: u.username,
+                status: u.status || 'Offline',
+                last_seen: u.last_seen || Date.now(),
+                status_text: u.status_text || "",
+                is_studying: u.is_studying || false
+            }));
+            
+            // Sort: Online first, then by Last Seen
+            list.sort((a, b) => {
+                if (a.status === 'Online' && b.status !== 'Online') return -1;
+                if (a.status !== 'Online' && b.status === 'Online') return 1;
+                return b.last_seen - a.last_seen;
+            });
+            setCommunityUsers(list);
+        } else {
+            setCommunityUsers([]);
+        }
+    });
   }, []);
 
 
-  // 4. STUDY TIMER (Logic to count up)
+  // 6. TIMER LOGIC
   useEffect(() => {
     if (!username || !isStudying) return;
 
-    // Flush to Cloudflare (Persistent History)
     const flushToCloudflare = () => {
         const amount = unsavedMinutesRef.current;
         if (amount > 0) {
@@ -155,20 +215,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    // Timer Loop: Runs every 60s
     const interval = setInterval(() => {
-        // 1. Update Firebase Presence (So everyone sees my time go up live)
-        // We update the specific user's node in the presence list
-        const myPresenceRef = ref(db, `/study_room_presence/${username}/total_study_time`);
-        set(myPresenceRef, increment(60)); // Add 60 seconds
-
-        // 2. Buffer for Cloudflare
+        // Update Study Timer in Firebase
+        const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
+        set(myStudyTimeRef, increment(60)); 
+        
         unsavedMinutesRef.current += 1;
-
-        // 3. Flush to Cloudflare every 5 mins
-        if (unsavedMinutesRef.current >= 5) {
-            flushToCloudflare();
-        }
+        if (unsavedMinutesRef.current >= 5) flushToCloudflare();
     }, 60000);
 
     return () => {
@@ -177,39 +230,20 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [username, isStudying]);
 
-
-  // --- ACTIONS ---
-
-  const joinSession = useCallback(() => {
-      setIsStudying(true);
-      // Logic handled in useEffect [username, isStudying]
-  }, []);
-
-  const leaveSession = useCallback(() => {
-      setIsStudying(false);
-      if (username) {
-          // Immediately remove from Firebase
-          remove(ref(db, `/study_room_presence/${username}`));
-      }
-  }, [username]);
+  // Actions
+  const joinSession = useCallback(() => setIsStudying(true), []);
+  const leaveSession = useCallback(() => setIsStudying(false), []);
 
   const updateStatusMessage = useCallback(async (msg: string) => {
     if (!username) return;
-    
-    // 1. Update Firebase (Instant for others in room)
-    if (isStudying) {
-        update(ref(db, `/study_room_presence/${username}`), { status_text: msg });
-    }
-
-    // 2. Update Cloudflare (Persistent for next reload)
+    update(ref(db, `/community_presence/${username}`), { status_text: msg });
     fetch(`${WORKER_URL}/user/status`, {
         method: 'POST',
         body: JSON.stringify({ username, status_text: msg }),
         headers: { 'Content-Type': 'application/json' }
-    }).catch(e => console.error("DB Save Failed", e));
-
+    });
     toast({ title: "Status Updated" });
-  }, [username, isStudying, toast]);
+  }, [username, toast]);
 
   const renameUser = useCallback(async (newName: string) => {
       setUsername(newName);
@@ -217,8 +251,10 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [setUsername]);
 
   const value = useMemo(() => ({
-    username, setUsername, onlineUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
-  }), [username, setUsername, onlineUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
+    username, setUsername, 
+    studyUsers, communityUsers, 
+    isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
+  }), [username, setUsername, studyUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };
