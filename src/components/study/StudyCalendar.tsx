@@ -1,27 +1,50 @@
 "use client"
 
 import * as React from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { format, addMonths, subMonths } from "date-fns"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
 
 export default function StudyCalendar() {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
+  const [currentMonth, setCurrentMonth] = React.useState(new Date())
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(prev => subMonths(prev, 1))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => addMonths(prev, 1))
+  }
 
   return (
     <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full max-w-sm mx-auto shadow-lg">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
+        <h2 className="font-semibold text-lg">{format(currentMonth, "MMMM yyyy")}</h2>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-8 w-8">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-8 w-8">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
       <CardContent className="p-0">
         <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
-            className="p-3"
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
+            className="p-3 pt-0"
             classNames={{
+                caption: "hidden", // Hide default caption
+                nav: "hidden", // Hide default nav buttons
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                 month: "space-y-4",
-                caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-medium",
-                nav: "space-x-1 flex items-center",
-                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
                 table: "w-full border-collapse space-y-1",
                 head_row: "flex",
                 head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
