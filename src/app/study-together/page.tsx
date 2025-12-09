@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import ControlPanel from '@/components/controls/ControlPanel';
 import ClientOnly from '@/components/ClientOnly';
@@ -9,7 +11,17 @@ import ChatPanel from '@/components/chat/ChatPanel';
 import StudyGrid from '@/components/study/StudyGrid';
 
 export default function StudyTogetherPage() {
-  const { onlineUsers } = usePresence();
+  const { onlineUsers, joinSession, leaveSession } = usePresence();
+
+  useEffect(() => {
+    // Join the session when the component mounts
+    joinSession();
+
+    // Leave the session when the component unmounts
+    return () => {
+      leaveSession();
+    };
+  }, [joinSession, leaveSession]);
 
   return (
     <ChatProvider>
