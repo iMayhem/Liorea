@@ -61,9 +61,7 @@ export default function StudyCalendar() {
         </Button>
         
         <div className="flex flex-col items-center justify-center">
-            <h2 className="font-bold text-lg tracking-tight text-white">
-                {format(currentMonth, "MMMM yyyy")}
-            </h2>
+            
             <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/50 uppercase tracking-widest mt-0.5">
                 <Activity className="w-3 h-3" /> 
                 Study Tracker
