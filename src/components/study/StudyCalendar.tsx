@@ -86,6 +86,9 @@ export default function StudyCalendar() {
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             className="p-0"
+            classNames={{
+              caption: "hidden",
+            }}
             modifiers={{ studyDay: (day) => isStudyDay(day) }}
             modifiersClassNames={{ studyDay: 'study-day-modifier' }}
         />
