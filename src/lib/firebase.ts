@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth, GoogleAuthProvider } from "firebase/auth"; // Added Auth imports
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsGYist7f2enKCGyHwBwSUw70wM_he1Ao",
@@ -13,13 +14,11 @@ const firebaseConfig = {
   measurementId: "G-L0QS4KTGGX"
 };
 
-// 1. Initialize Firebase (Prevent re-initialization error in Next.js)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// 2. Initialize Realtime Database
 const db = getDatabase(app);
+const auth = getAuth(app); // Initialize Auth
+const googleProvider = new GoogleAuthProvider(); // Initialize Google Provider
 
-// 3. Initialize Analytics (Only on client-side)
 let analytics;
 if (typeof window !== "undefined") {
   isSupported().then((yes) => {
@@ -29,4 +28,4 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { db, analytics };
+export { db, analytics, auth, googleProvider }; // Export them
