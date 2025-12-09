@@ -56,7 +56,6 @@ export default function WelcomePanel() {
           </button>
         </div>
       )}
-      <p className="mt-2 text-white/70 text-lg">Your cozy corner to study & connect.</p>
     </div>
   );
 }
