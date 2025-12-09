@@ -33,7 +33,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [isStudying, setIsStudying] = useState(false);
   
-  // Local buffer for Cloudflare
   const unsavedMinutesRef = useRef(0);
   const { toast } = useToast();
   
@@ -48,121 +47,152 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         localStorage.setItem('liorea-username', name);
     } else {
-        // Logout: Remove from Global Status
-        if (username) remove(ref(db, `/status/${username}`));
+        // Logout: Clear everything
+        if (username) {
+            remove(ref(db, `/status/${username}`));
+            remove(ref(db, `/study_room/${username}`));
+        }
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
     }
   }, [username]);
 
-  // 2. GLOBAL PRESENCE (Run anytime we have a username)
-  // This makes you show up in "Community" immediately
+  // ============================================================
+  // 2. GLOBAL PRESENCE (Home Page List)
+  // ============================================================
   useEffect(() => {
     if (!username) return;
 
-    const userStatusRef = ref(db, `/status/${username}`);
+    const globalRef = ref(db, `/status/${username}`);
     const connectionRef = ref(db, '.info/connected');
 
     const unsubscribe = onValue(connectionRef, async (snap) => {
         if (snap.val() === true) {
-            // A. Fetch persistent status text from Cloudflare
+            // A. Fetch persistent status (Cloudflare)
             let savedStatus = "";
             try {
                 const res = await fetch(`${WORKER_URL}/user/status?username=${username}`);
                 const data = await res.json();
                 if (data.status_text) savedStatus = data.status_text;
-            } catch (e) { console.error("DB Fetch Error", e); }
+            } catch (e) { console.error(e); }
 
-            // B. Set Online in Global List
-            update(userStatusRef, {
+            // B. Set Online Globally
+            update(globalRef, {
                 state: 'online',
                 last_changed: serverTimestamp(),
                 username: username,
-                status_text: savedStatus,
-                is_studying: isStudying // Sync current state
+                status_text: savedStatus
             });
 
-            // C. INSTANT DISCONNECT: Delete me if tab closes
-            onDisconnect(userStatusRef).remove();
+            // C. Instant Disconnect for Global List
+            onDisconnect(globalRef).remove();
         }
     });
 
     return () => unsubscribe();
-  }, [username]); // Removed isStudying dependency so it doesn't reset on mode switch
+  }, [username]);
 
 
-  // 3. STUDY LOGIC (Updates the existing user node)
+  // ============================================================
+  // 3. STUDY ROOM LOGIC (Separate Node)
+  // ============================================================
   useEffect(() => {
     if (!username) return;
 
-    // Update the "is_studying" flag in Firebase
-    update(ref(db, `/status/${username}`), { is_studying: isStudying });
+    const studyRoomRef = ref(db, `/study_room/${username}`);
 
-    if (!isStudying) return; // Stop here if not studying
+    if (isStudying) {
+        // A. Add to Study Room Node
+        update(studyRoomRef, {
+            username: username,
+            joined_at: serverTimestamp(),
+            is_studying: true
+        });
 
-    // --- TIMER LOGIC ---
-    
-    // Flush to Cloudflare
-    const flushToCloudflare = () => {
-        const amount = unsavedMinutesRef.current;
-        if (amount > 0) {
-            fetch(`${WORKER_URL}/study/update`, {
-                method: "POST",
-                body: JSON.stringify({ username }),
-                headers: { "Content-Type": "application/json" }
-            }).catch(()=>{});
-            unsavedMinutesRef.current = 0;
-        }
-    };
+        // B. Instant Disconnect for Study Room
+        // If tab closes, this node deletes instantly => Timer stops, User leaves grid.
+        onDisconnect(studyRoomRef).remove();
 
-    const interval = setInterval(() => {
-        // 1. Update Firebase (Live Leaderboard)
-        set(ref(db, `/timers/${username}/total_minutes`), increment(1));
+        // C. Timer Loop
+        const flushToCloudflare = () => {
+            const amount = unsavedMinutesRef.current;
+            if (amount > 0) {
+                fetch(`${WORKER_URL}/study/update`, {
+                    method: "POST",
+                    body: JSON.stringify({ username }),
+                    headers: { "Content-Type": "application/json" }
+                }).catch(()=>{});
+                unsavedMinutesRef.current = 0;
+            }
+        };
 
-        // 2. Buffer for Cloudflare
-        unsavedMinutesRef.current += 1;
+        const interval = setInterval(() => {
+            // Update Timer in Study Room Node (Live Leaderboard)
+            set(ref(db, `/study_room/${username}/session_minutes`), increment(1));
+            // Update Global Timer (Lifetime stats)
+            set(ref(db, `/timers/${username}/total_minutes`), increment(1));
 
-        // 3. Flush every 5 mins
-        if (unsavedMinutesRef.current >= 5) flushToCloudflare();
-    }, 60000);
+            unsavedMinutesRef.current += 1;
+            if (unsavedMinutesRef.current >= 5) flushToCloudflare();
+        }, 60000);
 
-    return () => {
-        clearInterval(interval);
-        flushToCloudflare();
-    };
+        return () => {
+            clearInterval(interval);
+            flushToCloudflare();
+            // We do NOT remove the node here on unmount, 
+            // only on explicit leaveSession call or disconnect.
+        };
+    } else {
+        // If isStudying is false, ensure node is gone
+        remove(studyRoomRef);
+    }
   }, [username, isStudying]);
 
 
-  // 4. FETCH COMMUNITY LIST (Live)
+  // ============================================================
+  // 4. DATA LISTENER (Merge Global + Study Data)
+  // ============================================================
   useEffect(() => {
-    const statusRef = ref(db, '/status');
-    const timersRef = ref(db, '/timers');
+    const globalStatusRef = ref(db, '/status');
+    const studyRoomRef = ref(db, '/study_room');
+    const globalTimersRef = ref(db, '/timers');
 
-    const unsub = onValue(statusRef, (statusSnap) => {
+    // Listen to Global Status (Base List)
+    const unsub = onValue(globalStatusRef, (statusSnap) => {
         const statusData = statusSnap.val() || {};
         
-        onValue(timersRef, (timerSnap) => {
-            const timerData = timerSnap.val() || {};
-            
-            const usersList: OnlineUser[] = Object.keys(statusData).map((key) => {
-                const minutes = timerData[key]?.total_minutes || 0;
-                return {
-                    username: key,
-                    status: 'Online',
-                    total_study_time: minutes * 60, 
-                    status_text: statusData[key].status_text || "",
-                    is_studying: statusData[key].is_studying || false
-                };
-            });
+        // Listen to Study Room (Who is actually studying)
+        onValue(studyRoomRef, (studySnap) => {
+            const studyData = studySnap.val() || {};
 
-            // Sort: Studying users first, then by time
-            usersList.sort((a, b) => {
-                if (a.is_studying && !b.is_studying) return -1;
-                if (!a.is_studying && b.is_studying) return 1;
-                return b.total_study_time - a.total_study_time;
-            });
-            
-            setOnlineUsers(usersList);
+            // Listen to Timers (Total times)
+            onValue(globalTimersRef, (timerSnap) => {
+                const timerData = timerSnap.val() || {};
+
+                // Merge Data
+                const mergedList: OnlineUser[] = Object.keys(statusData).map((key) => {
+                    const isUserStudying = !!studyData[key];
+                    const minutes = timerData[key]?.total_minutes || 0;
+
+                    return {
+                        username: key,
+                        status: 'Online',
+                        total_study_time: minutes * 60, // Total lifetime seconds
+                        status_text: statusData[key].status_text || "",
+                        is_studying: isUserStudying
+                    };
+                });
+
+                // Sort: Studying first, then by time
+                mergedList.sort((a, b) => {
+                    if (a.is_studying && !b.is_studying) return -1;
+                    if (!a.is_studying && b.is_studying) return 1;
+                    return b.total_study_time - a.total_study_time;
+                });
+
+                setOnlineUsers(mergedList);
+
+            }, { onlyOnce: true });
         }, { onlyOnce: true });
     });
 
@@ -170,16 +200,24 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
 
-  // --- ACTIONS ---
+  // ============================================================
+  // ACTIONS
+  // ============================================================
 
   const joinSession = useCallback(() => setIsStudying(true), []);
-  const leaveSession = useCallback(() => setIsStudying(false), []);
+  
+  const leaveSession = useCallback(() => {
+      setIsStudying(false);
+      // Logic in Effect 3 handles the node removal
+  }, []);
 
   const updateStatusMessage = useCallback(async (msg: string) => {
     if (!username) return;
     
+    // Update Global Node
     update(ref(db, `/status/${username}`), { status_text: msg });
 
+    // Sync to Cloudflare
     fetch(`${WORKER_URL}/user/status`, {
         method: 'POST',
         body: JSON.stringify({ username, status_text: msg }),
