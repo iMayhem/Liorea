@@ -76,18 +76,9 @@ export default function SoundscapeMixer({ sounds }: SoundscapeMixerProps) {
 
   const toggleSound = (soundId: string) => {
     if (soundId === 'focus-mode') {
-        toggleFocusMode();
-        // If a sound is playing, stop it when focus mode is activated
-        if (activeSoundId && !isFocusMode) {
-            const audio = audioRefs.current.get(activeSoundId);
-            if (audio) fade(audio, 'out', masterVolume);
-            setActiveSoundId(null);
-        }
-        return;
+      toggleFocusMode();
+      return;
     }
-    
-    // If focus mode is on, don't play sounds
-    if (isFocusMode) return;
 
     if (activeSoundId === soundId) {
       const audio = audioRefs.current.get(soundId);
