@@ -58,11 +58,17 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                         isOnline ? "bg-green-500" : "bg-gray-500"
                     )} />
                 </div>
-                <div className="flex-grow">
-                    <p className="font-semibold text-white text-sm">{user.username}</p>
-                    <p className={cn("text-xs", isOnline ? "text-green-400" : "text-gray-400")}>
-                      {isOnline ? 'Online' : `Offline`}
-                    </p>
+                <div className="flex-grow overflow-hidden">
+                    <p className="font-semibold text-white text-sm truncate">{user.username}</p>
+                    {user.status_text ? (
+                       <p className="text-xs text-white/70 italic truncate">
+                         {user.status_text}
+                       </p>
+                    ) : (
+                       <p className={cn("text-xs", isOnline ? "text-green-400" : "text-gray-400")}>
+                         {isOnline ? 'Online' : `Offline`}
+                       </p>
+                    )}
                 </div>
                 </div>
             )
