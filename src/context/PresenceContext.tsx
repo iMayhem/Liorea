@@ -2,6 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
@@ -16,10 +17,6 @@ interface PresenceContextType {
   username: string | null;
   setUsername: (name: string | null) => void;
   onlineUsers: OnlineUser[];
-  // New controls for the session
-  isStudying: boolean;
-  joinSession: () => void;
-  leaveSession: () => void;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -27,18 +24,14 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  // Default to false, but check localStorage in useEffect
-  const [isStudying, setIsStudying] = useState(false);
+  const pathname = usePathname();
   
-  // 1. Load saved data on startup
   useEffect(() => {
     try {
         const storedUser = localStorage.getItem('liorea-username');
-        if (storedUser) setUsernameState(storedUser);
-
-        // Check if we were already studying (persistence on refresh)
-        const sessionState = localStorage.getItem('liorea-is-studying');
-        if (sessionState === 'true') setIsStudying(true);
+        if (storedUser) {
+            setUsernameState(storedUser);
+        }
     } catch (e) {
         console.error("Could not access localStorage", e);
     }
@@ -55,34 +48,10 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     } else {
         try {
             localStorage.removeItem('liorea-username');
-            // If logging out, also stop studying
-            setIsStudying(false);
-            localStorage.removeItem('liorea-is-studying');
         } catch (e) {
             console.error("Could not access localStorage", e);
         }
     }
-  }, []);
-
-  // 2. Functions to Join/Leave (Discord style)
-  const joinSession = useCallback(() => {
-    setIsStudying(true);
-    try {
-        localStorage.setItem('liorea-is-studying', 'true');
-    } catch(e) {
-        console.error("Could not access localStorage", e);
-    }
-    console.log("Joined Study Session");
-  }, []);
-
-  const leaveSession = useCallback(() => {
-    setIsStudying(false);
-    try {
-        localStorage.setItem('liorea-is-studying', 'false');
-    } catch(e) {
-        console.error("Could not access localStorage", e);
-    }
-    console.log("Left Study Session");
   }, []);
 
   useEffect(() => {
@@ -96,14 +65,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       }).catch(error => console.error("Heartbeat failed:", error));
     };
     
-    // 3. The Timer Logic
     const updateStudyTime = () => {
-       // Only count if the switch is ON
-       if (!isStudying) {
+       if (pathname !== '/study-together') {
+         console.log("Not in study room, skipping timer update.");
          return; 
        }
 
-       console.log("Studying in background... +5 mins added.");
+       console.log("In study room, updating timer +5 mins...");
        fetch(`${WORKER_URL}/study/update`, {
         method: "POST",
         body: JSON.stringify({ username }),
@@ -127,6 +95,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     // Run immediately
     sendHeartbeat();
     checkOnlineUsers();
+    // Also run study time update immediately if on the right page
+    updateStudyTime();
 
     // Intervals
     const heartbeatInterval = setInterval(sendHeartbeat, 60000); 
@@ -138,16 +108,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(studyTimeInterval);
       clearInterval(statusInterval);
     };
-  }, [username, isStudying]); // Re-run if isStudying changes
+  }, [username, pathname]);
 
   const value = useMemo(() => ({
     username,
     setUsername,
     onlineUsers,
-    isStudying,
-    joinSession,
-    leaveSession
-  }), [username, setUsername, onlineUsers, isStudying, joinSession, leaveSession]);
+  }), [username, setUsername, onlineUsers]);
 
   return (
     <PresenceContext.Provider value={value}>

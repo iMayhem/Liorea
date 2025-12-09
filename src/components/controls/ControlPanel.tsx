@@ -18,11 +18,10 @@ import Leaderboard from '../study/Leaderboard';
 
 
 export default function ControlPanel() {
-  const { onlineUsers, leaveSession } = usePresence(); // Import leaveSession
+  const { onlineUsers } = usePresence();
   const router = useRouter();
 
   const handleLeave = () => {
-    leaveSession(); // Turn off the "studying" switch
     router.push('/home'); // Go back home
   };
   
