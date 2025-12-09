@@ -44,7 +44,7 @@ export default function ChatPanel() {
     if (messages.length) {
       bottomRef.current?.scrollIntoView({ behavior: 'auto' });
     }
-  }, []);
+  }, [messages.length]);
 
   const getTypingMessage = () => {
     if (typingUsers.length === 0) return null;
