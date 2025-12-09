@@ -9,6 +9,7 @@ import { FocusProvider } from '@/context/FocusContext';
 import FocusOverlay from '@/components/layout/FocusOverlay';
 import { NavigationEvents } from '@/components/layout/NavigationEvents';
 import { Suspense } from 'react';
+import MobileMessage from '@/components/layout/MobileMessage';
 
 export const metadata: Metadata = {
   title: 'Liorea',
@@ -35,7 +36,10 @@ export default function RootLayout({
             <FocusOverlay />
             <PresenceProvider>
               <NotificationProvider>
-                {children}
+                <div className="hidden md:block">
+                  {children}
+                </div>
+                <MobileMessage />
               </NotificationProvider>
             </PresenceProvider>
           </FocusProvider>
