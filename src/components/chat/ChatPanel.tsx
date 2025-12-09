@@ -109,7 +109,7 @@ export default function ChatPanel() {
             value={newMessage}
             onChange={handleInputChange}
           />
-          <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-white flex-shrink-0">
+          <Button type="submit" size="icon" variant="primary" className="flex-shrink-0">
             <Send className="h-4 w-4" />
           </Button>
         </form>
