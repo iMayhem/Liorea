@@ -1,16 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { db } from '@/lib/firebase';
+import { ref, onValue, set, onDisconnect, serverTimestamp, increment, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
-
-// Cloudflare Worker URL
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export interface OnlineUser {
   username: string;
-  status?: 'Online' | 'Offline';
-  last_seen?: number; 
-  total_study_time?: number; 
+  status: 'Online' | 'Offline';
+  total_study_time: number; // in seconds
   status_text?: string; 
 }
 
@@ -33,6 +31,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [isStudying, setIsStudying] = useState(false);
   const { toast } = useToast();
   
+  // 1. Initialize User from Local Storage
   useEffect(() => {
     const storedUser = localStorage.getItem('liorea-username');
     if (storedUser) setUsernameState(storedUser);
@@ -40,99 +39,124 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   const setUsername = useCallback((name: string | null) => {
     setUsernameState(name);
-    if (name) localStorage.setItem('liorea-username', name);
-    else {
+    if (name) {
+        localStorage.setItem('liorea-username', name);
+    } else {
+        // Logout Cleanup
+        if (username) {
+            const userStatusRef = ref(db, `/status/${username}`);
+            set(userStatusRef, null); // Remove from Firebase
+        }
         localStorage.removeItem('liorea-username');
         setIsStudying(false);
     }
+  }, [username]);
+
+  // 2. REALTIME PRESENCE (Online Status)
+  useEffect(() => {
+    if (!username) return;
+
+    const userStatusRef = ref(db, `/status/${username}`);
+    const connectionRef = ref(db, '.info/connected');
+
+    const unsubscribe = onValue(connectionRef, (snap) => {
+        if (snap.val() === true) {
+            // We are connected. Set status to Online.
+            update(userStatusRef, {
+                state: 'online',
+                last_changed: serverTimestamp(),
+                username: username,
+            });
+
+            // MAGIC LINE: If internet dies or tab closes, delete this node on server.
+            onDisconnect(userStatusRef).remove();
+        }
+    });
+
+    return () => {
+        unsubscribe();
+        // If unmounting but not closing (e.g. logging out), remove manually
+        // set(userStatusRef, null); 
+    };
+  }, [username]);
+
+
+  // 3. STUDY TIMER LOGIC
+  useEffect(() => {
+    if (!username || !isStudying) return;
+
+    // Update status to show "Studying"
+    update(ref(db, `/status/${username}`), { is_studying: true });
+
+    // Loop: Add 1 minute every 60 seconds
+    const interval = setInterval(() => {
+        const timerRef = ref(db, `/timers/${username}/total_minutes`);
+        // Atomic increment (safe against lag)
+        set(timerRef, increment(1));
+    }, 60000);
+
+    return () => {
+        clearInterval(interval);
+        // When stopping study, update status
+        if (username) {
+             update(ref(db, `/status/${username}`), { is_studying: false });
+        }
+    };
+  }, [username, isStudying]);
+
+
+  // 4. FETCH LEADERBOARD & USERS (Realtime Listener)
+  useEffect(() => {
+    const statusRef = ref(db, '/status');
+    const timersRef = ref(db, '/timers');
+
+    // Listen for changes
+    const unsub = onValue(statusRef, (statusSnap) => {
+        const statusData = statusSnap.val() || {};
+        
+        // Fetch timers once to combine data
+        onValue(timersRef, (timerSnap) => {
+            const timerData = timerSnap.val() || {};
+            
+            const usersList: OnlineUser[] = Object.keys(statusData).map((key) => {
+                const minutes = timerData[key]?.total_minutes || 0;
+                return {
+                    username: key,
+                    status: 'Online',
+                    total_study_time: minutes * 60, // Convert to seconds for UI
+                    status_text: statusData[key].status_text || ""
+                };
+            });
+
+            // Sort by Study Time (Highest first)
+            usersList.sort((a, b) => b.total_study_time - a.total_study_time);
+            
+            setOnlineUsers(usersList);
+        }, { onlyOnce: true });
+    });
+
+    return () => unsub();
   }, []);
+
+
+  // --- ACTIONS ---
 
   const joinSession = useCallback(() => setIsStudying(true), []);
   const leaveSession = useCallback(() => setIsStudying(false), []);
 
   const updateStatusMessage = useCallback(async (msg: string) => {
     if (!username) return;
-    try {
-        await fetch(`${WORKER_URL}/user/status`, {
-            method: 'POST',
-            body: JSON.stringify({ username, status_text: msg }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-        // Optimistic UI update
-        setOnlineUsers(prev => prev.map(u => u.username === username ? { ...u, status_text: msg } : u));
-        toast({ title: "Status Updated" });
-    } catch (e) { console.error(e); }
+    const statusRef = ref(db, `/status/${username}`);
+    await update(statusRef, { status_text: msg });
+    toast({ title: "Status Updated" });
   }, [username, toast]);
 
   const renameUser = useCallback(async (newName: string) => {
-    if (!username) return false;
-    try {
-        const res = await fetch(`${WORKER_URL}/user/rename`, {
-            method: 'POST',
-            body: JSON.stringify({ oldUsername: username, newUsername: newName }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-        const data = await res.json();
-        if (data.success) {
-            setUsername(newName);
-            return true;
-        }
-        return false;
-    } catch (e) { return false; }
-  }, [username, setUsername]);
-
-  // 1. PRESENCE HEARTBEAT (Cloudflare)
-  useEffect(() => {
-    if (!username || isStudying) return; // If studying, the timer loop handles the heartbeat
-    
-    const sendHeartbeat = () => {
-      if (document.hidden) return; // Optimization: Don't ping if tab is hidden
-      fetch(`${WORKER_URL}/heartbeat`, { 
-          method: "POST", 
-          body: JSON.stringify({ username }), 
-          headers: { "Content-Type": "application/json" } 
-      }).catch(()=>{});
-    };
-    
-    sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 60000); // 1 minute interval
-    return () => clearInterval(interval);
-  }, [username, isStudying]);
-
-  // 2. STUDY TIMER (Cloudflare)
-  useEffect(() => {
-    if (!username || !isStudying) return;
-
-    const logMinute = () => {
-       // This endpoint counts +1 minute AND updates 'last_seen'
-       fetch(`${WORKER_URL}/study/update`, { 
-           method: "POST", 
-           body: JSON.stringify({ username }), 
-           headers: { "Content-Type": "application/json" } 
-       }).catch(()=>{});
-    };
-
-    logMinute();
-    const interval = setInterval(logMinute, 60000); 
-    return () => clearInterval(interval);
-  }, [username, isStudying]);
-
-  // 3. FETCH LEADERBOARD (Cloudflare Polling)
-  useEffect(() => {
-    const fetchStatus = () => {
-      if (document.hidden) return; // Save Cloudflare reads
-      fetch(`${WORKER_URL}/status`)
-        .then(res => res.json())
-        .then((users: any[]) => {
-            const formatted = users.map(u => ({ ...u, total_study_time: (u.total_minutes || 0) * 60 }));
-            setOnlineUsers(formatted);
-        }).catch(()=>{});
-    };
-    
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 20000); // Poll every 20s
-    return () => clearInterval(interval);
-  }, []);
+      // In NoSQL without auth, we just switch the local name.
+      // (Old data stays under old name, new data under new name)
+      setUsername(newName);
+      return true;
+  }, [setUsername]);
 
   const value = useMemo(() => ({
     username, setUsername, onlineUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
