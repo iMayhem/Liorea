@@ -56,7 +56,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
 
   if (!isClient) {
       return (
-        <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
+        <Card className="border-none shadow-none bg-black/5 backdrop-blur-sm text-white">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="text-accent w-4 h-4" />
@@ -73,7 +73,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
   }
 
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
+    <Card className="border-none shadow-none bg-black/5 backdrop-blur-sm text-white">
       <CardHeader className="p-4 pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Target className="text-accent w-4 h-4" />
