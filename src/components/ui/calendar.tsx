@@ -16,7 +16,6 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-0", className)}
-      fixedWeeks
       classNames={{
         months: "flex flex-col space-y-4",
         month: "space-y-4",
