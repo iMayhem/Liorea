@@ -11,7 +11,6 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 222.2 47.4% 11.2%;
-    --primary-hsl: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -26,76 +25,6 @@
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
-
-  .dark {
-    --background: 222 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-hsl: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217.2 91.2% 59.8%;
-  }
-
-  .theme-blue {
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 47.4% 11.2%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 47.4% 11.2%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-hsl: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 210 40% 98%;
-  }
-  
-  .theme-zinc {
-    --background: 240 10% 3.9%;
-    --foreground: 210 40% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-hsl: 210 40% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 210 40% 98%;
-  }
-
 }
 
 @layer base {
@@ -105,81 +34,38 @@
   body {
     @apply text-foreground;
   }
-
-  @keyframes glassReveal {
-    0% {
-      backdrop-filter: blur(0px) saturate(120%);
-      -webkit-backdrop-filter: blur(0px) saturate(120%);
-      opacity: 0;
-    }
-    100% {
-      backdrop-filter: blur(8px) saturate(150%);
-      -webkit-backdrop-filter: blur(8px) saturate(150%);
-      opacity: 1;
-    }
-  }
   
-  .dark .card::before, .theme-blue .card::before, .theme-zinc .card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 60%);
-    transition: transform 0.6s ease;
-    transform-origin: center center;
-    pointer-events: none;
-    opacity: 0.5;
-    transform: translate(50%, -50%) scale(2);
+  /* Smooth Fade In Animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
 }
 
 @layer utilities {
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
   .glass-effect {
     @apply bg-background/60 backdrop-blur-lg;
   }
-  .glass-panel-2 {
-    background-color: rgba(10, 10, 15, 0.25);
-    backdrop-filter: blur(12px) saturate(150%);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 0 40px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.05);
-  }
-  /* Custom utility to make scrollbar always visible */
-  .scrollbar-visible {
-    opacity: 1 !important;
-  }
-
+  /* Hides scrollbar but keeps functionality */
   .no-scrollbar::-webkit-scrollbar {
       display: none;
   }
   .no-scrollbar {
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: none;  /* Firefox */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
   }
 }
 
-/* --- CALENDAR STYLES FROM LIOREA --- */
+/* --- LIOREA CALENDAR STYLES --- */
+
+/* The specific day styling for days where you studied */
 .study-day-modifier:not([aria-selected]) {
-    font-weight: bold;
-    color: white !important;
+    font-weight: 700; /* Bolder text */
+    color: #fff !important;
     position: relative;
-    z-index: 1;
 }
 
+/* The little glowing dot below the number */
 .study-day-modifier:not([aria-selected])::after {
     content: '';
     position: absolute;
@@ -188,42 +74,18 @@
     transform: translateX(-50%);
     width: 4px;
     height: 4px;
-    background-color: #4ade80; /* Green dot for activity */
+    background-color: #4ade80; /* Bright Green */
     border-radius: 50%;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
 }
 
-.study-day-modifier:not([aria-selected]):hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
+/* Glass panel global styling */
 .dark .card, .theme-blue .card, .theme-zinc .card {
   position: relative;
   overflow: hidden;
-  background: rgba(10, 10, 15, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  animation: glassReveal 0.2s ease-in-out forwards;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.theme-blue .rdp {
-    --rdp-cell-size: 40px;
-    --rdp-caption-font-size: 18px;
-    --rdp-accent-color: hsl(var(--primary-hsl));
-    --rdp-background-color: hsl(var(--primary-hsl) / 0.1);
-    --rdp-outline: 2px solid hsl(var(--primary-hsl));
-    --rdp-selected-color: hsl(var(--primary-foreground));
-}
-
-.theme-blue .rdp-head_cell {
-    color: hsl(var(--muted-foreground));
-}
-
-.theme-blue .rdp-day_today:not(.rdp-day_selected) {
-    background-color: hsl(var(--accent) / 0.5) !important;
-    color: hsl(var(--accent-foreground)) !important;
-}
-
-.theme-blue .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-    background-color: hsl(var(--accent) / 0.5) !important;
+  background: rgba(0, 0, 0, 0.2); /* Much more transparent */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Very subtle border */
+  animation: fadeIn 0.5s ease-out forwards;
 }
