@@ -9,12 +9,14 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/context/NotificationContext';
 import BackgroundManagement from './BackgroundManagement';
+import { usePresence } from '@/context/PresenceContext';
 
 
 export default function AdminDashboard() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const { toast } = useToast();
   const { addNotification } = useNotifications();
+  const { onlineUsers } = usePresence();
 
   const handleSendGlobalNotification = () => {
     if (notificationMessage.trim()) {
@@ -25,6 +27,17 @@ export default function AdminDashboard() {
       });
       setNotificationMessage('');
     }
+  };
+  
+  const totalUsers = onlineUsers.length;
+  const activeSessions = onlineUsers.filter(u => u.status === 'Online').length;
+  const totalStudySeconds = onlineUsers.reduce((acc, user) => acc + (user.total_study_time || 0), 0);
+  const averageStudySeconds = totalUsers > 0 ? totalStudySeconds / totalUsers : 0;
+  
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
   };
 
   return (
@@ -39,9 +52,9 @@ export default function AdminDashboard() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">8</div>
+                    <div className="text-2xl font-bold">{totalUsers}</div>
                     <p className="text-xs text-muted-foreground">
-                        +2 since last hour
+                        All registered users
                     </p>
                 </CardContent>
             </Card>
@@ -53,9 +66,9 @@ export default function AdminDashboard() {
                     <Timer className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">2h 37m</div>
+                    <div className="text-2xl font-bold">{formatTime(averageStudySeconds)}</div>
                     <p className="text-xs text-muted-foreground">
-                        based on today's sessions
+                        across all users
                     </p>
                 </CardContent>
             </Card>
@@ -67,7 +80,7 @@ export default function AdminDashboard() {
                     <Activity className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">5</div>
+                    <div className="text-2xl font-bold">{activeSessions}</div>
                     <p className="text-xs text-muted-foreground">
                         users currently online
                     </p>
