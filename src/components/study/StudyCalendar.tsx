@@ -22,15 +22,13 @@ export default function StudyCalendar() {
   return (
     <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full max-w-sm mx-auto shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between p-4">
-        <h2 className="font-semibold text-lg">{format(currentMonth, "MMMM yyyy")}</h2>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-8 w-8">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-8 w-8">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-8 w-8">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="font-semibold text-lg text-center flex-grow">{format(currentMonth, "MMMM yyyy")}</h2>
+        <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-8 w-8">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </CardHeader>
       <CardContent className="p-0">
         <Calendar
