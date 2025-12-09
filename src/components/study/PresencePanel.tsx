@@ -38,7 +38,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
         <CardHeader className="flex flex-row items-center justify-between p-4">
             <div className="flex items-center gap-3">
                 <Users className="text-white/80 w-5 h-5" />
-                <CardTitle className="text-lg text-white font-semibold">Community</CardTitle>
+                <CardTitle className="text-base text-white font-semibold">Community</CardTitle>
             </div>
             <Button variant="secondary" size="sm" className="bg-black/20 text-white/80 text-xs h-7 px-3 rounded-full">{onlineCount} Online</Button>
         </CardHeader>

@@ -152,7 +152,7 @@
     @apply bg-background/60 backdrop-blur-lg;
   }
   .glass-panel-2 {
-    background-color: rgba(30, 30, 40, 0.25);
+    background-color: rgba(10, 10, 15, 0.25);
     backdrop-filter: blur(12px) saturate(150%);
     -webkit-backdrop-filter: blur(12px) saturate(150%);
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
