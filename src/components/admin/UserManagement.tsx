@@ -65,7 +65,7 @@ export default function UserManagement() {
     };
 
   return (
-    <Card>
+    <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
       <CardHeader>
         <CardTitle>User Management</CardTitle>
         <CardDescription>View all registered users and perform administrative actions.</CardDescription>

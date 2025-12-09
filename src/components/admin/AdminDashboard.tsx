@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     <div className="w-full space-y-8 text-white">
         <h1 className="text-3xl font-bold text-center mb-8">Admin Dashboard</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
+            <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Total Users
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Average Study Time
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Active Sessions
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
                 </CardContent>
             </Card>
         </div>
-        <Card>
+        <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
             <CardHeader>
                 <CardTitle>Global Notifications</CardTitle>
                 <CardDescription>Send a message to all active users.</CardDescription>
