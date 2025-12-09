@@ -24,7 +24,9 @@ const getUserColor = (username: string) => {
 };
 
 export default function StudyGrid({ users }: StudyGridProps) {
-  const onlineUsers = users.filter(u => u.status === 'Online');
+  const onlineUsers = users
+    .filter(u => u.status === 'Online')
+    .sort((a, b) => a.username.localeCompare(b.username));
   
   return (
     <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full h-[480px]">
