@@ -27,10 +27,10 @@ function Calendar({
         head_row: "flex",
         head_cell:
           "text-white/40 rounded-md w-9 font-medium text-[0.8rem] uppercase tracking-wide",
-        row: "w-full",
-        cell: "h-9 w-9 text-center text-sm p-0",
+        row: "",
+        cell: "",
         day: cn(
-          "h-9 w-9 p-0 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
+          "h-8 w-8 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
         ),
         day_selected:
           "bg-white text-black hover:bg-white hover:text-black font-bold shadow-lg shadow-white/20",
