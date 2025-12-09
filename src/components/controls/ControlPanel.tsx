@@ -44,7 +44,7 @@ export default function ControlPanel() {
                             <Trophy className="w-6 h-6" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="bg-black/10 backdrop-blur-xl border-r-white/20 text-white w-[380px] sm:w-[540px] pt-10">
+                    <SheetContent side="left" className="bg-black/20 backdrop-blur-xl border-r-white/20 text-white w-[380px] sm:w-[540px] pt-10">
                         <SheetHeader>
                         <SheetTitle>Study Hall</SheetTitle>
                         <SheetDescription>

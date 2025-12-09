@@ -65,7 +65,7 @@ export default function UserManagement() {
     };
 
   return (
-    <Card className="bg-black/10 backdrop-blur-sm">
+    <Card>
       <CardHeader>
         <CardTitle>User Management</CardTitle>
         <CardDescription>View all registered users and perform administrative actions.</CardDescription>
@@ -73,7 +73,7 @@ export default function UserManagement() {
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
+            <TableRow className="hover:bg-transparent border-white/20">
               <TableHead>Username</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Last Seen</TableHead>
@@ -82,19 +82,19 @@ export default function UserManagement() {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.username} className="hover:bg-muted/50 border-gray-500/50">
+              <TableRow key={user.username} className="hover:bg-muted/50 border-white/20">
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.status}</TableCell>
                 <TableCell>{user.last_seen ? new Date(user.last_seen).toLocaleString() : 'N/A'}</TableCell>
                 <TableCell className="text-right">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-white/20">
                                 <span className="sr-only">Open menu</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="bg-black/20 backdrop-blur-md border-white/20 text-white">
                             <DropdownMenuItem onClick={() => startEditing(user)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 <span>Change Username</span>
@@ -121,7 +121,7 @@ export default function UserManagement() {
       </CardContent>
         {editingUser && (
              <AlertDialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-black/20 backdrop-blur-md border-white/20 text-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Change Username for {editingUser.username}</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -132,7 +132,7 @@ export default function UserManagement() {
                         value={newUsername}
                         onChange={(e) => setNewUsername(e.target.value)}
                         placeholder="New username"
-                        className="mt-4"
+                        className="mt-4 bg-transparent border-white/30"
                     />
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>

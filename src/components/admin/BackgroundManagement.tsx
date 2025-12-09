@@ -23,7 +23,7 @@ export default function BackgroundManagement() {
   }
   
   return (
-    <Card className="bg-black/10 backdrop-blur-sm">
+    <Card>
       <CardHeader>
         <CardTitle>Cloudflare R2 File Management</CardTitle>
         <CardDescription>All files from your Cloudflare R2 bucket worker.</CardDescription>
@@ -31,7 +31,7 @@ export default function BackgroundManagement() {
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
+            <TableRow className="hover:bg-transparent border-white/20">
               <TableHead>Type</TableHead>
               <TableHead>Filename</TableHead>
               <TableHead>URL</TableHead>
@@ -40,7 +40,7 @@ export default function BackgroundManagement() {
           </TableHeader>
           <TableBody>
             {allFiles.map((file) => (
-              <TableRow key={file.filename} className="hover:bg-muted/50 border-gray-500/50">
+              <TableRow key={file.filename} className="hover:bg-muted/50 border-white/20">
                 <TableCell>
                     {getFileIcon(file.filename)}
                 </TableCell>
@@ -60,7 +60,7 @@ export default function BackgroundManagement() {
           </TableBody>
         </Table>
       </CardContent>
-       <CardFooter className="border-t border-gray-500/50 pt-6">
+       <CardFooter className="border-t border-white/20 pt-6">
             <div className="w-full">
                 <h3 className="text-lg font-semibold mb-2">Upload New File</h3>
                  <p className="text-sm text-muted-foreground mt-2">

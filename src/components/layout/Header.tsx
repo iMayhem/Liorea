@@ -42,7 +42,7 @@ export default function Header() {
                     <span className="sr-only">Notifications</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
+            <PopoverContent className="w-80 bg-black/20 backdrop-blur-md border-white/20 text-white" align="end">
                 <div className="grid gap-4">
                     <div className="space-y-2">
                         <h4 className="font-medium leading-none">Notifications</h4>
