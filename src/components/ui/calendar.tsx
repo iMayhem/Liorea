@@ -22,10 +22,10 @@ function Calendar({
         caption: "hidden", // We use our custom header
         nav: "hidden",     // We use our custom navigation
         table: "w-full border-collapse space-y-1",
-        head_row: "", // Removed flex
+        head_row: "",
         head_cell: "text-white/40 rounded-md w-8 font-medium text-[0.8rem] uppercase tracking-wide",
-        row: "w-full mt-2", // Removed flex
-        cell: "h-8 w-8 text-center text-sm p-0 relative", // Added relative positioning
+        row: "w-full mt-2",
+        cell: "h-8 w-8 text-center text-sm p-0",
         day: cn(
           "h-8 w-8 p-0 font-normal text-white aria-selected:opacity-100 hover:bg-white/10 rounded-full transition-all duration-200 flex items-center justify-center"
         ),
