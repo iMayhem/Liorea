@@ -44,18 +44,18 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
   const setUsername = useCallback((name: string | null) => {
     setUsernameState(name);
-    if (name) localStorage.setItem('liorea-username', name);
-    else {
-        // If logging out, tell server we left
-        if (username) {
-            fetch(`${WORKER_URL}/user/leave`, {
-                method: "POST",
-                body: JSON.stringify({ username }),
-                headers: { "Content-Type": "application/json" }
-            }).catch(()=>{});
-        }
-        localStorage.removeItem('liorea-username');
-        setIsStudying(false);
+    if (name) {
+      localStorage.setItem('liorea-username', name);
+    } else {
+      if (username) {
+        fetch(`${WORKER_URL}/user/leave`, {
+            method: "POST",
+            body: JSON.stringify({ username }),
+            headers: { "Content-Type": "application/json" }
+        }).catch(()=>{});
+      }
+      localStorage.removeItem('liorea-username');
+      setIsStudying(false);
     }
   }, [username]);
 
@@ -63,8 +63,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   
   const leaveSession = useCallback(() => {
       setIsStudying(false);
-      // Immediately tell server we stopped studying (optional, usually heartbeat timeout handles it)
-  }, []);
+      // Immediately tell server we stopped studying
+       if (username) {
+            fetch(`${WORKER_URL}/study/leave`, {
+                method: "POST",
+                body: JSON.stringify({ username }),
+                headers: { "Content-Type": "application/json" }
+            }).catch(()=>{});
+        }
+  }, [username]);
 
   const updateStatusMessage = useCallback(async (msg: string) => {
     if (!username) return;
@@ -96,27 +103,26 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) { return false; }
   }, [username, setUsername]);
 
-  // 1. PRESENCE HEARTBEAT + TAB CLOSE HANDLER
+  // PRESENCE HEARTBEAT + DISCONNECTION HANDLER
   useEffect(() => {
     if (!username) return;
     
-    // Normal Heartbeat (Every 60s)
+    // Send initial heartbeat
     const sendHeartbeat = () => {
       if (document.hidden) return; 
       fetch(`${WORKER_URL}/heartbeat`, { 
           method: "POST", 
-          body: JSON.stringify({ username }), 
+          body: JSON.stringify({ username, is_studying: isStudying }), 
           headers: { "Content-Type": "application/json" } 
       }).catch(()=>{});
     };
     sendHeartbeat();
     const interval = setInterval(sendHeartbeat, 60000); 
 
-    // TAB CLOSE / BROWSER CLOSE HANDLER
+    // Handle tab/browser close
     const handleBeforeUnload = () => {
-        // Prepare data blob
+        if (!username) return;
         const blob = new Blob([JSON.stringify({ username })], { type: 'application/json' });
-        // Use sendBeacon - it survives the page close
         navigator.sendBeacon(`${WORKER_URL}/user/leave`, blob);
     };
     
@@ -126,9 +132,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         clearInterval(interval);
         window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [username]);
+  }, [username, isStudying]);
 
-  // 2. STUDY TIMER
+  // STUDY TIMER - This now only runs when isStudying is true.
   useEffect(() => {
     if (!username || !isStudying) return;
 
@@ -140,12 +146,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
        }).catch(()=>{});
     };
 
-    logMinute();
+    logMinute(); // Log the first minute immediately
     const interval = setInterval(logMinute, 60000); 
     return () => clearInterval(interval);
   }, [username, isStudying]);
 
-  // 3. FETCH LEADERBOARD
+  // FETCH USERS & STATUS
   useEffect(() => {
     const fetchStatus = () => {
       if (document.hidden) return; 
@@ -158,7 +164,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     };
     
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); 
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, [pathname, username]);
 
@@ -171,8 +177,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
 export const usePresence = () => {
     const c = useContext(PresenceContext);
-    if (c === undefined) throw new Error("usePresence error");
+    if (c === undefined) throw new Error("usePresence must be used within a PresenceProvider");
     return c;
 };
-
-    
