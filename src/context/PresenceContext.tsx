@@ -158,7 +158,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     };
     
     fetchStatus();
-    const interval = setInterval(fetchStatus, 20000); 
+    const interval = setInterval(fetchStatus, 5000); 
     return () => clearInterval(interval);
   }, [pathname, username]);
 
@@ -174,3 +174,5 @@ export const usePresence = () => {
     if (c === undefined) throw new Error("usePresence error");
     return c;
 };
+
+    
