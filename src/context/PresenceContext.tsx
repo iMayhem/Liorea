@@ -10,7 +10,7 @@ const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 // Type 1: People in the Study Room (Active Timer)
 export interface StudyUser {
   username: string;
-  total_study_time: number;
+  total_study_time: number; // In Seconds
   status: 'Online';
 }
 
@@ -20,19 +20,15 @@ export interface CommunityUser {
   status: 'Online' | 'Offline';
   last_seen: number;
   status_text?: string;
-  is_studying: boolean; // True if they are inside the Study Room
+  is_studying: boolean; 
 }
 
 interface PresenceContextType {
   username: string | null;
   setUsername: (name: string | null) => void;
-  
-  // Two separate lists
   studyUsers: StudyUser[];
   communityUsers: CommunityUser[];
-  
   isStudying: boolean;
-  
   joinSession: () => void;
   leaveSession: () => void;
   updateStatusMessage: (msg: string) => Promise<void>;
@@ -43,16 +39,14 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState<string | null>(null);
-  
-  // State for the two lists
   const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
   const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
-  
   const [isStudying, setIsStudying] = useState(false);
+  
+  // Ref to track minutes accumulated locally before sending to Cloudflare
   const unsavedMinutesRef = useRef(0);
   const { toast } = useToast();
 
-  // 1. INITIALIZATION (Load username from storage)
   useEffect(() => {
     const storedUser = localStorage.getItem('liorea-username');
     if (storedUser) setUsernameState(storedUser);
@@ -63,11 +57,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     if (name) {
         localStorage.setItem('liorea-username', name);
     } else {
-        // Logout Logic
         if (username) {
-            // Remove from Study Room
             remove(ref(db, `/study_room_presence/${username}`));
-            // Mark as Offline in Community
             update(ref(db, `/community_presence/${username}`), { 
                 status: 'Offline', 
                 last_seen: serverTimestamp(),
@@ -79,16 +70,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [username]);
 
-  // 2. GLOBAL COMMUNITY PRESENCE (Always On)
+  // --- 1. GLOBAL COMMUNITY PRESENCE (Sidebar) ---
   useEffect(() => {
     if (!username) return;
 
     const commRef = ref(db, `/community_presence/${username}`);
     const connectionRef = ref(db, '.info/connected');
 
-    const unsubscribe = onValue(connectionRef, async (snap) => {
+    const unsubscribe = onValue(connectionRef, async (snap: any) => {
         if (snap.val() === true) {
-            // Fetch saved status text from Cloudflare
             let savedStatus = "";
             try {
                 const res = await fetch(`${WORKER_URL}/user/status?username=${username}`);
@@ -96,7 +86,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 if (data.status_text) savedStatus = data.status_text;
             } catch (e) {}
 
-            // Set user as ONLINE in Global Community
             update(commRef, {
                 username: username,
                 status: 'Online',
@@ -104,7 +93,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 status_text: savedStatus,
             });
 
-            // On Disconnect: Set to OFFLINE (Do not remove node)
             onDisconnect(commRef).update({
                 status: 'Offline',
                 last_seen: serverTimestamp(),
@@ -117,31 +105,44 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username]);
 
 
-  // 3. ACTIVE STUDY PRESENCE (Only when "Studying")
+  // --- 2. ACTIVE STUDY LOGIC (Persistence Added Here) ---
   useEffect(() => {
     if (!username) return;
 
     const studyRef = ref(db, `/study_room_presence/${username}`);
     const commRef = ref(db, `/community_presence/${username}`);
 
-    if (isStudying) {
-        // A. Add to Study Room List
-        set(studyRef, {
-            username: username,
-            total_study_time: 0, // Starts at 0 for this session
-            status: 'Online'
-        });
-        
-        // B. Update Community List to show "Studying" icon
-        update(commRef, { is_studying: true });
+    const initializeStudySession = async () => {
+        if (isStudying) {
+            // A. Fetch existing minutes from Cloudflare D1
+            let initialSeconds = 0;
+            try {
+                const res = await fetch(`${WORKER_URL}/study/stats?username=${username}`);
+                const data = await res.json();
+                if (data.total_minutes) {
+                    initialSeconds = data.total_minutes * 60; // Convert to seconds for Firebase
+                }
+            } catch (e) {
+                console.error("Failed to fetch persistent stats", e);
+            }
 
-        // C. Disconnect logic
-        onDisconnect(studyRef).remove();
-    } else {
-        // User clicked Leave
-        remove(studyRef);
-        update(commRef, { is_studying: false });
-    }
+            // B. Set Firebase with the stored total
+            set(studyRef, {
+                username: username,
+                total_study_time: initialSeconds,
+                status: 'Online'
+            });
+            
+            update(commRef, { is_studying: true });
+            onDisconnect(studyRef).remove();
+        } else {
+            // Leave logic
+            remove(studyRef);
+            update(commRef, { is_studying: false });
+        }
+    };
+
+    initializeStudySession();
 
     return () => {
         if (!isStudying && username) {
@@ -152,15 +153,16 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username, isStudying]);
 
 
-  // 4. READ DATA: Study Users List
+  // --- 3. DATA LISTENERS ---
   useEffect(() => {
     const roomRef = ref(db, '/study_room_presence');
-    return onValue(roomRef, (snapshot) => {
+    return onValue(roomRef, (snapshot: any) => {
         const data = snapshot.val();
         if (data) {
             const list: StudyUser[] = Object.values(data).map((u: any) => ({
                 username: u.username,
-                total_study_time: u.total_study_time || 0,
+                // Ensure we have a number
+                total_study_time: Number(u.total_study_time) || 0, 
                 status: 'Online'
             }));
             list.sort((a, b) => b.total_study_time - a.total_study_time);
@@ -171,10 +173,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // 5. READ DATA: Community Users List
   useEffect(() => {
     const globalRef = ref(db, '/community_presence');
-    return onValue(globalRef, (snapshot) => {
+    return onValue(globalRef, (snapshot: any) => {
         const data = snapshot.val();
         if (data) {
             const list: CommunityUser[] = Object.values(data).map((u: any) => ({
@@ -185,7 +186,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 is_studying: u.is_studying || false
             }));
             
-            // Sort: Online first, then by Last Seen
             list.sort((a, b) => {
                 if (a.status === 'Online' && b.status !== 'Online') return -1;
                 if (a.status !== 'Online' && b.status === 'Online') return 1;
@@ -199,38 +199,50 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
 
-  // 6. TIMER LOGIC
+  // --- 4. TIMER & SAVE LOGIC ---
   useEffect(() => {
     if (!username || !isStudying) return;
 
+    // Flush to Cloudflare D1
     const flushToCloudflare = () => {
-        const amount = unsavedMinutesRef.current;
-        if (amount > 0) {
+        const minutesToAdd = unsavedMinutesRef.current;
+        if (minutesToAdd > 0) {
             fetch(`${WORKER_URL}/study/update`, {
                 method: "POST",
-                body: JSON.stringify({ username }), 
+                // Send the exact amount of minutes accumulated
+                body: JSON.stringify({ username, minutes: minutesToAdd }), 
                 headers: { "Content-Type": "application/json" }
-            }).catch(()=>{});
-            unsavedMinutesRef.current = 0;
+            }).then(res => {
+                if (res.ok) {
+                    // Only reset if successful
+                    unsavedMinutesRef.current = 0;
+                }
+            }).catch(e => console.error("Failed to save to D1", e));
         }
     };
 
     const interval = setInterval(() => {
-        // Update Study Timer in Firebase
+        // 1. Update Firebase UI (Seconds) - Everyone sees this live
         const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
         set(myStudyTimeRef, increment(60)); 
         
+        // 2. Accumulate Minutes for D1
         unsavedMinutesRef.current += 1;
-        if (unsavedMinutesRef.current >= 5) flushToCloudflare();
-    }, 60000);
+
+        // 3. Flush every 5 minutes
+        if (unsavedMinutesRef.current >= 5) {
+            flushToCloudflare();
+        }
+    }, 60000); // Run every 60 seconds
 
     return () => {
         clearInterval(interval);
+        // Force save on unmount (leaving page)
         flushToCloudflare();
     };
   }, [username, isStudying]);
 
-  // Actions
+
   const joinSession = useCallback(() => setIsStudying(true), []);
   const leaveSession = useCallback(() => setIsStudying(false), []);
 
