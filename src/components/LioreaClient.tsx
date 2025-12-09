@@ -13,6 +13,7 @@ import StudyCalendar from './study/StudyCalendar';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
 import WelcomePanel from './WelcomePanel';
+import StatusPanel from './study/StatusPanel';
 
 export default function LioreaClient() {
   const { error, isLoading: isBackgroundLoading } = useBackground();
@@ -51,27 +52,37 @@ export default function LioreaClient() {
 
       <Header />
 
-      <div className="fixed left-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
-        <div className="space-y-4">
+      <main className="relative z-1 min-h-screen flex items-center justify-center text-white p-4">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+          
+          {/* Left Column */}
+          <div className="hidden md:block">
             <PresencePanel users={onlineUsers} />
-        </div>
-      </div>
+          </div>
 
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden md:block">
+          {/* Center Column */}
+          <div className="flex flex-col items-center gap-8 md:col-span-2">
+             <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 flex items-center">
+                    <WelcomePanel />
+                </div>
+                <div className="flex flex-col gap-4">
+                    <StatusPanel />
+                    <StudyCalendar />
+                </div>
+             </div>
+          </div>
+          
+        </div>
+      </main>
+      
+      {/* Right side for desktop, hidden on mobile */}
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-20 hidden lg:block">
         <div className="space-y-4">
             <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
             <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
         </div>
       </div>
-
-      <main className="relative z-1 min-h-screen flex flex-col items-center justify-center text-white p-4">
-        <WelcomePanel />
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="w-80">
-            <StudyCalendar />
-          </div>
-        </div>
-      </main>
     </>
   );
 }
