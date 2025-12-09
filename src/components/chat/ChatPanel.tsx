@@ -98,7 +98,7 @@ export default function ChatPanel() {
           <Input
             type="text"
             placeholder="Type your message..."
-            className="bg-black/30 border-white/30 focus-visible:ring-accent placeholder:text-white/60"
+            className="bg-transparent border-white/30 focus-visible:ring-accent placeholder:text-white/60"
             value={newMessage}
             onChange={handleInputChange}
           />
