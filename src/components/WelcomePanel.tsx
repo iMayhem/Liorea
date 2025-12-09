@@ -27,13 +27,13 @@ export default function WelcomePanel() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full text-center">
       {isEditingName ? (
-        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md p-2 rounded-lg border border-white/20 animate-in fade-in zoom-in">
+        <div className="flex items-center justify-center gap-2 bg-black/40 backdrop-blur-md p-2 rounded-lg border border-white/20 animate-in fade-in zoom-in">
           <Input 
             value={tempName} 
             onChange={(e) => setTempName(e.target.value)} 
-            className="text-4xl font-bold h-12 w-auto bg-transparent border-none focus-visible:ring-0 text-white"
+            className="text-3xl font-bold h-12 w-auto bg-transparent border-none focus-visible:ring-0 text-white"
             autoFocus
           />
           <Button size="icon" variant="ghost" onClick={handleNameSave} className="hover:bg-green-500/20 text-green-400">
@@ -44,8 +44,8 @@ export default function WelcomePanel() {
           </Button>
         </div>
       ) : (
-        <div className="group flex items-center gap-3">
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+        <div className="group flex items-center justify-center gap-3">
+          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
             Welcome, {username}!
           </h1>
           <button 

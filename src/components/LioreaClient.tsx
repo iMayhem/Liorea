@@ -53,7 +53,7 @@ export default function LioreaClient() {
       <Header />
 
       <main className="relative z-1 min-h-screen flex items-center justify-center text-white p-4">
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           
           {/* Left Column */}
           <div className="hidden md:block">
@@ -61,16 +61,12 @@ export default function LioreaClient() {
           </div>
 
           {/* Center Column */}
-          <div className="flex flex-col items-center gap-8 md:col-span-2">
-             <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 flex items-center">
-                    <WelcomePanel />
-                </div>
-                <div className="flex flex-col gap-4">
-                    <StatusPanel />
-                    <StudyCalendar />
-                </div>
-             </div>
+          <div className="flex flex-col items-center justify-center gap-8 md:col-span-2 w-full">
+            <WelcomePanel />
+            <div className="flex flex-col gap-4 w-full max-w-sm">
+                <StatusPanel />
+                <StudyCalendar />
+            </div>
           </div>
           
         </div>
