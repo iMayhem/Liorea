@@ -140,6 +140,13 @@ export default function ChatPanel() {
     if (messages.length) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
+  const getTypingMessage = () => {
+    if (typingUsers.length === 0) return null;
+    if (typingUsers.length === 1) return `${typingUsers[0]} is typing...`;
+    if (typingUsers.length === 2) return `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
+    return 'Several people are typing...';
+  };
+
   // Helper to group reactions
   const getReactionGroups = (reactions: Record<string, any> | undefined) => {
       if (!reactions) return {};
@@ -156,8 +163,8 @@ export default function ChatPanel() {
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full shadow-xl relative">
-      <CardHeader className="p-4 border-b border-white/20 shrink-0">
+    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full shadow-xl relative overflow-hidden">
+      <CardHeader className="p-4 border-b border-white/20 shrink-0 bg-black/20">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
           Group Chat
@@ -165,7 +172,7 @@ export default function ChatPanel() {
       </CardHeader>
       
       <CardContent className="p-0 flex-1 min-h-0 relative">
-        <ScrollArea className="h-full w-full pr-4">
+        <ScrollArea className="h-full w-full">
           <div className="p-4 pb-2">
             {messages.map((msg, index) => {
               // Grouping Logic
@@ -177,41 +184,36 @@ export default function ChatPanel() {
               const reactionGroups = getReactionGroups(msg.reactions);
 
               return (
-                <div key={msg.id} className={`group relative flex gap-3 ${showHeader ? 'mt-4' : 'mt-0.5'} ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+                <div 
+                    key={msg.id} 
+                    className={`group relative flex gap-4 pr-2 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
+                >
                    
-                   {/* Avatar Column */}
-                   <div className="w-8 shrink-0 flex flex-col items-center">
-                       {showHeader && !isCurrentUser && (
-                            <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-8 h-8" />
-                       )}
-                       {!showHeader && !isCurrentUser && (
-                           <span className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                   {/* Avatar / Timestamp Column */}
+                   <div className="w-10 shrink-0 select-none pt-0.5">
+                       {showHeader ? (
+                            <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
+                       ) : (
+                           <div className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
                                {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}
-                           </span>
+                           </div>
                        )}
                    </div>
 
                    {/* Content Column */}
-                   <div className={`flex flex-col max-w-[75%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
+                   <div className="flex-1 min-w-0">
                         {/* Header Name & Time */}
                         {showHeader && (
-                            <div className={`flex items-baseline gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
-                                <span className="text-sm font-bold text-white/90">{msg.username}</span>
-                                <span className="text-[10px] text-white/40">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
+                            <div className="flex items-center gap-2 mb-1 select-none">
+                                <span className="text-base font-semibold text-white hover:underline cursor-pointer">{msg.username}</span>
+                                <span className="text-xs text-white/30 ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
                             </div>
                         )}
 
-                        {/* Message Bubble */}
-                        <div className={`relative rounded-2xl px-3 py-2 text-sm leading-relaxed break-words shadow-sm group-hover:shadow-md transition-shadow
-                            ${isCurrentUser 
-                                ? 'bg-indigo-600 text-white rounded-tr-none' 
-                                : 'bg-[#2b2d31] text-zinc-100 rounded-tl-none border border-white/5'
-                            }
-                            ${!showHeader && isCurrentUser ? 'rounded-tr-2xl' : ''}
-                            ${!showHeader && !isCurrentUser ? 'rounded-tl-2xl' : ''}
-                        `}>
+                        {/* Message Text / GIF */}
+                        <div className="text-base text-zinc-100 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
                             {msg.image_url ? (
-                                <img src={msg.image_url} alt="GIF" className="max-w-[200px] rounded-lg" loading="lazy" />
+                                <img src={msg.image_url} alt="GIF" className="max-w-[250px] rounded-lg mt-1" loading="lazy" />
                             ) : (
                                 <FormattedMessage content={msg.message} />
                             )}
@@ -219,15 +221,15 @@ export default function ChatPanel() {
 
                         {/* Reactions Display */}
                         {Object.keys(reactionGroups).length > 0 && (
-                            <div className={`flex flex-wrap gap-1 mt-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                            <div className="flex flex-wrap gap-1 mt-2 select-none">
                                 {Object.entries(reactionGroups).map(([emoji, data]) => (
                                     <button 
                                         key={emoji} 
                                         onClick={() => sendReaction(msg.id, emoji)} 
-                                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/50 text-indigo-100' : 'bg-black/20 border-white/10 text-white/70 hover:bg-white/10'}`}
+                                        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-[#2b2d31] border-transparent hover:border-white/20'}`}
                                     >
-                                        <span>{emoji}</span>
-                                        {data.count > 1 && <span className="font-bold">{data.count}</span>}
+                                        <span className="text-base">{emoji}</span>
+                                        <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-zinc-300'}`}>{data.count}</span>
                                     </button>
                                 ))}
                             </div>
@@ -235,17 +237,17 @@ export default function ChatPanel() {
                    </div>
 
                    {/* Hover Actions (Emoji Reaction) */}
-                   <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center self-start mt-1 ${isCurrentUser ? 'mr-2' : 'ml-2'}`}>
+                   <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
                         <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
                             <PopoverTrigger asChild>
-                                <button className="p-1.5 bg-black/40 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors border border-white/5">
-                                    <Smile className="w-3.5 h-3.5" />
+                                <button className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors">
+                                    <Smile className="w-4 h-4" />
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-full shadow-2xl backdrop-blur-md" side="top">
+                            <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-lg shadow-xl" side="top" align="end" sideOffset={5}>
                                 <div className="flex gap-1">
                                     {QUICK_EMOJIS.map(emoji => (
-                                        <button key={emoji} className="p-1.5 hover:bg-white/10 rounded-full text-lg transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
+                                        <button key={emoji} className="p-2 hover:bg-white/10 rounded-md text-xl transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
                                     ))}
                                 </div>
                             </PopoverContent>
@@ -259,12 +261,22 @@ export default function ChatPanel() {
           </div>
         </ScrollArea>
         
-        {/* Dropups */}
+        {typingUsers.length > 0 && (
+            <div className="absolute bottom-16 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
+                {getTypingMessage()}
+            </div>
+        )}
+
+        {/* Mention Dropup */}
         {mentionQuery && mentionableUsers.length > 0 && (
-            <div className="absolute bottom-16 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
+            <div className="absolute bottom-14 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
                 <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
                 {mentionableUsers.map((u, i) => (
-                    <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
+                    <div 
+                        key={u} 
+                        className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} 
+                        onClick={() => insertMention(u)}
+                    >
                         <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
                     </div>
                 ))}
