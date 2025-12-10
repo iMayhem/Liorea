@@ -204,9 +204,12 @@ export default function JournalPage() {
                             <div className={`h-24 w-full ${journal.theme_color || 'bg-blue-900'} opacity-80 group-hover:opacity-100 transition-opacity`} />
                             <CardContent className="p-5 -mt-10 relative z-10">
                                 <div className="flex justify-between items-end">
-                                     <div className="h-16 w-16 rounded-xl bg-black border-4 border-black/20 overflow-hidden shadow-lg flex items-center justify-center text-2xl font-bold">
-                                        {journal.title.charAt(0).toUpperCase()}
-                                     </div>
+                                     {/* UPDATED: Using UserAvatar for the Journal Card */}
+                                     <UserAvatar 
+                                        username={journal.username} 
+                                        className="h-16 w-16 rounded-xl border-4 border-black/20 shadow-lg text-2xl" 
+                                     />
+                                     
                                      <span className="text-xs text-white/50 font-mono mb-1">
                                         Updated {formatDate(journal.last_updated)}
                                      </span>
@@ -271,47 +274,41 @@ export default function JournalPage() {
                              </div>
                         </div>
 
-                        {posts.map((post, index) => {
-                            // Check if previous post was same user (to group visually)
-                            const isSequence = index > 0 && posts[index - 1].username === post.username;
-                            
-                            return (
-                                <div key={post.id} className={`group flex gap-4 ${isSequence ? 'mt-1' : 'mt-6'}`}>
-                                    {!isSequence ? (
-                                        <UserAvatar username={post.username} className="w-10 h-10 mt-1" />
-                                    ) : (
-                                        <div className="w-10" /> /* Spacer */
-                                    )}
-                                    
-                                    <div className="flex-1">
-                                        {!isSequence && (
-                                            <div className="flex items-baseline gap-2">
-                                                <span className="font-bold text-white hover:underline cursor-pointer">
-                                                    {post.username}
-                                                </span>
-                                                <span className="text-[10px] text-white/40">
-                                                    {formatDate(post.created_at)} at {formatTime(post.created_at)}
-                                                </span>
-                                                {post.username === activeJournal.username && (
-                                                    <span className="text-[9px] bg-accent text-black px-1 rounded font-bold uppercase">OP</span>
-                                                )}
-                                            </div>
-                                        )}
-                                        
-                                        <div className="text-white/90 leading-relaxed whitespace-pre-wrap mt-0.5">
-                                            {post.content}
-                                        </div>
-                                        
-                                        {/* Image Placeholder if url exists */}
-                                        {post.image_url && (
-                                            <div className="mt-2 rounded-lg overflow-hidden border border-white/10 max-w-md">
-                                                <img src={post.image_url} alt="Attachment" className="w-full h-auto" />
-                                            </div>
+                        {posts.map((post) => (
+                            // UPDATED: No grouping logic. Every message gets an avatar.
+                            // UPDATED: Reduced vertical gap to mt-3
+                            <div key={post.id} className="group flex gap-4 mt-3">
+                                
+                                {/* Always show Avatar */}
+                                <UserAvatar username={post.username} className="w-10 h-10 mt-1 shrink-0" />
+                                
+                                <div className="flex-1 min-w-0">
+                                    {/* Always show Header */}
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="font-bold text-white hover:underline cursor-pointer truncate">
+                                            {post.username}
+                                        </span>
+                                        <span className="text-[10px] text-white/40 shrink-0">
+                                            {formatDate(post.created_at)} at {formatTime(post.created_at)}
+                                        </span>
+                                        {post.username === activeJournal.username && (
+                                            <span className="text-[9px] bg-accent text-black px-1 rounded font-bold uppercase shrink-0">OP</span>
                                         )}
                                     </div>
+                                    
+                                    <div className="text-white/90 leading-relaxed whitespace-pre-wrap mt-0.5 break-words">
+                                        {post.content}
+                                    </div>
+                                    
+                                    {/* Image Placeholder if url exists */}
+                                    {post.image_url && (
+                                        <div className="mt-2 rounded-lg overflow-hidden border border-white/10 max-w-md">
+                                            <img src={post.image_url} alt="Attachment" className="w-full h-auto" />
+                                        </div>
+                                    )}
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
                         <div ref={scrollRef} />
                     </div>
                 </ScrollArea>
