@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card'; // Ensure Card is imported
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -99,11 +99,16 @@ function JournalContent() {
   const searchParams = useSearchParams();
   const router = useRouter(); 
   
-  const [view, setView] = useState<'gallery' | 'chat'>('gallery');
   const [journals, setJournals] = useState<Journal[]>([]);
   const [activeJournal, setActiveJournal] = useState<Journal | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   
+  // PAGINATION STATE
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
+  const prevScrollHeight = useRef(0);
+
   const [followedIds, setFollowedIds] = useState<number[]>([]);
   const [currentFollowers, setCurrentFollowers] = useState<string[]>([]);
   
@@ -137,7 +142,54 @@ function JournalContent() {
   // NEW: Track which message has the reaction picker open
   const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
 
-  // 1. INITIAL LOAD
+  // --- API FUNCTIONS (Defined BEFORE useEffect) ---
+
+  const fetchJournals = async () => { 
+      try { 
+          const res = await fetch(`${WORKER_URL}/journals/list`); 
+          if(res.ok) setJournals(await res.json()); 
+      } catch (e) { console.error(e); } 
+  };
+
+  const fetchPosts = async (id: number, before?: number, isUpdate = false) => {
+      try {
+          const url = `${WORKER_URL}/journals/posts?id=${id}${before ? `&before=${before}` : ''}`;
+          const res = await fetch(url);
+          if(res.ok) {
+              const newPosts: Post[] = await res.json();
+              
+              if (before) {
+                  // PAGINATION LOAD (Older posts)
+                  if (newPosts.length < 20) setHasMore(false);
+                  setPosts(prev => [...newPosts, ...prev]);
+                  setLoadingMore(false);
+              } else {
+                  // INITIAL LOAD or UPDATE
+                  if (isUpdate) {
+                      setPosts(prev => {
+                          const existingIds = new Set(prev.map(p => p.id));
+                          const uniqueNew = newPosts.filter(p => !existingIds.has(p.id));
+                          if (uniqueNew.length === 0) return prev;
+                          return [...prev, ...uniqueNew]; // Append new ones at end
+                      });
+                  } else {
+                      // Full replacement (First load of journal)
+                      setPosts(newPosts);
+                      if (newPosts.length < 20) setHasMore(false);
+                  }
+              }
+          }
+      } catch (e) { console.error(e); setLoadingMore(false); }
+  };
+
+  const fetchFollowers = async (id: number) => { 
+      try { 
+          const res = await fetch(`${WORKER_URL}/journals/followers?id=${id}`); 
+          if (res.ok) setCurrentFollowers(await res.json()); 
+      } catch (e) {} 
+  };
+
+  // 1. INITIAL LOAD (Journals List)
   useEffect(() => {
     const init = async () => {
         if (username) {
@@ -158,10 +210,10 @@ function JournalContent() {
                      const list: Journal[] = await res.json();
                      setJournals(list);
                      const freshFound = list.find(j => j.id.toString() === targetId);
-                     if (freshFound) { setActiveJournal(freshFound); setView('chat'); }
+                     if (freshFound) { setActiveJournal(freshFound); }
                  }
-            } else { setActiveJournal(found); setView('chat'); }
-        } else { setActiveJournal(null); setView('gallery'); }
+            } else { setActiveJournal(found); }
+        } else { setActiveJournal(null); }
     };
     init();
     
@@ -170,51 +222,89 @@ function JournalContent() {
     return () => unsubscribe();
   }, [searchParams, username]); 
 
-  // 2. CHAT LISTENER
+  // 2. CHAT INIT & SIGNAL LISTENER
   useEffect(() => {
     if (!activeJournal) return;
+    
+    // Reset state for new journal
+    setPosts([]);
+    setHasMore(true);
+    setIsInitialLoaded(false);
+    
+    // Initial Fetch
     fetchPosts(activeJournal.id);
     fetchFollowers(activeJournal.id);
+
+    // Listen for real-time updates (signals)
     const signalRef = ref(db, `journal_signals/${activeJournal.id}`);
-    const unsubscribe = onValue(signalRef, (snapshot) => { if (snapshot.exists()) fetchPosts(activeJournal.id); });
+    const unsubscribe = onValue(signalRef, (snapshot) => { 
+        if (snapshot.exists()) {
+            fetchPosts(activeJournal.id, undefined, true); 
+        } 
+    });
     return () => unsubscribe();
   }, [activeJournal]);
 
   // --- SCROLL LOGIC ---
-  
-  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-      bottomRef.current?.scrollIntoView({ behavior });
-      setShowScrollButton(false);
-  };
 
-  const handleScroll = () => {
-      if (!scrollContainerRef.current) return;
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      const isDistanceFromBottom = scrollHeight - scrollTop - clientHeight > 100;
-      setShowScrollButton(isDistanceFromBottom);
-  };
+  // 1. Initial Load: Teleport to bottom
+  useLayoutEffect(() => {
+      if (posts.length > 0 && !isInitialLoaded && activeJournal) {
+          if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
+          setIsInitialLoaded(true);
+      }
+  }, [posts, isInitialLoaded, activeJournal]);
 
+  // 2. New Message: Auto-Scroll (if at bottom)
   useEffect(() => {
-    if (!activeJournal) return;
+      if (isInitialLoaded && posts.length > prevPostsLength.current) {
+          const container = scrollContainerRef.current;
+          if (container) {
+              const { scrollTop, scrollHeight, clientHeight } = container;
+              // If user is near bottom (<150px) or if it's their own message
+              const lastPost = posts[posts.length - 1];
+              const isMyPost = lastPost?.username === username;
+              
+              if (isMyPost || scrollHeight - scrollTop - clientHeight < 150) {
+                  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+              }
+          }
+      }
+      prevPostsLength.current = posts.length;
+  }, [posts.length, isInitialLoaded, username]);
 
-    // 1. Channel Switch: Always jump to bottom instantly
-    if (activeJournal.id !== prevJournalId.current) {
-        scrollToBottom("instant");
-    } 
-    // 2. New Message Arrived
-    else if (posts.length > prevPostsLength.current) {
-        const lastPost = posts[posts.length - 1];
-        const isMyPost = lastPost.username === username;
-        
-        if (isMyPost || !showScrollButton) {
-            scrollToBottom("smooth");
-        }
-    }
+  // 3. Pagination: Detect Scroll Up
+  const handleScroll = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-    // Update Refs
-    prevPostsLength.current = posts.length;
-    prevJournalId.current = activeJournal.id;
-  }, [posts, activeJournal, username]);
+      // Show/Hide Scroll Button
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
+
+      // Trigger Load More
+      if (scrollTop < 50 && hasMore && !loadingMore && posts.length > 0) {
+          setLoadingMore(true);
+          prevScrollHeight.current = scrollHeight; // Capture height
+          const oldestPost = posts[0];
+          if (activeJournal) {
+              fetchPosts(activeJournal.id, oldestPost.created_at);
+          }
+      }
+  };
+
+  // 4. Restore Position after Pagination
+  useLayoutEffect(() => {
+      const container = scrollContainerRef.current;
+      if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
+          const newScrollHeight = container.scrollHeight;
+          const diff = newScrollHeight - prevScrollHeight.current;
+          container.scrollTop = diff + container.scrollTop;
+          prevScrollHeight.current = 0;
+      }
+  }, [posts]);
 
 
   // --- GIF FETCHING ---
@@ -232,8 +322,10 @@ function JournalContent() {
 
   const handleSendGif = async (url: string) => {
       if (!activeJournal || !username) return;
+      // Optimistic Update
       const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
-      setPosts([...posts, tempPost]); 
+      setPosts(prev => [...prev, tempPost]); 
+      
       try {
           await fetch(`${WORKER_URL}/journals/post`, {
               method: "POST",
@@ -243,10 +335,6 @@ function JournalContent() {
           notifyChatUpdate(activeJournal.id);
       } catch (e) { console.error(e); }
   };
-
-  const fetchJournals = async () => { try { const res = await fetch(`${WORKER_URL}/journals/list`); if(res.ok) setJournals(await res.json()); } catch (e) { console.error(e); } };
-  const fetchPosts = async (id: number) => { try { const res = await fetch(`${WORKER_URL}/journals/posts?id=${id}`); if(res.ok) setPosts(await res.json()); } catch (e) { console.error(e); } };
-  const fetchFollowers = async (id: number) => { try { const res = await fetch(`${WORKER_URL}/journals/followers?id=${id}`); if (res.ok) setCurrentFollowers(await res.json()); } catch (e) {} };
 
   const sortedJournals = useMemo(() => {
       return [...journals].sort((a, b) => {
@@ -268,9 +356,9 @@ function JournalContent() {
   const handleReact = async (post_id: number, emoji: string) => {
       if (!username || !activeJournal) return;
       
-      // CLOSE POPOVER IMMEDIATELY
       setOpenReactionPopoverId(null); 
 
+      // Optimistic Update
       setPosts(currentPosts => currentPosts.map(p => {
           if (p.id !== post_id) return p;
           const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji);
@@ -306,9 +394,9 @@ function JournalContent() {
   const handleDeletePost = async (postId: number) => { if (!username) return; setPosts(posts.filter(p => p.id !== postId)); try { await fetch(`${WORKER_URL}/journals/post/delete`, { method: 'DELETE', body: JSON.stringify({ id: postId, username }), headers: { 'Content-Type': 'application/json' } }); if (activeJournal) notifyChatUpdate(activeJournal.id); } catch (e) { if(activeJournal) fetchPosts(activeJournal.id); } };
   const handleCardUploadClick = (journalId: number, e: React.MouseEvent) => { e.stopPropagation(); setUpdatingJournalId(journalId); cardFileInputRef.current?.click(); };
   const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files || !updatingJournalId || !username) return; const files = Array.from(e.target.files); if(files.length > 4) { toast({ variant: "destructive", title: "Limit" }); return; } toast({ title: "Uploading..." }); try { const urls: string[] = []; for (const file of files) { const compressed = await compressImage(file); const res = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressed }); if (res.ok) urls.push((await res.json()).url); } const updateRes = await fetch(`${WORKER_URL}/journals/update_images`, { method: 'POST', body: JSON.stringify({ id: updatingJournalId, images: urls.join(","), username }), headers: { 'Content-Type': 'application/json' } }); if (updateRes.ok) notifyGlobalUpdate(); } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; } };
-  const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return; setIsUploadingChatImage(true); try { const compressed = await compressImage(e.target.files[0]); const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressed }); if (!uploadRes.ok) throw new Error("Upload failed"); const { url } = await uploadRes.json(); const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() }; setPosts([...posts, tempPost]); await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setIsUploadingChatImage(false); if (chatFileInputRef.current) chatFileInputRef.current.value = ""; } };
+  const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return; setIsUploadingChatImage(true); try { const compressed = await compressImage(e.target.files[0]); const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressed }); if (!uploadRes.ok) throw new Error("Upload failed"); const { url } = await uploadRes.json(); const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() }; setPosts(prev => [...prev, tempPost]); await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setIsUploadingChatImage(false); if (chatFileInputRef.current) chatFileInputRef.current.value = ""; } };
   const createJournal = async () => { if (!newTitle.trim() || !username) return; try { await fetch(`${WORKER_URL}/journals/create`, { method: "POST", body: JSON.stringify({ username, title: newTitle, tags: newTags, images: "", theme: "bg-black" }), headers: { "Content-Type": "application/json" } }); setNewTitle(""); setNewTags(""); setIsDialogOpen(false); notifyGlobalUpdate(); } catch (e) { console.error(e); } };
-  const sendPost = async () => { if (!newMessage.trim() || !activeJournal || !username) return; const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() }; setPosts([...posts, tempPost]); setNewMessage(""); const mentions = tempPost.content.match(/@(\w+)/g); if (mentions) { const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); uniqueUsers.forEach(taggedUser => { if (taggedUser !== username) { addNotification( `${username} mentioned you in "${activeJournal.title}"`, taggedUser, `/journal?id=${activeJournal.id}` ); } }); } try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: tempPost.content }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
+  const sendPost = async () => { if (!newMessage.trim() || !activeJournal || !username) return; const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() }; setPosts(prev => [...prev, tempPost]); setNewMessage(""); const mentions = tempPost.content.match(/@(\w+)/g); if (mentions) { const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); uniqueUsers.forEach(taggedUser => { if (taggedUser !== username) { addNotification( `${username} mentioned you in "${activeJournal.title}"`, taggedUser, `/journal?id=${activeJournal.id}` ); } }); } try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: tempPost.content }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   const JournalCollage = ({ imagesStr }: { imagesStr?: string }) => { const images = imagesStr ? imagesStr.split(',').filter(Boolean) : []; if (images.length === 0) return <div className="w-full h-full bg-black/40" />; return ( <div className="grid grid-cols-2 grid-rows-2 w-full h-full"> <div className={`relative ${images.length === 1 ? 'col-span-2 row-span-2' : ''} ${images.length === 3 ? 'row-span-2' : ''} overflow-hidden border-r border-b border-black/10`}><img src={images[0]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div> {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/10`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/10`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} </div> ); };
@@ -410,12 +498,13 @@ function JournalContent() {
 
                     {/* REPLACED ScrollArea WITH NATIVE DIV FOR BETTER CONTROL */}
                     <div 
-                        className="flex-1 p-4 overflow-y-auto no-scrollbar relative"
+                        className={`flex-1 p-0 overflow-y-auto no-scrollbar relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
                         ref={scrollContainerRef}
                         onScroll={handleScroll}
                     >
-                        <div className="space-y-1 pb-2">
-                            <div className="text-center py-8 select-none"><div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-3"><Hash className="w-6 h-6 text-white/20" /></div><p className="text-sm text-white/30">Start of history</p></div>
+                        <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
+                            {hasMore && <div className="text-center py-4 text-xs text-white/30"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
+                            {!hasMore && posts.length > 0 && <div className="text-center py-8 select-none"><div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-3"><Hash className="w-6 h-6 text-white/20" /></div><p className="text-sm text-white/30">Start of history</p></div>}
                             
                             {posts.map((post, index) => {
                                 const isSequence = index > 0 && posts[index - 1].username === post.username;
@@ -495,20 +584,20 @@ function JournalContent() {
                             })}
                             <div ref={bottomRef} />
                         </div>
-                        {/* SCROLL TO BOTTOM BUTTON */}
-                        {showScrollButton && (
-                            <button 
-                                onClick={() => scrollToBottom()}
-                                className="absolute bottom-6 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 hover:scale-105 transition-all animate-in fade-in zoom-in"
-                            >
-                                <ChevronDown className="w-6 h-6" />
-                            </button>
-                        )}
                     </div>
+                    {/* SCROLL TO BOTTOM BUTTON */}
+                    {showScrollButton && (
+                        <button 
+                            onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                            className="absolute bottom-20 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 hover:scale-105 transition-all animate-in fade-in zoom-in z-20"
+                        >
+                            <ChevronDown className="w-5 h-5" />
+                        </button>
+                    )}
 
                     {/* Mention Dropup */}
                     {mentionQuery && mentionableUsers.length > 0 && (
-                        <div className="absolute bottom-20 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none">
+                        <div className="absolute bottom-20 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
                             <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
                             {mentionableUsers.map((u, i) => (
                                 <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
