@@ -53,15 +53,22 @@ export default function JournalPage() {
   const [activeJournal, setActiveJournal] = useState<Journal | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   
+  // Creation State
   const [newTitle, setNewTitle] = useState("");
   const [newTags, setNewTags] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
+  // Update/Delete State
   const [journalToDelete, setJournalToDelete] = useState<number | null>(null);
   const [updatingJournalId, setUpdatingJournalId] = useState<number | null>(null);
-  const cardFileInputRef = useRef<HTMLInputElement>(null);
   
+  // Refs for File Inputs
+  const cardFileInputRef = useRef<HTMLInputElement>(null);
+  const chatFileInputRef = useRef<HTMLInputElement>(null); // NEW: For Chat Images
+  
+  // Posting State
   const [newMessage, setNewMessage] = useState("");
+  const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchJournals(); }, []);
@@ -93,6 +100,8 @@ export default function JournalPage() {
     } catch (e) { console.error(e); }
   };
 
+  // --- ACTIONS ---
+
   const handleDeleteJournal = async () => {
       if (!journalToDelete || !username) return;
       try {
@@ -114,7 +123,6 @@ export default function JournalPage() {
   const handleDeletePost = async (postId: number) => {
       if (!username) return;
       setPosts(posts.filter(p => p.id !== postId));
-      
       try {
           await fetch(`${WORKER_URL}/journals/post/delete`, {
               method: 'DELETE',
@@ -127,6 +135,7 @@ export default function JournalPage() {
       }
   };
 
+  // --- CARD COVER UPLOAD ---
   const handleCardUploadClick = (journalId: number, e: React.MouseEvent) => {
       e.stopPropagation(); 
       setUpdatingJournalId(journalId);
@@ -161,6 +170,39 @@ export default function JournalPage() {
           } 
       } catch (error) { toast({ variant: "destructive", title: "Error", description: "Upload failed." }); } 
       finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; }
+  };
+
+  // --- CHAT IMAGE UPLOAD (NEW) ---
+  const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return;
+      const file = e.target.files[0];
+      
+      setIsUploadingChatImage(true);
+      toast({ title: "Uploading...", description: "Sending image..." });
+
+      try {
+          // 1. Upload to R2
+          const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: file });
+          if (!uploadRes.ok) throw new Error("Upload failed");
+          const { url } = await uploadRes.json();
+
+          // 2. Send Post with Image URL
+          const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
+          setPosts([...posts, tempPost]); // Optimistic update
+
+          await fetch(`${WORKER_URL}/journals/post`, {
+              method: "POST",
+              body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }),
+              headers: { "Content-Type": "application/json" }
+          });
+          
+          fetchPosts(activeJournal.id); // Sync
+      } catch (error) {
+          toast({ variant: "destructive", title: "Error", description: "Failed to send image." });
+      } finally {
+          setIsUploadingChatImage(false);
+          if (chatFileInputRef.current) chatFileInputRef.current.value = "";
+      }
   };
 
   const createJournal = async () => {
@@ -223,7 +265,10 @@ export default function JournalPage() {
   return (
     <div className="min-h-screen text-white bg-transparent">
       <Header />
+      
+      {/* Hidden File Inputs */}
       <input type="file" ref={cardFileInputRef} className="hidden" accept="image/*" multiple onChange={handleCardFileChange} />
+      <input type="file" ref={chatFileInputRef} className="hidden" accept="image/*" onChange={handleChatFileChange} />
       
       <main className="container mx-auto pt-24 pb-10 px-4 h-screen flex flex-col">
         {/* GALLERY VIEW */}
@@ -300,12 +345,15 @@ export default function JournalPage() {
 
                 <ScrollArea className="flex-1 p-4">
                     <div className="space-y-6 pb-4">
-                        <div className="flex gap-4 p-6 bg-white/5 rounded-xl border border-white/5 mb-8">
-                             <div className="h-16 w-16 bg-accent rounded-full flex items-center justify-center text-3xl shrink-0 text-black">📚</div>
+                        
+                        {/* COMPACT WELCOME HEADER */}
+                        <div className="flex items-center gap-4 px-2 py-4 mb-4 border-b border-white/10">
+                             <div className="h-12 w-12 bg-accent rounded-full flex items-center justify-center text-2xl shrink-0 text-black">
+                                📚
+                             </div>
                              <div>
-                                <h3 className="text-xl font-bold">Welcome to {activeJournal.title}!</h3>
-                                <p className="text-white/60 mt-1">This is the beginning of {activeJournal.username}'s journey.</p>
-                                <div className="text-xs text-white/40 mt-2">Started on {formatDate(activeJournal.last_updated)}</div> 
+                                <h3 className="text-lg font-bold">Welcome to {activeJournal.title}</h3>
+                                <p className="text-white/50 text-xs">This is the start of {activeJournal.username}&apos;s journey. {formatDate(activeJournal.last_updated)}</p>
                              </div>
                         </div>
 
@@ -335,7 +383,17 @@ export default function JournalPage() {
 
                 <div className="p-4 bg-black/20 border-t border-white/10 shrink-0">
                     <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-xl border border-white/10 focus-within:border-white/30 transition-colors">
-                        <Button variant="ghost" size="icon" className="text-white/50 hover:text-white h-10 w-10 shrink-0 rounded-lg"><ImageIcon className="w-5 h-5" /></Button>
+                        {/* IMAGE UPLOAD BUTTON (WIRED UP) */}
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            disabled={isUploadingChatImage}
+                            onClick={() => chatFileInputRef.current?.click()} // Triggers file input
+                            className="text-white/50 hover:text-white h-10 w-10 shrink-0 rounded-lg"
+                        >
+                             {isUploadingChatImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                        </Button>
+                        
                         <textarea value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); } }} placeholder={`Message #${activeJournal.title}`} className="w-full bg-transparent border-none focus:ring-0 text-white placeholder:text-white/30 resize-none py-2 max-h-32 min-h-[40px]" rows={1} />
                         <Button onClick={sendPost} disabled={!newMessage.trim()} className="bg-accent text-black hover:bg-white h-10 w-10 shrink-0 rounded-lg p-0"><Send className="w-4 h-4" /></Button>
                     </div>
