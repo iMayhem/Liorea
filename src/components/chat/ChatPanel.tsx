@@ -8,11 +8,7 @@ import { Send, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useChat } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-
-const USER_COLORS = [
-  'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
-];
+import UserAvatar from '../UserAvatar';
 
 export default function ChatPanel() {
   const { messages, sendMessage, sendTypingEvent, typingUsers } = useChat();
@@ -29,17 +25,11 @@ export default function ChatPanel() {
     }
   };
   
-  const getUserColor = (username: string) => {
-    const charCodeSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return USER_COLORS[charCodeSum % USER_COLORS.length];
-  };
-  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setNewMessage(e.target.value);
       sendTypingEvent();
   };
 
-  // Scroll to the bottom only on the initial load of messages
   useEffect(() => {
     if (messages.length) {
       bottomRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -62,12 +52,6 @@ export default function ChatPanel() {
         </CardTitle>
       </CardHeader>
       
-      {/* 
-         CRITICAL FIX: 
-         flex-1: Takes up remaining space.
-         min-h-0: Prevents the container from expanding beyond the parent's height limit.
-         This forces the ScrollArea to actually scroll instead of stretching the card.
-      */}
       <CardContent className="p-0 flex-1 min-h-0 relative">
         <ScrollArea className="h-full w-full pr-4" ref={scrollAreaRef}>
           <div className="p-4 space-y-4">
@@ -76,10 +60,11 @@ export default function ChatPanel() {
               return (
                 <div key={index} className={`flex items-start gap-3 ${isCurrentUser ? 'justify-end' : ''}`}>
                    {!isCurrentUser && (
-                     <Avatar className="w-8 h-8 border-2 border-primary shrink-0">
-                        <AvatarImage src={msg.photoURL} alt={msg.username} />
-                        <AvatarFallback className={`${getUserColor(msg.username)} text-white`}>{msg.username.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                     <UserAvatar 
+                        username={msg.username} 
+                        fallbackUrl={msg.photoURL} // Pass chat-specific backup
+                        className="w-8 h-8 shrink-0" 
+                     />
                    )}
                   <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
                      <div className={`rounded-lg px-3 py-2 max-w-[240px] break-words ${isCurrentUser ? 'bg-primary/80 text-primary-foreground' : 'bg-black/30'}`}>

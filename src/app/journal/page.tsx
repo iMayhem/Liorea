@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import UserAvatar from '@/components/UserAvatar';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
@@ -29,7 +29,7 @@ type Post = {
   content: string;
   image_url?: string;
   created_at: number;
-  photoURL?: string; // We might need to fetch user details to get this, keeping simple for now
+  photoURL?: string; 
 };
 
 export default function JournalPage() {
@@ -44,6 +44,7 @@ export default function JournalPage() {
   // Creation State
   const [newTitle, setNewTitle] = useState("");
   const [newTags, setNewTags] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Posting State
   const [newMessage, setNewMessage] = useState("");
@@ -72,37 +73,43 @@ export default function JournalPage() {
   }, [posts]);
 
   const fetchJournals = async () => {
-    const res = await fetch(`${WORKER_URL}/journals/list`);
-    if(res.ok) setJournals(await res.json());
+    try {
+        const res = await fetch(`${WORKER_URL}/journals/list`);
+        if(res.ok) setJournals(await res.json());
+    } catch (e) { console.error("Failed to load journals", e); }
   };
 
   const fetchPosts = async (id: number) => {
-    const res = await fetch(`${WORKER_URL}/journals/posts?id=${id}`);
-    if(res.ok) setPosts(await res.json());
+    try {
+        const res = await fetch(`${WORKER_URL}/journals/posts?id=${id}`);
+        if(res.ok) setPosts(await res.json());
+    } catch (e) { console.error("Failed to load posts", e); }
   };
 
   const createJournal = async () => {
     if (!newTitle.trim() || !username) return;
-    await fetch(`${WORKER_URL}/journals/create`, {
-        method: "POST",
-        body: JSON.stringify({ 
-            username, 
-            title: newTitle, 
-            tags: newTags,
-            theme: "bg-gradient-to-br from-indigo-500 to-purple-500" // Aesthetic default
-        }),
-        headers: { "Content-Type": "application/json" }
-    });
-    setNewTitle("");
-    setNewTags("");
-    fetchJournals();
-    // Close dialog logic would go here normally
+    try {
+        await fetch(`${WORKER_URL}/journals/create`, {
+            method: "POST",
+            body: JSON.stringify({ 
+                username, 
+                title: newTitle, 
+                tags: newTags,
+                theme: "bg-gradient-to-br from-indigo-500 to-purple-500" // Aesthetic default
+            }),
+            headers: { "Content-Type": "application/json" }
+        });
+        setNewTitle("");
+        setNewTags("");
+        setIsDialogOpen(false);
+        fetchJournals();
+    } catch (e) { console.error("Failed to create journal", e); }
   };
 
   const sendPost = async () => {
     if (!newMessage.trim() || !activeJournal || !username) return;
     
-    // Optimistic update
+    // Optimistic update (Show immediately)
     const tempPost = { 
         id: Date.now(), 
         username, 
@@ -112,16 +119,19 @@ export default function JournalPage() {
     setPosts([...posts, tempPost]);
     setNewMessage("");
 
-    await fetch(`${WORKER_URL}/journals/post`, {
-        method: "POST",
-        body: JSON.stringify({
-            journal_id: activeJournal.id,
-            username,
-            content: tempPost.content
-        }),
-        headers: { "Content-Type": "application/json" }
-    });
-    fetchPosts(activeJournal.id);
+    try {
+        await fetch(`${WORKER_URL}/journals/post`, {
+            method: "POST",
+            body: JSON.stringify({
+                journal_id: activeJournal.id,
+                username,
+                content: tempPost.content
+            }),
+            headers: { "Content-Type": "application/json" }
+        });
+        // Fetch real data to sync IDs
+        fetchPosts(activeJournal.id);
+    } catch (e) { console.error("Failed to send post", e); }
   };
 
   // --- RENDER HELPERS ---
@@ -149,7 +159,7 @@ export default function JournalPage() {
                         <p className="text-white/50">Read about others' journeys or document your own.</p>
                     </div>
                     
-                    <Dialog>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                             <Button className="bg-white text-black hover:bg-white/90">
                                 <Plus className="w-4 h-4 mr-2" /> New Journal
@@ -184,7 +194,7 @@ export default function JournalPage() {
                     </Dialog>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
                     {journals.map((journal) => (
                         <Card 
                             key={journal.id} 
@@ -217,6 +227,11 @@ export default function JournalPage() {
                             </CardContent>
                         </Card>
                     ))}
+                    {journals.length === 0 && (
+                        <div className="col-span-full text-center text-white/40 py-20">
+                            No journals found. Be the first to start one!
+                        </div>
+                    )}
                 </div>
             </div>
         )}
@@ -252,7 +267,7 @@ export default function JournalPage() {
                              <div>
                                 <h3 className="text-xl font-bold">Welcome to {activeJournal.title}!</h3>
                                 <p className="text-white/60 mt-1">This is the beginning of {activeJournal.username}'s journey.</p>
-                                <div className="text-xs text-white/40 mt-2">Started on {formatDate(activeJournal.last_updated)}</div> {/* Should be created_at ideally */}
+                                <div className="text-xs text-white/40 mt-2">Started on {formatDate(activeJournal.last_updated)}</div> 
                              </div>
                         </div>
 
@@ -263,10 +278,7 @@ export default function JournalPage() {
                             return (
                                 <div key={post.id} className={`group flex gap-4 ${isSequence ? 'mt-1' : 'mt-6'}`}>
                                     {!isSequence ? (
-                                         <Avatar className="w-10 h-10 mt-1 border border-white/10">
-                                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${post.username}`} />
-                                            <AvatarFallback>{post.username[0]}</AvatarFallback>
-                                        </Avatar>
+                                        <UserAvatar username={post.username} className="w-10 h-10 mt-1" />
                                     ) : (
                                         <div className="w-10" /> /* Spacer */
                                     )}

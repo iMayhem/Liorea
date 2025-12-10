@@ -27,6 +27,7 @@ interface PresenceContextType {
   username: string | null;
   userImage: string | null;
   setUsername: (name: string | null) => void;
+  setUserImage: (url: string | null) => void; // EXPORTED NOW
   studyUsers: StudyUser[];
   communityUsers: CommunityUser[];
   leaderboardUsers: StudyUser[];
@@ -35,6 +36,7 @@ interface PresenceContextType {
   leaveSession: () => void;
   updateStatusMessage: (msg: string) => Promise<void>;
   renameUser: (newName: string) => Promise<boolean>;
+  getUserImage: (username: string) => string | undefined; // NEW CENTRAL LOOKUP
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -154,7 +156,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [username, isStudying, userImage]);
 
-  // --- DATA LISTENERS (Filtered) ---
+  // --- DATA LISTENERS ---
   useEffect(() => {
      const fetchLeaderboard = async () => {
          try {
@@ -251,6 +253,25 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
       return Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
   }, [historicalLeaderboard, studyUsers, communityUsers]);
 
+  // --- CENTRAL IMAGE LOOKUP ---
+  const userImageMap = useMemo(() => {
+    const map = new Map<string, string>();
+    
+    // 1. Current User (Priority)
+    if (username && userImage) map.set(username, userImage);
+
+    // 2. Data Sources
+    historicalLeaderboard.forEach(u => { if (u.photoURL) map.set(u.username, u.photoURL); });
+    communityUsers.forEach(u => { if (u.photoURL) map.set(u.username, u.photoURL); });
+    studyUsers.forEach(u => { if (u.photoURL) map.set(u.username, u.photoURL); });
+
+    return map;
+  }, [username, userImage, historicalLeaderboard, communityUsers, studyUsers]);
+
+  const getUserImage = useCallback((targetUsername: string) => {
+    return userImageMap.get(targetUsername);
+  }, [userImageMap]);
+
   // --- TIMER ---
   useEffect(() => {
     if (!username || !isStudying) return;
@@ -294,26 +315,22 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Status Updated" });
   }, [username, toast]);
 
-  // SAFE RENAME FUNCTION
   const renameUser = useCallback(async (newName: string) => {
       if (!username) return false;
       const oldName = username;
 
       try {
-          // 1. Check with Cloudflare
           const response = await fetch(`${WORKER_URL}/user/rename`, {
               method: 'POST',
               body: JSON.stringify({ oldUsername: oldName, newUsername: newName }),
               headers: { 'Content-Type': 'application/json' }
           });
 
-          // 2. Handle Errors (e.g., Username Taken)
           if (!response.ok) {
               const data = await response.json();
               throw new Error(data.error || "Rename failed");
           }
 
-          // 3. Success -> Clean up Firebase
           await remove(ref(db, `/community_presence/${oldName}`));
           if (isStudying) {
               await remove(ref(db, `/study_room_presence/${oldName}`));
@@ -330,10 +347,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
   }, [username, isStudying, setUsername, toast]);
 
   const value = useMemo(() => ({
-    username, userImage, setUsername,
+    username, userImage, setUsername, setUserImage,
     studyUsers, leaderboardUsers, communityUsers, 
-    isStudying, joinSession, leaveSession, updateStatusMessage, renameUser
-  }), [username, userImage, setUsername, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser]);
+    isStudying, joinSession, leaveSession, updateStatusMessage, renameUser,
+    getUserImage
+  }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser, getUserImage]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };

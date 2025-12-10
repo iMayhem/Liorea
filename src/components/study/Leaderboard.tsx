@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Award, Clock, Trophy } from 'lucide-react';
 import { StudyUser } from '@/context/PresenceContext';
+import UserAvatar from '../UserAvatar';
 
 interface LeaderboardProps {
   users: StudyUser[];
@@ -13,17 +13,7 @@ const formatTime = (seconds: number) => {
     return `${h}h ${m}m`;
 };
 
-const USER_COLORS = [
-  'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
-];
-
-const getUserColor = (username: string) => {
-    const charCodeSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return USER_COLORS[charCodeSum % USER_COLORS.length];
-};
-
 export default function Leaderboard({ users }: LeaderboardProps) {
-  // Sort users by time (highest first)
   const sortedUsers = [...users].sort((a, b) => (b.total_study_time || 0) - (a.total_study_time || 0));
 
   const getRankColor = (rank: number) => {
@@ -48,10 +38,7 @@ export default function Leaderboard({ users }: LeaderboardProps) {
               <div className={`flex items-center justify-center w-6 font-bold ${getRankColor(index)}`}>
                 {index < 3 ? <Award className="w-5 h-5" /> : <span className="text-sm">#{index + 1}</span>}
               </div>
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={user.photoURL} alt={user.username} />
-                <AvatarFallback className={`${getUserColor(user.username)} text-white`}>{user.username.charAt(0)}</AvatarFallback>
-              </Avatar>
+              <UserAvatar username={user.username} className="w-10 h-10" />
               <div className="flex-grow">
                 <p className="font-semibold">{user.username}</p>
               </div>

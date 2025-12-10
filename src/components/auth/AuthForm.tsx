@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { Chrome, ArrowRight, ArrowLeft } from 'lucide-react'; 
+import { usePresence } from '@/context/PresenceContext'; // Import Context
 
 interface AuthFormProps {
   onLogin: (username: string) => void;
@@ -16,6 +17,7 @@ interface AuthFormProps {
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 export default function AuthForm({ onLogin }: AuthFormProps) {
+  const { setUserImage } = usePresence(); // Get the setter
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'google' | 'username'>('google');
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
@@ -32,8 +34,12 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
       
       if (!user.email) throw new Error("No email found.");
 
-      if (user.photoURL) localStorage.setItem('liorea-user-image', user.photoURL);
-      setGooglePhoto(user.photoURL);
+      // IMMEDIATE UPDATE: Fixes the delay bug
+      if (user.photoURL) {
+          localStorage.setItem('liorea-user-image', user.photoURL);
+          setGooglePhoto(user.photoURL);
+          setUserImage(user.photoURL); // Update global state instantly
+      }
 
       const res = await fetch(`${WORKER_URL}/auth/google-check`, {
           method: 'POST',
@@ -80,6 +86,9 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
           if (!res.ok || data.error) {
               throw new Error(data.error || "Failed to create account");
           }
+          
+          // IMMEDIATE UPDATE: Fixes delay for new users too
+          if (googlePhoto) setUserImage(googlePhoto);
 
           toast({ title: 'Welcome!', description: `Account created as ${data.username}` });
           onLogin(data.username);
@@ -130,7 +139,6 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
                     <p className="text-xs text-white/50 text-center">This will be your display name on the leaderboard.</p>
                 </div>
                 
-                {/* Updated Layout: Stacked buttons for center alignment */}
                 <div className="flex flex-col items-center gap-3">
                     <Button 
                         type="submit" 

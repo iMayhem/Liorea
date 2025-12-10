@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { CommunityUser } from '@/context/PresenceContext';
 import { Users, BookOpen } from 'lucide-react';
 import { Button } from '../ui/button';
+import UserAvatar from '../UserAvatar';
 
 interface PresencePanelProps {
   users: CommunityUser[];
@@ -20,16 +20,6 @@ const getTimeAgo = (timestamp?: number) => {
     const daysAgo = Math.floor(hoursAgo / 24);
     return `${daysAgo}d ago`;
 }
-
-const USER_COLORS = [
-  'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
-];
-
-const getUserColor = (username: string | undefined | null) => {
-    if (!username) return 'bg-gray-500'; // Safety Check
-    const charCodeSum = username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return USER_COLORS[charCodeSum % USER_COLORS.length];
-};
 
 export default function PresencePanel({ users }: PresencePanelProps) {
   const onlineCount = users.filter(u => u.status === 'Online').length;
@@ -55,12 +45,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
             return (
                 <div key={user.username} className="flex items-center gap-3 group">
                 <div className="relative">
-                    <Avatar className="w-9 h-9 border border-white/10">
-                      <AvatarImage src={user.photoURL} alt={user.username} />
-                      <AvatarFallback className={`${getUserColor(user.username)} text-white font-medium`}>
-                        {user.username ? user.username.charAt(0).toUpperCase() : '?'}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar username={user.username} className="w-9 h-9" />
                     
                     <span className={cn(
                         "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-background z-10",
