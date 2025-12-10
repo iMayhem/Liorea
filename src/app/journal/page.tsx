@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { usePresence } from '@/context/PresenceContext';
+import { useNotifications } from '@/context/NotificationContext'; // NEW IMPORT
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,9 +50,7 @@ type Post = {
 
 // --- HELPER COMPONENT: PARSES MENTIONS ---
 const FormattedMessage = ({ content }: { content: string }) => {
-    // Regex to find @username (alphanumeric + underscore)
     const parts = content.split(/(@\w+)/g);
-
     return (
         <span>
             {parts.map((part, i) => {
@@ -69,7 +68,8 @@ const FormattedMessage = ({ content }: { content: string }) => {
 };
 
 export default function JournalPage() {
-  const { username, leaderboardUsers } = usePresence(); // Get leaderboard for auto-complete
+  const { username, leaderboardUsers } = usePresence();
+  const { addNotification } = useNotifications(); // NEW
   const { toast } = useToast();
   
   const [view, setView] = useState<'gallery' | 'chat'>('gallery');
@@ -77,26 +77,22 @@ export default function JournalPage() {
   const [activeJournal, setActiveJournal] = useState<Journal | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   
-  // Creation State
   const [newTitle, setNewTitle] = useState("");
   const [newTags, setNewTags] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  // Update/Delete State
   const [journalToDelete, setJournalToDelete] = useState<number | null>(null);
   const [updatingJournalId, setUpdatingJournalId] = useState<number | null>(null);
   
-  // Refs
   const cardFileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null); 
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   
-  // Posting State
   const [newMessage, setNewMessage] = useState("");
   const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // --- MENTION STATE ---
+  // Mention State
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
 
@@ -140,40 +136,22 @@ export default function JournalPage() {
     } catch (e) { console.error(e); }
   };
 
-  // --- MENTION LOGIC: GET USERS ---
+  // --- MENTION LOGIC ---
   const mentionableUsers = useMemo(() => {
       if (!mentionQuery) return [];
-      
-      // Combine Chat Participants + Leaderboard Users
       const chatUsers = posts.map(p => p.username);
       const lbUsers = leaderboardUsers.map(u => u.username);
-      
-      // Unique set of usernames
       const allUsers = Array.from(new Set([...chatUsers, ...lbUsers]));
-      
-      // Filter by query
-      return allUsers
-        .filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase()))
-        .slice(0, 5); // Limit to 5 results
+      return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5);
   }, [mentionQuery, posts, leaderboardUsers]);
 
-  // --- INPUT HANDLERS ---
-  
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const val = e.target.value;
       setNewMessage(val);
-
-      // Detect Mentions
       const cursorPos = e.target.selectionStart;
       const textBeforeCursor = val.slice(0, cursorPos);
-      const match = textBeforeCursor.match(/@(\w*)$/); // Matches @ followed by letters at end
-
-      if (match) {
-          setMentionQuery(match[1]);
-          setMentionIndex(0); // Reset selection
-      } else {
-          setMentionQuery(null);
-      }
+      const match = textBeforeCursor.match(/@(\w*)$/); 
+      if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); }
   };
 
   const insertMention = (user: string) => {
@@ -181,7 +159,6 @@ export default function JournalPage() {
       const cursorPos = chatInputRef.current?.selectionStart || 0;
       const textBefore = newMessage.slice(0, cursorPos).replace(/@(\w*)$/, `@${user} `);
       const textAfter = newMessage.slice(cursorPos);
-      
       setNewMessage(textBefore + textAfter);
       setMentionQuery(null);
       chatInputRef.current?.focus();
@@ -189,32 +166,20 @@ export default function JournalPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (mentionQuery && mentionableUsers.length > 0) {
-          if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionableUsers.length - 1));
-          } else if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              setMentionIndex(prev => (prev < mentionableUsers.length - 1 ? prev + 1 : 0));
-          } else if (e.key === 'Enter' || e.key === 'Tab') {
-              e.preventDefault();
-              insertMention(mentionableUsers[mentionIndex]);
-          } else if (e.key === 'Escape') {
-              setMentionQuery(null);
-          }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionableUsers.length - 1)); }
+          else if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(prev => (prev < mentionableUsers.length - 1 ? prev + 1 : 0)); }
+          else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionableUsers[mentionIndex]); }
+          else if (e.key === 'Escape') { setMentionQuery(null); }
           return;
       }
-
-      if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendPost();
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); }
   };
 
-  // --- SERVER ACTIONS (Keeping existing logic) ---
+  // --- ACTIONS ---
   const notifyGlobalUpdate = () => set(ref(db, 'journal_global_signal/last_updated'), serverTimestamp());
   const notifyChatUpdate = (journalId: number) => set(ref(db, `journal_signals/${journalId}`), serverTimestamp());
 
-  const handleDeleteJournal = async () => { /* ... existing ... */ 
+  const handleDeleteJournal = async () => {
       if (!journalToDelete || !username) return;
       try {
           const res = await fetch(`${WORKER_URL}/journals/delete`, { method: 'DELETE', body: JSON.stringify({ id: journalToDelete, username }), headers: { 'Content-Type': 'application/json' } });
@@ -222,7 +187,7 @@ export default function JournalPage() {
       } catch (e) { console.error(e); }
   };
 
-  const handleDeletePost = async (postId: number) => { /* ... existing ... */
+  const handleDeletePost = async (postId: number) => {
       if (!username) return;
       setPosts(posts.filter(p => p.id !== postId));
       try {
@@ -236,7 +201,6 @@ export default function JournalPage() {
   };
 
   const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      /* ... Keeping existing compression logic ... */
       if (!e.target.files || !updatingJournalId || !username) return;
       const files = Array.from(e.target.files);
       if(files.length > 4) { toast({ variant: "destructive", title: "Limit" }); return; }
@@ -248,18 +212,13 @@ export default function JournalPage() {
               const res = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressed });
               if (res.ok) urls.push((await res.json()).url);
           }
-          const updateRes = await fetch(`${WORKER_URL}/journals/update_images`, {
-              method: 'POST',
-              body: JSON.stringify({ id: updatingJournalId, images: urls.join(","), username }),
-              headers: { 'Content-Type': 'application/json' }
-          });
+          const updateRes = await fetch(`${WORKER_URL}/journals/update_images`, { method: 'POST', body: JSON.stringify({ id: updatingJournalId, images: urls.join(","), username }), headers: { 'Content-Type': 'application/json' } });
           if (updateRes.ok) notifyGlobalUpdate();
       } catch (error) { toast({ variant: "destructive", title: "Error" }); } 
       finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; }
   };
 
   const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      /* ... Keeping existing logic ... */
       if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return;
       setIsUploadingChatImage(true);
       try {
@@ -288,6 +247,22 @@ export default function JournalPage() {
     const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() };
     setPosts([...posts, tempPost]);
     setNewMessage("");
+
+    // --- MENTION NOTIFICATIONS ---
+    const mentions = tempPost.content.match(/@(\w+)/g);
+    if (mentions) {
+        const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); 
+        uniqueUsers.forEach(taggedUser => {
+            if (taggedUser !== username) {
+                addNotification(
+                    `${username} mentioned you in "${activeJournal.title}"`, 
+                    taggedUser,
+                    `/journal`
+                );
+            }
+        });
+    }
+
     try {
         await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: tempPost.content }), headers: { "Content-Type": "application/json" } });
         notifyChatUpdate(activeJournal.id);
@@ -387,7 +362,6 @@ export default function JournalPage() {
                                                     {post.username === activeJournal.username && <span className="text-[9px] bg-accent text-black px-1 rounded font-bold uppercase shrink-0">OP</span>}
                                                 </div>
                                             )}
-                                            {/* USE THE FORMATTED MESSAGE COMPONENT HERE */}
                                             <div className="text-sm text-white/90 leading-snug whitespace-pre-wrap break-words">
                                                 <FormattedMessage content={post.content} />
                                             </div>
@@ -406,13 +380,8 @@ export default function JournalPage() {
                         <div className="absolute bottom-16 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50">
                             <div className="px-3 py-2 text-[10px] uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
                             {mentionableUsers.map((u, i) => (
-                                <div 
-                                    key={u} 
-                                    className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`}
-                                    onClick={() => insertMention(u)}
-                                >
-                                    <UserAvatar username={u} className="w-6 h-6" />
-                                    <span className="text-sm">{u}</span>
+                                <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
+                                    <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
                                 </div>
                             ))}
                         </div>
@@ -421,17 +390,7 @@ export default function JournalPage() {
                     <div className="p-3 bg-black/10 border-t border-white/5 shrink-0">
                         <div className="relative flex items-end gap-2 bg-white/5 p-1.5 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
                             <Button variant="ghost" size="icon" disabled={isUploadingChatImage} onClick={() => chatFileInputRef.current?.click()} className="text-white/40 hover:text-white h-8 w-8 shrink-0 rounded">{isUploadingChatImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}</Button>
-                            
-                            <textarea 
-                                ref={chatInputRef}
-                                value={newMessage} 
-                                onChange={handleInputChange} // UPDATED
-                                onKeyDown={handleKeyDown} // UPDATED
-                                placeholder={`Message #${activeJournal.title}`} 
-                                className="w-full bg-transparent border-none focus:ring-0 text-white text-sm placeholder:text-white/20 resize-none py-1.5 max-h-24 min-h-[32px]" 
-                                rows={1} 
-                            />
-                            
+                            <textarea ref={chatInputRef} value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder={`Message #${activeJournal.title}`} className="w-full bg-transparent border-none focus:ring-0 text-white text-sm placeholder:text-white/20 resize-none py-1.5 max-h-24 min-h-[32px]" rows={1} />
                             <Button onClick={sendPost} disabled={!newMessage.trim()} className="bg-white/10 hover:bg-white text-white hover:text-black h-8 w-8 shrink-0 rounded p-0"><Send className="w-3 h-3" /></Button>
                         </div>
                     </div>

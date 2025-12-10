@@ -58,10 +58,15 @@ export default function Header() {
                                 <div
                                     key={notification.id}
                                     className={cn(
-                                        "mb-2 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0",
-                                        !notification.read && "font-semibold"
+                                        "mb-2 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
+                                        !notification.read && "font-semibold bg-white/5"
                                     )}
-                                    onClick={() => markAsRead(notification.id)}
+                                    onClick={() => {
+                                        markAsRead(notification.id);
+                                        if (notification.link) {
+                                            window.location.href = notification.link;
+                                        }
+                                    }}
                                 >
                                 <span className={cn("flex h-2 w-2 translate-y-1 rounded-full", !notification.read ? "bg-sky-500" : "bg-transparent")} />
                                 <div className="space-y-1">
@@ -101,7 +106,6 @@ export default function Header() {
             <span className="hidden sm:inline">Study Room</span>
           </Link>
 
-          {/* NEW JOURNAL LINK */}
           <Link href="/journal" className={cn(
             "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
             'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
