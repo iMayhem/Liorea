@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell, BookOpenCheck, Home } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -85,18 +85,32 @@ export default function Header() {
 
           <Link href="/home" className={cn(
             "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
-            'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
+            'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
+            pathname === '/home' && 'bg-white/10 text-white'
           )}>
-            <Home className="w-5 h-5 text-accent" />
-            Home
+            <Home className="w-4 h-4 text-accent" />
+            <span className="hidden sm:inline">Home</span>
           </Link>
+
           <Link href="/study-together" className={cn(
             "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
-            'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm'
+            'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
+            pathname === '/study-together' && 'bg-white/10 text-white'
           )}>
-            <Sparkles className="w-5 h-5 text-accent" />
-            Study Together
+            <Sparkles className="w-4 h-4 text-accent" />
+            <span className="hidden sm:inline">Study Room</span>
           </Link>
+
+          {/* NEW JOURNAL LINK */}
+          <Link href="/journal" className={cn(
+            "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
+            'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
+            pathname === '/journal' && 'bg-white/10 text-white'
+          )}>
+            <NotebookText className="w-4 h-4 text-accent" />
+            <span className="hidden sm:inline">Journal</span>
+          </Link>
+
         </nav>
       </div>
     </header>
