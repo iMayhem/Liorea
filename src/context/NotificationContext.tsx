@@ -6,6 +6,10 @@ import { ref, onValue, push, serverTimestamp, query, limitToLast } from 'firebas
 import { usePresence } from './PresenceContext';
 import { useToast } from '@/hooks/use-toast';
 
+// 🔔 SOUND URL (A soft glass ping)
+// You can upload your own 'notification.mp3' to your R2 bucket and replace this URL later if you want.
+const NOTIFICATION_SOUND = "https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/mention_notification.mp3";
+
 export interface Notification {
   id: string;
   message: string;
@@ -37,11 +41,21 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {}
   }, []);
 
+  // --- HELPER: PLAY SOUND ---
+  const playSound = () => {
+      try {
+          const audio = new Audio(NOTIFICATION_SOUND);
+          audio.volume = 0.4; // Keep it subtle, not ear-piercing
+          audio.play().catch(e => console.warn("Audio play blocked (user needs to interact first)", e));
+      } catch (e) {
+          // Ignore audio errors
+      }
+  };
+
   // 2. LISTEN TO USER-SPECIFIC FIREBASE NODE
   useEffect(() => {
     if (!username) return;
 
-    // Listen to "user_notifications/{username}"
     const notificationsRef = query(ref(db, `user_notifications/${username}`), limitToLast(20));
 
     const unsubscribe = onValue(notificationsRef, (snapshot) => {
@@ -57,19 +71,23 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         // Sort by newest first
         loadedNotifications.sort((a, b) => b.timestamp - a.timestamp);
         
-        // CHECK FOR NEW NOTIFICATIONS (To show Toast)
-        // We check if the newest one is very recent (within 5 seconds) to avoid spamming on page reload
+        // CHECK FOR NEW NOTIFICATIONS
         if (loadedNotifications.length > 0) {
             const latest = loadedNotifications[0];
             const isRecent = Date.now() - latest.timestamp < 5000;
             const isRead = readIds.includes(latest.id);
             
-            // If it's new, recent, and we haven't seen it in this session list yet
+            // If it's new, recent, and NOT read yet
             if (isRecent && !isRead && (!notifications.length || latest.id !== notifications[0].id)) {
+                
+                // 1. Show Visual Toast
                 toast({ 
                     title: "New Notification", 
                     description: latest.message,
                 });
+
+                // 2. Play Sound 🔔
+                playSound();
             }
         }
 
@@ -86,7 +104,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const addNotification = async (message: string, targetUser?: string, link?: string) => {
     try {
       if (targetUser) {
-          // Send to specific user
           const notificationsRef = ref(db, `user_notifications/${targetUser}`);
           await push(notificationsRef, {
             message,
@@ -94,7 +111,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             timestamp: serverTimestamp()
           });
       } else {
-          // Fallback: Global notification (Optional, if you want system-wide alerts)
           const notificationsRef = ref(db, `notifications`);
           await push(notificationsRef, {
             message,
