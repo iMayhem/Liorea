@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2 } from 'lucide-react';
-import { ScrollArea } from '../ui/scroll-area';
-import { useChat, ChatMessage } from '@/context/ChatContext';
+import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown } from 'lucide-react';
+import { useChat } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
 import UserAvatar from '../UserAvatar';
@@ -37,12 +36,20 @@ const FormattedMessage = ({ content }: { content: string }) => {
 };
 
 export default function ChatPanel() {
-  const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers } = useChat();
+  const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore } = useChat();
   const { username, leaderboardUsers } = usePresence();
   const { addNotification } = useNotifications();
   const [newMessage, setNewMessage] = useState('');
+  
+  // SCROLL REFS
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   
+  // UX STATES
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false); // Controls Opacity
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const prevScrollHeight = useRef(0);
+
   // GIF & Emoji State
   const [gifs, setGifs] = useState<GiphyResult[]>([]);
   const [gifSearch, setGifSearch] = useState("");
@@ -54,11 +61,70 @@ export default function ChatPanel() {
   const [mentionIndex, setMentionIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // --- SCROLL LOGIC ---
+  
+  // 1. TELEPORT TO BOTTOM (Initial Load)
+  // We use useLayoutEffect because it runs synchronously before the browser paints the screen.
+  // This guarantees the user never sees the top of the chat.
+  useLayoutEffect(() => {
+      if (messages.length > 0 && !isInitialLoaded) {
+          if (scrollContainerRef.current) {
+              // Instantly jump to bottom without animation
+              scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
+          // Reveal the chat
+          setIsInitialLoaded(true);
+      }
+  }, [messages, isInitialLoaded]);
+
+  // 2. AUTO-SCROLL on New Message (Only if user is already at bottom)
+  useEffect(() => {
+      if (isInitialLoaded && messages.length > 0) {
+          const container = scrollContainerRef.current;
+          if (container) {
+              const { scrollTop, scrollHeight, clientHeight } = container;
+              // If user is near bottom (<150px), auto scroll smoothly
+              if (scrollHeight - scrollTop - clientHeight < 150) {
+                  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+              }
+          }
+      }
+  }, [messages.length, isInitialLoaded]);
+
+  // 3. PAGINATION (Scroll Up to Load More)
+  const handleScroll = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      // Show/Hide "Scroll to Bottom" Button
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
+
+      // Trigger Load More when scrolling near top (<50px)
+      if (scrollTop < 50 && hasMore) {
+          prevScrollHeight.current = scrollHeight; // Capture height before loading
+          loadMoreMessages();
+      }
+  };
+
+  // 4. RESTORE POSITION (After loading older messages)
+  useLayoutEffect(() => {
+      const container = scrollContainerRef.current;
+      // If we just loaded older messages (height increased significantly)
+      if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
+          const newScrollHeight = container.scrollHeight;
+          const diff = newScrollHeight - prevScrollHeight.current;
+          // Instantly adjust scroll position so the user's view doesn't jump
+          container.scrollTop = diff + container.scrollTop; 
+          prevScrollHeight.current = 0; // Reset
+      }
+  }, [messages]);
+
+
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!newMessage.trim()) return;
 
-    // Detect Mentions
     const mentions = newMessage.match(/@(\w+)/g);
     if (mentions && username) {
         const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
@@ -73,9 +139,7 @@ export default function ChatPanel() {
     setNewMessage('');
   };
 
-  const handleSendGif = (url: string) => {
-      sendMessage("", url);
-  };
+  const handleSendGif = (url: string) => { sendMessage("", url); };
 
   const fetchGifs = async (query: string = "") => {
       setLoadingGifs(true);
@@ -89,7 +153,6 @@ export default function ChatPanel() {
       } catch (error) { console.error("Failed to fetch GIFs", error); } finally { setLoadingGifs(false); }
   };
   
-  // --- MENTION LOGIC ---
   const mentionableUsers = useMemo(() => { 
       if (!mentionQuery) return []; 
       const allUsers = leaderboardUsers.map(u => u.username); 
@@ -100,13 +163,10 @@ export default function ChatPanel() {
       const val = e.target.value;
       setNewMessage(val);
       sendTypingEvent();
-
       const cursorPos = e.target.selectionStart || 0;
       const textBeforeCursor = val.slice(0, cursorPos);
       const match = textBeforeCursor.match(/@(\w*)$/);
-      
-      if (match) { setMentionQuery(match[1]); setMentionIndex(0); } 
-      else { setMentionQuery(null); }
+      if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); }
   };
 
   const insertMention = (user: string) => {
@@ -136,10 +196,6 @@ export default function ChatPanel() {
       }
   };
 
-  useEffect(() => {
-    if (messages.length) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
-
   const getTypingMessage = () => {
     if (typingUsers.length === 0) return null;
     if (typingUsers.length === 1) return `${typingUsers[0]} is typing...`;
@@ -147,7 +203,6 @@ export default function ChatPanel() {
     return 'Several people are typing...';
   };
 
-  // Helper to group reactions
   const getReactionGroups = (reactions: Record<string, any> | undefined) => {
       if (!reactions) return {};
       const groups: Record<string, { count: number, hasReacted: boolean }> = {};
@@ -171,11 +226,17 @@ export default function ChatPanel() {
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-0 flex-1 min-h-0 relative">
-        <ScrollArea className="h-full w-full">
-          <div className="p-4 pb-2">
+      {/* Messages Area - Using Native Div for precise scroll control */}
+      {/* Opacity transition hides the 'teleport' glitch */}
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className={`flex-1 p-0 overflow-y-auto no-scrollbar relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
+      >
+          <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
+            {hasMore && <div className="text-center py-4 text-xs text-white/30"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
+            
             {messages.map((msg, index) => {
-              // Grouping Logic
               const isSequence = index > 0 && messages[index - 1].username === msg.username;
               const timeDiff = index > 0 ? msg.timestamp - messages[index - 1].timestamp : 0;
               const showHeader = !isSequence || timeDiff > 300000; // 5 mins
@@ -188,8 +249,6 @@ export default function ChatPanel() {
                     key={msg.id} 
                     className={`group relative flex gap-4 pr-2 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
                 >
-                   
-                   {/* Avatar / Timestamp Column */}
                    <div className="w-10 shrink-0 select-none pt-0.5">
                        {showHeader ? (
                             <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
@@ -200,9 +259,7 @@ export default function ChatPanel() {
                        )}
                    </div>
 
-                   {/* Content Column */}
                    <div className="flex-1 min-w-0">
-                        {/* Header Name & Time */}
                         {showHeader && (
                             <div className="flex items-center gap-2 mb-1 select-none">
                                 <span className="text-base font-semibold text-white hover:underline cursor-pointer">{msg.username}</span>
@@ -210,7 +267,6 @@ export default function ChatPanel() {
                             </div>
                         )}
 
-                        {/* Message Text / GIF */}
                         <div className="text-base text-zinc-100 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
                             {msg.image_url ? (
                                 <img src={msg.image_url} alt="GIF" className="max-w-[250px] rounded-lg mt-1" loading="lazy" />
@@ -219,7 +275,6 @@ export default function ChatPanel() {
                             )}
                         </div>
 
-                        {/* Reactions Display */}
                         {Object.keys(reactionGroups).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2 select-none">
                                 {Object.entries(reactionGroups).map(([emoji, data]) => (
@@ -236,7 +291,6 @@ export default function ChatPanel() {
                         )}
                    </div>
 
-                   {/* Hover Actions (Emoji Reaction) */}
                    <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
                         <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
                             <PopoverTrigger asChild>
@@ -253,42 +307,47 @@ export default function ChatPanel() {
                             </PopoverContent>
                         </Popover>
                    </div>
-
                 </div>
               );
             })}
             <div ref={bottomRef} />
           </div>
-        </ScrollArea>
-        
-        {typingUsers.length > 0 && (
-            <div className="absolute bottom-16 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
-                {getTypingMessage()}
-            </div>
-        )}
+      </div>
+      
+      {/* Scroll Down Button */}
+      {showScrollButton && (
+          <button 
+              onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="absolute bottom-20 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 transition-all animate-in fade-in zoom-in z-20"
+          >
+              <ChevronDown className="w-5 h-5" />
+          </button>
+      )}
 
-        {/* Mention Dropup (Fixed Position: removed bottom margin) */}
-        {mentionQuery && mentionableUsers.length > 0 && (
-            <div className="absolute bottom-0 left-4 bg-[#1e1e24] border border-white/10 rounded-t-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
-                <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
-                {mentionableUsers.map((u, i) => (
-                    <div 
-                        key={u} 
-                        className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} 
-                        onClick={() => insertMention(u)}
-                    >
-                        <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
-                    </div>
-                ))}
-            </div>
-        )}
-      </CardContent>
+      {typingUsers.length > 0 && (
+          <div className="absolute bottom-16 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
+              {getTypingMessage()}
+          </div>
+      )}
 
-      {/* Input Area */}
+      {/* Mention Dropup */}
+      {mentionQuery && mentionableUsers.length > 0 && (
+          <div className="absolute bottom-0 left-4 bg-[#1e1e24] border border-white/10 rounded-t-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
+              <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
+              {mentionableUsers.map((u, i) => (
+                  <div 
+                      key={u} 
+                      className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} 
+                      onClick={() => insertMention(u)}
+                  >
+                      <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
+                  </div>
+              ))}
+          </div>
+      )}
+
       <CardFooter className="p-3 border-t border-white/20 shrink-0 bg-black/20">
         <div className="flex w-full items-end gap-2">
-            
-            {/* GIF & Emoji Triggers */}
             <div className="flex gap-1 pb-1">
                 <Popover>
                     <PopoverTrigger asChild>
@@ -306,7 +365,6 @@ export default function ChatPanel() {
                                 ))}
                             </div>
                         </div>
-                        <div ref={(el) => { if(el && gifs.length === 0) fetchGifs(); }} />
                     </PopoverContent>
                 </Popover>
 
