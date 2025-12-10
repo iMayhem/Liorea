@@ -23,8 +23,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { db } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp } from 'firebase/database';
-
-// IMPORT THE COMPRESSOR
 import { compressImage } from '@/lib/compress';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
@@ -158,7 +156,6 @@ export default function JournalPage() {
       cardFileInputRef.current?.click();
   };
 
-  // --- COMPRESSED CARD UPLOAD ---
   const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || !updatingJournalId || !username) return;
       const files = Array.from(e.target.files);
@@ -169,14 +166,10 @@ export default function JournalPage() {
       try {
           const urls: string[] = [];
           for (const file of files) {
-              // 1. Compress
               const compressedFile = await compressImage(file);
-              
-              // 2. Upload
               const res = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressedFile });
               if (res.ok) urls.push((await res.json()).url);
           }
-          
           const imagesStr = urls.join(",");
           const updateRes = await fetch(`${WORKER_URL}/journals/update_images`, {
               method: 'POST',
@@ -188,26 +181,19 @@ export default function JournalPage() {
       finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; }
   };
 
-  // --- COMPRESSED CHAT UPLOAD ---
   const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return;
       const file = e.target.files[0];
-      
       setIsUploadingChatImage(true);
       toast({ title: "Processing...", description: "Compressing image..." });
 
       try {
-          // 1. Compress
           const compressedFile = await compressImage(file);
-
-          // 2. Upload
           const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressedFile });
           if (!uploadRes.ok) throw new Error("Upload failed");
           const { url } = await uploadRes.json();
-
           const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
           setPosts([...posts, tempPost]); 
-          
           await fetch(`${WORKER_URL}/journals/post`, {
               method: "POST",
               body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }),
@@ -296,13 +282,11 @@ export default function JournalPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto no-scrollbar pr-2 space-y-4">
-                {/* GRID: 2 Cards per row on this small panel */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                     {journals.map((journal) => (
                         <Card 
                             key={journal.id} 
                             onClick={() => setActiveJournal(journal)}
-                            // Modified Card: Smaller, Responsive Grid
                             className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl
                                 ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}
                             `}
@@ -310,7 +294,6 @@ export default function JournalPage() {
                             <div className="absolute inset-0 z-0"><JournalCollage imagesStr={journal.images} /></div>
                             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
                             
-                            {/* Controls */}
                             {journal.username === username && (
                                 <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                     <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full bg-black/50 hover:bg-white text-white hover:text-black"
@@ -342,7 +325,6 @@ export default function JournalPage() {
         <div className={`flex-1 flex flex-col bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
             {activeJournal ? (
                 <>
-                    {/* Compact Header */}
                     <div className="h-12 border-b border-white/10 flex items-center px-4 bg-black/10 shrink-0 justify-between">
                         <div className="flex items-center gap-3 overflow-hidden">
                             <Button variant="ghost" size="icon" className="md:hidden mr-1 -ml-2 h-8 w-8" onClick={() => setActiveJournal(null)}>
@@ -353,11 +335,8 @@ export default function JournalPage() {
                         </div>
                     </div>
 
-                    {/* Messages */}
                     <ScrollArea className="flex-1 p-3">
-                        <div className="space-y-1 pb-2"> {/* Tiny vertical gap between messages */}
-                            
-                            {/* Minimalist Welcome */}
+                        <div className="space-y-1 pb-2">
                             <div className="text-center py-6">
                                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/5 mb-2">
                                     <Hash className="w-5 h-5 text-white/20" />
@@ -365,45 +344,56 @@ export default function JournalPage() {
                                 <p className="text-xs text-white/30">Start of history</p>
                             </div>
 
-                            {posts.map((post) => (
-                                <div key={post.id} className="group flex gap-3 px-2 py-1 hover:bg-white/5 rounded-lg transition-colors relative">
-                                    <UserAvatar username={post.username} className="w-8 h-8 mt-0.5 shrink-0" />
-                                    
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-sm font-bold text-white hover:underline cursor-pointer">{post.username}</span>
-                                            <span className="text-[10px] text-white/30">{formatTime(post.created_at)}</span>
+                            {posts.map((post, index) => {
+                                // NEW LOGIC: Check if sequential
+                                const isSequence = index > 0 && posts[index - 1].username === post.username;
+
+                                return (
+                                    <div 
+                                        key={post.id} 
+                                        // Less margin/padding for sequential messages
+                                        className={`group flex gap-3 px-2 hover:bg-white/5 transition-colors relative ${isSequence ? 'mt-0.5 py-0.5' : 'mt-4 py-1'}`}
+                                    >
+                                        <div className="w-8 shrink-0">
+                                            {!isSequence ? (
+                                                <UserAvatar username={post.username} className="w-8 h-8 mt-0.5" />
+                                            ) : (
+                                                <div className="w-8" /> // Spacer
+                                            )}
                                         </div>
                                         
-                                        <div className="text-sm text-white/80 leading-snug whitespace-pre-wrap break-words">
-                                            {post.content}
-                                        </div>
-                                        
-                                        {/* Resized Image: Max Height Constraint */}
-                                        {post.image_url && (
-                                            <div className="mt-1.5">
-                                                <img 
-                                                    src={post.image_url} 
-                                                    alt="Attachment" 
-                                                    className="max-h-60 w-auto object-contain rounded-md border border-white/10" 
-                                                    loading="lazy"
-                                                />
+                                        <div className="flex-1 min-w-0">
+                                            {!isSequence && (
+                                                <div className="flex items-baseline gap-2 mb-0.5">
+                                                    <span className="text-sm font-bold text-white hover:underline cursor-pointer">{post.username}</span>
+                                                    <span className="text-[10px] text-white/30">{formatDate(post.created_at)} at {formatTime(post.created_at)}</span>
+                                                    {post.username === activeJournal.username && <span className="text-[9px] bg-accent text-black px-1 rounded font-bold uppercase shrink-0">OP</span>}
+                                                </div>
+                                            )}
+                                            
+                                            <div className="text-sm text-white/90 leading-snug whitespace-pre-wrap break-words">
+                                                {post.content}
                                             </div>
+                                            
+                                            {post.image_url && (
+                                                <div className="mt-1.5">
+                                                    <img src={post.image_url} alt="Attachment" className="max-h-60 w-auto object-contain rounded-md border border-white/10" loading="lazy" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {post.username === username && (
+                                            <button onClick={() => handleDeletePost(post.id)} className="absolute right-2 top-1 text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 p-1">
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
                                         )}
                                     </div>
-
-                                    {post.username === username && (
-                                        <button onClick={() => handleDeletePost(post.id)} className="absolute right-2 top-2 text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 p-1">
-                                            <Trash2 className="w-3 h-3" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
+                                );
+                            })}
                             <div ref={scrollRef} />
                         </div>
                     </ScrollArea>
 
-                    {/* Compact Input */}
                     <div className="p-3 bg-black/10 border-t border-white/5 shrink-0">
                         <div className="relative flex items-end gap-2 bg-white/5 p-1.5 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
                             <Button 
@@ -432,7 +422,6 @@ export default function JournalPage() {
                     </div>
                 </>
             ) : (
-                // Empty State for Right Panel
                 <div className="flex flex-col items-center justify-center h-full text-white/20">
                     <Hash className="w-16 h-16 mb-4 opacity-20" />
                     <p className="text-sm">Select a journal to start reading</p>
@@ -440,7 +429,6 @@ export default function JournalPage() {
             )}
         </div>
 
-        {/* Delete Modal */}
         <AlertDialog open={!!journalToDelete} onOpenChange={() => setJournalToDelete(null)}>
             <AlertDialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white">
                 <AlertDialogHeader><AlertDialogTitle>Delete Journal?</AlertDialogTitle><AlertDialogDescription>This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
