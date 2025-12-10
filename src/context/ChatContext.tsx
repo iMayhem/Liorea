@@ -1,24 +1,33 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { usePresence } from './PresenceContext';
 import { db } from '@/lib/firebase';
-import { ref, push, onChildAdded, query, orderByChild, startAfter, limitToLast, serverTimestamp } from 'firebase/database';
+import { ref, push, onValue, query, limitToLast, serverTimestamp, remove, set } from 'firebase/database';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const CHAT_ROOM = "study-room-1";
 
+export interface ChatReaction {
+  id?: string;
+  username: string;
+  emoji: string;
+}
+
 export interface ChatMessage {
-  id?: string | number;
+  id: string;
   username: string;
   message: string;
   timestamp: number;
   photoURL?: string;
+  image_url?: string;
+  reactions?: Record<string, ChatReaction>;
 }
 
 interface ChatContextType {
   messages: ChatMessage[];
-  sendMessage: (message: string) => void;
+  sendMessage: (message: string, image_url?: string) => void;
+  sendReaction: (messageId: string, emoji: string) => void;
   sendTypingEvent: () => void;
   typingUsers: string[];
 }
@@ -29,74 +38,48 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { username, userImage } = usePresence();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  
-  const lastLoadedTimestamp = useRef<number>(0);
-  const isHistoryLoaded = useRef(false);
 
-  // 1. LOAD HISTORY (D1)
+  // 1. LISTEN LIVE (Firebase onValue handles updates/reactions automatically)
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const res = await fetch(`${WORKER_URL}/chat/history?room=${CHAT_ROOM}`);
-        if (res.ok) {
-          const historyData: ChatMessage[] = await res.json();
-          if (historyData.length > 0) {
-            setMessages(historyData);
-            const lastMsg = historyData[historyData.length - 1];
-            if (lastMsg.timestamp) {
-                lastLoadedTimestamp.current = lastMsg.timestamp;
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load D1 history:", error);
-      } finally {
-        isHistoryLoaded.current = true;
-        startFirebaseListener(); 
-      }
-    };
-
-    loadHistory();
-  }, []);
-
-  // 2. LISTEN LIVE (Firebase)
-  const startFirebaseListener = useCallback(() => {
-    const chatRef = ref(db, 'chats');
+    const chatRef = query(ref(db, 'chats'), limitToLast(50));
     
-    const q = isHistoryLoaded.current && lastLoadedTimestamp.current > 0
-        ? query(chatRef, orderByChild('timestamp'), startAfter(lastLoadedTimestamp.current))
-        : query(chatRef, limitToLast(50));
-
-    const unsubscribe = onChildAdded(q, (snapshot) => {
+    const unsubscribe = onValue(chatRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            setMessages((prev) => {
-                const exists = prev.some(m => Math.abs(m.timestamp - data.timestamp) < 500 && m.message === data.message);
-                if (exists) return prev;
-                return [...prev, { ...data, id: snapshot.key }];
-            });
+            const loadedMessages: ChatMessage[] = Object.entries(data).map(([key, val]: [string, any]) => ({
+                ...val,
+                id: key,
+                // Ensure reactions are handled safely if undefined
+                reactions: val.reactions || {} 
+            }));
+            
+            // Sort by timestamp
+            loadedMessages.sort((a, b) => a.timestamp - b.timestamp);
+            setMessages(loadedMessages);
+        } else {
+            setMessages([]);
         }
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
-  // 3. SEND MESSAGE
-  const sendMessage = useCallback(async (message: string) => {
-    if (!message.trim() || !username) return;
+  // 2. SEND MESSAGE
+  const sendMessage = useCallback(async (message: string, image_url?: string) => {
+    if ((!message.trim() && !image_url) || !username) return;
 
     // 1. Send to Firebase (Instant)
     push(ref(db, 'chats'), {
         username,
         message,
+        image_url: image_url || "",
         photoURL: userImage || "",
         timestamp: serverTimestamp() 
     });
 
-    // 2. Backup to Cloudflare D1 (Permanent)
+    // 2. Backup to D1
     fetch(`${WORKER_URL}/chat/send`, {
         method: "POST",
-        // UPDATED: Now sending photoURL to the worker
         body: JSON.stringify({ 
             room_id: CHAT_ROOM, 
             username, 
@@ -107,12 +90,44 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }).catch(e => console.error("D1 Backup failed:", e));
 
   }, [username, userImage]);
+
+  // 3. SEND REACTION
+  const sendReaction = useCallback(async (messageId: string, emoji: string) => {
+      if (!username) return;
+
+      // Find the message locally to check if we already reacted
+      const msg = messages.find(m => m.id === messageId);
+      if (!msg) return;
+
+      // Check if reaction exists by this user with this emoji
+      let existingReactionKey: string | null = null;
+      if (msg.reactions) {
+          Object.entries(msg.reactions).forEach(([key, r]) => {
+              if (r.username === username && r.emoji === emoji) {
+                  existingReactionKey = key;
+              }
+          });
+      }
+
+      const reactionsRef = ref(db, `chats/${messageId}/reactions`);
+
+      if (existingReactionKey) {
+          // Remove reaction
+          remove(ref(db, `chats/${messageId}/reactions/${existingReactionKey}`));
+      } else {
+          // Add reaction
+          push(reactionsRef, {
+              username,
+              emoji
+          });
+      }
+  }, [username, messages]);
   
   const sendTypingEvent = useCallback(async () => {}, []);
 
   const value = useMemo(() => ({
-    messages, sendMessage, typingUsers, sendTypingEvent,
-  }), [messages, sendMessage, typingUsers, sendTypingEvent]);
+    messages, sendMessage, sendReaction, typingUsers, sendTypingEvent,
+  }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent]);
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };

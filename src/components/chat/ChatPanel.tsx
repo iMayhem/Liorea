@@ -3,12 +3,20 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
-import { Send, MessageSquare } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2 } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
-import { useChat } from '@/context/ChatContext';
+import { useChat, ChatMessage } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
 import UserAvatar from '../UserAvatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+
+const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
+const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢"];
+
+type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; } }
 
 const FormattedMessage = ({ content }: { content: string }) => {
     const parts = content.split(/(@\w+)/g);
@@ -29,39 +37,56 @@ const FormattedMessage = ({ content }: { content: string }) => {
 };
 
 export default function ChatPanel() {
-  const { messages, sendMessage, sendTypingEvent, typingUsers } = useChat();
+  const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers } = useChat();
   const { username, leaderboardUsers } = usePresence();
   const { addNotification } = useNotifications();
   const [newMessage, setNewMessage] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   
-  // MENTION STATE
+  // GIF & Emoji State
+  const [gifs, setGifs] = useState<GiphyResult[]>([]);
+  const [gifSearch, setGifSearch] = useState("");
+  const [loadingGifs, setLoadingGifs] = useState(false);
+  const [openReactionPopoverId, setOpenReactionPopoverId] = useState<string | null>(null);
+
+  // Mention State
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!newMessage.trim()) return;
 
-    // 1. Detect Mentions & Send Notifications
+    // Detect Mentions
     const mentions = newMessage.match(/@(\w+)/g);
     if (mentions && username) {
         const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
         uniqueUsers.forEach(taggedUser => {
             if (taggedUser !== username) {
-                addNotification(
-                    `${username} mentioned you in Study Room`,
-                    taggedUser,
-                    '/study-together'
-                );
+                addNotification(`${username} mentioned you in Study Room`, taggedUser, '/study-together');
             }
         });
     }
 
-    // 2. Send Message
     sendMessage(newMessage);
     setNewMessage('');
+  };
+
+  const handleSendGif = (url: string) => {
+      sendMessage("", url);
+  };
+
+  const fetchGifs = async (query: string = "") => {
+      setLoadingGifs(true);
+      try {
+          const endpoint = query 
+            ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`
+            : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
+          const res = await fetch(endpoint);
+          const data = await res.json();
+          setGifs(data.data);
+      } catch (error) { console.error("Failed to fetch GIFs", error); } finally { setLoadingGifs(false); }
   };
   
   // --- MENTION LOGIC ---
@@ -80,12 +105,8 @@ export default function ChatPanel() {
       const textBeforeCursor = val.slice(0, cursorPos);
       const match = textBeforeCursor.match(/@(\w*)$/);
       
-      if (match) {
-          setMentionQuery(match[1]);
-          setMentionIndex(0);
-      } else {
-          setMentionQuery(null);
-      }
+      if (match) { setMentionQuery(match[1]); setMentionIndex(0); } 
+      else { setMentionQuery(null); }
   };
 
   const insertMention = (user: string) => {
@@ -116,17 +137,23 @@ export default function ChatPanel() {
   };
 
   useEffect(() => {
-    if (messages.length) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (messages.length) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  const getTypingMessage = () => {
-    if (typingUsers.length === 0) return null;
-    if (typingUsers.length === 1) return `${typingUsers[0]} is typing...`;
-    if (typingUsers.length === 2) return `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
-    return 'Several people are typing...';
+  // Helper to group reactions
+  const getReactionGroups = (reactions: Record<string, any> | undefined) => {
+      if (!reactions) return {};
+      const groups: Record<string, { count: number, hasReacted: boolean }> = {};
+      Object.values(reactions).forEach((r: any) => {
+          if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false };
+          groups[r.emoji].count++;
+          if (r.username === username) groups[r.emoji].hasReacted = true;
+      });
+      return groups;
   };
+
+  const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   return (
     <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full shadow-xl relative">
@@ -139,26 +166,92 @@ export default function ChatPanel() {
       
       <CardContent className="p-0 flex-1 min-h-0 relative">
         <ScrollArea className="h-full w-full pr-4">
-          <div className="p-4 space-y-4">
+          <div className="p-4 pb-2">
             {messages.map((msg, index) => {
+              // Grouping Logic
+              const isSequence = index > 0 && messages[index - 1].username === msg.username;
+              const timeDiff = index > 0 ? msg.timestamp - messages[index - 1].timestamp : 0;
+              const showHeader = !isSequence || timeDiff > 300000; // 5 mins
+              
               const isCurrentUser = msg.username === username;
+              const reactionGroups = getReactionGroups(msg.reactions);
+
               return (
-                <div key={index} className={`flex items-start gap-3 ${isCurrentUser ? 'justify-end' : ''}`}>
-                   {!isCurrentUser && (
-                     <UserAvatar 
-                        username={msg.username} 
-                        fallbackUrl={msg.photoURL}
-                        className="w-8 h-8 shrink-0" 
-                     />
-                   )}
-                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-                     <div className={`rounded-lg px-3 py-2 max-w-[240px] break-words ${isCurrentUser ? 'bg-primary/80 text-primary-foreground' : 'bg-black/30'}`}>
-                        {!isCurrentUser && <p className="text-xs font-bold text-accent mb-1">{msg.username}</p>}
-                        <p className="text-sm leading-relaxed">
-                            <FormattedMessage content={msg.message} />
-                        </p>
-                     </div>
-                  </div>
+                <div key={msg.id} className={`group relative flex gap-3 ${showHeader ? 'mt-4' : 'mt-0.5'} ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+                   
+                   {/* Avatar Column */}
+                   <div className="w-8 shrink-0 flex flex-col items-center">
+                       {showHeader && !isCurrentUser && (
+                            <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-8 h-8" />
+                       )}
+                       {!showHeader && !isCurrentUser && (
+                           <span className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                               {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}
+                           </span>
+                       )}
+                   </div>
+
+                   {/* Content Column */}
+                   <div className={`flex flex-col max-w-[75%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
+                        {/* Header Name & Time */}
+                        {showHeader && (
+                            <div className={`flex items-baseline gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+                                <span className="text-sm font-bold text-white/90">{msg.username}</span>
+                                <span className="text-[10px] text-white/40">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
+                            </div>
+                        )}
+
+                        {/* Message Bubble */}
+                        <div className={`relative rounded-2xl px-3 py-2 text-sm leading-relaxed break-words shadow-sm group-hover:shadow-md transition-shadow
+                            ${isCurrentUser 
+                                ? 'bg-indigo-600 text-white rounded-tr-none' 
+                                : 'bg-[#2b2d31] text-zinc-100 rounded-tl-none border border-white/5'
+                            }
+                            ${!showHeader && isCurrentUser ? 'rounded-tr-2xl' : ''}
+                            ${!showHeader && !isCurrentUser ? 'rounded-tl-2xl' : ''}
+                        `}>
+                            {msg.image_url ? (
+                                <img src={msg.image_url} alt="GIF" className="max-w-[200px] rounded-lg" loading="lazy" />
+                            ) : (
+                                <FormattedMessage content={msg.message} />
+                            )}
+                        </div>
+
+                        {/* Reactions Display */}
+                        {Object.keys(reactionGroups).length > 0 && (
+                            <div className={`flex flex-wrap gap-1 mt-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                                {Object.entries(reactionGroups).map(([emoji, data]) => (
+                                    <button 
+                                        key={emoji} 
+                                        onClick={() => sendReaction(msg.id, emoji)} 
+                                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/50 text-indigo-100' : 'bg-black/20 border-white/10 text-white/70 hover:bg-white/10'}`}
+                                    >
+                                        <span>{emoji}</span>
+                                        {data.count > 1 && <span className="font-bold">{data.count}</span>}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                   </div>
+
+                   {/* Hover Actions (Emoji Reaction) */}
+                   <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center self-start mt-1 ${isCurrentUser ? 'mr-2' : 'ml-2'}`}>
+                        <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
+                            <PopoverTrigger asChild>
+                                <button className="p-1.5 bg-black/40 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors border border-white/5">
+                                    <Smile className="w-3.5 h-3.5" />
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-full shadow-2xl backdrop-blur-md" side="top">
+                                <div className="flex gap-1">
+                                    {QUICK_EMOJIS.map(emoji => (
+                                        <button key={emoji} className="p-1.5 hover:bg-white/10 rounded-full text-lg transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                   </div>
+
                 </div>
               );
             })}
@@ -166,22 +259,12 @@ export default function ChatPanel() {
           </div>
         </ScrollArea>
         
-        {typingUsers.length > 0 && (
-            <div className="absolute bottom-2 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded">
-                {getTypingMessage()}
-            </div>
-        )}
-
-        {/* Mention Dropup - Adjusted Position */}
+        {/* Dropups */}
         {mentionQuery && mentionableUsers.length > 0 && (
-            <div className="absolute bottom-2 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
+            <div className="absolute bottom-16 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
                 <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
                 {mentionableUsers.map((u, i) => (
-                    <div 
-                        key={u} 
-                        className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} 
-                        onClick={() => insertMention(u)}
-                    >
+                    <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
                         <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
                     </div>
                 ))}
@@ -189,21 +272,57 @@ export default function ChatPanel() {
         )}
       </CardContent>
 
-      <CardFooter className="p-4 border-t border-white/20 shrink-0">
-        <form onSubmit={handleSendMessage} className="flex w-full space-x-2">
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Type your message..."
-            className="flex h-10 w-full rounded-md border border-white/30 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-black"
-            value={newMessage}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-          />
-          <Button type="submit" size="icon" variant="primary" className="flex-shrink-0">
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+      {/* Input Area */}
+      <CardFooter className="p-3 border-t border-white/20 shrink-0 bg-black/20">
+        <div className="flex w-full items-end gap-2">
+            
+            {/* GIF & Emoji Triggers */}
+            <div className="flex gap-1 pb-1">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Film className="w-4 h-4" /></Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" align="start" className="w-72 p-2 bg-[#1e1e24] border-white/10 text-white">
+                        <div className="space-y-2">
+                            <div className="relative">
+                                <Search className="absolute left-2 top-2 w-3 h-3 text-white/40" />
+                                <Input placeholder="GIFs..." className="h-7 pl-7 bg-black/20 border-white/10 text-xs" value={gifSearch} onChange={(e) => { setGifSearch(e.target.value); fetchGifs(e.target.value); }} />
+                            </div>
+                            <div className="h-48 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
+                                {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-white/40">Loading...</div> : gifs.map(gif => (
+                                    <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
+                                ))}
+                            </div>
+                        </div>
+                        <div ref={(el) => { if(el && gifs.length === 0) fetchGifs(); }} />
+                    </PopoverContent>
+                </Popover>
+
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Smile className="w-4 h-4" /></Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" align="start" className="w-auto p-0 border-none bg-transparent shadow-none">
+                        <EmojiPicker theme={Theme.DARK} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={350} searchDisabled skinTonesDisabled />
+                    </PopoverContent>
+                </Popover>
+            </div>
+
+            <form onSubmit={handleSendMessage} className="flex-1 flex gap-2">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Message..."
+                    className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-white placeholder:text-white/30 h-10 py-2 px-0"
+                    value={newMessage}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                />
+                <Button type="submit" size="icon" variant="ghost" disabled={!newMessage.trim()} className="h-10 w-10 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-full">
+                    <Send className="h-5 w-5" />
+                </Button>
+            </form>
+        </div>
       </CardFooter>
     </Card>
   );
