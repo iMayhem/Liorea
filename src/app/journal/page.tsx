@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search } from 'lucide-react';
+import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search, ChevronDown } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -118,7 +118,14 @@ function JournalContent() {
   
   const [newMessage, setNewMessage] = useState("");
   const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // SCROLL REFS
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const prevPostsLength = useRef(0);
+  const prevJournalId = useRef<number | null>(null);
+
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
 
@@ -172,7 +179,45 @@ function JournalContent() {
     return () => unsubscribe();
   }, [activeJournal]);
 
-  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: "smooth" }); }, [posts]);
+  // --- SCROLL LOGIC ---
+  
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+      bottomRef.current?.scrollIntoView({ behavior });
+      setShowScrollButton(false);
+  };
+
+  const handleScroll = () => {
+      if (!scrollContainerRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      // If we are more than 100px away from the bottom, show the button
+      const isDistanceFromBottom = scrollHeight - scrollTop - clientHeight > 100;
+      setShowScrollButton(isDistanceFromBottom);
+  };
+
+  useEffect(() => {
+    if (!activeJournal) return;
+
+    // 1. Channel Switch: Always jump to bottom instantly
+    if (activeJournal.id !== prevJournalId.current) {
+        scrollToBottom("instant");
+    } 
+    // 2. New Message Arrived
+    else if (posts.length > prevPostsLength.current) {
+        const lastPost = posts[posts.length - 1];
+        const isMyPost = lastPost.username === username;
+        
+        // If I sent it, OR if I was already near the bottom -> Scroll
+        if (isMyPost || !showScrollButton) {
+            scrollToBottom("smooth");
+        }
+        // If I'm scrolled up reading old stuff -> Do nothing (Icon will appear via onScroll)
+    }
+
+    // Update Refs
+    prevPostsLength.current = posts.length;
+    prevJournalId.current = activeJournal.id;
+  }, [posts, activeJournal, username]);
+
 
   // --- GIF FETCHING ---
   const fetchGifs = async (query: string = "") => {
@@ -354,7 +399,12 @@ function JournalContent() {
                         </div>
                     </div>
 
-                    <ScrollArea className="flex-1 p-4">
+                    {/* REPLACED ScrollArea WITH NATIVE DIV FOR BETTER CONTROL */}
+                    <div 
+                        className="flex-1 p-4 overflow-y-auto no-scrollbar relative"
+                        ref={scrollContainerRef}
+                        onScroll={handleScroll}
+                    >
                         <div className="space-y-1 pb-2">
                             <div className="text-center py-8 select-none"><div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-3"><Hash className="w-6 h-6 text-white/20" /></div><p className="text-sm text-white/30">Start of history</p></div>
                             
@@ -426,9 +476,18 @@ function JournalContent() {
                                     </div>
                                 );
                             })}
-                            <div ref={scrollRef} />
+                            <div ref={bottomRef} />
                         </div>
-                    </ScrollArea>
+                        {/* SCROLL TO BOTTOM BUTTON */}
+                        {showScrollButton && (
+                            <button 
+                                onClick={() => scrollToBottom()}
+                                className="absolute bottom-6 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 hover:scale-105 transition-all animate-in fade-in zoom-in"
+                            >
+                                <ChevronDown className="w-6 h-6" />
+                            </button>
+                        )}
+                    </div>
 
                     {/* Mention Dropup */}
                     {mentionQuery && mentionableUsers.length > 0 && (
