@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/context/NotificationContext';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
+import UserAvatar from '@/components/UserAvatar'; // NEW IMPORT
 
 export default function Header() {
   const pathname = usePathname();
@@ -54,31 +55,42 @@ export default function Header() {
                     <ScrollArea className="h-72">
                         {notifications.length > 0 ? (
                             <div className="grid gap-2">
-                            {notifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className={cn(
-                                        "mb-2 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
-                                        !notification.read && "font-semibold bg-white/5"
-                                    )}
-                                    onClick={() => {
-                                        markAsRead(notification.id);
-                                        if (notification.link) {
-                                            window.location.href = notification.link;
-                                        }
-                                    }}
-                                >
-                                <span className={cn("flex h-2 w-2 translate-y-1 rounded-full", !notification.read ? "bg-sky-500" : "bg-transparent")} />
-                                <div className="space-y-1">
-                                    <p className="text-sm leading-snug">
-                                     {notification.message}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {new Date(notification.timestamp).toLocaleString()}
-                                    </p>
-                                </div>
-                                </div>
-                            ))}
+                            {notifications.map((notification) => {
+                                // Extract username from message "sujeet mentioned you..."
+                                const fromUser = notification.message.split(' ')[0]; 
+                                return (
+                                    <div
+                                        key={notification.id}
+                                        className={cn(
+                                            "mb-2 grid grid-cols-[auto_1fr] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
+                                            !notification.read && "bg-white/5"
+                                        )}
+                                        onClick={() => {
+                                            markAsRead(notification.id);
+                                            if (notification.link) {
+                                                window.location.href = notification.link;
+                                            }
+                                        }}
+                                    >
+                                        {/* AVATAR ADDED HERE */}
+                                        <div className="relative mt-1">
+                                            <UserAvatar username={fromUser} className="w-8 h-8" />
+                                            {!notification.read && (
+                                                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
+                                            )}
+                                        </div>
+                                        
+                                        <div className="space-y-1">
+                                            <p className={`text-sm leading-snug ${!notification.read ? 'font-semibold text-white' : 'text-white/80'}`}>
+                                                {notification.message}
+                                            </p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                {new Date(notification.timestamp).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground text-center py-8">No new notifications.</p>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { usePresence } from '@/context/PresenceContext';
-import { useNotifications } from '@/context/NotificationContext'; // NEW IMPORT
+import { useNotifications } from '@/context/NotificationContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,10 +25,11 @@ import {
 import { db } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp } from 'firebase/database';
 import { compressImage } from '@/lib/compress';
+import { useSearchParams, useRouter } from 'next/navigation'; // ADDED useRouter
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
-// --- TYPES ---
+// ... (Types & FormattedMessage component stay the same) ...
 type Journal = {
   id: number;
   username: string;
@@ -48,7 +49,6 @@ type Post = {
   photoURL?: string; 
 };
 
-// --- HELPER COMPONENT: PARSES MENTIONS ---
 const FormattedMessage = ({ content }: { content: string }) => {
     const parts = content.split(/(@\w+)/g);
     return (
@@ -69,8 +69,12 @@ const FormattedMessage = ({ content }: { content: string }) => {
 
 export default function JournalPage() {
   const { username, leaderboardUsers } = usePresence();
-  const { addNotification } = useNotifications(); // NEW
+  const { addNotification } = useNotifications();
   const { toast } = useToast();
+  
+  // NAVIGATION HOOKS
+  const searchParams = useSearchParams();
+  const router = useRouter(); 
   
   const [view, setView] = useState<'gallery' | 'chat'>('gallery');
   const [journals, setJournals] = useState<Journal[]>([]);
@@ -92,19 +96,60 @@ export default function JournalPage() {
   const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Mention State
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
 
-  // 1. GLOBAL LISTENER
+  // --- 1. INITIAL LOAD & URL SYNC ---
+  // This effect handles ALL view switching now. 
+  // If URL changes -> View changes.
   useEffect(() => {
-    fetchJournals();
+    const init = async () => {
+        // Always ensure we have the list first
+        if (journals.length === 0) {
+            await fetchJournals();
+        }
+        
+        const targetId = searchParams.get('id');
+        
+        if (targetId) {
+            // URL has ID -> Show Chat
+            // Look in current state, or fetch if empty (handled above)
+            // We use a functional update or dependency check to be safe
+            const found = journals.find(j => j.id.toString() === targetId);
+            
+            // If journals are still loading, we might need to fetch specifically or wait
+            // For simplicity, if we fetched list above, 'journals' state might not be updated in this render cycle yet
+            // So we fetch fresh here to be sure if 'found' is missing
+            if (!found) {
+                 const res = await fetch(`${WORKER_URL}/journals/list`);
+                 if(res.ok) {
+                     const list: Journal[] = await res.json();
+                     setJournals(list);
+                     const freshFound = list.find(j => j.id.toString() === targetId);
+                     if (freshFound) {
+                         setActiveJournal(freshFound);
+                         setView('chat');
+                     }
+                 }
+            } else {
+                setActiveJournal(found);
+                setView('chat');
+            }
+        } else {
+            // URL has no ID -> Show Gallery
+            setActiveJournal(null);
+            setView('gallery');
+        }
+    };
+    init();
+
+    // Keep the Global Listener for background updates
     const globalRef = ref(db, 'journal_global_signal/last_updated');
     const unsubscribe = onValue(globalRef, (snapshot) => {
         if (snapshot.exists()) fetchJournals();
     });
     return () => unsubscribe();
-  }, []);
+  }, [searchParams]); // Dependent on URL changes
 
   // 2. CHAT LISTENER
   useEffect(() => {
@@ -136,7 +181,7 @@ export default function JournalPage() {
     } catch (e) { console.error(e); }
   };
 
-  // --- MENTION LOGIC ---
+  // --- MENTION LOGIC --- (Kept same)
   const mentionableUsers = useMemo(() => {
       if (!mentionQuery) return [];
       const chatUsers = posts.map(p => p.username);
@@ -175,7 +220,19 @@ export default function JournalPage() {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); }
   };
 
-  // --- ACTIONS ---
+  // --- ACTIONS --- (Updated Navigation Logic)
+  
+  // NEW: Navigate to Journal
+  const handleOpenJournal = (journal: Journal) => {
+      // Instead of setState, we push to URL. The useEffect picks it up.
+      router.push(`/journal?id=${journal.id}`);
+  };
+
+  // NEW: Go Back
+  const handleBackToGallery = () => {
+      router.push('/journal');
+  };
+
   const notifyGlobalUpdate = () => set(ref(db, 'journal_global_signal/last_updated'), serverTimestamp());
   const notifyChatUpdate = (journalId: number) => set(ref(db, `journal_signals/${journalId}`), serverTimestamp());
 
@@ -183,7 +240,15 @@ export default function JournalPage() {
       if (!journalToDelete || !username) return;
       try {
           const res = await fetch(`${WORKER_URL}/journals/delete`, { method: 'DELETE', body: JSON.stringify({ id: journalToDelete, username }), headers: { 'Content-Type': 'application/json' } });
-          if (res.ok) { toast({ title: "Deleted" }); setJournalToDelete(null); if (activeJournal?.id === journalToDelete) setActiveJournal(null); notifyGlobalUpdate(); }
+          if (res.ok) { 
+              toast({ title: "Deleted" }); 
+              setJournalToDelete(null); 
+              // If we deleted the active journal, go back to gallery
+              if (activeJournal?.id === journalToDelete) {
+                  router.push('/journal');
+              }
+              notifyGlobalUpdate(); 
+          }
       } catch (e) { console.error(e); }
   };
 
@@ -257,7 +322,7 @@ export default function JournalPage() {
                 addNotification(
                     `${username} mentioned you in "${activeJournal.title}"`, 
                     taggedUser,
-                    `/journal`
+                    `/journal?id=${activeJournal.id}` // Link now works perfectly
                 );
             }
         });
@@ -297,10 +362,9 @@ export default function JournalPage() {
         
         {/* LEFT: JOURNAL LIST */}
         <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col ${activeJournal ? 'hidden md:flex' : 'flex'}`}>
-            <div className="flex justify-between items-center mb-4 shrink-0">
-                <h1 className="text-xl font-bold tracking-tight flex items-center gap-2"><Hash className="w-5 h-5 text-accent" /> Journals</h1>
+            <div className="flex justify-end items-center mb-4 shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8"><Plus className="w-4 h-4 mr-1" /> New</Button></DialogTrigger>
+                    <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8 shadow-md"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
                     <DialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white">
                         <DialogHeader><DialogTitle>Create Journal</DialogTitle></DialogHeader>
                         <div className="space-y-4 py-4">
@@ -314,7 +378,11 @@ export default function JournalPage() {
             <div className="flex-1 overflow-y-auto no-scrollbar pr-2 space-y-4">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                     {journals.map((journal) => (
-                        <Card key={journal.id} onClick={() => setActiveJournal(journal)} className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}`}>
+                        <Card 
+                            key={journal.id} 
+                            onClick={() => handleOpenJournal(journal)} // CHANGED to handleOpenJournal
+                            className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}`}
+                        >
                             <div className="absolute inset-0 z-0"><JournalCollage imagesStr={journal.images} /></div>
                             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
                             {journal.username === username && (
@@ -340,7 +408,7 @@ export default function JournalPage() {
                 <>
                     <div className="h-12 border-b border-white/10 flex items-center px-4 bg-black/10 shrink-0 justify-between">
                         <div className="flex items-center gap-3 overflow-hidden">
-                            <Button variant="ghost" size="icon" className="md:hidden mr-1 -ml-2 h-8 w-8" onClick={() => setActiveJournal(null)}><ArrowLeft className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="md:hidden mr-1 -ml-2 h-8 w-8" onClick={handleBackToGallery}><ArrowLeft className="w-4 h-4" /></Button>
                             <span className="font-bold text-white truncate text-sm"># {activeJournal.title}</span>
                             <span className="text-[10px] text-white/40 truncate hidden sm:inline">by {activeJournal.username}</span>
                         </div>
