@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-// ADDED ArrowLeft to the imports below
-import { Plus, Hash, Send, Image as ImageIcon, Upload, Loader2, Trash2, X, MoreVertical, ArrowLeft } from 'lucide-react';
+import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, X } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -24,6 +23,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { db } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp } from 'firebase/database';
+
+// IMPORT THE COMPRESSOR
+import { compressImage } from '@/lib/compress';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
@@ -51,6 +53,7 @@ export default function JournalPage() {
   const { username } = usePresence();
   const { toast } = useToast();
   
+  const [view, setView] = useState<'gallery' | 'chat'>('gallery');
   const [journals, setJournals] = useState<Journal[]>([]);
   const [activeJournal, setActiveJournal] = useState<Journal | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -155,18 +158,25 @@ export default function JournalPage() {
       cardFileInputRef.current?.click();
   };
 
+  // --- COMPRESSED CARD UPLOAD ---
   const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || !updatingJournalId || !username) return;
       const files = Array.from(e.target.files);
       if(files.length > 4) { toast({ variant: "destructive", title: "Limit Exceeded", description: "Max 4 images allowed." }); return; }
-      toast({ title: "Uploading...", description: "Updating journal cover." });
+      
+      toast({ title: "Processing...", description: "Compressing and uploading..." });
 
       try {
           const urls: string[] = [];
           for (const file of files) {
-              const res = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: file });
+              // 1. Compress
+              const compressedFile = await compressImage(file);
+              
+              // 2. Upload
+              const res = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressedFile });
               if (res.ok) urls.push((await res.json()).url);
           }
+          
           const imagesStr = urls.join(",");
           const updateRes = await fetch(`${WORKER_URL}/journals/update_images`, {
               method: 'POST',
@@ -178,16 +188,26 @@ export default function JournalPage() {
       finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; }
   };
 
+  // --- COMPRESSED CHAT UPLOAD ---
   const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return;
       const file = e.target.files[0];
+      
       setIsUploadingChatImage(true);
+      toast({ title: "Processing...", description: "Compressing image..." });
+
       try {
-          const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: file });
+          // 1. Compress
+          const compressedFile = await compressImage(file);
+
+          // 2. Upload
+          const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressedFile });
           if (!uploadRes.ok) throw new Error("Upload failed");
           const { url } = await uploadRes.json();
+
           const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
           setPosts([...posts, tempPost]); 
+          
           await fetch(`${WORKER_URL}/journals/post`, {
               method: "POST",
               body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }),
@@ -235,11 +255,11 @@ export default function JournalPage() {
       return (
           <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
               <div className={`relative ${images.length === 1 ? 'col-span-2 row-span-2' : ''} ${images.length === 3 ? 'row-span-2' : ''} overflow-hidden border-r border-b border-black/10`}>
-                  <img src={images[0]} className="w-full h-full object-cover" alt="cover" />
+                  <img src={images[0]} className="w-full h-full object-cover" alt="cover" loading="lazy" />
               </div>
-              {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/10`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" /></div>}
-              {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/10`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" /></div>}
-              {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" /></div>}
+              {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/10`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>}
+              {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/10`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>}
+              {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>}
           </div>
       );
   };
@@ -331,7 +351,6 @@ export default function JournalPage() {
                             <span className="font-bold text-white truncate text-sm"># {activeJournal.title}</span>
                             <span className="text-[10px] text-white/40 truncate hidden sm:inline">by {activeJournal.username}</span>
                         </div>
-                        {/* Optional: Add journal settings here if needed */}
                     </div>
 
                     {/* Messages */}
@@ -367,6 +386,7 @@ export default function JournalPage() {
                                                     src={post.image_url} 
                                                     alt="Attachment" 
                                                     className="max-h-60 w-auto object-contain rounded-md border border-white/10" 
+                                                    loading="lazy"
                                                 />
                                             </div>
                                         )}
