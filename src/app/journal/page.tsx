@@ -384,12 +384,14 @@ function JournalContent() {
                                 <TooltipProvider>
                                     <div className="flex -space-x-1.5">
                                         {currentFollowers.map((u, i) => (
-                                            <Tooltip key={i}>
-                                                <TooltipTrigger>
-                                                    <UserAvatar username={u} className="w-6 h-6 border border-black hover:z-10 transition-transform hover:scale-110" />
+                                            <Tooltip key={i} delayDuration={0}>
+                                                <TooltipTrigger asChild>
+                                                    <div className="cursor-pointer">
+                                                        <UserAvatar username={u} className="w-6 h-6 border border-black hover:z-10 transition-transform hover:scale-110" />
+                                                    </div>
                                                 </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{u}</p>
+                                                <TooltipContent side="bottom" className="bg-[#18181b] text-white border-white/10 z-[100]">
+                                                    <p className="text-xs font-medium">{u}</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         ))}
