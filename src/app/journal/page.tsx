@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from 
 import Header from '@/components/layout/Header';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
-import { Card } from '@/components/ui/card'; // Ensure Card is imported
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -106,7 +106,6 @@ function JournalContent() {
   // PAGINATION STATE
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
   const prevScrollHeight = useRef(0);
 
   const [followedIds, setFollowedIds] = useState<number[]>([]);
@@ -129,8 +128,6 @@ function JournalContent() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const prevPostsLength = useRef(0);
-  const prevJournalId = useRef<number | null>(null);
 
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -142,8 +139,7 @@ function JournalContent() {
   // NEW: Track which message has the reaction picker open
   const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
 
-  // --- API FUNCTIONS (Defined BEFORE useEffect) ---
-
+  // --- API FUNCTIONS ---
   const fetchJournals = async () => { 
       try { 
           const res = await fetch(`${WORKER_URL}/journals/list`); 
@@ -161,7 +157,10 @@ function JournalContent() {
               if (before) {
                   // PAGINATION LOAD (Older posts)
                   if (newPosts.length < 20) setHasMore(false);
-                  setPosts(prev => [...newPosts, ...prev]);
+                  
+                  if (newPosts.length > 0) {
+                      setPosts(prev => [...newPosts, ...prev]);
+                  }
                   setLoadingMore(false);
               } else {
                   // INITIAL LOAD or UPDATE
@@ -170,10 +169,9 @@ function JournalContent() {
                           const existingIds = new Set(prev.map(p => p.id));
                           const uniqueNew = newPosts.filter(p => !existingIds.has(p.id));
                           if (uniqueNew.length === 0) return prev;
-                          return [...prev, ...uniqueNew]; // Append new ones at end
+                          return [...prev, ...uniqueNew]; 
                       });
                   } else {
-                      // Full replacement (First load of journal)
                       setPosts(newPosts);
                       if (newPosts.length < 20) setHasMore(false);
                   }
@@ -229,13 +227,13 @@ function JournalContent() {
     // Reset state for new journal
     setPosts([]);
     setHasMore(true);
-    setIsInitialLoaded(false);
+    setLoadingMore(false);
     
     // Initial Fetch
     fetchPosts(activeJournal.id);
     fetchFollowers(activeJournal.id);
 
-    // Listen for real-time updates (signals)
+    // Listen for real-time updates
     const signalRef = ref(db, `journal_signals/${activeJournal.id}`);
     const unsubscribe = onValue(signalRef, (snapshot) => { 
         if (snapshot.exists()) {
@@ -245,43 +243,16 @@ function JournalContent() {
     return () => unsubscribe();
   }, [activeJournal]);
 
-  // --- SCROLL LOGIC ---
-
-  // 1. Initial Load: Teleport to bottom
-  useLayoutEffect(() => {
-      if (posts.length > 0 && !isInitialLoaded && activeJournal) {
-          if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-          }
-          setIsInitialLoaded(true);
-      }
-  }, [posts, isInitialLoaded, activeJournal]);
-
-  // 2. New Message: Auto-Scroll (if at bottom)
-  useEffect(() => {
-      if (isInitialLoaded && posts.length > prevPostsLength.current) {
-          const container = scrollContainerRef.current;
-          if (container) {
-              const { scrollTop, scrollHeight, clientHeight } = container;
-              // If user is near bottom (<150px) or if it's their own message
-              const lastPost = posts[posts.length - 1];
-              const isMyPost = lastPost?.username === username;
-              
-              if (isMyPost || scrollHeight - scrollTop - clientHeight < 150) {
-                  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-              }
-          }
-      }
-      prevPostsLength.current = posts.length;
-  }, [posts.length, isInitialLoaded, username]);
+  // --- SCROLL LOGIC (REMOVED AUTO SCROLL) ---
 
   // 3. Pagination: Detect Scroll Up
   const handleScroll = () => {
       const container = scrollContainerRef.current;
       if (!container) return;
 
-      // Show/Hide Scroll Button
       const { scrollTop, scrollHeight, clientHeight } = container;
+      
+      // Toggle "Go to Bottom" Button
       setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
 
       // Trigger Load More
@@ -295,7 +266,8 @@ function JournalContent() {
       }
   };
 
-  // 4. Restore Position after Pagination
+  // 4. Scroll Anchoring (Prevents jumping when loading history)
+  // This is NOT auto-scroll. This is "stay where you are" logic.
   useLayoutEffect(() => {
       const container = scrollContainerRef.current;
       if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
@@ -355,10 +327,7 @@ function JournalContent() {
 
   const handleReact = async (post_id: number, emoji: string) => {
       if (!username || !activeJournal) return;
-      
       setOpenReactionPopoverId(null); 
-
-      // Optimistic Update
       setPosts(currentPosts => currentPosts.map(p => {
           if (p.id !== post_id) return p;
           const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji);
@@ -498,7 +467,7 @@ function JournalContent() {
 
                     {/* REPLACED ScrollArea WITH NATIVE DIV FOR BETTER CONTROL */}
                     <div 
-                        className={`flex-1 p-0 overflow-y-auto no-scrollbar relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        className="flex-1 p-0 overflow-y-auto no-scrollbar relative"
                         ref={scrollContainerRef}
                         onScroll={handleScroll}
                     >
@@ -584,16 +553,16 @@ function JournalContent() {
                             })}
                             <div ref={bottomRef} />
                         </div>
+                        {/* SCROLL TO BOTTOM BUTTON */}
+                        {showScrollButton && (
+                            <button 
+                                onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                                className="sticky bottom-6 left-1/2 -translate-x-1/2 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 hover:scale-105 transition-all animate-in fade-in zoom-in z-20"
+                            >
+                                <ChevronDown className="w-6 h-6" />
+                            </button>
+                        )}
                     </div>
-                    {/* SCROLL TO BOTTOM BUTTON */}
-                    {showScrollButton && (
-                        <button 
-                            onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
-                            className="absolute bottom-20 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 hover:scale-105 transition-all animate-in fade-in zoom-in z-20"
-                        >
-                            <ChevronDown className="w-5 h-5" />
-                        </button>
-                    )}
 
                     {/* Mention Dropup */}
                     {mentionQuery && mentionableUsers.length > 0 && (
