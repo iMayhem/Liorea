@@ -4,12 +4,12 @@ import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import Header from '@/components/layout/Header';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
-import { Card } from '@/components/ui/card'; // We might barely use this now
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search, Menu, X } from 'lucide-react';
+import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -36,11 +36,40 @@ import EmojiPicker, { Theme } from 'emoji-picker-react';
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
 
-// --- TYPES (Keep existing) ---
-type Reaction = { post_id: number; username: string; emoji: string; }
-type Journal = { id: number; username: string; title: string; tags: string; theme_color: string; images?: string; last_updated: number; };
-type Post = { id: number; username: string; content: string; image_url?: string; created_at: number; photoURL?: string; reactions?: Reaction[]; };
-type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; } }
+// --- TYPES ---
+type Reaction = {
+    post_id: number;
+    username: string;
+    emoji: string;
+}
+
+type Journal = {
+  id: number;
+  username: string;
+  title: string;
+  tags: string;
+  theme_color: string;
+  images?: string; 
+  last_updated: number;
+};
+
+type Post = {
+  id: number;
+  username: string;
+  content: string;
+  image_url?: string;
+  created_at: number;
+  photoURL?: string; 
+  reactions?: Reaction[]; 
+};
+
+type GiphyResult = {
+    id: string;
+    images: {
+        fixed_height: { url: string };
+        original: { url: string };
+    }
+}
 
 const FormattedMessage = ({ content }: { content: string }) => {
     const parts = content.split(/(@\w+)/g);
@@ -48,7 +77,11 @@ const FormattedMessage = ({ content }: { content: string }) => {
         <span>
             {parts.map((part, i) => {
                 if (part.startsWith('@')) {
-                    return <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">{part}</span>;
+                    return (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">
+                            {part}
+                        </span>
+                    );
                 }
                 return part;
             })}
@@ -65,9 +98,7 @@ function JournalContent() {
   const searchParams = useSearchParams();
   const router = useRouter(); 
   
-  // Layout State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // For mobile responsiveness
-
+  const [view, setView] = useState<'gallery' | 'chat'>('gallery');
   const [journals, setJournals] = useState<Journal[]>([]);
   const [activeJournal, setActiveJournal] = useState<Journal | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -90,13 +121,15 @@ function JournalContent() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
-  const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
 
   const [gifs, setGifs] = useState<GiphyResult[]>([]);
   const [gifSearch, setGifSearch] = useState("");
   const [loadingGifs, setLoadingGifs] = useState(false);
 
-  // --- INITIAL LOAD ---
+  // NEW: Track which message has the reaction picker open
+  const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
+
+  // 1. INITIAL LOAD
   useEffect(() => {
     const init = async () => {
         if (username) {
@@ -105,6 +138,7 @@ function JournalContent() {
                 if (fRes.ok) setFollowedIds(await fRes.json());
             } catch (e) {}
         }
+
         if (journals.length === 0) await fetchJournals();
         
         const targetId = searchParams.get('id');
@@ -116,18 +150,19 @@ function JournalContent() {
                      const list: Journal[] = await res.json();
                      setJournals(list);
                      const freshFound = list.find(j => j.id.toString() === targetId);
-                     if (freshFound) setActiveJournal(freshFound);
+                     if (freshFound) { setActiveJournal(freshFound); setView('chat'); }
                  }
-            } else { setActiveJournal(found); }
-        }
+            } else { setActiveJournal(found); setView('chat'); }
+        } else { setActiveJournal(null); setView('gallery'); }
     };
     init();
+    
     const globalRef = ref(db, 'journal_global_signal/last_updated');
     const unsubscribe = onValue(globalRef, (snapshot) => { if (snapshot.exists()) fetchJournals(); });
     return () => unsubscribe();
   }, [searchParams, username]); 
 
-  // --- CHAT LISTENER ---
+  // 2. CHAT LISTENER
   useEffect(() => {
     if (!activeJournal) return;
     fetchPosts(activeJournal.id);
@@ -139,11 +174,13 @@ function JournalContent() {
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: "smooth" }); }, [posts]);
 
-  // --- API FUNCTIONS ---
+  // --- GIF FETCHING ---
   const fetchGifs = async (query: string = "") => {
       setLoadingGifs(true);
       try {
-          const endpoint = query ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g` : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
+          const endpoint = query 
+            ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`
+            : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
           const res = await fetch(endpoint);
           const data = await res.json();
           setGifs(data.data);
@@ -154,14 +191,20 @@ function JournalContent() {
       if (!activeJournal || !username) return;
       const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
       setPosts([...posts, tempPost]); 
-      try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); }
+      try {
+          await fetch(`${WORKER_URL}/journals/post`, {
+              method: "POST",
+              body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }),
+              headers: { "Content-Type": "application/json" }
+          });
+          notifyChatUpdate(activeJournal.id);
+      } catch (e) { console.error(e); }
   };
 
   const fetchJournals = async () => { try { const res = await fetch(`${WORKER_URL}/journals/list`); if(res.ok) setJournals(await res.json()); } catch (e) { console.error(e); } };
   const fetchPosts = async (id: number) => { try { const res = await fetch(`${WORKER_URL}/journals/posts?id=${id}`); if(res.ok) setPosts(await res.json()); } catch (e) { console.error(e); } };
   const fetchFollowers = async (id: number) => { try { const res = await fetch(`${WORKER_URL}/journals/followers?id=${id}`); if (res.ok) setCurrentFollowers(await res.json()); } catch (e) {} };
 
-  // --- HELPERS ---
   const sortedJournals = useMemo(() => {
       return [...journals].sort((a, b) => {
           const aFollow = followedIds.includes(a.id) ? 1 : 0;
@@ -181,7 +224,10 @@ function JournalContent() {
 
   const handleReact = async (post_id: number, emoji: string) => {
       if (!username || !activeJournal) return;
-      setOpenReactionPopoverId(null);
+      
+      // CLOSE POPOVER IMMEDIATELY
+      setOpenReactionPopoverId(null); 
+
       setPosts(currentPosts => currentPosts.map(p => {
           if (p.id !== post_id) return p;
           const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji);
@@ -210,6 +256,7 @@ function JournalContent() {
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => { if (mentionQuery && mentionableUsers.length > 0) { if (e.key === 'ArrowUp') { e.preventDefault(); setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionableUsers.length - 1)); } else if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(prev => (prev < mentionableUsers.length - 1 ? prev + 1 : 0)); } else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionableUsers[mentionIndex]); } else if (e.key === 'Escape') { setMentionQuery(null); } return; } if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); } };
   const handleOpenJournal = (journal: Journal) => { router.push(`/journal?id=${journal.id}`); };
+  const handleBackToGallery = () => { router.push('/journal'); };
   const notifyGlobalUpdate = () => set(ref(db, 'journal_global_signal/last_updated'), serverTimestamp());
   const notifyChatUpdate = (journalId: number) => set(ref(db, `journal_signals/${journalId}`), serverTimestamp());
   const handleDeleteJournal = async () => { if (!journalToDelete || !username) return; try { const res = await fetch(`${WORKER_URL}/journals/delete`, { method: 'DELETE', body: JSON.stringify({ id: journalToDelete, username }), headers: { 'Content-Type': 'application/json' } }); if (res.ok) { toast({ title: "Deleted" }); setJournalToDelete(null); if (activeJournal?.id === journalToDelete) router.push('/journal'); notifyGlobalUpdate(); } } catch (e) { console.error(e); } };
@@ -221,123 +268,96 @@ function JournalContent() {
   const sendPost = async () => { if (!newMessage.trim() || !activeJournal || !username) return; const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() }; setPosts([...posts, tempPost]); setNewMessage(""); const mentions = tempPost.content.match(/@(\w+)/g); if (mentions) { const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); uniqueUsers.forEach(taggedUser => { if (taggedUser !== username) { addNotification( `${username} mentioned you in "${activeJournal.title}"`, taggedUser, `/journal?id=${activeJournal.id}` ); } }); } try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: tempPost.content }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  const JournalCollage = ({ imagesStr }: { imagesStr?: string }) => { const images = imagesStr ? imagesStr.split(',').filter(Boolean) : []; if (images.length === 0) return <div className="w-full h-full bg-zinc-800/50" />; return ( <div className="grid grid-cols-2 grid-rows-2 w-full h-full"> <div className={`relative ${images.length === 1 ? 'col-span-2 row-span-2' : ''} ${images.length === 3 ? 'row-span-2' : ''} overflow-hidden border-r border-b border-black/20`}><img src={images[0]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div> {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/20`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/20`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} </div> ); };
+  const JournalCollage = ({ imagesStr }: { imagesStr?: string }) => { const images = imagesStr ? imagesStr.split(',').filter(Boolean) : []; if (images.length === 0) return <div className="w-full h-full bg-black/40" />; return ( <div className="grid grid-cols-2 grid-rows-2 w-full h-full"> <div className={`relative ${images.length === 1 ? 'col-span-2 row-span-2' : ''} ${images.length === 3 ? 'row-span-2' : ''} overflow-hidden border-r border-b border-black/10`}><img src={images[0]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div> {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/10`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/10`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} </div> ); };
 
   return (
-    <div className="h-screen w-screen bg-[#0a0a0a] overflow-hidden flex flex-col">
-      {/* 1. APP-LIKE HEADER (Fixed top) */}
-      <div className="z-50">
-        <Header />
-      </div>
-      
-      {/* Hidden inputs */}
+    <div className="min-h-screen text-white bg-transparent overflow-hidden">
+      <Header />
       <input type="file" ref={cardFileInputRef} className="hidden" accept="image/*" multiple onChange={handleCardFileChange} />
       <input type="file" ref={chatFileInputRef} className="hidden" accept="image/*" onChange={handleChatFileChange} />
       
-      {/* 2. MAIN APP BODY (Below Header, Full remaining height) */}
-      <div className="flex-1 flex overflow-hidden pt-16">
+      <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-4">
         
-        {/* LEFT SIDEBAR: Journal List (Fixed Width or Responsive) */}
-        <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-white/5 bg-[#111113] ${activeJournal ? 'hidden md:flex' : 'flex'}`}>
-            
-            {/* Sidebar Header */}
-            <div className="h-14 flex items-center justify-between px-4 border-b border-white/5 shrink-0">
-                <span className="font-bold text-white tracking-tight flex items-center gap-2 text-lg">
-                    <Hash className="w-5 h-5 text-indigo-400" /> Journals
-                </span>
+        {/* LEFT: JOURNAL LIST */}
+        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col ${activeJournal ? 'hidden md:flex' : 'flex'} select-none`}>
+            {/* ... (Create Button) ... */}
+            <div className="flex justify-end items-center mb-4 shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/10"><Plus className="w-5 h-5" /></Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-[#1e1e24] border-white/10 text-white">
+                    <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8 shadow-md"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
+                    <DialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white">
                         <DialogHeader><DialogTitle>Create Journal</DialogTitle></DialogHeader>
                         <div className="space-y-4 py-4">
-                            <Input placeholder="Journal Title" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-black/20 border-white/10 text-white" />
-                            <Input placeholder="Tags (e.g. NEET)" value={newTags} onChange={e => setNewTags(e.target.value)} className="bg-black/20 border-white/10 text-white" />
-                            <Button onClick={createJournal} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">Create</Button>
+                            <Input placeholder="Journal Title" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="bg-black/20 border-white/20 text-white" />
+                            <Input placeholder="Tags (e.g. NEET)" value={newTags} onChange={e => setNewTags(e.target.value)} className="bg-black/20 border-white/20 text-white" />
+                            <Button onClick={createJournal} className="w-full bg-accent text-black hover:bg-white">Create</Button>
                         </div>
                     </DialogContent>
                 </Dialog>
             </div>
-
-            {/* Scrollable Journal List */}
-            <ScrollArea className="flex-1">
-                <div className="p-3 space-y-2">
+            
+            <div className="flex-1 overflow-y-auto no-scrollbar pr-2 space-y-4">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                     {sortedJournals.map((journal) => (
-                        <div 
-                            key={journal.id}
-                            onClick={() => handleOpenJournal(journal)}
-                            className={`group relative flex items-center gap-3 p-2 rounded-md cursor-pointer transition-all
-                                ${activeJournal?.id === journal.id ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}
+                        <Card key={journal.id} onClick={() => handleOpenJournal(journal)} 
+                            className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl 
+                            ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}
+                            ${followedIds.includes(journal.id) ? 'shadow-accent/5 border-l-2 border-l-accent' : ''} 
                             `}
                         >
-                            {/* Tiny Cover Preview */}
-                            <div className="h-10 w-10 shrink-0 rounded-md overflow-hidden bg-black/40 border border-white/5">
-                                {journal.images ? <img src={journal.images.split(',')[0]} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-indigo-500/20" />}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center">
-                                    <span className="font-semibold truncate text-sm">{journal.title}</span>
-                                    {followedIds.includes(journal.id) && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
-                                </div>
-                                <div className="text-xs truncate opacity-60">@{journal.username}</div>
-                            </div>
-
-                            {/* Owner Actions (Hover) */}
+                            <div className="absolute inset-0 z-0"><JournalCollage imagesStr={journal.images} /></div>
+                            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
                             {journal.username === username && (
-                                <div className="absolute right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[#111113] pl-2">
-                                    <button onClick={(e) => handleCardUploadClick(journal.id, e)} className="p-1 hover:text-white"><Upload className="w-3 h-3" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); setJournalToDelete(journal.id); }} className="p-1 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                                <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full bg-black/50 hover:bg-white text-white hover:text-black" onClick={(e) => handleCardUploadClick(journal.id, e)}><Upload className="w-3 h-3" /></Button>
+                                    <Button size="icon" variant="destructive" className="h-6 w-6 rounded-full bg-red-500/50 hover:bg-red-500" onClick={(e) => { e.stopPropagation(); setJournalToDelete(journal.id); }}><Trash2 className="w-3 h-3" /></Button>
                                 </div>
                             )}
-                        </div>
+                            <div className="absolute inset-0 z-20 p-3 flex flex-col justify-end">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <UserAvatar username={journal.username} className="h-6 w-6 border border-white/20" />
+                                    <span className="text-[10px] text-white/60 truncate">@{journal.username}</span>
+                                    {followedIds.includes(journal.id) && <Star className="w-3 h-3 text-accent fill-accent" />}
+                                </div>
+                                <h3 className="text-sm font-bold text-white leading-tight mb-1 line-clamp-2">{journal.title}</h3>
+                                <div className="flex gap-1 flex-wrap">{journal.tags && journal.tags.split(',').slice(0, 1).map((tag, i) => (<span key={i} className="text-[9px] bg-white/10 px-1.5 rounded text-white/70">{tag}</span>))}</div>
+                            </div>
+                        </Card>
                     ))}
                 </div>
-            </ScrollArea>
+            </div>
         </div>
 
-        {/* RIGHT MAIN PANEL: Chat Area */}
-        <div className={`flex-1 flex flex-col bg-[#0a0a0a]/90 backdrop-blur-md relative ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
-            
+        {/* RIGHT: CHAT */}
+        <div className={`flex-1 flex flex-col bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
             {activeJournal ? (
                 <>
-                    {/* Chat Header */}
-                    <div className="h-14 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <Button variant="ghost" size="icon" className="md:hidden -ml-2 h-8 w-8" onClick={() => router.push('/journal')}>
-                                <ArrowLeft className="w-5 h-5" />
-                            </Button>
-                            <Hash className="w-5 h-5 text-white/30" />
-                            <div>
-                                <h3 className="font-bold text-white text-base leading-tight">{activeJournal.title}</h3>
-                                <p className="text-xs text-white/40">by {activeJournal.username}</p>
+                    <div className="h-14 border-b border-white/10 flex items-center px-4 bg-black/10 shrink-0 justify-between select-none">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <Button variant="ghost" size="icon" className="md:hidden mr-1 -ml-2 h-8 w-8" onClick={handleBackToGallery}><ArrowLeft className="w-4 h-4" /></Button>
+                            <span className="font-bold text-lg text-white truncate"># {activeJournal.title}</span>
+                            <span className="text-sm text-white/40 truncate hidden sm:inline">by {activeJournal.username}</span>
+                            
+                            <div className="flex items-center gap-1 ml-2 border-l border-white/10 pl-2">
+                                <div className="flex -space-x-1.5">
+                                    {currentFollowers.map((u, i) => (
+                                        <UserAvatar key={i} username={u} className="w-6 h-6 border border-black" />
+                                    ))}
+                                </div>
+                                <Button 
+                                    size="icon" variant="ghost" 
+                                    className={`h-8 w-8 rounded-full ml-1 ${followedIds.includes(activeJournal.id) ? 'text-accent fill-accent' : 'text-white/40 hover:text-white'}`}
+                                    onClick={handleFollowToggle}
+                                >
+                                    <Star className={`w-5 h-5 ${followedIds.includes(activeJournal.id) ? 'fill-accent' : ''}`} />
+                                </Button>
                             </div>
-                        </div>
-                        
-                        {/* Header Actions */}
-                        <div className="flex items-center gap-3">
-                            <div className="flex -space-x-2 mr-2">
-                                {currentFollowers.map((u, i) => <UserAvatar key={i} username={u} className="w-6 h-6 border-2 border-[#0a0a0a]" />)}
-                            </div>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-white/40 hover:text-yellow-500" onClick={handleFollowToggle}>
-                                <Star className={`w-5 h-5 ${followedIds.includes(activeJournal.id) ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                            </Button>
                         </div>
                     </div>
 
-                    {/* Chat Messages */}
-                    <ScrollArea className="flex-1">
-                        <div className="p-4 pb-4 flex flex-col justify-end min-h-full">
-                            {/* Empty State / Welcome */}
-                            <div className="mt-auto mb-8 px-4">
-                                <div className="h-16 w-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                                    <Hash className="w-8 h-8 text-white/20" />
-                                </div>
-                                <h1 className="text-3xl font-bold text-white mb-2">Welcome to #{activeJournal.title}</h1>
-                                <p className="text-white/50">This is the start of the journal created by <span className="font-semibold text-white">@{activeJournal.username}</span>.</p>
-                            </div>
-
+                    <ScrollArea className="flex-1 p-4">
+                        <div className="space-y-1 pb-2">
+                            <div className="text-center py-8 select-none"><div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-3"><Hash className="w-6 h-6 text-white/20" /></div><p className="text-sm text-white/30">Start of history</p></div>
+                            
                             {posts.map((post, index) => {
                                 const isSequence = index > 0 && posts[index - 1].username === post.username;
                                 const timeDiff = index > 0 ? post.created_at - posts[index - 1].created_at : 0;
@@ -347,74 +367,58 @@ function JournalContent() {
                                 return (
                                     <div 
                                         key={post.id} 
-                                        className={`group flex gap-4 pr-4 hover:bg-white/[0.02] -mx-4 px-4 transition-colors relative ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
+                                        className={`group flex gap-3 px-2 hover:bg-white/5 transition-colors relative ${showHeader ? 'mt-4' : 'mt-[2px]'}`}
                                     >
-                                        <div className="w-10 shrink-0 select-none pt-0.5">
-                                            {showHeader ? (
-                                                <UserAvatar username={post.username} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
-                                            ) : (
-                                                <div className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
-                                                    {new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}
-                                                </div>
-                                            )}
+                                        <div className="w-10 shrink-0 select-none">
+                                            {showHeader ? (<UserAvatar username={post.username} className="w-10 h-10 mt-0.5" />) : (<div className="w-10 text-[10px] text-white/20 text-center opacity-0 group-hover:opacity-100 mt-1 select-none">{new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}</div>)}
                                         </div>
                                         
                                         <div className="flex-1 min-w-0">
                                             {showHeader && (
-                                                <div className="flex items-center gap-2 mb-1 select-none">
+                                                <div className="flex items-baseline gap-2 mb-0.5 select-none">
                                                     <span className="text-base font-semibold text-white hover:underline cursor-pointer">{post.username}</span>
-                                                    <span className="text-xs text-white/30 ml-1">{formatDate(post.created_at)} at {formatTime(post.created_at)}</span>
-                                                    {post.username === activeJournal.username && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-bold uppercase ml-1">OP</span>}
+                                                    <span className="text-xs text-white/30">{formatDate(post.created_at)} at {formatTime(post.created_at)}</span>
+                                                    {post.username === activeJournal.username && <span className="text-[10px] bg-accent text-black px-1.5 rounded font-bold uppercase shrink-0">OP</span>}
                                                 </div>
                                             )}
                                             
-                                            <div className="text-base text-zinc-100 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
+                                            <div className="text-base text-white/90 leading-snug whitespace-pre-wrap break-words">
                                                 <FormattedMessage content={post.content} />
                                             </div>
                                             
                                             {post.image_url && (
                                                 <div className="mt-2 select-none">
-                                                    <img src={post.image_url} alt="Attachment" className="max-h-[350px] max-w-full rounded-lg border border-white/10" loading="lazy" />
+                                                    <img src={post.image_url} alt="Attachment" className="max-h-80 w-auto object-contain rounded-md border border-white/10" loading="lazy" />
                                                 </div>
                                             )}
                                             
-                                            {/* Reactions */}
-                                            {Object.keys(reactionGroups).length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mt-2 select-none">
-                                                    {Object.entries(reactionGroups).map(([emoji, data]) => (
-                                                        <button 
-                                                            key={emoji} 
-                                                            onClick={() => handleReact(post.id, emoji)} 
-                                                            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-[#2b2d31] border-transparent hover:border-white/20'}`}
-                                                        >
-                                                            <span className="text-base">{emoji}</span>
-                                                            <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-zinc-300'}`}>{data.count}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {Object.entries(reactionGroups).map(([emoji, data]) => (
+                                                    <button key={emoji} onClick={() => handleReact(post.id, emoji)} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}><span>{emoji}</span><span className="font-bold">{data.count}</span></button>
+                                                ))}
+                                            </div>
                                         </div>
 
-                                        {/* HOVER TOOLBAR (Discord Style) */}
-                                        <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
+                                        {/* HOVER ACTIONS (UPDATED STYLING) */}
+                                        <div className="absolute right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 -translate-y-1/2">
                                             <Popover open={openReactionPopoverId === post.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? post.id : null)}>
                                                 <PopoverTrigger asChild>
-                                                    <button className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors">
+                                                    <button className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10">
                                                         <Smile className="w-4 h-4" />
                                                     </button>
                                                 </PopoverTrigger>
-                                                {/* FIXED POPUP: Darker, Floating */}
-                                                <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-lg shadow-xl" side="top" align="end" sideOffset={5}>
-                                                    <div className="flex gap-1">
+                                                {/* NEW FLOATING PILL STYLE */}
+                                                <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-full shadow-2xl backdrop-blur-md" side="top" sideOffset={5}>
+                                                    <div className="flex gap-1.5">
                                                         {QUICK_EMOJIS.map(emoji => (
-                                                            <button key={emoji} className="p-2 hover:bg-white/10 rounded-md text-xl transition-colors" onClick={() => handleReact(post.id, emoji)}>{emoji}</button>
+                                                            <button key={emoji} className="p-1.5 hover:bg-white/10 rounded-full text-lg transition-colors" onClick={() => handleReact(post.id, emoji)}>{emoji}</button>
                                                         ))}
                                                     </div>
                                                 </PopoverContent>
                                             </Popover>
 
                                             {post.username === username && (
-                                                <button onClick={() => handleDeletePost(post.id)} className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400 transition-colors">
+                                                <button onClick={() => handleDeletePost(post.id)} className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             )}
@@ -426,84 +430,67 @@ function JournalContent() {
                         </div>
                     </ScrollArea>
 
-                    {/* Chat Input */}
-                    <div className="px-4 pb-6 pt-2 bg-transparent shrink-0">
-                        <div className="relative flex items-end gap-2 bg-[#1e1f22] p-2.5 rounded-lg text-zinc-200">
-                            
-                            {/* Attachments */}
-                            <div className="flex gap-1 shrink-0">
-                                <Button variant="ghost" size="icon" disabled={isUploadingChatImage} onClick={() => chatFileInputRef.current?.click()} className="text-zinc-400 hover:text-zinc-200 h-8 w-8 rounded-full hover:bg-transparent">
-                                     {isUploadingChatImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <div className="bg-zinc-400 w-5 h-5 rounded-full flex items-center justify-center text-[#1e1f22] font-bold text-xs"><Plus className="w-4 h-4" /></div>}
-                                </Button>
-                            </div>
-
-                            {/* Text Area */}
-                            <textarea 
-                                ref={chatInputRef} 
-                                value={newMessage} 
-                                onChange={handleInputChange} 
-                                onKeyDown={handleKeyDown} 
-                                placeholder={`Message #${activeJournal.title}`} 
-                                className="w-full bg-transparent border-none focus:ring-0 text-base placeholder:text-zinc-500 resize-none py-1 max-h-48 min-h-[24px]" 
-                                rows={1} 
-                            />
-                            
-                            {/* Right Actions */}
-                            <div className="flex gap-2 shrink-0">
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-200 h-8 w-8 rounded hover:bg-transparent"><Film className="w-5 h-5" /></Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent side="top" align="end" className="w-80 p-2 bg-[#1e1e24] border-white/10 text-white">
-                                        <div className="space-y-2">
-                                            <div className="relative">
-                                                <Search className="absolute left-2 top-2 w-4 h-4 text-white/40" />
-                                                <Input placeholder="Search GIFs..." className="h-8 pl-8 bg-black/20 border-white/10 text-sm" value={gifSearch} onChange={(e) => { setGifSearch(e.target.value); fetchGifs(e.target.value); }} />
-                                            </div>
-                                            <div className="h-60 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
-                                                {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-white/40">Loading...</div> : gifs.map(gif => (
-                                                    <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div ref={(el) => { if(el && gifs.length === 0) fetchGifs(); }} />
-                                    </PopoverContent>
-                                </Popover>
-
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-200 h-8 w-8 rounded hover:bg-transparent"><Smile className="w-6 h-6" /></Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent side="top" align="end" className="w-auto p-0 border-none bg-transparent shadow-none">
-                                        <EmojiPicker theme={Theme.DARK} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={400} />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                    {/* Mention Dropup */}
+                    {mentionQuery && mentionableUsers.length > 0 && (
+                        <div className="absolute bottom-20 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none">
+                            <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
+                            {mentionableUsers.map((u, i) => (
+                                <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
+                                    <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
+                                </div>
+                            ))}
                         </div>
-                        {mentionQuery && mentionableUsers.length > 0 && (
-                            <div className="absolute bottom-20 left-4 bg-[#1e1e24] border border-black/50 rounded-md shadow-2xl overflow-hidden w-64 z-50 select-none">
-                                <div className="px-3 py-2 text-xs uppercase font-bold text-zinc-500 tracking-wider bg-[#111113]">Members</div>
-                                {mentionableUsers.map((u, i) => (
-                                    <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-[#404249] text-white' : 'text-zinc-400 hover:bg-[#35373c]'}`} onClick={() => insertMention(u)}>
-                                        <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm font-medium">{u}</span>
+                    )}
+
+                    <div className="p-4 bg-black/10 border-t border-white/5 shrink-0">
+                        <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+                            
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><Film className="w-5 h-5" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent side="top" align="start" className="w-80 p-2 bg-[#1e1e24] border-white/10 text-white">
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-2 w-4 h-4 text-white/40" />
+                                            <Input placeholder="Search GIFs..." className="h-8 pl-8 bg-black/20 border-white/10 text-sm" value={gifSearch} onChange={(e) => { setGifSearch(e.target.value); fetchGifs(e.target.value); }} />
+                                        </div>
+                                        <div className="h-60 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
+                                            {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-white/40">Loading...</div> : gifs.map(gif => (
+                                                <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
+                                             ))}
+                                        </div>
+                                        <div className="text-[10px] text-white/20 text-center uppercase tracking-widest font-bold">Powered by GIPHY</div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                    <div ref={(el) => { if(el && gifs.length === 0) fetchGifs(); }} />
+                                </PopoverContent>
+                            </Popover>
+
+                            <Button variant="ghost" size="icon" disabled={isUploadingChatImage} onClick={() => chatFileInputRef.current?.click()} className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded">{isUploadingChatImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}</Button>
+                            
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><Smile className="w-5 h-5" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent side="top" className="w-auto p-0 border-none bg-transparent shadow-none">
+                                    <EmojiPicker theme={Theme.DARK} onEmojiClick={handleEmojiClick} height={400} searchDisabled={false} skinTonesDisabled />
+                                </PopoverContent>
+                            </Popover>
+
+                            <textarea ref={chatInputRef} value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder={`Message #${activeJournal.title}`} className="w-full bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-white/20 resize-none py-1.5 max-h-32 min-h-[36px]" rows={1} />
+                            <Button onClick={sendPost} disabled={!newMessage.trim()} className="bg-white/10 hover:bg-white text-white hover:text-black h-9 w-9 shrink-0 rounded p-0"><Send className="w-4 h-4" /></Button>
+                        </div>
                     </div>
                 </>
             ) : (
-                <div className="flex flex-col items-center justify-center h-full text-white/10 select-none">
-                    <Hash className="w-20 h-20 mb-6 opacity-20" />
-                    <p className="text-lg font-medium text-zinc-500">Select a journal to start reading</p>
-                </div>
+                <div className="flex flex-col items-center justify-center h-full text-white/20 select-none"><Hash className="w-16 h-16 mb-4 opacity-20" /><p className="text-base">Select a journal to start reading</p></div>
             )}
         </div>
 
         <AlertDialog open={!!journalToDelete} onOpenChange={() => setJournalToDelete(null)}>
-            <AlertDialogContent className="bg-[#1e1e24] border-black/50 text-white">
+            <AlertDialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white">
                 <AlertDialogHeader><AlertDialogTitle>Delete Journal?</AlertDialogTitle><AlertDialogDescription>This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                <AlertDialogFooter><AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/5">Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteJournal} className="bg-red-500 hover:bg-red-600 text-white">Delete</AlertDialogAction></AlertDialogFooter>
+                <AlertDialogFooter><AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10">Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteJournal} className="bg-red-600 hover:bg-red-700 text-white">Delete</AlertDialogAction></AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
       </main>
@@ -511,11 +498,10 @@ function JournalContent() {
   );
 }
 
-// SUSPENSE WRAPPER
 export default function JournalPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] overflow-hidden">
-        <Suspense fallback={<div className="flex h-screen items-center justify-center text-zinc-500">Loading...</div>}>
+    <div className="min-h-screen text-white bg-transparent overflow-hidden">
+        <Suspense fallback={<div className="flex h-screen items-center justify-center text-white/50">Loading...</div>}>
             <JournalContent />
         </Suspense>
     </div>
