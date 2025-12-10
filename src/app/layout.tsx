@@ -26,7 +26,8 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/favicon/favicon.svg" />
       </head>
-      <body className="font-body antialiased">
+      {/* UPDATED: h-screen w-screen overflow-hidden ensures "App" behavior */}
+      <body className="font-body antialiased h-screen w-screen overflow-hidden">
         <Suspense>
           <NavigationEvents />
         </Suspense>
@@ -36,7 +37,7 @@ export default function RootLayout({
             <FocusOverlay />
             <PresenceProvider>
               <NotificationProvider>
-                <div className="hidden md:block">
+                <div className="hidden md:block h-full w-full">
                   {children}
                 </div>
                 <MobileMessage />

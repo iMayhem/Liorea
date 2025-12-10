@@ -33,12 +33,10 @@
   }
   body {
     @apply text-foreground;
-  }
-  
-  /* Smooth Fade In Animation */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    /* APP-LIKE FEEL: Lock the body so it never scrolls */
+    overflow: hidden; 
+    height: 100vh;
+    width: 100vw;
   }
 }
 
@@ -46,7 +44,7 @@
   .glass-effect {
     @apply bg-background/60 backdrop-blur-lg;
   }
-  /* Hides scrollbar but keeps functionality */
+  /* Hides scrollbar completely but keeps functionality (Optional) */
   .no-scrollbar::-webkit-scrollbar {
       display: none;
   }
@@ -56,36 +54,28 @@
   }
 }
 
-/* --- LIOREA CALENDAR STYLES --- */
-
-/* The specific day styling for days where you studied */
-.study-day-modifier:not([aria-selected]) {
-    font-weight: 700; /* Bolder text */
-    color: #fff !important;
-    position: relative;
+/* --- APP-LIKE SCROLLBAR (Discord Style) --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-
-/* The little glowing dot below the number */
-.study-day-modifier:not([aria-selected])::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    background-color: #4ade80; /* Bright Green */
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2); 
 }
 
 /* Glass panel global styling */
 .dark .card, .theme-blue .card, .theme-zinc .card {
   position: relative;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2); /* Much more transparent */
+  background: rgba(0, 0, 0, 0.2); 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08); /* Very subtle border */
-  animation: fadeIn 0.5s ease-out forwards;
+  border: 1px solid rgba(255, 255, 255, 0.08); 
 }
