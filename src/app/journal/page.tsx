@@ -126,6 +126,9 @@ function JournalContent() {
   const [gifSearch, setGifSearch] = useState("");
   const [loadingGifs, setLoadingGifs] = useState(false);
 
+  // NEW: Track which message has the reaction picker open
+  const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
+
   // 1. INITIAL LOAD
   useEffect(() => {
     const init = async () => {
@@ -162,10 +165,8 @@ function JournalContent() {
   // 2. CHAT LISTENER
   useEffect(() => {
     if (!activeJournal) return;
-    
     fetchPosts(activeJournal.id);
     fetchFollowers(activeJournal.id);
-
     const signalRef = ref(db, `journal_signals/${activeJournal.id}`);
     const unsubscribe = onValue(signalRef, (snapshot) => { if (snapshot.exists()) fetchPosts(activeJournal.id); });
     return () => unsubscribe();
@@ -223,6 +224,10 @@ function JournalContent() {
 
   const handleReact = async (post_id: number, emoji: string) => {
       if (!username || !activeJournal) return;
+      
+      // CLOSE POPOVER IMMEDIATELY
+      setOpenReactionPopoverId(null); 
+
       setPosts(currentPosts => currentPosts.map(p => {
           if (p.id !== post_id) return p;
           const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji);
@@ -275,6 +280,7 @@ function JournalContent() {
         
         {/* LEFT: JOURNAL LIST */}
         <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col ${activeJournal ? 'hidden md:flex' : 'flex'} select-none`}>
+            {/* ... (Create Button) ... */}
             <div className="flex justify-end items-center mb-4 shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8 shadow-md"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
@@ -393,18 +399,29 @@ function JournalContent() {
                                             </div>
                                         </div>
 
-                                        <div className="absolute right-4 top-0 bg-[#1e1e24] shadow-lg rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 border border-white/10 -translate-y-1/2">
-                                            <Popover>
-                                                <PopoverTrigger asChild><button className="p-1.5 hover:bg-white/10 rounded text-white/70 hover:text-white"><Smile className="w-4 h-4" /></button></PopoverTrigger>
-                                                <PopoverContent className="w-auto p-1 bg-black/90 border-white/20" side="top">
-                                                    <div className="flex gap-1">
+                                        {/* HOVER ACTIONS (UPDATED STYLING) */}
+                                        <div className="absolute right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 -translate-y-1/2">
+                                            <Popover open={openReactionPopoverId === post.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? post.id : null)}>
+                                                <PopoverTrigger asChild>
+                                                    <button className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10">
+                                                        <Smile className="w-4 h-4" />
+                                                    </button>
+                                                </PopoverTrigger>
+                                                {/* NEW FLOATING PILL STYLE */}
+                                                <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-full shadow-2xl backdrop-blur-md" side="top" sideOffset={5}>
+                                                    <div className="flex gap-1.5">
                                                         {QUICK_EMOJIS.map(emoji => (
-                                                            <button key={emoji} className="p-2 hover:bg-white/20 rounded text-xl" onClick={() => handleReact(post.id, emoji)}>{emoji}</button>
+                                                            <button key={emoji} className="p-1.5 hover:bg-white/10 rounded-full text-lg transition-colors" onClick={() => handleReact(post.id, emoji)}>{emoji}</button>
                                                         ))}
                                                     </div>
                                                 </PopoverContent>
                                             </Popover>
-                                            {post.username === username && (<button onClick={() => handleDeletePost(post.id)} className="p-1.5 hover:bg-red-900/50 rounded text-white/70 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>)}
+
+                                            {post.username === username && (
+                                                <button onClick={() => handleDeletePost(post.id)} className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );
