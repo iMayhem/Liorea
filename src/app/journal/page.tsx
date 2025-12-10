@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react'; // Added Suspense import
 import Header from '@/components/layout/Header';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, AtSign } from 'lucide-react';
+import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2 } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -25,11 +25,11 @@ import {
 import { db } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp } from 'firebase/database';
 import { compressImage } from '@/lib/compress';
-import { useSearchParams, useRouter } from 'next/navigation'; // ADDED useRouter
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
-// ... (Types & FormattedMessage component stay the same) ...
+// --- TYPES ---
 type Journal = {
   id: number;
   username: string;
@@ -49,6 +49,7 @@ type Post = {
   photoURL?: string; 
 };
 
+// --- HELPER COMPONENT ---
 const FormattedMessage = ({ content }: { content: string }) => {
     const parts = content.split(/(@\w+)/g);
     return (
@@ -67,12 +68,12 @@ const FormattedMessage = ({ content }: { content: string }) => {
     );
 };
 
-export default function JournalPage() {
+// --- MAIN CONTENT COMPONENT (Contains useSearchParams logic) ---
+function JournalContent() {
   const { username, leaderboardUsers } = usePresence();
   const { addNotification } = useNotifications();
   const { toast } = useToast();
   
-  // NAVIGATION HOOKS
   const searchParams = useSearchParams();
   const router = useRouter(); 
   
@@ -99,57 +100,37 @@ export default function JournalPage() {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
 
-  // --- 1. INITIAL LOAD & URL SYNC ---
-  // This effect handles ALL view switching now. 
-  // If URL changes -> View changes.
+  // 1. INITIAL LOAD & URL SYNC
   useEffect(() => {
     const init = async () => {
-        // Always ensure we have the list first
-        if (journals.length === 0) {
-            await fetchJournals();
-        }
+        if (journals.length === 0) await fetchJournals();
         
         const targetId = searchParams.get('id');
-        
         if (targetId) {
-            // URL has ID -> Show Chat
-            // Look in current state, or fetch if empty (handled above)
-            // We use a functional update or dependency check to be safe
             const found = journals.find(j => j.id.toString() === targetId);
-            
-            // If journals are still loading, we might need to fetch specifically or wait
-            // For simplicity, if we fetched list above, 'journals' state might not be updated in this render cycle yet
-            // So we fetch fresh here to be sure if 'found' is missing
             if (!found) {
                  const res = await fetch(`${WORKER_URL}/journals/list`);
                  if(res.ok) {
                      const list: Journal[] = await res.json();
                      setJournals(list);
                      const freshFound = list.find(j => j.id.toString() === targetId);
-                     if (freshFound) {
-                         setActiveJournal(freshFound);
-                         setView('chat');
-                     }
+                     if (freshFound) { setActiveJournal(freshFound); setView('chat'); }
                  }
             } else {
-                setActiveJournal(found);
-                setView('chat');
+                setActiveJournal(found); setView('chat');
             }
         } else {
-            // URL has no ID -> Show Gallery
-            setActiveJournal(null);
-            setView('gallery');
+            setActiveJournal(null); setView('gallery');
         }
     };
     init();
 
-    // Keep the Global Listener for background updates
     const globalRef = ref(db, 'journal_global_signal/last_updated');
     const unsubscribe = onValue(globalRef, (snapshot) => {
         if (snapshot.exists()) fetchJournals();
     });
     return () => unsubscribe();
-  }, [searchParams]); // Dependent on URL changes
+  }, [searchParams]); 
 
   // 2. CHAT LISTENER
   useEffect(() => {
@@ -181,7 +162,7 @@ export default function JournalPage() {
     } catch (e) { console.error(e); }
   };
 
-  // --- MENTION LOGIC --- (Kept same)
+  // --- MENTION LOGIC ---
   const mentionableUsers = useMemo(() => {
       if (!mentionQuery) return [];
       const chatUsers = posts.map(p => p.username);
@@ -220,19 +201,9 @@ export default function JournalPage() {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); }
   };
 
-  // --- ACTIONS --- (Updated Navigation Logic)
-  
-  // NEW: Navigate to Journal
-  const handleOpenJournal = (journal: Journal) => {
-      // Instead of setState, we push to URL. The useEffect picks it up.
-      router.push(`/journal?id=${journal.id}`);
-  };
-
-  // NEW: Go Back
-  const handleBackToGallery = () => {
-      router.push('/journal');
-  };
-
+  // --- ACTIONS ---
+  const handleOpenJournal = (journal: Journal) => { router.push(`/journal?id=${journal.id}`); };
+  const handleBackToGallery = () => { router.push('/journal'); };
   const notifyGlobalUpdate = () => set(ref(db, 'journal_global_signal/last_updated'), serverTimestamp());
   const notifyChatUpdate = (journalId: number) => set(ref(db, `journal_signals/${journalId}`), serverTimestamp());
 
@@ -241,12 +212,8 @@ export default function JournalPage() {
       try {
           const res = await fetch(`${WORKER_URL}/journals/delete`, { method: 'DELETE', body: JSON.stringify({ id: journalToDelete, username }), headers: { 'Content-Type': 'application/json' } });
           if (res.ok) { 
-              toast({ title: "Deleted" }); 
-              setJournalToDelete(null); 
-              // If we deleted the active journal, go back to gallery
-              if (activeJournal?.id === journalToDelete) {
-                  router.push('/journal');
-              }
+              toast({ title: "Deleted" }); setJournalToDelete(null); 
+              if (activeJournal?.id === journalToDelete) router.push('/journal');
               notifyGlobalUpdate(); 
           }
       } catch (e) { console.error(e); }
@@ -313,7 +280,6 @@ export default function JournalPage() {
     setPosts([...posts, tempPost]);
     setNewMessage("");
 
-    // --- MENTION NOTIFICATIONS ---
     const mentions = tempPost.content.match(/@(\w+)/g);
     if (mentions) {
         const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); 
@@ -322,7 +288,7 @@ export default function JournalPage() {
                 addNotification(
                     `${username} mentioned you in "${activeJournal.title}"`, 
                     taggedUser,
-                    `/journal?id=${activeJournal.id}` // Link now works perfectly
+                    `/journal?id=${activeJournal.id}` 
                 );
             }
         });
@@ -353,7 +319,7 @@ export default function JournalPage() {
   };
 
   return (
-    <div className="min-h-screen text-white bg-transparent overflow-hidden">
+      <>
       <Header />
       <input type="file" ref={cardFileInputRef} className="hidden" accept="image/*" multiple onChange={handleCardFileChange} />
       <input type="file" ref={chatFileInputRef} className="hidden" accept="image/*" onChange={handleChatFileChange} />
@@ -378,11 +344,7 @@ export default function JournalPage() {
             <div className="flex-1 overflow-y-auto no-scrollbar pr-2 space-y-4">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                     {journals.map((journal) => (
-                        <Card 
-                            key={journal.id} 
-                            onClick={() => handleOpenJournal(journal)} // CHANGED to handleOpenJournal
-                            className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}`}
-                        >
+                        <Card key={journal.id} onClick={() => handleOpenJournal(journal)} className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}`}>
                             <div className="absolute inset-0 z-0"><JournalCollage imagesStr={journal.images} /></div>
                             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
                             {journal.username === username && (
@@ -475,6 +437,17 @@ export default function JournalPage() {
             </AlertDialogContent>
         </AlertDialog>
       </main>
+      </>
+  );
+}
+
+// --- SUSPENSE WRAPPER ---
+export default function JournalPage() {
+  return (
+    <div className="min-h-screen text-white bg-transparent overflow-hidden">
+        <Suspense fallback={<div className="flex h-screen items-center justify-center text-white/50">Loading...</div>}>
+            <JournalContent />
+        </Suspense>
     </div>
   );
 }
