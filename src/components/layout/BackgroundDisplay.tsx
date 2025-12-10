@@ -1,54 +1,62 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useBackground } from "@/context/BackgroundContext";
+import { useBackground, Background } from "@/context/BackgroundContext";
 import Image from "next/image";
-import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function BackgroundDisplay() {
   const { currentBackground } = useBackground();
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  
+  // We keep track of the image currently being displayed to the user
+  const [displayedBackground, setDisplayedBackground] = useState<Background | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // When the background ID changes, reset the loaded state to show the spinner again
+  // Initialize strictly on client to avoid hydration mismatch
   useEffect(() => {
-    setIsImageLoaded(false);
-  }, [currentBackground?.id]);
+    if (currentBackground && !displayedBackground) {
+        setDisplayedBackground(currentBackground);
+    }
+  }, [currentBackground, displayedBackground]);
 
   return (
-    // 1. Base Container with Solid Dark Color
-    <div className="fixed inset-0 -z-50 bg-[#050505]"> 
-      
-      {/* 2. Loading State (Spinner) */}
-      {/* We keep this behind the image, or fade it out when image loads */}
-      <div 
-        className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ${
-          isImageLoaded ? "opacity-0" : "opacity-100"
-        }`}
-      >
-        <Loader2 className="w-10 h-10 text-white/30 animate-spin mb-4" />
-        <p className="text-white/30 text-xs tracking-[0.2em] uppercase font-medium">
-            Loading Space...
-        </p>
-      </div>
+    <div className="fixed inset-0 -z-50 bg-[#050505] overflow-hidden">
+      {/* 
+         This AnimatePresence handles the cross-fade.
+         We key by ID so Framer Motion knows when to swap them.
+      */}
+      <AnimatePresence mode="popLayout">
+        {currentBackground && (
+          <motion.div
+            key={currentBackground.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }} // The old image fades out as the new one fades in
+            transition={{ duration: 1.2, ease: "easeInOut" }} // Slow, cinematic fade
+            className="absolute inset-0 w-full h-full"
+          >
+            <Image
+              src={currentBackground.url}
+              alt="Background"
+              fill
+              quality={95}
+              priority
+              className="object-cover"
+              // When the NEW image is ready, we consider the transition 'active'
+              onLoad={() => setIsLoaded(true)}
+            />
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 bg-black/40" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* 3. The Image */}
-      {currentBackground && (
-        <Image
-          key={currentBackground.id} // Forces React to treat new backgrounds as new elements
-          src={currentBackground.url}
-          alt={currentBackground.name}
-          fill
-          quality={90}
-          priority // Prioritize loading this image
-          onLoad={() => setIsImageLoaded(true)} // Trigger fade-in when data is ready
-          className={`object-cover transition-opacity duration-1000 ease-in-out ${
-            isImageLoaded ? "opacity-100" : "opacity-0"
-          }`}
-        />
+      {/* Initial Loading State (Only visible on very first load) */}
+      {!isLoaded && (
+         <div className="absolute inset-0 bg-[#050505] flex items-center justify-center z-[-1]">
+            <div className="w-full h-full absolute inset-0 bg-gradient-to-b from-black/20 to-black/80" />
+         </div>
       )}
-      
-      {/* Optional: A subtle overlay to ensure text is always readable regardless of the image brightness */}
-      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
     </div>
   );
 }

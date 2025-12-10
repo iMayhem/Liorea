@@ -2,10 +2,11 @@ import imageCompression from 'browser-image-compression';
 
 export async function compressImage(file: File): Promise<File> {
   const options = {
-    maxSizeMB: 0.6,          // Max size ~600KB (Great quality, low size)
-    maxWidthOrHeight: 1920,  // Max width 1080p (No need for 4k on a card)
-    useWebWorker: true,      // Runs in background so app doesn't freeze
-    initialQuality: 0.8      // 80% JPEG quality
+    maxSizeMB: 0.8,          // Increased slightly for better detail
+    maxWidthOrHeight: 2048,  // 2K resolution is better for modern screens
+    useWebWorker: true,      // Runs in background
+    fileType: "image/webp",  // Newer format: Better quality/size ratio than JPEG
+    initialQuality: 0.85     // Higher starting quality
   };
 
   try {
@@ -13,6 +14,6 @@ export async function compressImage(file: File): Promise<File> {
     return compressedFile;
   } catch (error) {
     console.error("Compression failed:", error);
-    return file; // If compression fails, upload the original
+    return file; // Fallback to original
   }
 }

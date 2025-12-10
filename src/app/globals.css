@@ -37,6 +37,8 @@
     overflow: hidden; 
     height: 100vh;
     width: 100vw;
+    /* Default dark ambient background to hide loading jitters */
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
   }
 }
 
@@ -44,7 +46,6 @@
   .glass-effect {
     @apply bg-background/60 backdrop-blur-lg;
   }
-  /* Hides scrollbar completely but keeps functionality (Optional) */
   .no-scrollbar::-webkit-scrollbar {
       display: none;
   }
