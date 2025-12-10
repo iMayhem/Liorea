@@ -262,10 +262,7 @@ export default function JournalPage() {
         {/* LEFT PANEL: Journal List (35% Width) */}
         <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col ${activeJournal ? 'hidden md:flex' : 'flex'}`}>
             
-            <div className="flex justify-between items-center mb-4 shrink-0">
-                <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                    <Hash className="w-5 h-5 text-accent" /> Journals
-                </h1>
+            <div className="flex justify-end items-center mb-4 shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button size="sm" variant="secondary" className="h-8"><Plus className="w-4 h-4 mr-1" /> New</Button>
