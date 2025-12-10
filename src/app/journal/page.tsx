@@ -22,6 +22,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// FIREBASE IMPORTS
+import { db } from '@/lib/firebase';
+import { ref, onValue, set, serverTimestamp } from 'firebase/database';
+
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 // Types
@@ -62,24 +66,46 @@ export default function JournalPage() {
   const [journalToDelete, setJournalToDelete] = useState<number | null>(null);
   const [updatingJournalId, setUpdatingJournalId] = useState<number | null>(null);
   
-  // Refs for File Inputs
+  // Refs
   const cardFileInputRef = useRef<HTMLInputElement>(null);
-  const chatFileInputRef = useRef<HTMLInputElement>(null); // NEW: For Chat Images
+  const chatFileInputRef = useRef<HTMLInputElement>(null); 
   
   // Posting State
   const [newMessage, setNewMessage] = useState("");
   const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { fetchJournals(); }, []);
-
+  // --- 1. GLOBAL LISTENER (Updates the Gallery when anyone creates/deletes a journal) ---
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (view === 'chat' && activeJournal) {
-        fetchPosts(activeJournal.id);
-        interval = setInterval(() => fetchPosts(activeJournal.id), 5000);
-    }
-    return () => clearInterval(interval);
+    // Initial Load
+    fetchJournals();
+
+    // Listen for global changes
+    const globalRef = ref(db, 'journal_global_signal/last_updated');
+    const unsubscribe = onValue(globalRef, (snapshot) => {
+        // If timestamp changes, re-fetch the list from Cloudflare
+        if (snapshot.exists()) {
+            fetchJournals();
+        }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // --- 2. CHAT LISTENER (Updates messages inside a specific journal) ---
+  useEffect(() => {
+    if (view !== 'chat' || !activeJournal) return;
+
+    fetchPosts(activeJournal.id);
+
+    const signalRef = ref(db, `journal_signals/${activeJournal.id}`);
+    const unsubscribe = onValue(signalRef, (snapshot) => {
+        if (snapshot.exists()) {
+            fetchPosts(activeJournal.id);
+        }
+    });
+
+    return () => unsubscribe();
   }, [view, activeJournal]);
 
   useEffect(() => {
@@ -102,6 +128,16 @@ export default function JournalPage() {
 
   // --- ACTIONS ---
 
+  const notifyGlobalUpdate = () => {
+      // Pings Firebase to tell everyone to refresh their gallery
+      set(ref(db, 'journal_global_signal/last_updated'), serverTimestamp());
+  };
+
+  const notifyChatUpdate = (journalId: number) => {
+      // Pings Firebase to tell readers to refresh messages
+      set(ref(db, `journal_signals/${journalId}`), serverTimestamp());
+  };
+
   const handleDeleteJournal = async () => {
       if (!journalToDelete || !username) return;
       try {
@@ -113,7 +149,7 @@ export default function JournalPage() {
           if (res.ok) {
               toast({ title: "Deleted", description: "Journal deleted successfully." });
               setJournalToDelete(null);
-              fetchJournals();
+              notifyGlobalUpdate(); // Refresh everyone's gallery
           } else {
               toast({ variant: "destructive", title: "Error", description: "Could not delete journal." });
           }
@@ -129,13 +165,13 @@ export default function JournalPage() {
               body: JSON.stringify({ id: postId, username }),
               headers: { 'Content-Type': 'application/json' }
           });
+          if (activeJournal) notifyChatUpdate(activeJournal.id); // Refresh chat for others
       } catch (e) {
           toast({ variant: "destructive", title: "Error", description: "Failed to delete message." });
           if(activeJournal) fetchPosts(activeJournal.id);
       }
   };
 
-  // --- CARD COVER UPLOAD ---
   const handleCardUploadClick = (journalId: number, e: React.MouseEvent) => {
       e.stopPropagation(); 
       setUpdatingJournalId(journalId);
@@ -166,13 +202,12 @@ export default function JournalPage() {
 
           if (updateRes.ok) {
               toast({ title: "Success", description: "Cover updated." });
-              fetchJournals(); 
+              notifyGlobalUpdate(); // Refresh everyone's gallery to see new cover
           } 
       } catch (error) { toast({ variant: "destructive", title: "Error", description: "Upload failed." }); } 
       finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; }
   };
 
-  // --- CHAT IMAGE UPLOAD (NEW) ---
   const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return;
       const file = e.target.files[0];
@@ -181,14 +216,12 @@ export default function JournalPage() {
       toast({ title: "Uploading...", description: "Sending image..." });
 
       try {
-          // 1. Upload to R2
           const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: file });
           if (!uploadRes.ok) throw new Error("Upload failed");
           const { url } = await uploadRes.json();
 
-          // 2. Send Post with Image URL
           const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
-          setPosts([...posts, tempPost]); // Optimistic update
+          setPosts([...posts, tempPost]); 
 
           await fetch(`${WORKER_URL}/journals/post`, {
               method: "POST",
@@ -196,7 +229,8 @@ export default function JournalPage() {
               headers: { "Content-Type": "application/json" }
           });
           
-          fetchPosts(activeJournal.id); // Sync
+          notifyChatUpdate(activeJournal.id); // Notify others
+
       } catch (error) {
           toast({ variant: "destructive", title: "Error", description: "Failed to send image." });
       } finally {
@@ -214,7 +248,7 @@ export default function JournalPage() {
             headers: { "Content-Type": "application/json" }
         });
         setNewTitle(""); setNewTags(""); setIsDialogOpen(false);
-        fetchJournals();
+        notifyGlobalUpdate(); // Refresh everyone's gallery
     } catch (e) { console.error(e); }
   };
 
@@ -230,7 +264,7 @@ export default function JournalPage() {
             body: JSON.stringify({ journal_id: activeJournal.id, username, content: tempPost.content }),
             headers: { "Content-Type": "application/json" }
         });
-        fetchPosts(activeJournal.id);
+        notifyChatUpdate(activeJournal.id); // Notify others
     } catch (e) { console.error(e); }
   };
 
@@ -279,6 +313,7 @@ export default function JournalPage() {
                         <h1 className="text-3xl font-bold tracking-tight">Community Journals</h1>
                         <p className="text-white/50">Read about others' journeys or document your own.</p>
                     </div>
+                    
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
                             <Button className="bg-white text-black hover:bg-white/90"><Plus className="w-4 h-4 mr-2" /> New Journal</Button>
@@ -346,14 +381,14 @@ export default function JournalPage() {
                 <ScrollArea className="flex-1 p-4">
                     <div className="space-y-6 pb-4">
                         
-                        {/* COMPACT WELCOME HEADER */}
-                        <div className="flex items-center gap-4 px-2 py-4 mb-4 border-b border-white/10">
-                             <div className="h-12 w-12 bg-accent rounded-full flex items-center justify-center text-2xl shrink-0 text-black">
+                        {/* COMPACT WELCOME HEADER - CLEANED UP */}
+                        <div className="flex items-center gap-4 px-2 py-4 mb-4 border-b border-white/5">
+                             <div className="h-12 w-12 bg-white/5 rounded-full flex items-center justify-center text-2xl shrink-0 text-white/70">
                                 📚
                              </div>
                              <div>
-                                <h3 className="text-lg font-bold">Welcome to {activeJournal.title}</h3>
-                                <p className="text-white/50 text-xs">This is the start of {activeJournal.username}&apos;s journey. {formatDate(activeJournal.last_updated)}</p>
+                                <h3 className="text-lg font-bold text-white/90">Welcome to {activeJournal.title}</h3>
+                                <p className="text-white/40 text-xs">This is the start of {activeJournal.username}&apos;s journey. {formatDate(activeJournal.last_updated)}</p>
                              </div>
                         </div>
 
