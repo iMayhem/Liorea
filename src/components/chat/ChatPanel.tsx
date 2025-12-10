@@ -7,6 +7,7 @@ import { Send, MessageSquare } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { useChat } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
+import { useNotifications } from '@/context/NotificationContext';
 import UserAvatar from '../UserAvatar';
 
 const FormattedMessage = ({ content }: { content: string }) => {
@@ -30,6 +31,7 @@ const FormattedMessage = ({ content }: { content: string }) => {
 export default function ChatPanel() {
   const { messages, sendMessage, sendTypingEvent, typingUsers } = useChat();
   const { username, leaderboardUsers } = usePresence();
+  const { addNotification } = useNotifications();
   const [newMessage, setNewMessage] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   
@@ -40,16 +42,31 @@ export default function ChatPanel() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim()) {
-      sendMessage(newMessage);
-      setNewMessage('');
+    if (!newMessage.trim()) return;
+
+    // 1. Detect Mentions & Send Notifications
+    const mentions = newMessage.match(/@(\w+)/g);
+    if (mentions && username) {
+        const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
+        uniqueUsers.forEach(taggedUser => {
+            if (taggedUser !== username) {
+                addNotification(
+                    `${username} mentioned you in Study Room`,
+                    taggedUser,
+                    '/study-together'
+                );
+            }
+        });
     }
+
+    // 2. Send Message
+    sendMessage(newMessage);
+    setNewMessage('');
   };
   
   // --- MENTION LOGIC ---
   const mentionableUsers = useMemo(() => { 
       if (!mentionQuery) return []; 
-      // Filter users
       const allUsers = leaderboardUsers.map(u => u.username); 
       return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); 
   }, [mentionQuery, leaderboardUsers]);
@@ -59,7 +76,6 @@ export default function ChatPanel() {
       setNewMessage(val);
       sendTypingEvent();
 
-      // Detection for @
       const cursorPos = e.target.selectionStart || 0;
       const textBeforeCursor = val.slice(0, cursorPos);
       const match = textBeforeCursor.match(/@(\w*)$/);
