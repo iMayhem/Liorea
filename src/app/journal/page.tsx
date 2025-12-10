@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, X, Loader2 } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
@@ -20,6 +20,7 @@ type Journal = {
   title: string;
   tags: string;
   theme_color: string;
+  images?: string; // Comma separated URLs
   last_updated: number;
 };
 
@@ -44,7 +45,10 @@ export default function JournalPage() {
   // Creation State
   const [newTitle, setNewTitle] = useState("");
   const [newTags, setNewTags] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Posting State
   const [newMessage, setNewMessage] = useState("");
@@ -55,7 +59,7 @@ export default function JournalPage() {
     fetchJournals();
   }, []);
 
-  // Poll for new posts when inside a journal (Simple realtime simulation)
+  // Poll for new posts
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (view === 'chat' && activeJournal) {
@@ -65,7 +69,7 @@ export default function JournalPage() {
     return () => clearInterval(interval);
   }, [view, activeJournal]);
 
-  // Scroll to bottom on new posts
+  // Scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
         scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -86,21 +90,64 @@ export default function JournalPage() {
     } catch (e) { console.error("Failed to load posts", e); }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+          const files = Array.from(e.target.files);
+          if (files.length + selectedFiles.length > 4) {
+              alert("Max 4 images allowed");
+              return;
+          }
+          setSelectedFiles([...selectedFiles, ...files]);
+      }
+  };
+
+  const uploadImages = async (): Promise<string> => {
+      if (selectedFiles.length === 0) return "";
+      setIsUploading(true);
+      const urls: string[] = [];
+      
+      try {
+          // Upload sequentially to avoid overwhelming browser/network
+          for (const file of selectedFiles) {
+              const res = await fetch(`${WORKER_URL}/upload`, {
+                  method: 'PUT',
+                  body: file
+              });
+              if (res.ok) {
+                  const data = await res.json();
+                  urls.push(data.url);
+              }
+          }
+      } catch (e) {
+          console.error("Upload failed", e);
+      } finally {
+          setIsUploading(false);
+      }
+      return urls.join(",");
+  };
+
   const createJournal = async () => {
     if (!newTitle.trim() || !username) return;
+    
     try {
+        const imageUrls = await uploadImages();
+
         await fetch(`${WORKER_URL}/journals/create`, {
             method: "POST",
             body: JSON.stringify({ 
                 username, 
                 title: newTitle, 
                 tags: newTags,
-                theme: "bg-gradient-to-br from-indigo-500 to-purple-500" // Aesthetic default
+                images: imageUrls,
+                theme: "bg-black" // Default to black as we removed colored headers
             }),
             headers: { "Content-Type": "application/json" }
         });
+        
+        // Reset
         setNewTitle("");
         setNewTags("");
+        setSelectedFiles([]);
         setIsDialogOpen(false);
         fetchJournals();
     } catch (e) { console.error("Failed to create journal", e); }
@@ -109,7 +156,6 @@ export default function JournalPage() {
   const sendPost = async () => {
     if (!newMessage.trim() || !activeJournal || !username) return;
     
-    // Optimistic update (Show immediately)
     const tempPost = { 
         id: Date.now(), 
         username, 
@@ -129,13 +175,10 @@ export default function JournalPage() {
             }),
             headers: { "Content-Type": "application/json" }
         });
-        // Fetch real data to sync IDs
         fetchPosts(activeJournal.id);
     } catch (e) { console.error("Failed to send post", e); }
   };
 
-  // --- RENDER HELPERS ---
-  
   const formatDate = (ts: number) => {
       return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
@@ -144,13 +187,35 @@ export default function JournalPage() {
       return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Helper to render the image collage
+  const renderCollage = (imagesStr?: string) => {
+      if (!imagesStr) return null;
+      const images = imagesStr.split(',').filter(Boolean);
+      if (images.length === 0) return null;
+
+      let gridClass = "grid-cols-1";
+      if (images.length === 2) gridClass = "grid-cols-2";
+      if (images.length === 3) gridClass = "grid-cols-2"; // Special logic needed inside
+      if (images.length === 4) gridClass = "grid-cols-2";
+
+      return (
+          <div className={`grid ${gridClass} gap-0.5 mt-3 rounded-lg overflow-hidden h-48 w-full`}>
+              {images.map((img, i) => (
+                  <div key={i} className={`relative bg-gray-800 ${images.length === 3 && i === 0 ? 'row-span-2 h-full' : 'h-full'}`}>
+                      <img src={img} alt="Cover" className="object-cover w-full h-full" />
+                  </div>
+              ))}
+          </div>
+      );
+  };
+
   return (
     <div className="min-h-screen text-white bg-transparent">
       <Header />
       
       <main className="container mx-auto pt-24 pb-10 px-4 h-screen flex flex-col">
         
-        {/* VIEW 1: GALLERY (Grid of Journals) */}
+        {/* VIEW 1: GALLERY */}
         {view === 'gallery' && (
             <div className="flex-1 overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-8">
@@ -180,7 +245,7 @@ export default function JournalPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm text-white/70">Tags (Optional)</label>
+                                    <label className="text-sm text-white/70">Tags</label>
                                     <Input 
                                         placeholder="JEE, 2025, Dropper" 
                                         value={newTags}
@@ -188,7 +253,50 @@ export default function JournalPage() {
                                         className="bg-black/20 border-white/20 text-white"
                                     />
                                 </div>
-                                <Button onClick={createJournal} className="w-full bg-accent text-white">Create</Button>
+                                
+                                {/* Image Upload Section */}
+                                <div className="space-y-2">
+                                    <label className="text-sm text-white/70 flex justify-between">
+                                        Cover Images (Max 4)
+                                        <span className="text-xs text-white/40">{selectedFiles.length}/4</span>
+                                    </label>
+                                    
+                                    <div className="flex gap-2 flex-wrap">
+                                        {selectedFiles.map((file, i) => (
+                                            <div key={i} className="relative h-16 w-16 rounded overflow-hidden group">
+                                                <img src={URL.createObjectURL(file)} className="h-full w-full object-cover opacity-80" />
+                                                <button 
+                                                    onClick={() => setSelectedFiles(selectedFiles.filter((_, idx) => idx !== i))}
+                                                    className="absolute top-0 right-0 bg-red-500 p-0.5 rounded-bl text-white opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        
+                                        {selectedFiles.length < 4 && (
+                                            <button 
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="h-16 w-16 rounded border border-dashed border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                            >
+                                                <ImageIcon className="w-6 h-6 text-white/50" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        className="hidden" 
+                                        accept="image/*" 
+                                        multiple 
+                                        onChange={handleFileSelect} 
+                                    />
+                                </div>
+
+                                <Button onClick={createJournal} disabled={isUploading} className="w-full bg-accent text-black hover:bg-white">
+                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2"/> : null}
+                                    {isUploading ? "Uploading..." : "Create"}
+                                </Button>
                             </div>
                         </DialogContent>
                     </Dialog>
@@ -199,30 +307,38 @@ export default function JournalPage() {
                         <Card 
                             key={journal.id} 
                             onClick={() => { setActiveJournal(journal); setView('chat'); }}
-                            // UPDATED: Added backdrop-blur-md, shadow-lg, and consistent border styles
-                            className="group cursor-pointer bg-black/20 backdrop-blur-md border-white/10 hover:border-white/30 transition-all hover:bg-black/30 overflow-hidden shadow-lg"
+                            // The "Dark Card" Look
+                            className="group cursor-pointer bg-[#18181b]/80 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all hover:bg-[#18181b] overflow-hidden shadow-lg hover:shadow-xl"
                         >
-                            <div className={`h-24 w-full ${journal.theme_color || 'bg-blue-900'} opacity-80 group-hover:opacity-100 transition-opacity`} />
-                            <CardContent className="p-5 -mt-10 relative z-10">
-                                <div className="flex justify-between items-end">
+                            <CardContent className="p-5">
+                                {/* Header: Avatar + Meta */}
+                                <div className="flex items-center gap-3 mb-3">
                                      <UserAvatar 
                                         username={journal.username} 
-                                        className="h-16 w-16 rounded-xl border-4 border-black/20 shadow-lg text-2xl" 
+                                        className="h-8 w-8 rounded-full border border-white/10" 
                                      />
-                                     
-                                     <span className="text-xs text-white/50 font-mono mb-1">
-                                        Updated {formatDate(journal.last_updated)}
-                                     </span>
+                                     <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-white leading-none hover:underline">
+                                            {journal.username}
+                                        </span>
+                                        <span className="text-[10px] text-white/40 font-mono mt-0.5">
+                                            {formatDate(journal.last_updated)}
+                                        </span>
+                                     </div>
                                 </div>
                                 
-                                <h3 className="text-xl font-bold mt-3 leading-tight group-hover:text-accent transition-colors">
+                                {/* Title */}
+                                <h3 className="text-lg font-bold text-white/90 leading-snug group-hover:text-accent transition-colors">
                                     {journal.title}
                                 </h3>
-                                <p className="text-sm text-white/60 mt-1">by @{journal.username}</p>
                                 
+                                {/* Collage */}
+                                {renderCollage(journal.images)}
+
+                                {/* Tags */}
                                 <div className="flex gap-2 mt-4 flex-wrap">
                                     {journal.tags && journal.tags.split(',').map((tag, i) => (
-                                        <span key={i} className="text-[10px] uppercase tracking-wider bg-white/10 px-2 py-1 rounded-full text-white/70">
+                                        <span key={i} className="text-[10px] uppercase tracking-wider bg-white/5 px-2 py-1 rounded text-white/50 border border-white/5">
                                             {tag}
                                         </span>
                                     ))}
@@ -232,14 +348,14 @@ export default function JournalPage() {
                     ))}
                     {journals.length === 0 && (
                         <div className="col-span-full text-center text-white/40 py-20">
-                            No journals found. Be the first to start one!
+                            No journals found. Start documenting your journey!
                         </div>
                     )}
                 </div>
             </div>
         )}
 
-        {/* VIEW 2: CHAT (Reading/Posting) */}
+        {/* VIEW 2: CHAT */}
         {view === 'chat' && activeJournal && (
             <div className="flex-1 flex flex-col bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden h-[calc(100vh-120px)] animate-in fade-in zoom-in-95 duration-300">
                 
@@ -262,7 +378,6 @@ export default function JournalPage() {
                 {/* Messages Area */}
                 <ScrollArea className="flex-1 p-4">
                     <div className="space-y-6 pb-4">
-                        {/* Intro Card */}
                         <div className="flex gap-4 p-6 bg-white/5 rounded-xl border border-white/5 mb-8">
                              <div className="h-16 w-16 bg-accent rounded-full flex items-center justify-center text-3xl shrink-0 text-black">
                                 📚
@@ -276,9 +391,7 @@ export default function JournalPage() {
 
                         {posts.map((post) => (
                             <div key={post.id} className="group flex gap-4 mt-3">
-                                
                                 <UserAvatar username={post.username} className="w-10 h-10 mt-1 shrink-0" />
-                                
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-baseline gap-2">
                                         <span className="font-bold text-white hover:underline cursor-pointer truncate">
@@ -291,11 +404,9 @@ export default function JournalPage() {
                                             <span className="text-[9px] bg-accent text-black px-1 rounded font-bold uppercase shrink-0">OP</span>
                                         )}
                                     </div>
-                                    
                                     <div className="text-white/90 leading-relaxed whitespace-pre-wrap mt-0.5 break-words">
                                         {post.content}
                                     </div>
-                                    
                                     {post.image_url && (
                                         <div className="mt-2 rounded-lg overflow-hidden border border-white/10 max-w-md">
                                             <img src={post.image_url} alt="Attachment" className="w-full h-auto" />
