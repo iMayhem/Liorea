@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
@@ -11,7 +9,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/context/NotificationContext';
 import BackgroundManagement from './BackgroundManagement';
-
+import JournalManagement from './JournalManagement';
 
 export default function AdminDashboard() {
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -23,7 +21,6 @@ export default function AdminDashboard() {
     if (notificationMessage.trim()) {
       setIsSending(true);
       try {
-        // This now calls the Firebase logic in NotificationContext
         await addNotification(notificationMessage.trim());
         toast({
           title: "Global Notification Sent",
@@ -110,6 +107,7 @@ export default function AdminDashboard() {
             </CardFooter>
         </Card>
         <UserManagement />
+        <JournalManagement />
         <BackgroundManagement />
     </div>
   );
