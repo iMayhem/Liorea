@@ -1,5 +1,3 @@
---- START OF FILE src/app/journal/page.tsx ---
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
@@ -231,7 +229,6 @@ function JournalContent() {
       <input type="file" ref={chatFileInputRef} className="hidden" accept="image/*" onChange={handleChatFileChange} />
       
       {/* 2. MAIN APP BODY (Below Header, Full remaining height) */}
-      {/* FIXED: Changed from div to main to match the closing tag */}
       <main className="flex-1 flex overflow-hidden pt-16">
         
         {/* LEFT SIDEBAR: Journal List (Fixed Width or Responsive) */}
