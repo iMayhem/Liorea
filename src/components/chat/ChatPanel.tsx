@@ -172,9 +172,9 @@ export default function ChatPanel() {
             </div>
         )}
 
-        {/* Mention Dropup */}
+        {/* Mention Dropup - Adjusted Position */}
         {mentionQuery && mentionableUsers.length > 0 && (
-            <div className="absolute bottom-20 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none">
+            <div className="absolute bottom-2 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
                 <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
                 {mentionableUsers.map((u, i) => (
                     <div 
