@@ -3,10 +3,11 @@
 import { usePresence } from "@/context/PresenceContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useUserContextMenu } from "@/context/UserContextMenuContext";
 
 interface UserAvatarProps {
   username: string;
-  fallbackUrl?: string; // Optional: If we have an image in a chat object, we can pass it as backup
+  fallbackUrl?: string; 
   className?: string;
 }
 
@@ -16,19 +17,25 @@ const USER_COLORS = [
 
 export default function UserAvatar({ username, fallbackUrl, className }: UserAvatarProps) {
   const { getUserImage } = usePresence();
+  const { openMenu } = useUserContextMenu();
   
-  // 1. Try to get the "Live" image from our centralized map
   const liveImage = getUserImage(username);
-  
-  // 2. Decide which image to show
   const displayImage = liveImage || fallbackUrl;
 
-  // 3. Generate consistent color based on username
   const charCodeSum = username ? username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) : 0;
   const colorClass = USER_COLORS[charCodeSum % USER_COLORS.length];
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+      if (username) {
+          openMenu(e, username);
+      }
+  };
+
   return (
-    <Avatar className={cn("border border-white/10", className)}>
+    <Avatar 
+        className={cn("border border-white/10 cursor-pointer", className)}
+        onContextMenu={handleContextMenu}
+    >
       {displayImage && <AvatarImage src={displayImage} alt={username} />}
       <AvatarFallback className={cn("text-white font-medium", colorClass)}>
         {username ? username.charAt(0).toUpperCase() : '?'}

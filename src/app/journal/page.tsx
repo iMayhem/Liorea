@@ -32,6 +32,7 @@ import { ref, onValue, set, serverTimestamp } from 'firebase/database';
 import { compressImage } from '@/lib/compress';
 import { useSearchParams, useRouter } from 'next/navigation';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
@@ -189,7 +190,6 @@ function JournalContent() {
   const handleScroll = () => {
       if (!scrollContainerRef.current) return;
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      // If we are more than 100px away from the bottom, show the button
       const isDistanceFromBottom = scrollHeight - scrollTop - clientHeight > 100;
       setShowScrollButton(isDistanceFromBottom);
   };
@@ -206,11 +206,9 @@ function JournalContent() {
         const lastPost = posts[posts.length - 1];
         const isMyPost = lastPost.username === username;
         
-        // If I sent it, OR if I was already near the bottom -> Scroll
         if (isMyPost || !showScrollButton) {
             scrollToBottom("smooth");
         }
-        // If I'm scrolled up reading old stuff -> Do nothing (Icon will appear via onScroll)
     }
 
     // Update Refs
@@ -383,11 +381,20 @@ function JournalContent() {
                             <span className="text-sm text-white/40 truncate hidden sm:inline">by {activeJournal.username}</span>
                             
                             <div className="flex items-center gap-1 ml-2 border-l border-white/10 pl-2">
-                                <div className="flex -space-x-1.5">
-                                    {currentFollowers.map((u, i) => (
-                                        <UserAvatar key={i} username={u} className="w-6 h-6 border border-black" />
-                                    ))}
-                                </div>
+                                <TooltipProvider>
+                                    <div className="flex -space-x-1.5">
+                                        {currentFollowers.map((u, i) => (
+                                            <Tooltip key={i}>
+                                                <TooltipTrigger>
+                                                    <UserAvatar username={u} className="w-6 h-6 border border-black hover:z-10 transition-transform hover:scale-110" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{u}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ))}
+                                    </div>
+                                </TooltipProvider>
                                 <Button 
                                     size="icon" variant="ghost" 
                                     className={`h-8 w-8 rounded-full ml-1 ${followedIds.includes(activeJournal.id) ? 'text-accent fill-accent' : 'text-white/40 hover:text-white'}`}

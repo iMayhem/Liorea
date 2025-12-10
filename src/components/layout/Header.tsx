@@ -2,18 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/context/NotificationContext';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
-import UserAvatar from '@/components/UserAvatar'; // NEW IMPORT
+import UserAvatar from '@/components/UserAvatar'; 
 
 export default function Header() {
   const pathname = usePathname();
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -45,18 +45,24 @@ export default function Header() {
             </PopoverTrigger>
             <PopoverContent className="w-80 bg-black/20 backdrop-blur-md border-white/20 text-white" align="end">
                 <div className="grid gap-4">
-                    <div className="space-y-2">
+                    <div className="flex items-center justify-between">
                         <h4 className="font-medium leading-none">Notifications</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Recent announcements from the admins.
-                        </p>
+                        {notifications.length > 0 && (
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={markAllAsRead}
+                                className="h-6 text-[10px] px-2 text-white/50 hover:text-accent hover:bg-white/10"
+                            >
+                                <CheckCheck className="w-3 h-3 mr-1" /> Mark all read
+                            </Button>
+                        )}
                     </div>
-                     <Separator />
+                     <Separator className="bg-white/10" />
                     <ScrollArea className="h-72">
                         {notifications.length > 0 ? (
                             <div className="grid gap-2">
                             {notifications.map((notification) => {
-                                // Extract username from message "sujeet mentioned you..."
                                 const fromUser = notification.message.split(' ')[0]; 
                                 return (
                                     <div
@@ -72,7 +78,6 @@ export default function Header() {
                                             }
                                         }}
                                     >
-                                        {/* AVATAR ADDED HERE */}
                                         <div className="relative mt-1">
                                             <UserAvatar username={fromUser} className="w-8 h-8" />
                                             {!notification.read && (
