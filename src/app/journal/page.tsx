@@ -199,12 +199,12 @@ export default function JournalPage() {
                         <Card 
                             key={journal.id} 
                             onClick={() => { setActiveJournal(journal); setView('chat'); }}
-                            className="group cursor-pointer bg-black/20 border-white/10 hover:border-white/30 transition-all hover:bg-black/30 overflow-hidden"
+                            // UPDATED: Added backdrop-blur-md, shadow-lg, and consistent border styles
+                            className="group cursor-pointer bg-black/20 backdrop-blur-md border-white/10 hover:border-white/30 transition-all hover:bg-black/30 overflow-hidden shadow-lg"
                         >
                             <div className={`h-24 w-full ${journal.theme_color || 'bg-blue-900'} opacity-80 group-hover:opacity-100 transition-opacity`} />
                             <CardContent className="p-5 -mt-10 relative z-10">
                                 <div className="flex justify-between items-end">
-                                     {/* UPDATED: Using UserAvatar for the Journal Card */}
                                      <UserAvatar 
                                         username={journal.username} 
                                         className="h-16 w-16 rounded-xl border-4 border-black/20 shadow-lg text-2xl" 
@@ -275,15 +275,11 @@ export default function JournalPage() {
                         </div>
 
                         {posts.map((post) => (
-                            // UPDATED: No grouping logic. Every message gets an avatar.
-                            // UPDATED: Reduced vertical gap to mt-3
                             <div key={post.id} className="group flex gap-4 mt-3">
                                 
-                                {/* Always show Avatar */}
                                 <UserAvatar username={post.username} className="w-10 h-10 mt-1 shrink-0" />
                                 
                                 <div className="flex-1 min-w-0">
-                                    {/* Always show Header */}
                                     <div className="flex items-baseline gap-2">
                                         <span className="font-bold text-white hover:underline cursor-pointer truncate">
                                             {post.username}
@@ -300,7 +296,6 @@ export default function JournalPage() {
                                         {post.content}
                                     </div>
                                     
-                                    {/* Image Placeholder if url exists */}
                                     {post.image_url && (
                                         <div className="mt-2 rounded-lg overflow-hidden border border-white/10 max-w-md">
                                             <img src={post.image_url} alt="Attachment" className="w-full h-auto" />
