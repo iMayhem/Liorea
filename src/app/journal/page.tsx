@@ -37,40 +37,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
 
-// --- TYPES ---
-type Reaction = {
-    post_id: number;
-    username: string;
-    emoji: string;
-}
-
-type Journal = {
-  id: number;
-  username: string;
-  title: string;
-  tags: string;
-  theme_color: string;
-  images?: string; 
-  last_updated: number;
-};
-
-type Post = {
-  id: number;
-  username: string;
-  content: string;
-  image_url?: string;
-  created_at: number;
-  photoURL?: string; 
-  reactions?: Reaction[]; 
-};
-
-type GiphyResult = {
-    id: string;
-    images: {
-        fixed_height: { url: string };
-        original: { url: string };
-    }
-}
+// ... (TYPES AND HELPERS REMAIN SAME AS BEFORE) ...
+// To save space, assuming the Type definitions and FormattedMessage helper are here.
+type Reaction = { post_id: number; username: string; emoji: string; }
+type Journal = { id: number; username: string; title: string; tags: string; theme_color: string; images?: string; last_updated: number; };
+type Post = { id: number; username: string; content: string; image_url?: string; created_at: number; photoURL?: string; reactions?: Reaction[]; };
+type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; } }
 
 const FormattedMessage = ({ content }: { content: string }) => {
     const parts = content.split(/(@\w+)/g);
@@ -78,18 +50,13 @@ const FormattedMessage = ({ content }: { content: string }) => {
         <span>
             {parts.map((part, i) => {
                 if (part.startsWith('@')) {
-                    return (
-                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">
-                            {part}
-                        </span>
-                    );
+                    return <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">{part}</span>;
                 }
                 return part;
             })}
         </span>
     );
 };
-
 const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢", "🎉", "💯"];
 
 function JournalContent() {
@@ -102,68 +69,47 @@ function JournalContent() {
   const [journals, setJournals] = useState<Journal[]>([]);
   const [activeJournal, setActiveJournal] = useState<Journal | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  
-  // PAGINATION STATE
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
   const prevScrollHeight = useRef(0);
-
   const [followedIds, setFollowedIds] = useState<number[]>([]);
   const [currentFollowers, setCurrentFollowers] = useState<string[]>([]);
-  
   const [newTitle, setNewTitle] = useState("");
   const [newTags, setNewTags] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [journalToDelete, setJournalToDelete] = useState<number | null>(null);
   const [updatingJournalId, setUpdatingJournalId] = useState<number | null>(null);
-  
   const cardFileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null); 
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
-  
   const [newMessage, setNewMessage] = useState("");
   const [isUploadingChatImage, setIsUploadingChatImage] = useState(false);
-  
-  // SCROLL REFS
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
-
+  const prevPostsLength = useRef(0);
+  const prevJournalId = useRef<number | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
-
   const [gifs, setGifs] = useState<GiphyResult[]>([]);
   const [gifSearch, setGifSearch] = useState("");
   const [loadingGifs, setLoadingGifs] = useState(false);
-
-  // NEW: Track which message has the reaction picker open
   const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
 
-  // --- API FUNCTIONS ---
-  const fetchJournals = async () => { 
-      try { 
-          const res = await fetch(`${WORKER_URL}/journals/list`); 
-          if(res.ok) setJournals(await res.json()); 
-      } catch (e) { console.error(e); } 
-  };
-
+  // ... (API FUNCTIONS REMAIN SAME) ...
+  const fetchJournals = async () => { try { const res = await fetch(`${WORKER_URL}/journals/list`); if(res.ok) setJournals(await res.json()); } catch (e) { console.error(e); } };
   const fetchPosts = async (id: number, before?: number, isUpdate = false) => {
       try {
           const url = `${WORKER_URL}/journals/posts?id=${id}${before ? `&before=${before}` : ''}`;
           const res = await fetch(url);
           if(res.ok) {
               const newPosts: Post[] = await res.json();
-              
               if (before) {
-                  // PAGINATION LOAD (Older posts)
                   if (newPosts.length < 20) setHasMore(false);
-                  
-                  if (newPosts.length > 0) {
-                      setPosts(prev => [...newPosts, ...prev]);
-                  }
+                  if (newPosts.length > 0) setPosts(prev => [...newPosts, ...prev]);
                   setLoadingMore(false);
               } else {
-                  // INITIAL LOAD or UPDATE
                   if (isUpdate) {
                       setPosts(prev => {
                           const existingIds = new Set(prev.map(p => p.id));
@@ -179,15 +125,8 @@ function JournalContent() {
           }
       } catch (e) { console.error(e); setLoadingMore(false); }
   };
-
-  const fetchFollowers = async (id: number) => { 
-      try { 
-          const res = await fetch(`${WORKER_URL}/journals/followers?id=${id}`); 
-          if (res.ok) setCurrentFollowers(await res.json()); 
-      } catch (e) {} 
-  };
-
-  // --- REPORT LOGIC ---
+  const fetchFollowers = async (id: number) => { try { const res = await fetch(`${WORKER_URL}/journals/followers?id=${id}`); if (res.ok) setCurrentFollowers(await res.json()); } catch (e) {} };
+  
   const handleReportMessage = async (msg: Post) => {
       if(!username || !activeJournal) return;
       try {
@@ -201,89 +140,71 @@ function JournalContent() {
               status: "pending"
           });
           toast({ title: "Report Sent", description: "Admins have been notified." });
-      } catch (e) {
-          toast({ variant: "destructive", title: "Error", description: "Could not send report." });
-      }
+      } catch (e) { toast({ variant: "destructive", title: "Error", description: "Could not send report." }); }
   };
 
-  // 1. INITIAL LOAD (Journals List)
+  // ... (USE EFFECTS REMAIN SAME) ...
   useEffect(() => {
     const init = async () => {
-        if (username) {
-            try {
-                const fRes = await fetch(`${WORKER_URL}/journals/following?username=${username}`);
-                if (fRes.ok) setFollowedIds(await fRes.json());
-            } catch (e) {}
-        }
-
+        if (username) { try { const fRes = await fetch(`${WORKER_URL}/journals/following?username=${username}`); if (fRes.ok) setFollowedIds(await fRes.json()); } catch (e) {} }
         if (journals.length === 0) await fetchJournals();
-        
         const targetId = searchParams.get('id');
         if (targetId) {
             const found = journals.find(j => j.id.toString() === targetId);
-            if (!found) {
-                 const res = await fetch(`${WORKER_URL}/journals/list`);
-                 if(res.ok) {
-                     const list: Journal[] = await res.json();
-                     setJournals(list);
-                     const freshFound = list.find(j => j.id.toString() === targetId);
-                     if (freshFound) { setActiveJournal(freshFound); }
-                 }
+            if (!found) { const res = await fetch(`${WORKER_URL}/journals/list`); if(res.ok) { const list: Journal[] = await res.json(); setJournals(list); const freshFound = list.find(j => j.id.toString() === targetId); if (freshFound) { setActiveJournal(freshFound); } }
             } else { setActiveJournal(found); }
         } else { setActiveJournal(null); }
     };
     init();
-    
     const globalRef = ref(db, 'journal_global_signal/last_updated');
     const unsubscribe = onValue(globalRef, (snapshot) => { if (snapshot.exists()) fetchJournals(); });
     return () => unsubscribe();
   }, [searchParams, username]); 
 
-  // 2. CHAT INIT & SIGNAL LISTENER
   useEffect(() => {
     if (!activeJournal) return;
-    
-    // Reset state for new journal
-    setPosts([]);
-    setHasMore(true);
-    setLoadingMore(false);
-    
-    // Initial Fetch
-    fetchPosts(activeJournal.id);
-    fetchFollowers(activeJournal.id);
-
-    // Listen for real-time updates
+    setPosts([]); setHasMore(true); setIsInitialLoaded(false); setLoadingMore(false);
+    fetchPosts(activeJournal.id); fetchFollowers(activeJournal.id);
     const signalRef = ref(db, `journal_signals/${activeJournal.id}`);
-    const unsubscribe = onValue(signalRef, (snapshot) => { 
-        if (snapshot.exists()) {
-            fetchPosts(activeJournal.id, undefined, true); 
-        } 
-    });
+    const unsubscribe = onValue(signalRef, (snapshot) => { if (snapshot.exists()) fetchPosts(activeJournal.id, undefined, true); });
     return () => unsubscribe();
   }, [activeJournal]);
 
-  // --- SCROLL LOGIC ---
+  useLayoutEffect(() => {
+      if (posts.length > 0 && !isInitialLoaded && activeJournal) {
+          if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          setTimeout(() => setIsInitialLoaded(true), 50);
+      }
+  }, [posts, isInitialLoaded, activeJournal]);
 
-  // 3. Pagination: Detect Scroll Up
+  useEffect(() => {
+      const lastPost = posts[posts.length - 1];
+      const prevLastPost = posts.length > prevPostsLength.current ? posts[prevPostsLength.current - 1] : null;
+      if (isInitialLoaded && lastPost && prevLastPost && lastPost.id !== prevLastPost.id) {
+          const container = scrollContainerRef.current;
+          if (container) {
+              const { scrollTop, scrollHeight, clientHeight } = container;
+              if (lastPost.username === username || scrollHeight - scrollTop - clientHeight < 200) {
+                  bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+              }
+          }
+      }
+      prevPostsLength.current = posts.length;
+  }, [posts, isInitialLoaded, username]);
+
   const handleScroll = () => {
       const container = scrollContainerRef.current;
       if (!container) return;
-
       const { scrollTop, scrollHeight, clientHeight } = container;
-      
       setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
-
       if (scrollTop < 50 && hasMore && !loadingMore && posts.length > 0) {
           setLoadingMore(true);
-          prevScrollHeight.current = scrollHeight; // Capture height
+          prevScrollHeight.current = scrollHeight;
           const oldestPost = posts[0];
-          if (activeJournal) {
-              fetchPosts(activeJournal.id, oldestPost.created_at);
-          }
+          if (activeJournal) fetchPosts(activeJournal.id, oldestPost.created_at);
       }
   };
 
-  // 4. Scroll Anchoring
   useLayoutEffect(() => {
       const container = scrollContainerRef.current;
       if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
@@ -294,81 +215,17 @@ function JournalContent() {
       }
   }, [posts]);
 
-
-  // --- GIF FETCHING ---
-  const fetchGifs = async (query: string = "") => {
-      setLoadingGifs(true);
-      try {
-          const endpoint = query 
-            ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`
-            : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
-          const res = await fetch(endpoint);
-          const data = await res.json();
-          setGifs(data.data);
-      } catch (error) { console.error("Failed to fetch GIFs", error); } finally { setLoadingGifs(false); }
-  };
-
-  const handleSendGif = async (url: string) => {
-      if (!activeJournal || !username) return;
-      const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
-      setPosts(prev => [...prev, tempPost]); 
-      
-      try {
-          await fetch(`${WORKER_URL}/journals/post`, {
-              method: "POST",
-              body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }),
-              headers: { "Content-Type": "application/json" }
-          });
-          notifyChatUpdate(activeJournal.id);
-      } catch (e) { console.error(e); }
-  };
-
-  const sortedJournals = useMemo(() => {
-      return [...journals].sort((a, b) => {
-          const aFollow = followedIds.includes(a.id) ? 1 : 0;
-          const bFollow = followedIds.includes(b.id) ? 1 : 0;
-          if (aFollow !== bFollow) return bFollow - aFollow; 
-          return b.last_updated - a.last_updated; 
-      });
-  }, [journals, followedIds]);
-
-  const handleFollowToggle = async () => {
-      if (!activeJournal || !username) return;
-      const isFollowing = followedIds.includes(activeJournal.id);
-      if (isFollowing) { setFollowedIds(prev => prev.filter(id => id !== activeJournal.id)); setCurrentFollowers(prev => prev.filter(u => u !== username)); } 
-      else { setFollowedIds(prev => [...prev, activeJournal.id]); setCurrentFollowers(prev => [username, ...prev]); }
-      try { await fetch(`${WORKER_URL}/journals/follow`, { method: 'POST', body: JSON.stringify({ journal_id: activeJournal.id, username }), headers: { 'Content-Type': 'application/json' } }); } catch (e) { console.error(e); }
-  };
-
-  const handleReact = async (post_id: number, emoji: string) => {
-      if (!username || !activeJournal) return;
-      setOpenReactionPopoverId(null); 
-      setPosts(currentPosts => currentPosts.map(p => {
-          if (p.id !== post_id) return p;
-          const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji);
-          let newReactions = p.reactions ? [...p.reactions] : [];
-          if (existingReactionIndex !== undefined && existingReactionIndex > -1) { newReactions.splice(existingReactionIndex, 1); } else { newReactions.push({ post_id, username, emoji }); }
-          return { ...p, reactions: newReactions };
-      }));
-      try { await fetch(`${WORKER_URL}/journals/react`, { method: 'POST', body: JSON.stringify({ post_id, username, emoji }), headers: { 'Content-Type': 'application/json' } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error("Reaction failed"); }
-  };
-
-  const getReactionGroups = (reactions: Reaction[] | undefined) => {
-      if (!reactions) return {};
-      const groups: Record<string, { count: number, hasReacted: boolean }> = {};
-      reactions.forEach(r => {
-          if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false };
-          groups[r.emoji].count++;
-          if (r.username === username) groups[r.emoji].hasReacted = true;
-      });
-      return groups;
-  };
-
+  // ... (REST OF HANDLERS REMAIN SAME) ...
+  const fetchGifs = async (query: string = "") => { setLoadingGifs(true); try { const endpoint = query ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g` : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`; const res = await fetch(endpoint); const data = await res.json(); setGifs(data.data); } catch (error) { console.error(error); } finally { setLoadingGifs(false); } };
+  const handleSendGif = async (url: string) => { if (!activeJournal || !username) return; const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() }; setPosts(prev => [...prev, tempPost]); try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }), headers: { "Content-Type": "application/json" } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
+  const sortedJournals = useMemo(() => { return [...journals].sort((a, b) => { const aFollow = followedIds.includes(a.id) ? 1 : 0; const bFollow = followedIds.includes(b.id) ? 1 : 0; if (aFollow !== bFollow) return bFollow - aFollow; return b.last_updated - a.last_updated; }); }, [journals, followedIds]);
+  const handleFollowToggle = async () => { if (!activeJournal || !username) return; const isFollowing = followedIds.includes(activeJournal.id); if (isFollowing) { setFollowedIds(prev => prev.filter(id => id !== activeJournal.id)); setCurrentFollowers(prev => prev.filter(u => u !== username)); } else { setFollowedIds(prev => [...prev, activeJournal.id]); setCurrentFollowers(prev => [username, ...prev]); } try { await fetch(`${WORKER_URL}/journals/follow`, { method: 'POST', body: JSON.stringify({ journal_id: activeJournal.id, username }), headers: { 'Content-Type': 'application/json' } }); } catch (e) { console.error(e); } };
+  const handleReact = async (post_id: number, emoji: string) => { if (!username || !activeJournal) return; setOpenReactionPopoverId(null); setPosts(currentPosts => currentPosts.map(p => { if (p.id !== post_id) return p; const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji); let newReactions = p.reactions ? [...p.reactions] : []; if (existingReactionIndex !== undefined && existingReactionIndex > -1) { newReactions.splice(existingReactionIndex, 1); } else { newReactions.push({ post_id, username, emoji }); } return { ...p, reactions: newReactions }; })); try { await fetch(`${WORKER_URL}/journals/react`, { method: 'POST', body: JSON.stringify({ post_id, username, emoji }), headers: { 'Content-Type': 'application/json' } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
+  const getReactionGroups = (reactions: Reaction[] | undefined) => { if (!reactions) return {}; const groups: Record<string, { count: number, hasReacted: boolean }> = {}; reactions.forEach(r => { if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false }; groups[r.emoji].count++; if (r.username === username) groups[r.emoji].hasReacted = true; }); return groups; };
   const mentionableUsers = useMemo(() => { if (!mentionQuery) return []; const chatUsers = posts.map(p => p.username); const lbUsers = leaderboardUsers.map(u => u.username); const allUsers = Array.from(new Set([...chatUsers, ...lbUsers])); return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); }, [mentionQuery, posts, leaderboardUsers]);
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const val = e.target.value; setNewMessage(val); const cursorPos = e.target.selectionStart; const textBeforeCursor = val.slice(0, cursorPos); const match = textBeforeCursor.match(/@(\w*)$/); if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); } };
   const insertMention = (user: string) => { if (!mentionQuery) return; const cursorPos = chatInputRef.current?.selectionStart || 0; const textBefore = newMessage.slice(0, cursorPos).replace(/@(\w*)$/, `@${user} `); const textAfter = newMessage.slice(cursorPos); setNewMessage(textBefore + textAfter); setMentionQuery(null); chatInputRef.current?.focus(); };
   const handleEmojiClick = (emojiObj: any) => { setNewMessage(prev => prev + emojiObj.emoji); };
-  
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => { if (mentionQuery && mentionableUsers.length > 0) { if (e.key === 'ArrowUp') { e.preventDefault(); setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionableUsers.length - 1)); } else if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(prev => (prev < mentionableUsers.length - 1 ? prev + 1 : 0)); } else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionableUsers[mentionIndex]); } else if (e.key === 'Escape') { setMentionQuery(null); } return; } if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); } };
   const handleOpenJournal = (journal: Journal) => { router.push(`/journal?id=${journal.id}`); };
   const handleBackToGallery = () => { router.push('/journal'); };
@@ -393,12 +250,13 @@ function JournalContent() {
       
       <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-4">
         
-        {/* LEFT: JOURNAL LIST (Glass Panel) */}
-        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col glass-panel rounded-2xl overflow-hidden ${activeJournal ? 'hidden md:flex' : 'flex'} select-none`}>
-            {/* Header */}
-            <div className="flex justify-end items-center p-4 glass-panel-light shrink-0">
+        {/* LEFT: JOURNAL LIST (Transparent / Floating) */}
+        {/* REMOVED .glass-panel from here as requested */}
+        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col rounded-2xl overflow-hidden ${activeJournal ? 'hidden md:flex' : 'flex'} select-none`}>
+            {/* Header - Made it look consistent but distinct */}
+            <div className="flex justify-end items-center p-4 shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8 shadow-md"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
+                    <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8 shadow-md glass-panel-light text-white hover:bg-white/20"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
                     <DialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white">
                         <DialogHeader><DialogTitle>Create Journal</DialogTitle></DialogHeader>
                         <div className="space-y-4 py-4">
@@ -415,8 +273,9 @@ function JournalContent() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                     {sortedJournals.map((journal) => (
                         <Card key={journal.id} onClick={() => handleOpenJournal(journal)} 
-                            className={`relative group cursor-pointer h-40 xl:h-48 bg-black/40 hover:bg-black/60 border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl 
-                            ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/5'}
+                            // Applied Premium Glass Effect to CARDS INDIVIDUALLY
+                            className={`relative group cursor-pointer h-40 xl:h-48 glass-panel hover:bg-black/50 transition-all overflow-hidden shadow-lg rounded-xl 
+                            ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}
                             ${followedIds.includes(journal.id) ? 'shadow-accent/5 border-l-2 border-l-accent' : ''} 
                             `}
                         >
@@ -443,7 +302,7 @@ function JournalContent() {
             </div>
         </div>
 
-        {/* RIGHT: CHAT (Glass Panel) */}
+        {/* RIGHT: CHAT (Kept Glass Panel) */}
         <div className={`flex-1 flex flex-col glass-panel rounded-2xl overflow-hidden ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
             {activeJournal ? (
                 <>
@@ -510,10 +369,9 @@ function JournalContent() {
                                         
                                         <div className="flex-1 min-w-0">
                                             {showHeader && (
-                                                <div className="flex items-baseline gap-2 mb-0.5 select-none">
+                                                <div className="flex items-center gap-2 mb-1 select-none">
                                                     <span className="text-base font-semibold text-white hover:underline cursor-pointer">{post.username}</span>
-                                                    <span className="text-xs text-white/30">{formatDate(post.created_at)} at {formatTime(post.created_at)}</span>
-                                                    {post.username === activeJournal.username && <span className="text-[10px] bg-accent text-black px-1.5 rounded font-bold uppercase shrink-0">OP</span>}
+                                                    <span className="text-xs text-white/30 ml-1">{formatDate(post.created_at)} at {formatTime(post.created_at)}</span>
                                                 </div>
                                             )}
                                             

@@ -25,19 +25,20 @@ export default function PresencePanel({ users }: PresencePanelProps) {
   const onlineCount = users.filter(u => u.status === 'Online').length;
 
   return (
-    <Card className="glass-panel-2 bg-black/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg w-72 h-[500px] flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0">
+    // UPDATED CLASSNAME:
+    <Card className="glass-panel text-white w-72 h-[500px] flex flex-col rounded-2xl overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0 glass-panel-light">
             <div className="flex items-center gap-3">
                 <Users className="text-white/80 w-5 h-5" />
                 <CardTitle className="text-base text-white font-semibold">Community</CardTitle>
             </div>
-            <Button variant="secondary" size="sm" className="bg-black/20 text-white/80 text-xs h-7 px-3 rounded-full">
+            <Button variant="secondary" size="sm" className="bg-white/10 text-white/80 text-xs h-7 px-3 rounded-full hover:bg-white/20 border border-white/5">
                 {onlineCount} Online
             </Button>
         </CardHeader>
       <CardContent className="p-0 flex-1 min-h-0">
         <ScrollArea className="h-full px-4">
-            <div className="space-y-4 py-1">
+            <div className="space-y-4 py-4">
             {users.map((user) => {
             const isOnline = user.status === 'Online';
             const lastSeen = getTimeAgo(user.last_seen);
@@ -48,7 +49,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                     <UserAvatar username={user.username} className="w-9 h-9" />
                     
                     <span className={cn(
-                        "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-background z-10",
+                        "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-black z-10",
                         isOnline ? "bg-green-500" : "bg-gray-500"
                     )} />
                 </div>

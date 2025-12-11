@@ -18,6 +18,7 @@ export default function StudyGrid({ users }: StudyGridProps) {
   const sortedUsers = [...users].sort((a, b) => a.username.localeCompare(b.username));
   
   return (
+    // UPDATED CLASSNAME:
     <Card className="glass-panel text-white w-full h-[480px] rounded-2xl overflow-hidden">
         <CardHeader className="p-4 glass-panel-light">
             <CardTitle className="text-base flex items-center gap-2">

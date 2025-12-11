@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Target } from 'lucide-react';
 
@@ -31,58 +31,41 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
 
   useEffect(() => {
     setIsClient(true);
-    // Calculate initial time left only on the client
     setTimeLeft(calculateTimeLeft(targetDate));
-
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft(targetDate));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [targetDate]);
 
 
-  const timerComponents: JSX.Element[] = [];
+  // Fixed Type Definition here
+  const timerComponents: React.ReactNode[] = [];
 
   Object.keys(timeLeft).forEach((interval) => {
     timerComponents.push(
       <div key={interval} className="flex flex-col items-center">
-        <span className="text-2xl font-bold">
+        <span className="text-2xl font-bold font-mono tracking-wider">
             {String(timeLeft[interval as keyof typeof timeLeft] ?? '00').padStart(2, '0')}
         </span>
+        <span className="text-[10px] uppercase tracking-widest text-white/50">{interval}</span>
       </div>
     );
   });
 
-  if (!isClient) {
-      return (
-        <Card className="border-none shadow-none bg-black/5 backdrop-blur-sm text-white">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Target className="text-accent w-4 h-4" />
-              {examName} Countdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="grid grid-cols-4 gap-2 text-center h-[44px]">
-              {/* Placeholder for server render */}
-            </div>
-          </CardContent>
-        </Card>
-      );
-  }
+  if (!isClient) return null;
 
   return (
-    <Card className="border-none shadow-none bg-black/5 backdrop-blur-sm text-white">
-      <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
+    <Card className="glass-panel text-white w-full rounded-2xl overflow-hidden">
+      <CardHeader className="p-4 pb-2 glass-panel-light">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2 uppercase tracking-wider text-white/80">
           <Target className="text-accent w-4 h-4" />
           {examName} Countdown
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
+      <CardContent className="p-4 pt-4">
         {timerComponents.length ? (
-            <div className="grid grid-cols-4 gap-2 text-center">
+            <div className="flex justify-between items-center px-2">
                 {timerComponents}
             </div>
         ) : (
