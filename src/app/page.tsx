@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthForm from '@/features/auth/components/AuthForm';
-import { usePresence } from '@/shared/context/PresenceContext';
-import { useBackground } from '@/shared/context/BackgroundContext';
-import { Skeleton } from '@/shared/ui/skeleton';
+import AuthForm from '@/components/auth/AuthForm';
+import { usePresence } from '@/features/study';
+import { useBackground } from '@/context/BackgroundContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function LandingPage() {
   useEffect(() => {
     // If background is done loading AND we have a username, go to home
     if (!isBackgroundLoading && username) {
-        router.push('/home');
+      router.push('/home');
     }
   }, [isBackgroundLoading, username, router]);
 

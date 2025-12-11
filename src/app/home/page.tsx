@@ -1,7 +1,7 @@
 
 "use client";
 
-import LioreaClient from "@/features/dashboard/components/LioreaClient";
+import LioreaClient from "@/components/LioreaClient";
 
 export default function HomePage() {
   return <LioreaClient />;

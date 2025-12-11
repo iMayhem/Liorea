@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { BentoCard, CardContent, CardHeader, CardTitle } from '@/components/ui/BentoCard';
 import { Target } from 'lucide-react';
 
 interface ExamCountdownProps {
@@ -46,7 +46,7 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
     timerComponents.push(
       <div key={interval} className="flex flex-col items-center">
         <span className="text-2xl font-bold font-mono tracking-wider">
-            {String(timeLeft[interval as keyof typeof timeLeft] ?? '00').padStart(2, '0')}
+          {String(timeLeft[interval as keyof typeof timeLeft] ?? '00').padStart(2, '0')}
         </span>
         <span className="text-[10px] uppercase tracking-widest text-white/50">{interval}</span>
       </div>
@@ -56,8 +56,8 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
   if (!isClient) return null;
 
   return (
-    <Card className="glass-panel text-white w-full rounded-2xl overflow-hidden">
-      <CardHeader className="p-4 pb-2 glass-panel-light">
+    <BentoCard className="w-full text-white rounded-2xl overflow-hidden shadow-md" noPadding>
+      <CardHeader className="p-4 pb-2 border-b border-zinc-800 bg-zinc-900/50">
         <CardTitle className="text-sm font-semibold flex items-center gap-2 uppercase tracking-wider text-white/80">
           <Target className="text-accent w-4 h-4" />
           {examName} Countdown
@@ -65,13 +65,13 @@ export default function ExamCountdown({ examName, targetDate }: ExamCountdownPro
       </CardHeader>
       <CardContent className="p-4 pt-4">
         {timerComponents.length ? (
-            <div className="flex justify-between items-center px-2">
-                {timerComponents}
-            </div>
+          <div className="flex justify-between items-center px-2">
+            {timerComponents}
+          </div>
         ) : (
           <p className="text-center text-sm font-semibold text-accent">The exam has started!</p>
         )}
       </CardContent>
-    </Card>
+    </BentoCard>
   );
 }

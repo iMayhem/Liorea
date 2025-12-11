@@ -1,20 +1,22 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/card';
-import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
-import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag } from 'lucide-react';
-import { useChat, ChatMessage } from '@/features/chat/context/ChatContext';
-import { usePresence } from '@/shared/context/PresenceContext';
-import { useNotifications } from '@/shared/context/NotificationContext';
-import UserAvatar from '@/shared/components/UserAvatar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
-import { db } from '@/shared/utils/firebase';
-import { ref, push, serverTimestamp } from 'firebase/database';
-import { useToast } from '@/shared/hooks/use-toast';
 
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon } from 'lucide-react';
+import { useChat, ChatMessage } from '../context/ChatContext';
+import { usePresence } from '@/features/study/context/PresenceContext';
+import { useNotifications } from '@/context/NotificationContext';
+import UserAvatar from '@/components/UserAvatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { db } from '@/lib/firebase';
+import { ref, push, serverTimestamp } from 'firebase/database';
+import { useToast } from '@/hooks/use-toast';
+import { compressImage } from '@/lib/compress';
+
+const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
 const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢"];
 
@@ -57,6 +59,34 @@ export default function ChatPanel() {
     const [gifSearch, setGifSearch] = useState("");
     const [loadingGifs, setLoadingGifs] = useState(false);
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<string | null>(null);
+
+    // Image Upload State
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files[0] || !username) return;
+
+        setIsUploading(true);
+        try {
+            const compressed = await compressImage(e.target.files[0]);
+            const uploadRes = await fetch(`${WORKER_URL}/upload`, {
+                method: 'PUT',
+                body: compressed
+            });
+
+            if (!uploadRes.ok) throw new Error("Upload failed");
+
+            const { url } = await uploadRes.json();
+            sendMessage("", url); // Send message with image URL
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Error", description: "Image upload failed." });
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
 
     // Mention State
     const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -223,21 +253,26 @@ export default function ChatPanel() {
     const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <Card className="glass-panel text-white flex flex-col h-[480px] w-full relative overflow-hidden rounded-2xl">
-            <CardHeader className="p-4 shrink-0 glass-panel-light">
-                <CardTitle className="text-base flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5" />
-                    Group Chat
-                </CardTitle>
-            </CardHeader>
+        <div className="flex-1 flex flex-col h-full">
+            {/* Header - Native Discord Style */}
+            <div className="h-16 flex items-center px-6 py-5 shrink-0 justify-between select-none border-b border-[#1F2023] bg-[#2B2D31]">
+                <div className="flex items-center gap-3">
+                    <MessageSquare className="w-5 h-5 text-zinc-400" />
+                    <div>
+                        <span className="font-bold text-base text-zinc-100">Study Room</span>
+                        <span className="text-xs text-zinc-500 hidden sm:inline ml-2">General Channel</span>
+                    </div>
+                </div>
+            </div>
 
+            {/* Chat Area */}
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className={`flex-1 p-0 overflow-y-auto no-scrollbar relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`flex-1 p-0 overflow-y-auto relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
             >
                 <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
-                    {hasMore && <div className="text-center py-4 text-xs text-white/30"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
+                    {hasMore && <div className="text-center py-4 text-xs text-zinc-500"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
 
                     {messages.map((msg, index) => {
                         const isSequence = index > 0 && messages[index - 1].username === msg.username;
@@ -250,13 +285,13 @@ export default function ChatPanel() {
                         return (
                             <div
                                 key={msg.id}
-                                className={`group relative flex gap-4 pr-2 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
+                                className={`group relative flex gap-4 pr-4 hover:bg-[#2e3035] -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}
                             >
                                 <div className="w-10 shrink-0 select-none pt-0.5">
                                     {showHeader ? (
                                         <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
                                     ) : (
-                                        <div className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
+                                        <div className="text-[10px] text-zinc-600 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
                                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                                         </div>
                                     )}
@@ -265,14 +300,14 @@ export default function ChatPanel() {
                                 <div className="flex-1 min-w-0">
                                     {showHeader && (
                                         <div className="flex items-center gap-2 mb-1 select-none">
-                                            <span className="text-base font-semibold text-white hover:underline cursor-pointer">{msg.username}</span>
-                                            <span className="text-xs text-white/30 ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
+                                            <span className="text-base font-semibold text-zinc-100 hover:underline cursor-pointer">{msg.username}</span>
+                                            <span className="text-xs text-zinc-500 ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
                                         </div>
                                     )}
 
-                                    <div className="text-base text-zinc-100 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
+                                    <div className="text-base text-zinc-300 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
                                         {msg.image_url ? (
-                                            <img src={msg.image_url} alt="GIF" className="max-w-[250px] rounded-lg mt-1" loading="lazy" />
+                                            <img src={msg.image_url} alt="Attachment" className="max-w-[300px] max-h-80 w-auto object-contain rounded-lg mt-1 border border-white/10" loading="lazy" />
                                         ) : (
                                             <FormattedMessage content={msg.message} />
                                         )}
@@ -284,10 +319,10 @@ export default function ChatPanel() {
                                                 <button
                                                     key={emoji}
                                                     onClick={() => sendReaction(msg.id, emoji)}
-                                                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-[#2b2d31] border-transparent hover:border-white/20'}`}
+                                                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-[#2b2d31] border-transparent hover:border-zinc-700'}`}
                                                 >
                                                     <span className="text-base">{emoji}</span>
-                                                    <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-zinc-300'}`}>{data.count}</span>
+                                                    <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-zinc-400'}`}>{data.count}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -295,24 +330,24 @@ export default function ChatPanel() {
                                 </div>
 
                                 {/* HOVER ACTIONS */}
-                                <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
-                                    <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
+                                <div className="absolute right-4 -top-2 bg-[#1E1F22] shadow-sm rounded-[4px] border border-[#111214] opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
+                                    <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open: boolean) => setOpenReactionPopoverId(open ? msg.id : null)}>
                                         <PopoverTrigger asChild>
-                                            <button className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors">
+                                            <button className="p-1.5 hover:bg-white/5 rounded text-zinc-400 hover:text-zinc-200 transition-colors">
                                                 <Smile className="w-4 h-4" />
                                             </button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-lg shadow-xl" side="top" align="end" sideOffset={5}>
+                                        <PopoverContent className="w-auto p-1.5 bg-[#1E1F22] border border-[#111214] rounded-lg shadow-xl" side="top" align="end" sideOffset={5}>
                                             <div className="flex gap-1">
                                                 {QUICK_EMOJIS.map(emoji => (
-                                                    <button key={emoji} className="p-2 hover:bg-white/10 rounded-md text-xl transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
+                                                    <button key={emoji} className="p-2 hover:bg-white/5 rounded-md text-xl transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
                                                 ))}
                                             </div>
                                         </PopoverContent>
                                     </Popover>
 
                                     {!isCurrentUser && (
-                                        <button onClick={() => handleReportMessage(msg)} className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400 transition-colors" title="Report">
+                                        <button onClick={() => handleReportMessage(msg)} className="p-1.5 hover:bg-white/5 rounded text-zinc-400 hover:text-red-400 transition-colors" title="Report">
                                             <Flag className="w-4 h-4" />
                                         </button>
                                     )}
@@ -334,18 +369,19 @@ export default function ChatPanel() {
             )}
 
             {typingUsers.length > 0 && (
-                <div className="absolute bottom-16 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
+                <div className="absolute bottom-16 left-4 text-xs text-zinc-400 italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
                     {getTypingMessage()}
                 </div>
             )}
 
+            {/* Mention Dropup */}
             {mentionQuery && mentionableUsers.length > 0 && (
-                <div className="absolute bottom-0 left-4 bg-[#1e1e24] border border-white/10 rounded-t-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
-                    <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
+                <div className="absolute bottom-16 left-4 bg-[#1E1F22] border border-[#111214] rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
+                    <div className="px-3 py-2 text-xs uppercase font-bold text-zinc-500 tracking-wider bg-black/20">Members</div>
                     {mentionableUsers.map((u, i) => (
                         <div
                             key={u}
-                            className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`}
+                            className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-[#5865F2]/20 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'}`}
                             onClick={() => insertMention(u)}
                         >
                             <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
@@ -354,54 +390,66 @@ export default function ChatPanel() {
                 </div>
             )}
 
-            <CardFooter className="p-3 shrink-0 glass-panel-light">
-                <div className="flex w-full items-end gap-2">
-                    <div className="flex gap-1 pb-1">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Film className="w-4 h-4" /></Button>
-                            </PopoverTrigger>
-                            <PopoverContent side="top" align="start" className="w-72 p-2 bg-[#1e1e24] border-white/10 text-white">
-                                <div className="space-y-2">
-                                    <div className="relative">
-                                        <Search className="absolute left-2 top-2 w-3 h-3 text-white/40" />
-                                        <Input placeholder="GIFs..." className="h-7 pl-7 bg-black/20 border-white/10 text-xs" value={gifSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setGifSearch(e.target.value); fetchGifs(e.target.value); }} />
-                                    </div>
-                                    <div className="h-48 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
-                                        {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-white/40">Loading...</div> : gifs.map(gif => (
-                                            <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
-                                        ))}
-                                    </div>
+            {/* Input Area - Journal Style */}
+            <div className="p-4 shrink-0 bg-[#2B2D31] border-t border-[#1F2023]">
+                <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+
+                    {/* Hidden Date Input for Image Upload */}
+                    <Input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                    />
+
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><Film className="w-5 h-5" /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" align="start" className="w-80 p-2 bg-[#1e1e24] border-white/10 text-white">
+                            <div className="space-y-2">
+                                <div className="relative">
+                                    <Search className="absolute left-2 top-2 w-4 h-4 text-white/40" />
+                                    <Input placeholder="Search GIFs..." className="h-8 pl-8 bg-black/20 border-white/10 text-sm" value={gifSearch} onChange={(e) => { setGifSearch(e.target.value); fetchGifs(e.target.value); }} />
                                 </div>
-                            </PopoverContent>
-                        </Popover>
+                                <div className="h-60 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
+                                    {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-white/40">Loading...</div> : gifs.map(gif => (
+                                        <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
+                                    ))}
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
 
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Smile className="w-4 h-4" /></Button>
-                            </PopoverTrigger>
-                            <PopoverContent side="top" align="start" className="w-auto p-0 border-none bg-transparent shadow-none">
-                                <EmojiPicker theme={Theme.DARK} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={350} searchDisabled skinTonesDisabled />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
+                    <Button variant="ghost" size="icon" disabled={isUploading} onClick={() => fileInputRef.current?.click()} className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded">
+                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                    </Button>
 
-                    <form onSubmit={handleSendMessage} className="flex-1 flex gap-2">
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            placeholder="Message..."
-                            className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-white placeholder:text-white/30 h-10 py-2 px-0"
-                            value={newMessage}
-                            onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
-                        />
-                        <Button type="submit" size="icon" variant="ghost" disabled={!newMessage.trim()} className="h-10 w-10 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-full">
-                            <Send className="h-5 w-5" />
-                        </Button>
-                    </form>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><Smile className="w-5 h-5" /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" className="w-auto p-0 border-none bg-transparent shadow-none">
+                            <EmojiPicker theme={Theme.DARK} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={400} searchDisabled={false} skinTonesDisabled />
+                        </PopoverContent>
+                    </Popover>
+
+                    <textarea
+                        ref={inputRef}
+                        value={newMessage}
+                        onChange={(e) => { handleInputChange(e as any); }} // Casting for textarea/input mismatch if needed, but logic is same
+                        onKeyDown={(e) => { handleKeyDown(e as any); }}
+                        placeholder="Message Study Room..."
+                        className="w-full bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-white/20 resize-none py-1.5 max-h-32 min-h-[36px] no-scrollbar"
+                        rows={1}
+                    />
+
+                    <Button onClick={() => handleSendMessage()} disabled={!newMessage.trim()} className="bg-white/10 hover:bg-white text-white hover:text-black h-9 w-9 shrink-0 rounded p-0">
+                        <Send className="w-4 h-4" />
+                    </Button>
                 </div>
-            </CardFooter>
-        </Card>
+            </div>
+        </div>
     );
 }
