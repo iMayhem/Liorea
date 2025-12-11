@@ -164,9 +164,9 @@ function JournalContent() {
 
       <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-4">
         
-        {/* LEFT PANEL */}
-        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col h-full min-h-0 rounded-2xl overflow-hidden glass-panel ${activeJournal ? 'hidden md:flex' : 'flex'}`}>
-            <div className="flex justify-end items-center p-4 shrink-0 border-b border-white/5">
+        {/* LEFT PANEL: Removed 'glass-panel' to float freely. Added overflow-hidden to contain scrollbar. */}
+        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col h-full min-h-0 rounded-2xl overflow-hidden ${activeJournal ? 'hidden md:flex' : 'flex'}`}>
+            <div className="flex justify-end items-center p-4 shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild><Button size="sm" variant="secondary" className="glass-panel-light hover:bg-white/20"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
                     <DialogContent className="bg-black/80 backdrop-blur-xl border-white/20 text-white">
@@ -209,11 +209,12 @@ function JournalContent() {
             </Scrollable>
         </div>
 
-        {/* RIGHT PANEL: Chat */}
+        {/* RIGHT PANEL: Chat. Added 'overflow-hidden' to ensure scrollbar stays inside */}
         <div className={`flex-1 flex flex-col h-full min-h-0 glass-panel rounded-2xl overflow-hidden ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
             {activeJournal ? (
                 <>
-                    <div className="h-16 glass-panel-light flex items-center px-6 shrink-0 justify-between">
+                    {/* Header: Fixed height */}
+                    <div className="h-16 glass-panel-light flex items-center px-6 shrink-0 justify-between z-10">
                          <div className="flex items-center gap-3 overflow-hidden">
                             <Button variant="ghost" size="icon" className="md:hidden -ml-2" onClick={() => setActiveJournal(null)}><ArrowLeft className="w-4 h-4" /></Button>
                             <div>
@@ -226,6 +227,7 @@ function JournalContent() {
                         </Button>
                     </div>
 
+                    {/* Messages: flex-1 takes remaining space. Scrollable handles overflow. */}
                     <Scrollable ref={scrollRef} onScroll={handleScroll} className="flex-1 p-0 min-h-0">
                         <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
                             {loadingMore && <div className="text-center py-4"><Loader2 className="w-4 h-4 animate-spin mx-auto text-white/30" /></div>}
@@ -260,7 +262,8 @@ function JournalContent() {
                         </div>
                     </Scrollable>
 
-                    <div className="p-4 glass-panel-light shrink-0">
+                    {/* Input Area: Fixed height at bottom */}
+                    <div className="p-4 glass-panel-light shrink-0 z-10">
                         <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10">
                             <GiphyPicker onSelect={(url) => sendMessage("", url)} />
                             <Button variant="ghost" size="icon" disabled={isUploading} onClick={() => fileInputRef.current?.click()} className="text-white/40 hover:text-white rounded-full">
