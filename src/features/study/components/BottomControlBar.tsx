@@ -27,7 +27,7 @@ export default function BottomControlBar() {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1E1F22] border-t border-[#111214]">
-            <div className="flex items-center justify-between px-4 py-4">
+            <div className="flex items-center justify-between px-4 py-3">
 
                 {/* LEFT: User Count */}
                 <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export default function BottomControlBar() {
                                 <SheetTitle className="text-zinc-100">Leaderboard</SheetTitle>
                                 <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
                             </SheetHeader>
-                            <div className="py-4 space-y-8 h-full overflow-y-auto">
+                            <div className="py-3 space-y-8 h-full overflow-y-auto">
                                 <Leaderboard users={leaderboardUsers} />
                             </div>
                         </SheetContent>
@@ -62,7 +62,7 @@ export default function BottomControlBar() {
                 {/* RIGHT: Leave Button */}
                 <Button
                     onClick={handleLeave}
-                    className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-md px-4 py-2 transition-all font-medium text-sm gap-2 h-9"
+                    className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-md px-3 py-2 transition-all font-medium text-sm gap-2 h-9"
                 >
                     <LogOut className="w-4 h-4" />
                     <span>Leave</span>
