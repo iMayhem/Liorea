@@ -223,8 +223,8 @@ export default function ChatPanel() {
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white flex flex-col h-[480px] w-full shadow-xl relative overflow-hidden">
-      <CardHeader className="p-4 border-b border-white/20 shrink-0 bg-black/20">
+    <Card className="glass-panel text-white flex flex-col h-[480px] w-full relative overflow-hidden rounded-2xl">
+      <CardHeader className="p-4 shrink-0 glass-panel-light">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
           Group Chat
@@ -294,7 +294,7 @@ export default function ChatPanel() {
                         )}
                    </div>
 
-                   {/* HOVER ACTIONS (REPORT BUTTON ADDED) */}
+                   {/* HOVER ACTIONS */}
                    <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
                         <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
                             <PopoverTrigger asChild>
@@ -311,7 +311,6 @@ export default function ChatPanel() {
                             </PopoverContent>
                         </Popover>
 
-                        {/* REPORT BUTTON */}
                         {!isCurrentUser && (
                             <button onClick={() => handleReportMessage(msg)} className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400 transition-colors" title="Report">
                                 <Flag className="w-4 h-4" />
@@ -355,7 +354,7 @@ export default function ChatPanel() {
           </div>
       )}
 
-      <CardFooter className="p-3 border-t border-white/20 shrink-0 bg-black/20">
+      <CardFooter className="p-3 shrink-0 glass-panel-light">
         <div className="flex w-full items-end gap-2">
             <div className="flex gap-1 pb-1">
                 <Popover>

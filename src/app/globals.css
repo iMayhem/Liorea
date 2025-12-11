@@ -37,15 +37,23 @@
     overflow: hidden; 
     height: 100vh;
     width: 100vw;
-    /* Default dark ambient background to hide loading jitters */
+    /* Deep dark gradient fallback to prevent white flashes */
     background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
   }
 }
 
 @layer utilities {
-  .glass-effect {
-    @apply bg-background/60 backdrop-blur-lg;
+  /* THE PREMIUM GLASS EFFECT */
+  .glass-panel {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
+  
+  /* Lighter glass for headers/inputs/footers */
+  .glass-panel-light {
+    @apply bg-white/5 backdrop-blur-lg border-b border-white/5;
+  }
+
+  /* Hides scrollbar completely but keeps functionality */
   .no-scrollbar::-webkit-scrollbar {
       display: none;
   }
@@ -57,21 +65,21 @@
 
 /* --- APP-LIKE SCROLLBAR (Discord Style) --- */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent; 
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1); 
-  border-radius: 4px;
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2); 
 }
 
-/* Glass panel global styling */
+/* Legacy Glass panel global styling (kept for safety) */
 .dark .card, .theme-blue .card, .theme-zinc .card {
   position: relative;
   overflow: hidden;

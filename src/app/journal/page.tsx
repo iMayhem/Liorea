@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search, ChevronDown } from 'lucide-react';
+import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search, ChevronDown, Flag } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -28,7 +28,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { db } from '@/lib/firebase';
-import { ref, onValue, set, serverTimestamp } from 'firebase/database';
+import { ref, onValue, set, serverTimestamp, push } from 'firebase/database';
 import { compressImage } from '@/lib/compress';
 import { useSearchParams, useRouter } from 'next/navigation';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
@@ -187,6 +187,25 @@ function JournalContent() {
       } catch (e) {} 
   };
 
+  // --- REPORT LOGIC ---
+  const handleReportMessage = async (msg: Post) => {
+      if(!username || !activeJournal) return;
+      try {
+          await push(ref(db, 'reports'), {
+              reporter: username,
+              reported_user: msg.username,
+              message_content: msg.content || "Image/GIF",
+              message_id: msg.id,
+              room: `Journal: ${activeJournal.title}`,
+              timestamp: serverTimestamp(),
+              status: "pending"
+          });
+          toast({ title: "Report Sent", description: "Admins have been notified." });
+      } catch (e) {
+          toast({ variant: "destructive", title: "Error", description: "Could not send report." });
+      }
+  };
+
   // 1. INITIAL LOAD (Journals List)
   useEffect(() => {
     const init = async () => {
@@ -243,7 +262,7 @@ function JournalContent() {
     return () => unsubscribe();
   }, [activeJournal]);
 
-  // --- SCROLL LOGIC (REMOVED AUTO SCROLL) ---
+  // --- SCROLL LOGIC ---
 
   // 3. Pagination: Detect Scroll Up
   const handleScroll = () => {
@@ -252,10 +271,8 @@ function JournalContent() {
 
       const { scrollTop, scrollHeight, clientHeight } = container;
       
-      // Toggle "Go to Bottom" Button
       setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
 
-      // Trigger Load More
       if (scrollTop < 50 && hasMore && !loadingMore && posts.length > 0) {
           setLoadingMore(true);
           prevScrollHeight.current = scrollHeight; // Capture height
@@ -266,8 +283,7 @@ function JournalContent() {
       }
   };
 
-  // 4. Scroll Anchoring (Prevents jumping when loading history)
-  // This is NOT auto-scroll. This is "stay where you are" logic.
+  // 4. Scroll Anchoring
   useLayoutEffect(() => {
       const container = scrollContainerRef.current;
       if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
@@ -294,7 +310,6 @@ function JournalContent() {
 
   const handleSendGif = async (url: string) => {
       if (!activeJournal || !username) return;
-      // Optimistic Update
       const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
       setPosts(prev => [...prev, tempPost]); 
       
@@ -378,10 +393,10 @@ function JournalContent() {
       
       <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-4">
         
-        {/* LEFT: JOURNAL LIST */}
-        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col ${activeJournal ? 'hidden md:flex' : 'flex'} select-none`}>
-            {/* ... (Create Button) ... */}
-            <div className="flex justify-end items-center mb-4 shrink-0">
+        {/* LEFT: JOURNAL LIST (Glass Panel) */}
+        <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col glass-panel rounded-2xl overflow-hidden ${activeJournal ? 'hidden md:flex' : 'flex'} select-none`}>
+            {/* Header */}
+            <div className="flex justify-end items-center p-4 glass-panel-light shrink-0">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild><Button size="sm" variant="secondary" className="h-8 shadow-md"><Plus className="w-4 h-4 mr-1" /> New Journal</Button></DialogTrigger>
                     <DialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white">
@@ -395,12 +410,13 @@ function JournalContent() {
                 </Dialog>
             </div>
             
-            <div className="flex-1 overflow-y-auto no-scrollbar pr-2 space-y-4">
+            {/* List */}
+            <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-3">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                     {sortedJournals.map((journal) => (
                         <Card key={journal.id} onClick={() => handleOpenJournal(journal)} 
-                            className={`relative group cursor-pointer h-40 xl:h-48 bg-black/20 backdrop-blur-md border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl 
-                            ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/10'}
+                            className={`relative group cursor-pointer h-40 xl:h-48 bg-black/40 hover:bg-black/60 border hover:border-white/30 transition-all overflow-hidden shadow-lg rounded-xl 
+                            ${activeJournal?.id === journal.id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-white/5'}
                             ${followedIds.includes(journal.id) ? 'shadow-accent/5 border-l-2 border-l-accent' : ''} 
                             `}
                         >
@@ -427,47 +443,49 @@ function JournalContent() {
             </div>
         </div>
 
-        {/* RIGHT: CHAT */}
-        <div className={`flex-1 flex flex-col bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
+        {/* RIGHT: CHAT (Glass Panel) */}
+        <div className={`flex-1 flex flex-col glass-panel rounded-2xl overflow-hidden ${!activeJournal ? 'hidden md:flex' : 'flex'}`}>
             {activeJournal ? (
                 <>
-                    <div className="h-14 border-b border-white/10 flex items-center px-4 bg-black/10 shrink-0 justify-between select-none">
+                    <div className="h-16 glass-panel-light flex items-center px-6 shrink-0 justify-between select-none">
                         <div className="flex items-center gap-3 overflow-hidden">
                             <Button variant="ghost" size="icon" className="md:hidden mr-1 -ml-2 h-8 w-8" onClick={handleBackToGallery}><ArrowLeft className="w-4 h-4" /></Button>
-                            <span className="font-bold text-lg text-white truncate"># {activeJournal.title}</span>
-                            <span className="text-sm text-white/40 truncate hidden sm:inline">by {activeJournal.username}</span>
-                            
-                            <div className="flex items-center gap-1 ml-2 border-l border-white/10 pl-2">
-                                <TooltipProvider>
-                                    <div className="flex -space-x-1.5">
-                                        {currentFollowers.map((u, i) => (
-                                            <Tooltip key={i} delayDuration={0}>
-                                                <TooltipTrigger asChild>
-                                                    <div className="cursor-pointer">
-                                                        <UserAvatar username={u} className="w-6 h-6 border border-black hover:z-10 transition-transform hover:scale-110" />
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="bottom" className="bg-[#18181b] text-white border-white/10 z-[100]">
-                                                    <p className="text-xs font-medium">{u}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        ))}
-                                    </div>
-                                </TooltipProvider>
-                                <Button 
-                                    size="icon" variant="ghost" 
-                                    className={`h-8 w-8 rounded-full ml-1 ${followedIds.includes(activeJournal.id) ? 'text-accent fill-accent' : 'text-white/40 hover:text-white'}`}
-                                    onClick={handleFollowToggle}
-                                >
-                                    <Star className={`w-5 h-5 ${followedIds.includes(activeJournal.id) ? 'fill-accent' : ''}`} />
-                                </Button>
+                            <div>
+                                <span className="font-bold text-lg text-white truncate"># {activeJournal.title}</span>
+                                <span className="text-sm text-white/40 truncate hidden sm:inline ml-2">by {activeJournal.username}</span>
                             </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 ml-2 border-l border-white/10 pl-2">
+                            <TooltipProvider>
+                                <div className="flex -space-x-1.5">
+                                    {currentFollowers.map((u, i) => (
+                                        <Tooltip key={i} delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <div className="cursor-pointer">
+                                                    <UserAvatar username={u} className="w-6 h-6 border border-black hover:z-10 transition-transform hover:scale-110" />
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="bottom" className="bg-[#18181b] text-white border-white/10 z-[100]">
+                                                <p className="text-xs font-medium">{u}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    ))}
+                                </div>
+                            </TooltipProvider>
+                            <Button 
+                                size="icon" variant="ghost" 
+                                className={`h-8 w-8 rounded-full ml-1 ${followedIds.includes(activeJournal.id) ? 'text-accent fill-accent' : 'text-white/40 hover:text-white'}`}
+                                onClick={handleFollowToggle}
+                            >
+                                <Star className={`w-5 h-5 ${followedIds.includes(activeJournal.id) ? 'fill-accent' : ''}`} />
+                            </Button>
                         </div>
                     </div>
 
-                    {/* REPLACED ScrollArea WITH NATIVE DIV FOR BETTER CONTROL */}
+                    {/* Chat Area */}
                     <div 
-                        className="flex-1 p-0 overflow-y-auto no-scrollbar relative"
+                        className="flex-1 p-0 overflow-y-auto relative"
                         ref={scrollContainerRef}
                         onScroll={handleScroll}
                     >
@@ -484,10 +502,10 @@ function JournalContent() {
                                 return (
                                     <div 
                                         key={post.id} 
-                                        className={`group flex gap-3 px-2 hover:bg-white/5 transition-colors relative ${showHeader ? 'mt-4' : 'mt-[2px]'}`}
+                                        className={`group relative flex gap-4 pr-2 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
                                     >
-                                        <div className="w-10 shrink-0 select-none">
-                                            {showHeader ? (<UserAvatar username={post.username} className="w-10 h-10 mt-0.5" />) : (<div className="w-10 text-[10px] text-white/20 text-center opacity-0 group-hover:opacity-100 mt-1 select-none">{new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}</div>)}
+                                        <div className="w-10 shrink-0 select-none pt-0.5">
+                                            {showHeader ? (<UserAvatar username={post.username} className="w-10 h-10 hover:opacity-90 cursor-pointer" />) : (<div className="w-10 text-[10px] text-white/20 text-center opacity-0 group-hover:opacity-100 mt-1 select-none">{new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}</div>)}
                                         </div>
                                         
                                         <div className="flex-1 min-w-0">
@@ -509,14 +527,9 @@ function JournalContent() {
                                                 </div>
                                             )}
                                             
-                                            {/* UPDATED REACTIONS SECTION */}
                                             <div className="flex flex-wrap gap-1 mt-2">
                                                 {Object.entries(reactionGroups).map(([emoji, data]) => (
-                                                    <button 
-                                                        key={emoji} 
-                                                        onClick={() => handleReact(post.id, emoji)} 
-                                                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/60 text-indigo-100' : 'bg-white/10 border-white/10 text-white/70 hover:bg-white/20'}`}
-                                                    >
+                                                    <button key={emoji} onClick={() => handleReact(post.id, emoji)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/60 text-indigo-100' : 'bg-white/10 border-white/10 text-white/70 hover:bg-white/20'}`}>
                                                         <span className="text-base leading-none">{emoji}</span>
                                                         <span className="text-xs font-bold">{data.count}</span>
                                                     </button>
@@ -524,7 +537,6 @@ function JournalContent() {
                                             </div>
                                         </div>
 
-                                        {/* HOVER ACTIONS (UPDATED STYLING) */}
                                         <div className="absolute right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 -translate-y-1/2">
                                             <Popover open={openReactionPopoverId === post.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? post.id : null)}>
                                                 <PopoverTrigger asChild>
@@ -532,7 +544,6 @@ function JournalContent() {
                                                         <Smile className="w-4 h-4" />
                                                     </button>
                                                 </PopoverTrigger>
-                                                {/* NEW FLOATING PILL STYLE */}
                                                 <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-full shadow-2xl backdrop-blur-md" side="top" sideOffset={5}>
                                                     <div className="flex gap-1.5">
                                                         {QUICK_EMOJIS.map(emoji => (
@@ -547,22 +558,28 @@ function JournalContent() {
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             )}
+
+                                            {post.username !== username && (
+                                                <button onClick={() => handleReportMessage(post)} className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10">
+                                                    <Flag className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );
                             })}
                             <div ref={bottomRef} />
                         </div>
-                        {/* SCROLL TO BOTTOM BUTTON */}
-                        {showScrollButton && (
-                            <button 
-                                onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
-                                className="sticky bottom-6 left-1/2 -translate-x-1/2 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 hover:scale-105 transition-all animate-in fade-in zoom-in z-20"
-                            >
-                                <ChevronDown className="w-6 h-6" />
-                            </button>
-                        )}
                     </div>
+                    {/* SCROLL BUTTON */}
+                    {showScrollButton && (
+                        <button 
+                            onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                            className="absolute bottom-20 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 transition-all animate-in fade-in zoom-in z-20"
+                        >
+                            <ChevronDown className="w-5 h-5" />
+                        </button>
+                    )}
 
                     {/* Mention Dropup */}
                     {mentionQuery && mentionableUsers.length > 0 && (
@@ -576,7 +593,7 @@ function JournalContent() {
                         </div>
                     )}
 
-                    <div className="p-4 bg-black/10 border-t border-white/5 shrink-0">
+                    <div className="p-4 glass-panel-light shrink-0">
                         <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
                             
                             <Popover>
@@ -594,9 +611,7 @@ function JournalContent() {
                                                 <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
                                              ))}
                                         </div>
-                                        <div className="text-[10px] text-white/20 text-center uppercase tracking-widest font-bold">Powered by GIPHY</div>
                                     </div>
-                                    <div ref={(el) => { if(el && gifs.length === 0) fetchGifs(); }} />
                                 </PopoverContent>
                             </Popover>
 
