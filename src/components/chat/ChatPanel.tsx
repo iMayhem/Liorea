@@ -1,69 +1,46 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag } from 'lucide-react';
-import { useChat, ChatMessage } from '@/context/ChatContext';
-import { usePresence } from '@/context/PresenceContext';
-import { useNotifications } from '@/context/NotificationContext';
-import UserAvatar from '../UserAvatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Send, MessageSquare, ChevronDown, Smile, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { db } from '@/lib/firebase';
 import { ref, push, serverTimestamp } from 'firebase/database';
+
+// --- CONTEXT & HOOKS ---
+import { useChat, ChatMessage } from '@/context/ChatContext';
+import { usePresence } from '@/context/PresenceContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { useToast } from '@/hooks/use-toast';
+import UserAvatar from '@/components/UserAvatar';
 
-const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
-const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢"];
-
-type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; } }
-
-const FormattedMessage = ({ content }: { content: string }) => {
-    const parts = content.split(/(@\w+)/g);
-    return (
-        <span>
-            {parts.map((part, i) => {
-                if (part.startsWith('@')) {
-                    return (
-                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">
-                            {part}
-                        </span>
-                    );
-                }
-                return part;
-            })}
-        </span>
-    );
-};
+// --- ISOLATED FEATURES (The Simplified Parts) ---
+import GiphyPicker from '@/features/media/GiphyPicker';
+import MessageBubble from '@/features/chat/MessageBubble';
+import { Scrollable } from '@/features/ui/Scrollable';
 
 export default function ChatPanel() {
   const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore } = useChat();
   const { username, leaderboardUsers } = usePresence();
   const { addNotification } = useNotifications();
   const { toast } = useToast();
-  const [newMessage, setNewMessage] = useState('');
   
-  // SCROLL REFS
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const prevScrollHeight = useRef(0);
-
-  // GIF & Emoji State
-  const [gifs, setGifs] = useState<GiphyResult[]>([]);
-  const [gifSearch, setGifSearch] = useState("");
-  const [loadingGifs, setLoadingGifs] = useState(false);
-  const [openReactionPopoverId, setOpenReactionPopoverId] = useState<string | null>(null);
-
-  // Mention State
+  // State
+  const [newMessage, setNewMessage] = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
 
-  // --- SCROLL LOGIC ---
+  // Refs
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const prevScrollHeight = useRef(0);
+
+  // --- 1. SCROLL HANDLING ---
   useLayoutEffect(() => {
       if (messages.length > 0 && !isInitialLoaded) {
           if (scrollContainerRef.current) {
@@ -78,6 +55,7 @@ export default function ChatPanel() {
           const container = scrollContainerRef.current;
           if (container) {
               const { scrollTop, scrollHeight, clientHeight } = container;
+              // Auto-scroll if near bottom
               if (scrollHeight - scrollTop - clientHeight < 150) {
                   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
               }
@@ -89,7 +67,9 @@ export default function ChatPanel() {
       const container = scrollContainerRef.current;
       if (!container) return;
       const { scrollTop, scrollHeight, clientHeight } = container;
+      
       setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
+      
       if (scrollTop < 50 && hasMore) {
           prevScrollHeight.current = scrollHeight; 
           loadMoreMessages();
@@ -99,14 +79,31 @@ export default function ChatPanel() {
   useLayoutEffect(() => {
       const container = scrollContainerRef.current;
       if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
-          const newScrollHeight = container.scrollHeight;
-          const diff = newScrollHeight - prevScrollHeight.current;
+          const diff = container.scrollHeight - prevScrollHeight.current;
           container.scrollTop = diff + container.scrollTop; 
           prevScrollHeight.current = 0; 
       }
   }, [messages]);
 
-  // --- ACTIONS ---
+  // --- 2. ACTIONS ---
+  const handleSendMessage = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!newMessage.trim()) return;
+
+    // Mention Notifications
+    const mentions = newMessage.match(/@(\w+)/g);
+    if (mentions && username) {
+        const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
+        uniqueUsers.forEach(taggedUser => {
+            if (taggedUser !== username) {
+                addNotification(`${username} mentioned you in Study Room`, taggedUser, '/study-together');
+            }
+        });
+    }
+
+    sendMessage(newMessage);
+    setNewMessage('');
+  };
 
   const handleReportMessage = async (msg: ChatMessage) => {
       if(!username) return;
@@ -126,38 +123,7 @@ export default function ChatPanel() {
       }
   };
 
-  const handleSendMessage = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const mentions = newMessage.match(/@(\w+)/g);
-    if (mentions && username) {
-        const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
-        uniqueUsers.forEach(taggedUser => {
-            if (taggedUser !== username) {
-                addNotification(`${username} mentioned you in Study Room`, taggedUser, '/study-together');
-            }
-        });
-    }
-
-    sendMessage(newMessage);
-    setNewMessage('');
-  };
-
-  const handleSendGif = (url: string) => { sendMessage("", url); };
-
-  const fetchGifs = async (query: string = "") => {
-      setLoadingGifs(true);
-      try {
-          const endpoint = query 
-            ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`
-            : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
-          const res = await fetch(endpoint);
-          const data = await res.json();
-          setGifs(data.data);
-      } catch (error) { console.error("Failed to fetch GIFs", error); } finally { setLoadingGifs(false); }
-  };
-  
+  // --- 3. MENTION INPUT LOGIC ---
   const mentionableUsers = useMemo(() => { 
       if (!mentionQuery) return []; 
       const allUsers = leaderboardUsers.map(u => u.username); 
@@ -168,6 +134,7 @@ export default function ChatPanel() {
       const val = e.target.value;
       setNewMessage(val);
       sendTypingEvent();
+      
       const cursorPos = e.target.selectionStart || 0;
       const textBeforeCursor = val.slice(0, cursorPos);
       const match = textBeforeCursor.match(/@(\w*)$/);
@@ -201,29 +168,10 @@ export default function ChatPanel() {
       }
   };
 
-  const getTypingMessage = () => {
-    if (typingUsers.length === 0) return null;
-    if (typingUsers.length === 1) return `${typingUsers[0]} is typing...`;
-    if (typingUsers.length === 2) return `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
-    return 'Several people are typing...';
-  };
-
-  const getReactionGroups = (reactions: Record<string, any> | undefined) => {
-      if (!reactions) return {};
-      const groups: Record<string, { count: number, hasReacted: boolean }> = {};
-      Object.values(reactions).forEach((r: any) => {
-          if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false };
-          groups[r.emoji].count++;
-          if (r.username === username) groups[r.emoji].hasReacted = true;
-      });
-      return groups;
-  };
-
-  const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-
   return (
     <Card className="glass-panel text-white flex flex-col h-[480px] w-full relative overflow-hidden rounded-2xl">
+      
+      {/* HEADER */}
       <CardHeader className="p-4 shrink-0 glass-panel-light">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
@@ -231,99 +179,41 @@ export default function ChatPanel() {
         </CardTitle>
       </CardHeader>
       
-      <div 
+      {/* MESSAGES LIST */}
+      <Scrollable 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className={`flex-1 p-0 overflow-y-auto no-scrollbar relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`flex-1 p-0 transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
       >
           <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
             {hasMore && <div className="text-center py-4 text-xs text-white/30"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
             
+            {/* --- THE SIMPLIFIED RENDERING LOOP --- */}
             {messages.map((msg, index) => {
+              // Logic for visual grouping
               const isSequence = index > 0 && messages[index - 1].username === msg.username;
               const timeDiff = index > 0 ? msg.timestamp - messages[index - 1].timestamp : 0;
-              const showHeader = !isSequence || timeDiff > 300000; 
-              
-              const isCurrentUser = msg.username === username;
-              const reactionGroups = getReactionGroups(msg.reactions);
+              const showHeader = !isSequence || timeDiff > 300000; // 5 mins
 
               return (
-                <div 
-                    key={msg.id} 
-                    className={`group relative flex gap-4 pr-2 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
-                >
-                   <div className="w-10 shrink-0 select-none pt-0.5">
-                       {showHeader ? (
-                            <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
-                       ) : (
-                           <div className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
-                               {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}
-                           </div>
-                       )}
-                   </div>
-
-                   <div className="flex-1 min-w-0">
-                        {showHeader && (
-                            <div className="flex items-center gap-2 mb-1 select-none">
-                                <span className="text-base font-semibold text-white hover:underline cursor-pointer">{msg.username}</span>
-                                <span className="text-xs text-white/30 ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
-                            </div>
-                        )}
-
-                        <div className="text-base text-zinc-100 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
-                            {msg.image_url ? (
-                                <img src={msg.image_url} alt="GIF" className="max-w-[250px] rounded-lg mt-1" loading="lazy" />
-                            ) : (
-                                <FormattedMessage content={msg.message} />
-                            )}
-                        </div>
-
-                        {Object.keys(reactionGroups).length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2 select-none">
-                                {Object.entries(reactionGroups).map(([emoji, data]) => (
-                                    <button 
-                                        key={emoji} 
-                                        onClick={() => sendReaction(msg.id, emoji)} 
-                                        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-[#2b2d31] border-transparent hover:border-white/20'}`}
-                                    >
-                                        <span className="text-base">{emoji}</span>
-                                        <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-zinc-300'}`}>{data.count}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                   </div>
-
-                   {/* HOVER ACTIONS */}
-                   <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
-                        <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
-                            <PopoverTrigger asChild>
-                                <button className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors">
-                                    <Smile className="w-4 h-4" />
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-lg shadow-xl" side="top" align="end" sideOffset={5}>
-                                <div className="flex gap-1">
-                                    {QUICK_EMOJIS.map(emoji => (
-                                        <button key={emoji} className="p-2 hover:bg-white/10 rounded-md text-xl transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
-                                    ))}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        {!isCurrentUser && (
-                            <button onClick={() => handleReportMessage(msg)} className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400 transition-colors" title="Report">
-                                <Flag className="w-4 h-4" />
-                            </button>
-                        )}
-                   </div>
-                </div>
+                <MessageBubble 
+                    key={msg.id}
+                    message={msg}
+                    isCurrentUser={msg.username === username}
+                    showHeader={showHeader}
+                    // FIXED: Explicit type for emoji
+                    onReact={(emoji: string) => sendReaction(msg.id, emoji)}
+                    onReport={() => handleReportMessage(msg)}
+                />
               );
             })}
             <div ref={bottomRef} />
           </div>
-      </div>
+      </Scrollable>
       
+      {/* FLOATING UI ELEMENTS */}
+      
+      {/* 1. Scroll To Bottom Button */}
       {showScrollButton && (
           <button 
               onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
@@ -333,12 +223,14 @@ export default function ChatPanel() {
           </button>
       )}
 
+      {/* 2. Typing Indicator */}
       {typingUsers.length > 0 && (
           <div className="absolute bottom-16 left-4 text-xs text-muted-foreground italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
-              {getTypingMessage()}
+              {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : 'Several people are typing...'}
           </div>
       )}
 
+      {/* 3. Mention Popup */}
       {mentionQuery && mentionableUsers.length > 0 && (
           <div className="absolute bottom-0 left-4 bg-[#1e1e24] border border-white/10 rounded-t-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
               <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
@@ -354,28 +246,15 @@ export default function ChatPanel() {
           </div>
       )}
 
+      {/* INPUT FOOTER */}
       <CardFooter className="p-3 shrink-0 glass-panel-light">
         <div className="flex w-full items-end gap-2">
             <div className="flex gap-1 pb-1">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Film className="w-4 h-4" /></Button>
-                    </PopoverTrigger>
-                    <PopoverContent side="top" align="start" className="w-72 p-2 bg-[#1e1e24] border-white/10 text-white">
-                        <div className="space-y-2">
-                            <div className="relative">
-                                <Search className="absolute left-2 top-2 w-3 h-3 text-white/40" />
-                                <Input placeholder="GIFs..." className="h-7 pl-7 bg-black/20 border-white/10 text-xs" value={gifSearch} onChange={(e) => { setGifSearch(e.target.value); fetchGifs(e.target.value); }} />
-                            </div>
-                            <div className="h-48 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
-                                {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-white/40">Loading...</div> : gifs.map(gif => (
-                                    <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.original.url)} />
-                                ))}
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-
+                
+                {/* Isolated Giphy Picker */}
+                <GiphyPicker onSelect={(url) => sendMessage("", url)} />
+                
+                {/* Main Emoji Picker (For Input Field) */}
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Smile className="w-4 h-4" /></Button>

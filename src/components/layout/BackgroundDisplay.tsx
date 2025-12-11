@@ -1,62 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useBackground, Background } from "@/context/BackgroundContext";
+import { useBackgrounds } from "@/features/backgrounds/useBackgrounds";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBackground } from "@/context/BackgroundContext"; // Keep context for now if used elsewhere, or replace entirely.
+
+// NOTE: Ideally, we replace the Context entirely. 
+// For now, let's simplify the display logic.
 
 export default function BackgroundDisplay() {
-  const { currentBackground } = useBackground();
-  
-  // We keep track of the image currently being displayed to the user
-  const [displayedBackground, setDisplayedBackground] = useState<Background | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Initialize strictly on client to avoid hydration mismatch
-  useEffect(() => {
-    if (currentBackground && !displayedBackground) {
-        setDisplayedBackground(currentBackground);
-    }
-  }, [currentBackground, displayedBackground]);
+  // You can switch to useBackgrounds() hook here if you remove the Provider from layout.tsx
+  // For this step, let's assume we are keeping the Provider for global state but simplifying the render.
+  const { currentBackground } = useBackground(); 
 
   return (
     <div className="fixed inset-0 -z-50 bg-[#050505] overflow-hidden">
-      {/* 
-         This AnimatePresence handles the cross-fade.
-         We key by ID so Framer Motion knows when to swap them.
-      */}
       <AnimatePresence mode="popLayout">
         {currentBackground && (
           <motion.div
             key={currentBackground.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }} // The old image fades out as the new one fades in
-            transition={{ duration: 1.2, ease: "easeInOut" }} // Slow, cinematic fade
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full"
           >
             <Image
               src={currentBackground.url}
               alt="Background"
               fill
-              quality={95}
+              quality={90}
               priority
-              className="object-cover"
-              // When the NEW image is ready, we consider the transition 'active'
-              onLoad={() => setIsLoaded(true)}
+              className="object-cover opacity-60" // Built-in dimming
             />
-            {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-black/40" />
+            {/* Gradient Overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Initial Loading State (Only visible on very first load) */}
-      {!isLoaded && (
-         <div className="absolute inset-0 bg-[#050505] flex items-center justify-center z-[-1]">
-            <div className="w-full h-full absolute inset-0 bg-gradient-to-b from-black/20 to-black/80" />
-         </div>
-      )}
     </div>
   );
 }
