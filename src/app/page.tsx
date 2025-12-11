@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AuthForm from '@/components/auth/AuthForm';
-import { usePresence } from '@/context/PresenceContext';
-import { useBackground } from '@/context/BackgroundContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import AuthForm from '@/features/auth/components/AuthForm';
+import { usePresence } from '@/shared/context/PresenceContext';
+import { useBackground } from '@/shared/context/BackgroundContext';
+import { Skeleton } from '@/shared/ui/skeleton';
 
 export default function LandingPage() {
   const router = useRouter();

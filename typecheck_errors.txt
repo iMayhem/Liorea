@@ -1,0 +1,31 @@
+
+> nextn@0.1.0 typecheck
+> tsc --noEmit
+
+src/features/admin/components/AdminDashboard.tsx(6,26): error TS2307: Cannot find module '../ui/textarea' or its corresponding type declarations.
+src/features/admin/components/AdminDashboard.tsx(7,24): error TS2307: Cannot find module '../ui/button' or its corresponding type declarations.
+src/features/admin/components/AdminDashboard.tsx(98,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/admin/components/UserManagement.tsx(9,90): error TS2307: Cannot find module '../ui/dropdown-menu' or its corresponding type declarations.
+src/features/chat/components/ChatPanel.tsx(4,70): error TS2307: Cannot find module '../ui/card' or its corresponding type declarations.
+src/features/chat/components/ChatPanel.tsx(5,24): error TS2307: Cannot find module '../ui/button' or its corresponding type declarations.
+src/features/chat/components/ChatPanel.tsx(6,23): error TS2307: Cannot find module '../ui/input' or its corresponding type declarations.
+src/features/chat/components/ChatPanel.tsx(11,24): error TS2307: Cannot find module '../UserAvatar' or its corresponding type declarations.
+src/features/chat/components/ChatPanel.tsx(368,148): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/chat/context/ChatContext.tsx(4,29): error TS2307: Cannot find module './PresenceContext' or its corresponding type declarations.
+src/features/dashboard/components/LioreaClient.tsx(4,27): error TS2307: Cannot find module './study/PresencePanel' or its corresponding type declarations.
+src/features/dashboard/components/LioreaClient.tsx(5,27): error TS2307: Cannot find module './timer/ExamCountdown' or its corresponding type declarations.
+src/features/dashboard/components/LioreaClient.tsx(7,53): error TS2307: Cannot find module './ui/alert' or its corresponding type declarations.
+src/features/dashboard/components/LioreaClient.tsx(11,27): error TS2307: Cannot find module './study/StudyCalendar' or its corresponding type declarations.
+src/features/dashboard/components/LioreaClient.tsx(13,26): error TS2307: Cannot find module './ui/skeleton' or its corresponding type declarations.
+src/features/dashboard/components/LioreaClient.tsx(15,25): error TS2307: Cannot find module './study/StatusPanel' or its corresponding type declarations.
+src/features/study/components/Leaderboard.tsx(4,24): error TS2307: Cannot find module '../UserAvatar' or its corresponding type declarations.
+src/features/study/components/PresencePanel.tsx(3,28): error TS2307: Cannot find module '../ui/scroll-area' or its corresponding type declarations.
+src/features/study/components/PresencePanel.tsx(6,24): error TS2307: Cannot find module '../ui/button' or its corresponding type declarations.
+src/features/study/components/PresencePanel.tsx(7,24): error TS2307: Cannot find module '../UserAvatar' or its corresponding type declarations.
+src/features/study/components/StatusPanel.tsx(7,35): error TS2307: Cannot find module '../ui/card' or its corresponding type declarations.
+src/features/study/components/StudyGrid.tsx(4,28): error TS2307: Cannot find module '../ui/scroll-area' or its corresponding type declarations.
+src/features/study/components/StudyGrid.tsx(5,24): error TS2307: Cannot find module '../UserAvatar' or its corresponding type declarations.
+src/features/study/components/controls/ControlPanel.tsx(17,25): error TS2307: Cannot find module '../study/Leaderboard' or its corresponding type declarations.
+src/features/study/components/controls/SoundscapeMixer.tsx(5,24): error TS2307: Cannot find module '../ui/button' or its corresponding type declarations.
+src/features/study/components/controls/SoundscapeMixer.tsx(6,24): error TS2307: Cannot find module '../ui/slider' or its corresponding type declarations.
+src/features/study/components/controls/SoundscapeMixer.tsx(144,36): error TS7031: Binding element 'value' implicitly has an 'any' type.

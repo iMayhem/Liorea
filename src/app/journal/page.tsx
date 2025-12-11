@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from 'react';
-import Header from '@/components/layout/Header';
-import { usePresence } from '@/context/PresenceContext';
-import { useNotifications } from '@/context/NotificationContext';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import Header from '@/shared/layout/Header';
+import { usePresence } from '@/shared/context/PresenceContext';
+import { useNotifications } from '@/shared/context/NotificationContext';
+import { Card } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { ScrollArea } from '@/shared/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/ui/dialog';
 import { Plus, Hash, Send, Image as ImageIcon, ArrowLeft, Upload, Loader2, Trash2, Smile, Star, Film, Search, ChevronDown, Flag } from 'lucide-react';
-import UserAvatar from '@/components/UserAvatar';
-import { useToast } from '@/hooks/use-toast';
+import UserAvatar from '@/shared/components/UserAvatar';
+import { useToast } from '@/shared/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,18 +21,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/ui/alert-dialog";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { db } from '@/lib/firebase';
+} from "@/shared/ui/popover"
+import { db } from '@/shared/utils/firebase';
 import { ref, onValue, set, serverTimestamp, push } from 'firebase/database';
-import { compressImage } from '@/lib/compress';
+import { compressImage } from '@/shared/utils/compress';
 import { useSearchParams, useRouter } from 'next/navigation';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";

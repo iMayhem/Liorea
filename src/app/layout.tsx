@@ -1,18 +1,18 @@
 "use client";
 
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { NotificationProvider } from '@/context/NotificationContext';
-import { BackgroundProvider } from '@/context/BackgroundContext';
-import { PresenceProvider } from '@/context/PresenceContext';
-import BackgroundDisplay from '@/components/layout/BackgroundDisplay';
-import { FocusProvider } from '@/context/FocusContext';
-import FocusOverlay from '@/components/layout/FocusOverlay';
-import { NavigationEvents } from '@/components/layout/NavigationEvents';
+import { Toaster } from "@/shared/ui/toaster";
+import { NotificationProvider } from '@/shared/context/NotificationContext';
+import { BackgroundProvider } from '@/shared/context/BackgroundContext';
+import { PresenceProvider } from '@/shared/context/PresenceContext';
+import BackgroundDisplay from '@/shared/layout/BackgroundDisplay';
+import { FocusProvider } from '@/shared/context/FocusContext';
+import FocusOverlay from '@/shared/layout/FocusOverlay';
+import { NavigationEvents } from '@/shared/layout/NavigationEvents';
 import { Suspense, useEffect } from 'react';
-import MobileMessage from '@/components/layout/MobileMessage';
-import { UserContextMenuProvider } from '@/context/UserContextMenuContext';
-import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
+import MobileMessage from '@/shared/layout/MobileMessage';
+import { UserContextMenuProvider } from '@/shared/context/UserContextMenuContext';
+import GlobalUserContextMenu from '@/shared/layout/GlobalUserContextMenu';
 
 export default function RootLayout({
   children,

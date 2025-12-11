@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/layout/Header';
-import ControlPanel from '@/components/controls/ControlPanel';
-import ClientOnly from '@/components/ClientOnly';
-import { usePresence } from '@/context/PresenceContext';
-import { ChatProvider } from '@/context/ChatContext';
-import ChatPanel from '@/components/chat/ChatPanel';
-import StudyGrid from '@/components/study/StudyGrid';
+import Header from '@/shared/layout/Header';
+import ControlPanel from '@/features/study/components/controls/ControlPanel';
+import ClientOnly from '@/shared/components/ClientOnly';
+import { usePresence } from '@/shared/context/PresenceContext';
+import { ChatProvider } from '@/features/chat/context/ChatContext';
+import ChatPanel from '@/features/chat/components/ChatPanel';
+import StudyGrid from '@/features/study/components/StudyGrid';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Loading Animation Variants

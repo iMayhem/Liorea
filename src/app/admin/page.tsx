@@ -1,7 +1,7 @@
 "use client";
 
-import AdminDashboard from '@/components/admin/AdminDashboard';
-import Header from '@/components/layout/Header';
+import AdminDashboard from '@/features/admin/components/AdminDashboard';
+import Header from '@/shared/layout/Header';
 
 export default function AdminPage() {
 
