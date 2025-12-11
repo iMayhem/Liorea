@@ -7,6 +7,7 @@ import { ref, push, onValue, query, limitToLast, serverTimestamp, remove } from 
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const CHAT_ROOM = "study-room-1";
+const LOCAL_STORAGE_KEY = 'liorea_chat_history';
 
 export interface ChatReaction {
   id?: string;
@@ -15,7 +16,7 @@ export interface ChatReaction {
 }
 
 export interface ChatMessage {
-  id: string;
+  id: string; // Can be Firebase string or D1 number (as string)
   username: string;
   message: string;
   timestamp: number;
@@ -43,41 +44,122 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // 1. INITIAL LOAD (Latest 20) & LIVE UPDATES
+  // --- DEDUPLICATION HELPER ---
+  // Merges two arrays of messages, removing duplicates based on (User + Content + Approx Time)
+  // Priorities: Firebase Messages (String IDs) > D1 Messages (Number IDs)
+  const mergeAndDedupe = (current: ChatMessage[], incoming: ChatMessage[]) => {
+      const combined = [...current, ...incoming];
+      
+      // 1. Sort by time
+      combined.sort((a, b) => a.timestamp - b.timestamp);
+
+      const unique: ChatMessage[] = [];
+      
+      for (let i = 0; i < combined.length; i++) {
+          const msg = combined[i];
+          const lastAdded = unique[unique.length - 1];
+
+          if (!lastAdded) {
+              unique.push(msg);
+              continue;
+          }
+
+          // Check for Duplicate
+          const isSameID = String(msg.id) === String(lastAdded.id);
+          const isSameContent = msg.username === lastAdded.username && 
+                                msg.message === lastAdded.message && 
+                                Math.abs(msg.timestamp - lastAdded.timestamp) < 5000; // 5 sec window
+
+          if (isSameID || isSameContent) {
+              // If duplicate, keep the "better" one (Firebase ID preferred usually, or the one with reactions)
+              // Firebase keys look like "-OD...", D1 keys are integers "123"
+              const lastIsFirebase = isNaN(Number(lastAdded.id));
+              const currIsFirebase = isNaN(Number(msg.id));
+
+              if (currIsFirebase && !lastIsFirebase) {
+                  // Replace D1 entry with Firebase entry
+                  unique[unique.length - 1] = msg;
+              } 
+              // Else: Keep 'lastAdded' (it's either Firebase already, or we stick with first found)
+          } else {
+              unique.push(msg);
+          }
+      }
+      return unique;
+  };
+
+  // 1. INITIAL LOAD & LIVE LISTENER
   useEffect(() => {
-    // A. Fetch initial 20 from Worker to populate immediately (optional, but faster than Firebase cold start)
-    const fetchInitial = async () => {
+    let mounted = true;
+
+    const init = async () => {
+        let initialMessages: ChatMessage[] = [];
+        let sinceTimestamp = 0;
+
+        // A. Local Storage
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (stored) {
+                try {
+                    initialMessages = JSON.parse(stored);
+                    if (initialMessages.length > 0) {
+                        sinceTimestamp = initialMessages[initialMessages.length - 1].timestamp;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // B. Fetch History from D1 (Last 50)
+        // We fetch the latest chunk to ensure we have recent context, 
+        // rely on dedupe to fix overlaps with LocalStorage
         try {
             const res = await fetch(`${WORKER_URL}/chat/history?room=${CHAT_ROOM}`);
-            if (res.ok) {
-                const data = await res.json();
-                setMessages(data);
+            if (res.ok && mounted) {
+                const d1Messages = await res.json();
+                initialMessages = mergeAndDedupe(initialMessages, d1Messages);
+                
+                // Trim local storage if too big
+                if (initialMessages.length > 200) {
+                    initialMessages = initialMessages.slice(initialMessages.length - 200);
+                }
+                
+                setMessages(initialMessages);
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialMessages));
             }
         } catch (e) { console.error(e); }
     };
-    fetchInitial();
 
-    // B. Firebase Live Listener (New messages)
-    const chatRef = query(ref(db, 'chats'), limitToLast(20));
+    init();
+
+    // C. Firebase Live Listener
+    const chatRef = query(ref(db, 'chats'), limitToLast(30));
     const unsubscribe = onValue(chatRef, (snapshot) => {
         const data = snapshot.val();
-        if (data) {
+        if (data && mounted) {
             const liveMessages: ChatMessage[] = Object.entries(data).map(([key, val]: [string, any]) => ({
                 ...val,
                 id: key,
                 reactions: val.reactions || {} 
             }));
 
-            // Merge logic: Live messages always win over static ones
-            setMessages((prev) => {
-                const msgMap = new Map(prev.map(m => [m.id, m]));
-                liveMessages.forEach(newMsg => msgMap.set(newMsg.id, newMsg));
-                return Array.from(msgMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+            setMessages(prev => {
+                // Merge Live messages into existing state
+                // This handles the "D1 vs Firebase" duplicate issue
+                const merged = mergeAndDedupe(prev, liveMessages);
+                
+                // Cache updates
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged.slice(-200)));
+                }
+                return merged;
             });
         }
     });
 
-    return () => unsubscribe();
+    return () => {
+        mounted = false;
+        unsubscribe();
+    };
   }, []);
 
   // 2. PAGINATION: Load Older Messages
@@ -93,7 +175,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
               if (olderMessages.length < 20) setHasMore(false);
               
               if (olderMessages.length > 0) {
-                  setMessages(prev => [...olderMessages, ...prev]);
+                  setMessages(prev => mergeAndDedupe(olderMessages, prev));
               }
           }
       } catch (e) { console.error("Load more failed", e); }
@@ -104,7 +186,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const sendMessage = useCallback(async (message: string, image_url?: string) => {
     if ((!message.trim() && !image_url) || !username) return;
 
-    // Send to Firebase
+    // Send to Firebase (UI updates via listener)
     push(ref(db, 'chats'), {
         username,
         message,
@@ -113,7 +195,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         timestamp: serverTimestamp() 
     });
 
-    // Backup to D1
+    // Backup to D1 (Silent)
     fetch(`${WORKER_URL}/chat/send`, {
         method: "POST",
         body: JSON.stringify({ 
@@ -130,6 +212,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   // 4. SEND REACTION
   const sendReaction = useCallback(async (messageId: string, emoji: string) => {
       if (!username) return;
+      
+      // Optimistic check: Do we already have this reaction?
       const msg = messages.find(m => m.id === messageId);
       if (!msg) return;
 
