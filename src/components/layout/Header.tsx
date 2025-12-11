@@ -1,20 +1,55 @@
 "use client";
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/context/NotificationContext';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
-import UserAvatar from '@/components/UserAvatar'; 
+import UserAvatar from '@/components/UserAvatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { usePresence } from '@/context/PresenceContext';
+import { db } from '@/lib/firebase';
+import { ref, push, serverTimestamp } from 'firebase/database';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {
   const pathname = usePathname();
   const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const unreadCount = notifications.filter(n => !n.read).length;
+  
+  // Feedback/Bug Report State
+  const { username } = usePresence();
+  const { toast } = useToast();
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmitFeedback = async () => {
+      if (!feedbackText.trim()) return;
+      setIsSubmitting(true);
+      try {
+          await push(ref(db, 'feedback'), {
+              reporter: username || 'Anonymous',
+              message: feedbackText.trim(),
+              timestamp: serverTimestamp(),
+              type: 'bug_or_suggestion',
+              status: 'open'
+          });
+          toast({ title: "Feedback Sent", description: "Thanks for helping us improve Liorea!" });
+          setFeedbackText("");
+          setIsFeedbackOpen(false);
+      } catch (error) {
+          toast({ variant: "destructive", title: "Error", description: "Could not send report. Try again." });
+      } finally {
+          setIsSubmitting(false);
+      }
+  };
 
   return (
     <header className={cn(
@@ -30,6 +65,43 @@ export default function Header() {
           Liorea
         </Link>
         <nav className="flex items-center gap-2">
+           
+           {/* BUG REPORT / FEEDBACK BUTTON */}
+           <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" title="Report Bug / Suggestion">
+                        <Bug className="w-5 h-5" />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-black/40 backdrop-blur-xl border-white/20 text-white sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Report Bug or Suggestion</DialogTitle>
+                        <DialogDescription className="text-white/60">
+                            Found a glitch or have an idea? Let us know below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Textarea 
+                            placeholder="Describe the bug or your suggestion..." 
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            className="bg-black/20 border-white/20 text-white min-h-[120px] focus-visible:ring-offset-0 focus-visible:ring-white/30"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button 
+                            onClick={handleSubmitFeedback} 
+                            disabled={isSubmitting || !feedbackText.trim()} 
+                            className="bg-white text-black hover:bg-white/90"
+                        >
+                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            Submit
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+           </Dialog>
+
+           {/* NOTIFICATIONS */}
            <Popover>
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full relative">

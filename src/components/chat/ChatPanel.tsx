@@ -4,13 +4,16 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown } from 'lucide-react';
-import { useChat } from '@/context/ChatContext';
+import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag } from 'lucide-react';
+import { useChat, ChatMessage } from '@/context/ChatContext';
 import { usePresence } from '@/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
 import UserAvatar from '../UserAvatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { db } from '@/lib/firebase';
+import { ref, push, serverTimestamp } from 'firebase/database';
+import { useToast } from '@/hooks/use-toast';
 
 const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
 const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢"];
@@ -39,14 +42,13 @@ export default function ChatPanel() {
   const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore } = useChat();
   const { username, leaderboardUsers } = usePresence();
   const { addNotification } = useNotifications();
+  const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
   
   // SCROLL REFS
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  
-  // UX STATES
-  const [isInitialLoaded, setIsInitialLoaded] = useState(false); // Controls Opacity
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const prevScrollHeight = useRef(0);
 
@@ -62,28 +64,20 @@ export default function ChatPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // --- SCROLL LOGIC ---
-  
-  // 1. TELEPORT TO BOTTOM (Initial Load)
-  // We use useLayoutEffect because it runs synchronously before the browser paints the screen.
-  // This guarantees the user never sees the top of the chat.
   useLayoutEffect(() => {
       if (messages.length > 0 && !isInitialLoaded) {
           if (scrollContainerRef.current) {
-              // Instantly jump to bottom without animation
               scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
           }
-          // Reveal the chat
           setIsInitialLoaded(true);
       }
   }, [messages, isInitialLoaded]);
 
-  // 2. AUTO-SCROLL on New Message (Only if user is already at bottom)
   useEffect(() => {
       if (isInitialLoaded && messages.length > 0) {
           const container = scrollContainerRef.current;
           if (container) {
               const { scrollTop, scrollHeight, clientHeight } = container;
-              // If user is near bottom (<150px), auto scroll smoothly
               if (scrollHeight - scrollTop - clientHeight < 150) {
                   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
               }
@@ -91,35 +85,46 @@ export default function ChatPanel() {
       }
   }, [messages.length, isInitialLoaded]);
 
-  // 3. PAGINATION (Scroll Up to Load More)
   const handleScroll = () => {
       const container = scrollContainerRef.current;
       if (!container) return;
-
-      // Show/Hide "Scroll to Bottom" Button
       const { scrollTop, scrollHeight, clientHeight } = container;
       setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
-
-      // Trigger Load More when scrolling near top (<50px)
       if (scrollTop < 50 && hasMore) {
-          prevScrollHeight.current = scrollHeight; // Capture height before loading
+          prevScrollHeight.current = scrollHeight; 
           loadMoreMessages();
       }
   };
 
-  // 4. RESTORE POSITION (After loading older messages)
   useLayoutEffect(() => {
       const container = scrollContainerRef.current;
-      // If we just loaded older messages (height increased significantly)
       if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
           const newScrollHeight = container.scrollHeight;
           const diff = newScrollHeight - prevScrollHeight.current;
-          // Instantly adjust scroll position so the user's view doesn't jump
           container.scrollTop = diff + container.scrollTop; 
-          prevScrollHeight.current = 0; // Reset
+          prevScrollHeight.current = 0; 
       }
   }, [messages]);
 
+  // --- ACTIONS ---
+
+  const handleReportMessage = async (msg: ChatMessage) => {
+      if(!username) return;
+      try {
+          await push(ref(db, 'reports'), {
+              reporter: username,
+              reported_user: msg.username,
+              message_content: msg.message || "Image/GIF",
+              message_id: msg.id,
+              room: "Study Room",
+              timestamp: serverTimestamp(),
+              status: "pending"
+          });
+          toast({ title: "Report Sent", description: "Admins have been notified." });
+      } catch (e) {
+          toast({ variant: "destructive", title: "Error", description: "Could not send report." });
+      }
+  };
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -226,8 +231,6 @@ export default function ChatPanel() {
         </CardTitle>
       </CardHeader>
       
-      {/* Messages Area - Using Native Div for precise scroll control */}
-      {/* Opacity transition hides the 'teleport' glitch */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
@@ -239,7 +242,7 @@ export default function ChatPanel() {
             {messages.map((msg, index) => {
               const isSequence = index > 0 && messages[index - 1].username === msg.username;
               const timeDiff = index > 0 ? msg.timestamp - messages[index - 1].timestamp : 0;
-              const showHeader = !isSequence || timeDiff > 300000; // 5 mins
+              const showHeader = !isSequence || timeDiff > 300000; 
               
               const isCurrentUser = msg.username === username;
               const reactionGroups = getReactionGroups(msg.reactions);
@@ -291,6 +294,7 @@ export default function ChatPanel() {
                         )}
                    </div>
 
+                   {/* HOVER ACTIONS (REPORT BUTTON ADDED) */}
                    <div className="absolute right-4 -top-2 bg-[#111113] shadow-sm rounded-[4px] border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
                         <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}>
                             <PopoverTrigger asChild>
@@ -306,6 +310,13 @@ export default function ChatPanel() {
                                 </div>
                             </PopoverContent>
                         </Popover>
+
+                        {/* REPORT BUTTON */}
+                        {!isCurrentUser && (
+                            <button onClick={() => handleReportMessage(msg)} className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400 transition-colors" title="Report">
+                                <Flag className="w-4 h-4" />
+                            </button>
+                        )}
                    </div>
                 </div>
               );
@@ -314,7 +325,6 @@ export default function ChatPanel() {
           </div>
       </div>
       
-      {/* Scroll Down Button */}
       {showScrollButton && (
           <button 
               onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
@@ -330,7 +340,6 @@ export default function ChatPanel() {
           </div>
       )}
 
-      {/* Mention Dropup */}
       {mentionQuery && mentionableUsers.length > 0 && (
           <div className="absolute bottom-0 left-4 bg-[#1e1e24] border border-white/10 rounded-t-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
               <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
