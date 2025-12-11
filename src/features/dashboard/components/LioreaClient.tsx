@@ -19,14 +19,14 @@ export default function LioreaClient() {
   const { communityUsers, username } = usePresence(); // Changed onlineUsers to communityUsers
   const router = useRouter();
   const nextYear = new Date().getFullYear() + 1;
-  
+
   const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-24T09:00:00`), [nextYear]);
   const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-05T14:00:00`), [nextYear]);
 
   useEffect(() => {
     // If the background is done loading and we find there's no user, redirect.
     if (!isBackgroundLoading && !username) {
-        router.push('/');
+      router.push('/');
     }
   }, [isBackgroundLoading, username, router]);
 
@@ -38,41 +38,41 @@ export default function LioreaClient() {
   return (
     <>
       {error && (
-         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
-            <Alert variant="destructive">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Background Error</AlertTitle>
-                <AlertDescription>
-                    Could not load backgrounds from the worker: {error}
-                </AlertDescription>
-            </Alert>
-         </div>
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md">
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Background Error</AlertTitle>
+            <AlertDescription>
+              Could not load backgrounds from the worker: {error}
+            </AlertDescription>
+          </Alert>
+        </div>
       )}
 
       <Header />
 
       <main className="relative z-1 min-h-screen flex items-center justify-center text-white p-4">
         <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8 items-center">
-          
+
           {/* Left Column */}
-          <div className="hidden md:flex justify-start md:col-span-1 lg:col-span-1">
+          <div className="hidden md:flex justify-start md:col-span-1 lg:col-span-1 h-full items-center">
             <PresencePanel users={communityUsers} />
           </div>
 
           {/* Center Column */}
-          <div className="flex flex-col items-center justify-center gap-8 md:col-span-2 lg:col-span-3 w-full -mt-16">
+          <div className="flex flex-col items-center justify-center gap-8 md:col-span-2 lg:col-span-3 w-full">
             <WelcomePanel />
             <div className="flex flex-col gap-4 w-full max-w-sm">
-                <StatusPanel />
-                <StudyCalendar />
+              <StatusPanel />
+              <StudyCalendar />
             </div>
           </div>
-          
-           {/* Right Column */}
+
+          {/* Right Column */}
           <div className="hidden md:flex justify-end md:col-span-1 lg:col-span-1">
             <div className="space-y-4">
-                <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
-                <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
+              <ExamCountdown examName="JEE Main" targetDate={jeeTargetDate} />
+              <ExamCountdown examName="NEET UG" targetDate={neetTargetDate} />
             </div>
           </div>
         </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import './globals.css';
+
+/* Add custom glass utilities here via style tag or css file update - assuming we edit css directly */
 import { Toaster } from "@/shared/ui/toaster";
 import { NotificationProvider } from '@/shared/context/NotificationContext';
 import { BackgroundProvider } from '@/shared/context/BackgroundContext';
@@ -47,11 +49,11 @@ export default function RootLayout({
             <PresenceProvider>
               <NotificationProvider>
                 <UserContextMenuProvider>
-                    <div className="hidden md:block h-full w-full">
-                      {children}
-                    </div>
-                    <MobileMessage />
-                    <GlobalUserContextMenu />
+                  <div className="hidden md:block h-full w-full">
+                    {children}
+                  </div>
+                  <MobileMessage />
+                  <GlobalUserContextMenu />
                 </UserContextMenuProvider>
               </NotificationProvider>
             </PresenceProvider>
