@@ -7,9 +7,9 @@ interface ScrollableProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   
   // Options
-  hideScrollbar?: boolean; // True = invisible scrollbar
-  thin?: boolean;          // True = 3px wide (good for small lists)
-  horizontal?: boolean;    // Allow horizontal scrolling
+  hideScrollbar?: boolean;
+  thin?: boolean;
+  horizontal?: boolean;
   
   // Events
   onScroll?: (e: UIEvent<HTMLDivElement>) => void;
@@ -23,15 +23,17 @@ export const Scrollable = forwardRef<HTMLDivElement, ScrollableProps>(
         ref={ref}
         onScroll={onScroll}
         className={cn(
-          // 1. Base Structure
-          "relative",
+          // Layout Constraints (Critical for Scroll)
+          "relative w-full h-full overscroll-none",
+          
+          // Scroll Direction
           horizontal ? "overflow-x-auto overflow-y-hidden" : "overflow-y-auto overflow-x-hidden",
           
-          // 2. Scrollbar Styling Logic
+          // Scrollbar Styling
           hideScrollbar ? "no-scrollbar" : "custom-scrollbar",
           (thin && !hideScrollbar) && "thin-scrollbar",
 
-          // 3. Custom classes passed from parent
+          // Custom classes (flex-1, etc)
           className
         )}
         {...props}
