@@ -55,7 +55,6 @@ function JournalContent() {
      setIsListLoading(true);
      try {
        const list = await api.journal.list();
-       // Check if list is valid array
        if (Array.isArray(list)) {
            setJournals(list);
        }
@@ -165,7 +164,7 @@ function JournalContent() {
 
       <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-4">
         
-        {/* LEFT PANEL: Fixed Layout */}
+        {/* LEFT PANEL */}
         <div className={`flex-shrink-0 w-full md:w-[38%] lg:w-[35%] flex flex-col h-full min-h-0 rounded-2xl overflow-hidden glass-panel ${activeJournal ? 'hidden md:flex' : 'flex'}`}>
             <div className="flex justify-end items-center p-4 shrink-0 border-b border-white/5">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -181,7 +180,7 @@ function JournalContent() {
                 </Dialog>
             </div>
             
-            <Scrollable className="flex-1 p-3" thin>
+            <Scrollable className="flex-1 p-3 min-h-0" thin>
                 {isListLoading ? (
                     <div className="flex items-center justify-center h-40">
                         <div className="flex flex-col items-center gap-2">
@@ -227,7 +226,7 @@ function JournalContent() {
                         </Button>
                     </div>
 
-                    <Scrollable ref={scrollRef} onScroll={handleScroll} className="flex-1 p-0">
+                    <Scrollable ref={scrollRef} onScroll={handleScroll} className="flex-1 p-0 min-h-0">
                         <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
                             {loadingMore && <div className="text-center py-4"><Loader2 className="w-4 h-4 animate-spin mx-auto text-white/30" /></div>}
                             
