@@ -42,25 +42,18 @@
 
 @layer utilities {
   /* 
-     FROSTED GLASS STYLE (User Requested)
-     - Translucent white layer
-     - Soft blur (8px)
-     - Glow shadow
+     PREVIOUS DARK GLASS STYLE
+     - Removed the white tint.
+     - Added back the heavy blur (xl).
+     - Low opacity black (30%) to let background shine through but keep text readable.
   */
   .glass-panel {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    @apply bg-black/30 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   
-  /* Slightly adjusted for headers to maintain the theme */
+  /* Slightly lighter for headers/inputs but still dark based */
   .glass-panel-light {
-    background: rgba(255, 255, 255, 0.09);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    @apply bg-white/5 backdrop-blur-xl border-b border-white/5;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -91,7 +84,7 @@
 .dark .card, .theme-blue .card, .theme-zinc .card {
   position: relative;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.6); 
+  background: rgba(0, 0, 0, 0.2); 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08); 
