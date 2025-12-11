@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Send, MessageSquare, ChevronDown, Smile, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -16,6 +16,7 @@ import GiphyPicker from '@/features/media/GiphyPicker';
 import { db } from '@/lib/firebase';
 import { ref, push, serverTimestamp } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
+import { ChatLayout } from '@/features/ui/ChatLayout'; // <---
 
 export default function ChatPanel() {
   const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore } = useChat();
@@ -34,7 +35,8 @@ export default function ChatPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const prevScrollHeight = useRef(0);
 
-  // --- SCROLLING ---
+  // ... (Scroll logic stays same, omitted for brevity, copy from previous if needed) ...
+  // Re-pasting critical scroll logic just in case:
   useLayoutEffect(() => {
       if (messages.length > 0 && !isInitialLoaded) {
           if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
@@ -70,12 +72,10 @@ export default function ChatPanel() {
       }
   }, [messages]);
 
-  // --- ACTIONS ---
+  // Actions
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!newMessage.trim()) return;
-
-    // Mention Notification
     const mentions = newMessage.match(/@(\w+)/g);
     if (mentions && username) {
         const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
@@ -90,19 +90,12 @@ export default function ChatPanel() {
 
   const handleReportMessage = async (msg: ChatMessage) => {
       if(!username) return;
-      try {
-          await push(ref(db, 'reports'), {
-              reporter: username, reported_user: msg.username, message_content: msg.message, message_id: msg.id, room: "Study Room", timestamp: serverTimestamp(), status: "pending"
-          });
-          toast({ title: "Report Sent" });
-      } catch (e) { }
+      try { await push(ref(db, 'reports'), { reporter: username, reported_user: msg.username, message_content: msg.message, message_id: msg.id, room: "Study Room", timestamp: serverTimestamp(), status: "pending" }); toast({ title: "Report Sent" }); } catch (e) { }
   };
 
-  // --- MENTION LOGIC ---
   const mentionableUsers = useMemo(() => { 
       if (!mentionQuery) return []; 
       const query = mentionQuery.toLowerCase();
-      // Combine active users + leaderboard users to find match
       const allUsers = Array.from(new Set([...leaderboardUsers.map(u => u.username), ...messages.slice(-50).map(m => m.username)]));
       return allUsers.filter(u => u.toLowerCase().startsWith(query)).slice(0, 5); 
   }, [mentionQuery, leaderboardUsers, messages]);
@@ -111,10 +104,8 @@ export default function ChatPanel() {
       const val = e.target.value;
       setNewMessage(val);
       sendTypingEvent();
-      
       const cursorPos = e.target.selectionStart || 0;
       const textBeforeCursor = val.slice(0, cursorPos);
-      // Regex to find @username at end of string
       const match = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
       if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); }
   };
@@ -138,73 +129,71 @@ export default function ChatPanel() {
   };
 
   return (
-    <Card className="glass-panel text-white flex flex-col h-[480px] w-full rounded-2xl overflow-hidden shadow-2xl">
-      {/* 1. HEADER (Fixed) */}
-      <CardHeader className="p-4 shrink-0 glass-panel-light z-20">
-        <CardTitle className="text-base flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" /> Group Chat
-        </CardTitle>
-      </CardHeader>
-      
-      {/* 2. MESSAGES (Scrollable Area - flex-1 min-h-0 is CRITICAL) */}
-      <div className="flex-1 min-h-0 relative">
-          <Scrollable ref={scrollContainerRef} onScroll={handleScroll} className="p-0">
-              <div className="p-4 pb-4 flex flex-col justify-end min-h-full">
+    <Card className="glass-panel text-white h-[480px] w-full rounded-2xl overflow-hidden shadow-2xl">
+      <ChatLayout
+        header={
+            <div className="p-4 glass-panel-light flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" /> <span className="font-semibold">Group Chat</span>
+            </div>
+        }
+        footer={
+            <div className="p-3 glass-panel-light relative">
+                {mentionQuery && mentionableUsers.length > 0 && (
+                    <div className="absolute bottom-full left-4 mb-2 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden z-50 w-64">
+                        <div className="px-3 py-2 text-[10px] font-bold text-white/40 bg-white/5">MEMBERS</div>
+                        {mentionableUsers.map((u, i) => (
+                            <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20' : 'hover:bg-white/5'}`} onClick={() => insertMention(u)}>
+                                <UserAvatar username={u} className="w-5 h-5" /><span className="text-sm">{u}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {typingUsers.length > 0 && (
+                    <div className="absolute bottom-full left-4 mb-2 text-[10px] text-white/50 italic animate-pulse">
+                        {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : 'Several people are typing...'}
+                    </div>
+                )}
+                <div className="flex w-full items-end gap-2">
+                    <div className="flex gap-1 pb-1">
+                        <GiphyPicker onSelect={(url) => sendMessage("", url)} />
+                        <Popover>
+                            <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Smile className="w-4 h-4" /></Button></PopoverTrigger>
+                            <PopoverContent side="top" align="start" className="w-auto p-0 border-none bg-transparent shadow-none">
+                                <EmojiPicker theme={Theme.DARK} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={350} searchDisabled skinTonesDisabled />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <form onSubmit={handleSendMessage} className="flex-1 flex gap-2">
+                        <input ref={inputRef} type="text" placeholder="Message..." className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-white placeholder:text-white/30 h-10 py-2 px-0" value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} />
+                        <Button type="submit" size="icon" variant="ghost" disabled={!newMessage.trim()} className="h-10 w-10 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-full"><Send className="h-5 w-5" /></Button>
+                    </form>
+                </div>
+            </div>
+        }
+      >
+        <Scrollable ref={scrollContainerRef} onScroll={handleScroll}>
+            <div className="p-4 pb-4 flex flex-col justify-end min-h-full">
                 {hasMore && <div className="text-center py-4"><Loader2 className="w-4 h-4 animate-spin mx-auto text-white/30" /></div>}
-                
                 {messages.map((msg, index) => {
-                  const isSequence = index > 0 && messages[index - 1].username === msg.username;
-                  const timeDiff = index > 0 ? msg.timestamp - messages[index - 1].timestamp : 0;
-                  const showHeader = !isSequence || timeDiff > 300000;
-                  return (
-                    <MessageBubble 
-                        key={msg.id} message={msg} isCurrentUser={msg.username === username} showHeader={showHeader}
-                        onReact={(emoji: string) => sendReaction(msg.id, emoji)} onReport={() => handleReportMessage(msg)}
-                    />
-                  );
+                    const isSequence = index > 0 && messages[index - 1].username === msg.username;
+                    const timeDiff = index > 0 ? msg.timestamp - messages[index - 1].timestamp : 0;
+                    const showHeader = !isSequence || timeDiff > 300000;
+                    return (
+                        <MessageBubble 
+                            key={msg.id} message={msg} isCurrentUser={msg.username === username} showHeader={showHeader}
+                            onReact={(emoji: string) => sendReaction(msg.id, emoji)} onReport={() => handleReportMessage(msg)}
+                        />
+                    );
                 })}
                 <div ref={bottomRef} />
-              </div>
-          </Scrollable>
-
-          {/* Floating Scroll Button */}
-          {showScrollButton && (
-              <button onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })} className="absolute bottom-4 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 z-20">
-                  <ChevronDown className="w-5 h-5" />
-              </button>
-          )}
-
-          {/* Mention Popup */}
-          {mentionQuery && mentionableUsers.length > 0 && (
-              <div className="absolute bottom-2 left-4 right-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                  <div className="px-3 py-2 text-[10px] uppercase font-bold text-white/40 bg-white/5">Members</div>
-                  {mentionableUsers.map((u, i) => (
-                      <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
-                          <UserAvatar username={u} className="w-5 h-5" /><span className="text-sm">{u}</span>
-                      </div>
-                  ))}
-              </div>
-          )}
-      </div>
-
-      {/* 3. INPUT (Fixed Footer) */}
-      <CardFooter className="p-3 shrink-0 glass-panel-light z-20">
-        <div className="flex w-full items-end gap-2">
-            <div className="flex gap-1 pb-1">
-                <GiphyPicker onSelect={(url) => sendMessage("", url)} />
-                <Popover>
-                    <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-white/50 hover:text-white rounded-full"><Smile className="w-4 h-4" /></Button></PopoverTrigger>
-                    <PopoverContent side="top" align="start" className="w-auto p-0 border-none bg-transparent shadow-none">
-                        <EmojiPicker theme={Theme.DARK} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={350} searchDisabled skinTonesDisabled />
-                    </PopoverContent>
-                </Popover>
             </div>
-            <form onSubmit={handleSendMessage} className="flex-1 flex gap-2">
-                <input ref={inputRef} type="text" placeholder="Message..." className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-white placeholder:text-white/30 h-10 py-2 px-0" value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} />
-                <Button type="submit" size="icon" variant="ghost" disabled={!newMessage.trim()} className="h-10 w-10 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-full"><Send className="h-5 w-5" /></Button>
-            </form>
-        </div>
-      </CardFooter>
+        </Scrollable>
+        {showScrollButton && (
+            <button onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })} className="absolute bottom-4 right-6 p-2 rounded-full bg-black/60 border border-white/10 text-white shadow-xl hover:bg-black/80 z-20">
+                <ChevronDown className="w-5 h-5" />
+            </button>
+        )}
+      </ChatLayout>
     </Card>
   );
 }

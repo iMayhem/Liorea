@@ -18,11 +18,11 @@ export const Scrollable = forwardRef<HTMLDivElement, ScrollableProps>(
         ref={ref}
         onScroll={onScroll}
         className={cn(
-          // Essential for flex layouts:
-          "relative w-full h-full", 
+          // 'absolute inset-0' ensures it strictly fills the relative parent without expanding it
+          "absolute inset-0 w-full h-full", 
+          
           horizontal ? "overflow-x-auto overflow-y-hidden" : "overflow-y-auto overflow-x-hidden",
           
-          // Scrollbar Styling
           hideScrollbar ? "no-scrollbar" : "custom-scrollbar",
           (thin && !hideScrollbar) && "thin-scrollbar",
           
