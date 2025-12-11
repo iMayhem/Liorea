@@ -1,8 +1,6 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Scrollable } from '@/features/ui/Scrollable'; // <--- NEW IMPORT
+import { ScrollArea } from '../ui/scroll-area';
 import { CommunityUser } from '@/context/PresenceContext';
 import { Users, BookOpen } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -27,6 +25,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
   const onlineCount = users.filter(u => u.status === 'Online').length;
 
   return (
+    // UPDATED CLASSNAME:
     <Card className="glass-panel text-white w-72 h-[500px] flex flex-col rounded-2xl overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0 glass-panel-light">
             <div className="flex items-center gap-3">
@@ -38,8 +37,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
             </Button>
         </CardHeader>
       <CardContent className="p-0 flex-1 min-h-0">
-        {/* REPLACED WITH SCROLLABLE (THIN MODE) */}
-        <Scrollable className="h-full px-4" thin>
+        <ScrollArea className="h-full px-4">
             <div className="space-y-4 py-4">
             {users.map((user) => {
             const isOnline = user.status === 'Online';
@@ -80,7 +78,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
             )
             })}
             </div>
-        </Scrollable>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

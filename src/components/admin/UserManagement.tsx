@@ -1,62 +1,147 @@
 "use client";
 
-import { GlassCard } from '@/features/ui/GlassCard';
+import { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, UserX, Send } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { MoreHorizontal, UserX, Edit, Trash2, Send } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { usePresence } from '@/context/PresenceContext';
+import { CommunityUser } from '@/context/PresenceContext'; // Changed to CommunityUser
 
 export default function UserManagement() {
-    const { communityUsers } = usePresence();
+    // Show everyone in the community list
+    const { communityUsers: users } = usePresence(); 
+    const [editingUser, setEditingUser] = useState<CommunityUser | null>(null);
+    const [newUsername, setNewUsername] = useState('');
+    const { toast } = useToast();
 
-    return (
-        <GlassCard className="flex flex-col h-full">
-            <div className="mb-4">
-                <h3 className="font-semibold">User Management</h3>
-                <p className="text-xs text-white/50">Manage active members</p>
-            </div>
-            
-            <div className="rounded-md border border-white/10 overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-white/5">
-                        <TableRow className="border-white/10 hover:bg-transparent">
-                            <TableHead className="text-white/60">User</TableHead>
-                            <TableHead className="text-white/60">Status</TableHead>
-                            <TableHead className="text-right text-white/60">Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {communityUsers.slice(0, 5).map((user) => (
-                            <TableRow key={user.username} className="border-white/10 hover:bg-white/5">
-                                <TableCell className="font-medium">{user.username}</TableCell>
-                                <TableCell>
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${user.status === 'Online' ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-white/50'}`}>
-                                        {user.status}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-6 w-6 p-0">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="bg-[#18181b] border-white/10 text-white">
-                                            <DropdownMenuItem className="focus:bg-white/10">
-                                                <Send className="mr-2 h-4 w-4" /> Message
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem className="text-red-400 focus:bg-red-500/10 focus:text-red-400">
-                                                <UserX className="mr-2 h-4 w-4" /> Kick
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        </GlassCard>
-    );
+    const handleBlockUser = (userName: string) => {
+        toast({ 
+            variant: "destructive",
+            title: "Action Not Implemented", 
+            description: `Blocking functionality is not yet connected to the backend.` 
+        });
+    };
+    
+    const startEditing = (user: CommunityUser) => {
+        setEditingUser(user);
+        setNewUsername(user.username);
+    };
+
+    const handleUsernameChange = () => {
+        if (editingUser && newUsername.trim()) {
+            toast({
+                variant: "destructive",
+                title: "Action Not Implemented",
+                description: `Changing usernames is not yet connected to the backend.`
+            });
+            setEditingUser(null);
+            setNewUsername('');
+        }
+    };
+    
+    const handleClearChat = (userName: string) => {
+        toast({ 
+            variant: "destructive",
+            title: "Action Not Implemented", 
+            description: `Clearing chat is not yet connected to the backend.` 
+        });
+    };
+
+    const handleSendNotification = (userName: string) => {
+        toast({ title: "Notification Sent", description: `A notification has been sent to ${userName}.` });
+    };
+
+  return (
+    <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white">
+      <CardHeader>
+        <CardTitle>User Management</CardTitle>
+        <CardDescription>View all registered users and perform administrative actions.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-white/20">
+              <TableHead>Username</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Last Seen</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.username} className="hover:bg-muted/50 border-white/20">
+                <TableCell className="font-medium">{user.username}</TableCell>
+                <TableCell>{user.status}</TableCell>
+                <TableCell>{user.last_seen ? new Date(user.last_seen).toLocaleString() : 'N/A'}</TableCell>
+                <TableCell className="text-right">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-white/20">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-black/20 backdrop-blur-md border-white/20 text-white">
+                            <DropdownMenuItem onClick={() => startEditing(user)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                <span>Change Username</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBlockUser(user.username)}>
+                                <UserX className="mr-2 h-4 w-4" />
+                                <span>Block User</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleClearChat(user.username)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Clear Chat</span>
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleSendNotification(user.username)}>
+                                <Send className="mr-2 h-4 w-4" />
+                                <span>Send Notification</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+        {editingUser && (
+             <AlertDialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+                <AlertDialogContent className="bg-black/20 backdrop-blur-md border-white/20 text-white">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Change Username for {editingUser.username}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Enter the new username below. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <Input
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        placeholder="New username"
+                        className="mt-4 bg-transparent border-white/30"
+                    />
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleUsernameChange}>Save Change</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+    </Card>
+  );
 }

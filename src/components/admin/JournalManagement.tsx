@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { GlassCard } from '@/features/ui/GlassCard';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Loader2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { usePresence } from '@/context/PresenceContext';
 import { useToast } from '@/hooks/use-toast';
-import { api } from '@/lib/api';
+
+const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 
 type Journal = {
   id: number;
@@ -20,77 +21,60 @@ export default function JournalManagement() {
   const { username } = usePresence();
   const { toast } = useToast();
   const [journals, setJournals] = useState<Journal[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadJournals();
+    fetchJournals();
   }, []);
 
-  const loadJournals = async () => {
-    setIsLoading(true);
+  const fetchJournals = async () => {
     try {
-        const list = await api.journal.list();
-        setJournals(list);
-    } catch (e) { 
-        console.error(e); 
-    } finally {
-        setIsLoading(false);
-    }
+        const res = await fetch(`${WORKER_URL}/journals/list`);
+        if(res.ok) setJournals(await res.json());
+    } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (id: number) => {
       if (!confirm("Are you sure you want to force delete this journal?")) return;
       if (!username) return;
 
-      // Note: We need to ensure the DELETE endpoint is supported in api.ts
-      // For now, we assume direct fetch or add it to api.ts. 
-      // To keep it simple here, we will do a direct safe call since api.ts might not have delete logic explicitly typed yet.
-      
       try {
-          const res = await fetch("https://r2-gallery-api.sujeetunbeatable.workers.dev/journals/delete", {
+          const res = await fetch(`${WORKER_URL}/journals/delete`, {
               method: 'DELETE',
               body: JSON.stringify({ id, username }),
               headers: { 'Content-Type': 'application/json' }
           });
           
           if (res.ok) {
-              toast({ title: "Deleted", description: "Journal removed." });
-              loadJournals(); // Refresh list
+              toast({ title: "Journal Deleted" });
+              fetchJournals();
           } else {
-              toast({ variant: "destructive", title: "Error", description: "Could not delete." });
+              toast({ variant: "destructive", title: "Error", description: "Failed (Are you admin?)" });
           }
       } catch (e) { console.error(e); }
   };
 
   return (
-    <GlassCard className="flex flex-col">
-      <div className="mb-4">
-        <h3 className="font-semibold">Journal Moderation</h3>
-        <p className="text-xs text-white/50">Manage community content</p>
-      </div>
-
-      <div className="rounded-md border border-white/10 overflow-hidden">
+    <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white mt-8">
+      <CardHeader>
+        <CardTitle>Journal Moderation</CardTitle>
+        <CardDescription>Manage community journals and content.</CardDescription>
+      </CardHeader>
+      <CardContent>
         <Table>
-          <TableHeader className="bg-white/5">
+          <TableHeader>
             <TableRow className="hover:bg-transparent border-white/20">
-              <TableHead className="text-white/60">Title</TableHead>
-              <TableHead className="text-white/60">Owner</TableHead>
-              <TableHead className="text-white/60">Updated</TableHead>
-              <TableHead className="text-right text-white/60">Action</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Owner</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-               <TableRow>
-                 <TableCell colSpan={4} className="h-24 text-center text-white/40">
-                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                 </TableCell>
-               </TableRow>
-            ) : journals.map((journal) => (
-              <TableRow key={journal.id} className="hover:bg-white/5 border-white/10">
+            {journals.map((journal) => (
+              <TableRow key={journal.id} className="hover:bg-muted/50 border-white/20">
                 <TableCell className="font-medium">{journal.title}</TableCell>
-                <TableCell className="text-white/70">@{journal.username}</TableCell>
-                <TableCell className="text-white/50 text-xs">{new Date(journal.last_updated).toLocaleDateString()}</TableCell>
+                <TableCell>@{journal.username}</TableCell>
+                <TableCell>{new Date(journal.last_updated).toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
                     <Button variant="ghost" size="sm" onClick={() => handleDelete(journal.id)} className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
                         <Trash2 className="w-4 h-4" />
@@ -100,7 +84,7 @@ export default function JournalManagement() {
             ))}
           </TableBody>
         </Table>
-      </div>
-    </GlassCard>
+      </CardContent>
+    </Card>
   );
 }
