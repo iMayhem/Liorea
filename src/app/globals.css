@@ -42,18 +42,17 @@
 
 @layer utilities {
   /* 
-     INTENSIFIED BLUR (Matches reference image)
-     - Increased opacity to 40% for better contrast
-     - 'backdrop-blur-3xl' (64px) for that deep frosted look
-     - Subtler border 
+     OPAQUE GLASS STYLE
+     - bg-black/75:  75% opacity (Much darker/solid, less transparent)
+     - backdrop-blur-xl: Smooths out whatever little background shows through
   */
   .glass-panel {
-    @apply bg-black/40 backdrop-blur-3xl border border-white/10 shadow-2xl;
+    @apply bg-black/75 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   
-  /* Lighter glass for headers/inputs - kept slightly more transparent */
+  /* Headers get a slightly lighter tint for contrast, but still solid */
   .glass-panel-light {
-    @apply bg-white/5 backdrop-blur-3xl border-b border-white/5;
+    @apply bg-white/10 backdrop-blur-xl border-b border-white/10;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -73,18 +72,18 @@
   background: transparent; 
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1); 
+  background: rgba(255, 255, 255, 0.15); /* Slightly brighter thumb for visibility on dark glass */
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2); 
+  background: rgba(255, 255, 255, 0.3); 
 }
 
 /* Legacy support */
 .dark .card, .theme-blue .card, .theme-zinc .card {
   position: relative;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2); 
+  background: rgba(0, 0, 0, 0.6); /* Fallback to darker opacity */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08); 
