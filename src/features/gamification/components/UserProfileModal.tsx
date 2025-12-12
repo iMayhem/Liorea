@@ -32,7 +32,13 @@ interface ProfileStats {
 export function UserProfileModal() {
     const { isOpen, targetUsername, closeProfile } = useUserProfile();
     const { username: myUsername } = usePresence();
-    const isMe = myUsername === targetUsername;
+    const isMe = (myUsername && targetUsername) ? myUsername.toLowerCase().trim() === targetUsername.toLowerCase().trim() : false;
+
+    useEffect(() => {
+        if (isOpen) {
+            console.log("🔍 [UserProfileModal] Visibility Debug:", { myUsername, targetUsername, isMe });
+        }
+    }, [isOpen, myUsername, targetUsername, isMe]);
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [loading, setLoading] = useState(true);
