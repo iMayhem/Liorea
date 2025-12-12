@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import SoundscapeMixer from './SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
 import { usePresence } from '@/features/study';
-import { Users, LogOut, Trophy, Mic, MicOff, Settings, Home, BookOpen } from 'lucide-react';
+import { Users, LogOut, Trophy, Mic, MicOff, Settings, Home, BookOpen, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
     Sheet,
@@ -59,6 +59,20 @@ export default function SidebarControlPanel() {
                     </div>
                     <span>{studyUsers.length}</span>
                 </div>
+
+                {/* Shop */}
+                <Link href="/shop" className="cursor-pointer">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-zinc-400 hover:bg-[#313338] hover:text-indigo-400 rounded-[16px] w-12 h-12 transition-all relative">
+                                    <ShoppingBag className="w-5 h-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right"><p>Item Shop</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </Link>
 
                 {/* Leaderboard */}
                 <Sheet>
