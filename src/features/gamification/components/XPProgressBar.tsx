@@ -44,7 +44,11 @@ export function XPProgressBar({ variant = 'full' }: { variant?: 'full' | 'compac
                                 </span>
                                 <span>{Math.floor(currentProgress)} / {Math.floor(levelSpan)} XP</span>
                             </div>
-                            <Progress value={percentage} className="h-2 bg-zinc-800" indicatorClassName="bg-yellow-500" />
+                            <Progress
+                                value={percentage}
+                                className="h-2.5 bg-yellow-500/10 border border-yellow-500/10"
+                                indicatorClassName="bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]"
+                            />
                             <div className="text-[10px] text-zinc-500 mt-1 text-center">
                                 {Math.floor(levelSpan - currentProgress)} XP to next level
                             </div>
