@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, onValue, set, onDisconnect, serverTimestamp, increment, update, remove } from 'firebase/database';
+import { ref, onValue, set, onDisconnect, serverTimestamp, increment, update, remove, query, limitToLast } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 
 import { api } from '@/lib/api';
@@ -214,7 +214,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     useEffect(() => {
-        const globalRef = ref(db, '/community_presence');
+        const globalRef = query(ref(db, '/community_presence'), limitToLast(100));
         return onValue(globalRef, (snapshot: any) => {
             const data = snapshot.val();
             if (data) {

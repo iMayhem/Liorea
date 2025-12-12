@@ -8,8 +8,13 @@ import { db } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
 import { Loader2, Trophy, Coins, CalendarDays, X, Shield, Star, Medal, Settings, User } from "lucide-react";
 import { ShopItem } from "../types";
-import { LottiePreview } from "@/components/ui/LottiePreview";
 import { usePresence } from "@/features/study/context/PresenceContext";
+import dynamic from 'next/dynamic';
+
+const LottiePreview = dynamic(() => import('@/components/ui/LottiePreview').then(mod => mod.LottiePreview), {
+    loading: () => <div className="w-full h-full bg-discord-gray animate-pulse" />,
+    ssr: false
+});
 
 
 interface ProfileStats {
@@ -33,11 +38,7 @@ export function UserProfileModal() {
     const { username: myUsername } = usePresence();
     const isMe = (myUsername && targetUsername) ? myUsername.toLowerCase().trim() === targetUsername.toLowerCase().trim() : false;
 
-    useEffect(() => {
-        if (isOpen) {
-            console.log("🔍 [UserProfileModal] Visibility Debug:", { myUsername, targetUsername, isMe });
-        }
-    }, [isOpen, myUsername, targetUsername, isMe]);
+    // Logs removed
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<ProfileStats | null>(null);
@@ -53,7 +54,7 @@ export function UserProfileModal() {
             const fetchStats = async () => {
                 try {
                     const data = await api.gamification.getStats(targetUsername);
-                    console.log("🔍 [UserProfileModal] Fetched Stats:", data);
+                    // console.log("🔍 [UserProfileModal] Fetched Stats:", data);
                     // Map flat API response to nested structure
                     setStats({
                         level: 1, // Placeholder
@@ -109,11 +110,7 @@ export function UserProfileModal() {
     // DEBUG LOGS
     useEffect(() => {
         if (isOpen) {
-            console.log("🔍 [UserProfileModal] Stats:", stats);
-            console.log("🔍 [UserProfileModal] All Items:", allItems);
-            console.log("🔍 [UserProfileModal] Resolved Badge:", badgeItem);
-            console.log("🔍 [UserProfileModal] Resolved Frame:", frameItem);
-            console.log("🔍 [UserProfileModal] Resolved Effect:", effectItem);
+            // Logs removed for optimization
         }
     }, [isOpen, stats, allItems, badgeItem, frameItem, effectItem]);
 

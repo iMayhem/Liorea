@@ -16,6 +16,7 @@ import { UserProfileProvider } from '@/features/gamification/context/UserProfile
 import { UserProfileModal } from '@/features/gamification/components/UserProfileModal';
 import { LiveTicker } from '@/features/gamification/components/LiveTicker';
 import { SettingsProvider } from '@/context/SettingsContext';
+import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     // ... useEffect ...

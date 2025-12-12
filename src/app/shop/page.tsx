@@ -6,7 +6,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, getProxiedUrl } from '@/lib/api';
 import { ShopItem } from "@/features/gamification/types";
-import { LottiePreview } from "@/components/ui/LottiePreview";
+import dynamic from 'next/dynamic';
+
+const LottiePreview = dynamic(() => import('@/components/ui/LottiePreview').then(mod => mod.LottiePreview), {
+    loading: () => <div className="w-20 h-20 bg-discord-gray animate-pulse rounded-full" />,
+    ssr: false
+});
 
 type Category = 'all' | 'badge' | 'frame' | 'color' | 'effect';
 
