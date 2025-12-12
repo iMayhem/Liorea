@@ -15,6 +15,11 @@ import { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
+import { XPProgressBar } from '@/features/gamification/components/XPProgressBar';
+import { StreakIndicator } from '@/features/gamification/components/StreakIndicator';
+import { PomodoroTimer } from '@/features/timer';
+import { ShoppingBag, Timer } from 'lucide-react';
+import Link from 'next/link';
 
 export default function BottomControlBar() {
     const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
@@ -36,7 +41,39 @@ export default function BottomControlBar() {
                 </div>
 
                 {/* CENTER: Controls */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 md:gap-4">
+
+                    {/* Level & Streak (Compact) */}
+                    <div className="flex items-center gap-2 mr-2">
+                        <XPProgressBar variant="compact" />
+                        <StreakIndicator />
+                    </div>
+
+                    {/* Timer */}
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 hover:bg-[#313338] text-zinc-400 hover:text-red-400 transition-colors">
+                                <Timer className="w-5 h-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="bottom" className="bg-[#313338] border-t-[#1F2023] text-zinc-100 h-auto pb-10">
+                            <SheetHeader>
+                                <SheetTitle className="text-zinc-100 text-center">Focus Timer</SheetTitle>
+                                <SheetDescription className="text-zinc-400 text-center">Stay productive with the Pomodoro technique.</SheetDescription>
+                            </SheetHeader>
+                            <div className="py-6 flex justify-center">
+                                <PomodoroTimer />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+
+                    {/* Shop */}
+                    <Link href="/shop">
+                        <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 hover:bg-[#313338] text-zinc-400 hover:text-indigo-400 transition-colors">
+                            <ShoppingBag className="w-5 h-5" />
+                        </Button>
+                    </Link>
+
                     {/* Sound Controls */}
                     <SoundscapeMixer sounds={sounds} sidebarMode={false} />
 
