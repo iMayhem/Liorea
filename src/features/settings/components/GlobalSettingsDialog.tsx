@@ -31,7 +31,7 @@ export function GlobalSettingsDialog() {
                 <VisuallyHidden>
                     <DialogTitle>Global Settings</DialogTitle>
                 </VisuallyHidden>
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl h-full flex flex-col overflow-hidden shadow-2xl">
+                <div className="bg-[#09090b] border border-zinc-800 rounded-xl h-full flex flex-col overflow-hidden shadow-2xl relative z-50">
                     <ProfileSettings
                         allItems={allItems}
                         onClose={() => setIsOpen(false)}

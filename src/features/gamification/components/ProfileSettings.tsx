@@ -71,7 +71,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     };
 
     return (
-        <div className="p-6 space-y-6 bg-zinc-950 text-zinc-100 h-full overflow-y-auto">
+        <div className="p-6 space-y-6 bg-[#09090b] text-zinc-100 h-full overflow-y-auto w-full">
             <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <UserIcon className="w-5 h-5 text-blue-400" />
@@ -94,7 +94,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                 <TabsContent value="general" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
                     {/* AVATAR */}
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-full bg-zinc-900 overflow-hidden border-2 border-zinc-700 relative group">
+                        <div className="w-24 h-24 min-w-[6rem] min-h-[6rem] shrink-0 rounded-full bg-zinc-900 overflow-hidden border-2 border-zinc-700 relative group shadow-lg">
                             {userImage ? (
                                 <img
                                     src={userImage}
