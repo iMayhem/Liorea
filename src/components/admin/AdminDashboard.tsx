@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Users, Timer, Activity, Send, Loader2, LayoutDashboard, FlaskConical } from 'lucide-react';
+import { Users, Timer, Activity, Send, Loader2, LayoutDashboard, FlaskConical, ShoppingBag } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { useState, useEffect } from 'react';
@@ -14,6 +14,7 @@ import { usePresence } from '@/features/study';
 // Placeholder components for new tabs
 import UserManagement from './UserManagement';
 import CosmeticsLab from './CosmeticsLab';
+import ItemManager from './ItemManager';
 
 export default function AdminDashboard() {
     const [notificationMessage, setNotificationMessage] = useState('');
@@ -82,6 +83,9 @@ export default function AdminDashboard() {
                     </TabsTrigger>
                     <TabsTrigger value="users" className="gap-2">
                         <Users className="w-4 h-4" /> User Management
+                    </TabsTrigger>
+                    <TabsTrigger value="items" className="gap-2">
+                        <ShoppingBag className="w-4 h-4" /> Item Manager
                     </TabsTrigger>
                     <TabsTrigger value="cosmetics" className="gap-2">
                         <FlaskConical className="w-4 h-4" /> Cosmetics Lab
@@ -153,6 +157,11 @@ export default function AdminDashboard() {
                 {/* USER MANAGEMENT TAB */}
                 <TabsContent value="users" className="mt-6">
                     <UserManagement />
+                </TabsContent>
+
+                {/* ITEM MANAGER TAB */}
+                <TabsContent value="items" className="mt-6">
+                    <ItemManager />
                 </TabsContent>
 
                 {/* COSMETICS TAB */}

@@ -71,14 +71,31 @@ export function UserProfileModal() {
                 {/* Profile Content */}
                 <div className="px-6 pb-8 -mt-12 relative">
                     {/* Avatar & badge */}
+                    {/* Avatar & badge */}
                     <div className="flex justify-between items-end mb-4">
-                        <div className={`relative w-24 h-24 rounded-2xl bg-zinc-800 border-4 border-[#18181b] shadow-xl overflow-hidden ${frameItem?.assetUrl || ''}`}>
-                            <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUsername}`}
-                                alt={targetUsername || "User"}
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="relative group">
+                            {/* APNG Decoration */}
+                            {frameItem && (
+                                <img
+                                    src={frameItem.assetUrl}
+                                    className="absolute -top-[15%] -left-[15%] w-[130%] h-[130%] z-20 pointer-events-none"
+                                    alt=""
+                                />
+                            )}
+
+                            {/* Masked Avatar */}
+                            <div className={`relative w-24 h-24 rounded-full bg-zinc-800 discord-mask-lg overflow-hidden border-none shadow-xl`}>
+                                <img
+                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUsername}`}
+                                    alt={targetUsername || "User"}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+
+                            {/* Large Status Indicator */}
+                            <span className="absolute bottom-1 right-1 block w-6 h-6 rounded-full bg-green-500 ring-[5px] ring-[#18181b] z-10" />
                         </div>
+
                         {badgeItem && (
                             <div className="bg-zinc-800/80 backdrop-blur-sm border border-zinc-700 px-3 py-1.5 rounded-full flex items-center gap-2 mb-2">
                                 <span className="text-xl">{badgeItem.previewUrl}</span>

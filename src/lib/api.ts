@@ -87,10 +87,15 @@ export const api = {
 
     upload: {
         put: async (file: Blob) => {
-            // Uploads to R2 usually require raw body, not JSON
-            // We need a specific override here to NOT set application/json
             const url = `${WORKER_URL}/upload`;
-            const response = await fetch(url, { method: 'PUT', body: file });
+            const headerAuth = await getAuthHeaders();
+            const response = await fetch(url, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    ...headerAuth
+                }
+            });
             if (!response.ok) throw new Error("Upload failed");
             return response.json() as Promise<{ url: string }>;
         }
@@ -128,6 +133,13 @@ export const api = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, itemId, type })
             });
+        },
+        // Dynamic Shop API
+        getItems: () => request<any[]>('/gamification/shop/items'),
+        admin: {
+            init: () => request('/gamification/admin/init-db'),
+            createItem: (item: any) => request('/gamification/admin/items', { method: 'POST', body: JSON.stringify(item) }),
+            deleteItem: (id: string) => request('/gamification/admin/items', { method: 'DELETE', body: JSON.stringify({ id }) }),
         }
     }
 };

@@ -4,9 +4,11 @@ import { useGamification } from "@/features/gamification/context/GamificationCon
 import { SHOP_ITEMS } from "@/features/gamification/data/items";
 import { Coins, ShoppingBag, ArrowLeft, Check, Lock } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { ShopItem } from "@/features/gamification/types";
 
 type Category = 'all' | 'badge' | 'frame' | 'color';
 
@@ -14,8 +16,18 @@ export default function ShopPage() {
     const { stats, buyItem, equipItem, hasItem } = useGamification();
     const [category, setCategory] = useState<Category>('all');
     const [buyingId, setBuyingId] = useState<string | null>(null);
+    const [dynamicItems, setDynamicItems] = useState<ShopItem[]>([]);
 
-    const filteredItems = SHOP_ITEMS.filter(item => category === 'all' || item.type === category);
+    useEffect(() => {
+        api.gamification.getItems().then(items => {
+            if (Array.isArray(items)) setDynamicItems(items);
+        }).catch(console.error);
+    }, []);
+
+    // Merge static and dynamic items, preferring dynamic if ID conflicts (or just unique)
+    const allItems = [...SHOP_ITEMS, ...dynamicItems.filter(d => !SHOP_ITEMS.find(s => s.id === d.id))];
+
+    const filteredItems = allItems.filter(item => category === 'all' || item.type === category);
 
     const handleBuy = async (item: typeof SHOP_ITEMS[0]) => {
         if (buyingId) return;

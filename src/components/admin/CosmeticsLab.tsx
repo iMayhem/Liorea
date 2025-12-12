@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SHOP_ITEMS } from "@/features/gamification/data/items";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useGamification } from "@/features/gamification/context/GamificationContext";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { ShopItem } from "@/features/gamification/types";
 
 export default function CosmeticsLab() {
     const { equipItem, stats } = useGamification();
@@ -17,10 +20,19 @@ export default function CosmeticsLab() {
     const [previewBadge, setPreviewBadge] = useState<string | null>(null);
     const [previewFrame, setPreviewFrame] = useState<string | null>(null);
     const [previewColor, setPreviewColor] = useState<string | null>(null);
+    const [dynamicItems, setDynamicItems] = useState<ShopItem[]>([]);
 
-    const badges = SHOP_ITEMS.filter(i => i.type === 'badge');
-    const frames = SHOP_ITEMS.filter(i => i.type === 'frame');
-    const colors = SHOP_ITEMS.filter(i => i.type === 'color');
+    useEffect(() => {
+        api.gamification.getItems().then(items => {
+            if (Array.isArray(items)) setDynamicItems(items);
+        }).catch(console.error);
+    }, []);
+
+    const allItems = [...SHOP_ITEMS, ...dynamicItems.filter(d => !SHOP_ITEMS.find(s => s.id === d.id))];
+
+    const badges = allItems.filter(i => i.type === 'badge');
+    const frames = allItems.filter(i => i.type === 'frame');
+    const colors = allItems.filter(i => i.type === 'color');
 
     // Get asset URLs for preview
     const activeBadgeItem = badges.find(b => b.id === previewBadge);
@@ -103,14 +115,22 @@ export default function CosmeticsLab() {
 
                 <div className="relative group">
                     {/* Avatar Frame */}
-                    <div className={`relative w-24 h-24 rounded-2xl bg-zinc-800 overflow-hidden mb-4 transition-all duration-300 ${activeFrameItem?.assetUrl || 'ring-0'}`}>
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                </div>
+                    <div className="relative group">
+                        {activeFrameItem && (
+                            <img
+                                src={activeFrameItem.assetUrl}
+                                className="absolute -top-[15%] -left-[15%] w-[130%] h-[130%] z-20 pointer-events-none"
+                                alt=""
+                            />
+                        )}
+                        <Avatar className={`w - 24 h - 24 ${true ? 'discord-mask' : ''} `}>
+                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=AdminUser`} />
+                            <AvatarFallback>AD</AvatarFallback>
+                        </Avatar >
+                        {/* Status Dot */}
+                        < span className="absolute bottom-1 right-1 block w-5 h-5 rounded-full bg-green-500 ring-4 ring-[#18181b] z-10" />
+                    </div >
+                </div >
 
                 <div className="text-center space-y-1">
                     <div className="flex items-center justify-center gap-2">
@@ -135,7 +155,7 @@ export default function CosmeticsLab() {
                         This will check/add items to your inventory and auto-equip them.
                     </p>
                 </div>
-            </Card>
-        </div>
+            </Card >
+        </div >
     );
 }
