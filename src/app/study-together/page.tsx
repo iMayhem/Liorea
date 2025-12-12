@@ -7,8 +7,11 @@ import BottomControlBar from '@/features/study/components/BottomControlBar';
 import { usePresence } from '@/features/study';
 import { ChatProvider, ChatPanel } from '@/features/chat';
 import { StudyGrid } from '@/features/study';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Users } from 'lucide-react';
+import BigPomodoroTimer from '@/features/timer/components/BigPomodoroTimer';
+
+// ... (keep loading variants same if possible or simplify imports above)
 
 // Loading Animation Variants
 const loadingContainerVariants = {
@@ -28,31 +31,10 @@ const loadingCircleTransition = {
   ease: "easeInOut",
 };
 
-// Content Animation Variants (Smoother entry)
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1, // Delays the chat panel slightly after the grid
-      delayChildren: 0.2    // Waits for layout to settle before showing content
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 10, scale: 0.99 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
-
 export default function StudyTogetherPage() {
   const { studyUsers, joinSession, leaveSession } = usePresence();
   const [isJoining, setIsJoining] = useState(true);
+  const [isTimerMode, setIsTimerMode] = useState(false);
 
   useEffect(() => {
     // Start the session
@@ -101,8 +83,6 @@ export default function StudyTogetherPage() {
         <Header />
 
         {/* Content Container - Match Journal's Layout */}
-        {/* Journal uses: pt-20 px-4 h-screen flex gap-6 pb-4 */}
-        {/* We add extra pb to account for bottom control bar */}
         <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-20">
 
           {/* LEFT: Study Grid Panel (Solid) - No Header */}
@@ -110,15 +90,42 @@ export default function StudyTogetherPage() {
             <StudyGrid users={studyUsers} />
           </div>
 
-          {/* RIGHT: Chat Panel (Solid) */}
-          <div className="flex-1 flex flex-col bg-[#2B2D31] rounded-2xl border border-[#1F2023] shadow-xl overflow-hidden">
-            <ChatPanel />
+          {/* RIGHT: Chat Panel OR Timer (Solid) */}
+          <div className="flex-1 flex flex-col bg-[#2B2D31] rounded-2xl border border-[#1F2023] shadow-xl overflow-hidden relative">
+            <AnimatePresence mode="wait">
+              {isTimerMode ? (
+                <motion.div
+                  key="timer"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 z-10"
+                >
+                  <BigPomodoroTimer />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="chat"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 z-0"
+                >
+                  <ChatPanel />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
         </main>
 
         {/* BOTTOM CONTROL BAR */}
-        <BottomControlBar />
+        <BottomControlBar
+          onTimerClick={() => setIsTimerMode(!isTimerMode)}
+          isTimerMode={isTimerMode}
+        />
 
       </div>
     </ChatProvider>

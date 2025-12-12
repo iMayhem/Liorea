@@ -5,23 +5,23 @@ import { useRouter } from 'next/navigation';
 import {
     Sheet,
     SheetContent,
-    SheetDescription,
     SheetHeader,
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Leaderboard } from '@/features/study';
-import { useState } from 'react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
-import { sounds } from '@/lib/sounds';
 import { XPProgressBar } from '@/features/gamification/components/XPProgressBar';
 import { StreakIndicator } from '@/features/gamification/components/StreakIndicator';
-import { PomodoroTimer } from '@/features/timer';
-import { ShoppingBag, Timer } from 'lucide-react';
-import Link from 'next/link';
+import { Timer } from 'lucide-react';
+import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
+import { sounds } from '@/lib/sounds';
 
-export default function BottomControlBar() {
+interface BottomControlBarProps {
+    onTimerClick?: () => void;
+    isTimerMode?: boolean;
+}
+
+export default function BottomControlBar({ onTimerClick, isTimerMode }: BottomControlBarProps) {
     const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
     const router = useRouter();
 
@@ -49,23 +49,18 @@ export default function BottomControlBar() {
                         <StreakIndicator />
                     </div>
 
-                    {/* Timer */}
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 hover:bg-[#313338] text-zinc-400 hover:text-red-400 transition-colors">
-                                <Timer className="w-5 h-5" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="bottom" className="bg-[#313338] border-t-[#1F2023] text-zinc-100 h-auto pb-10">
-                            <SheetHeader>
-                                <SheetTitle className="text-zinc-100 text-center">Focus Timer</SheetTitle>
-                                <SheetDescription className="text-zinc-400 text-center">Stay productive with the Pomodoro technique.</SheetDescription>
-                            </SheetHeader>
-                            <div className="py-6 flex justify-center">
-                                <PomodoroTimer />
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                    {/* Timer Toggle */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onTimerClick}
+                        className={`rounded-full w-9 h-9 transition-colors ${isTimerMode
+                                ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
+                                : "hover:bg-[#313338] text-zinc-400 hover:text-red-400"
+                            }`}
+                    >
+                        <Timer className="w-5 h-5" />
+                    </Button>
 
                     {/* Shop - Moved to Main Header */}
 

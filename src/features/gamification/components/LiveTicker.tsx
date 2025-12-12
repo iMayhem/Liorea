@@ -19,24 +19,27 @@ export function LiveTicker() {
 
     // Mock Listener for demo - in real app, listen to a Firebase node or socket
     useEffect(() => {
+        /* 
+        // DISABLE MOCK DATA
         const interval = setInterval(() => {
-            // Randomly generate an event for demonstration if users exist
-            if (studyUsers.length > 0 && Math.random() > 0.7) {
-                const randomUser = studyUsers[Math.floor(Math.random() * studyUsers.length)];
-                const actions: TickerEvent['action'][] = ['started_timer', 'leveled_up', 'on_fire'];
-                const action = actions[Math.floor(Math.random() * actions.length)];
-
-                const newEvent: TickerEvent = {
-                    id: Date.now().toString(),
-                    username: randomUser.username,
-                    action,
-                    detail: action === 'started_timer' ? '25m Focus' : action === 'leveled_up' ? 'Level 5' : undefined
-                };
-
-                setEvents(prev => [...prev, newEvent]);
-            }
-        }, 8000); // Every 8 seconds try to add event
+             // Randomly generate an event for demonstration if users exist
+             if (studyUsers.length > 0 && Math.random() > 0.7) {
+                 const randomUser = studyUsers[Math.floor(Math.random() * studyUsers.length)];
+                 const actions: TickerEvent['action'][] = ['started_timer', 'leveled_up', 'on_fire'];
+                 const action = actions[Math.floor(Math.random() * actions.length)];
+                 
+                 const newEvent: TickerEvent = {
+                     id: Date.now().toString(),
+                     username: randomUser.username,
+                     action,
+                     detail: action === 'started_timer' ? '25m Focus' : action === 'leveled_up' ? 'Level 5' : undefined
+                 };
+                 
+                 setEvents(prev => [...prev, newEvent]);
+             }
+        }, 8000); 
         return () => clearInterval(interval);
+        */
     }, [studyUsers]);
 
     // Process Queue
