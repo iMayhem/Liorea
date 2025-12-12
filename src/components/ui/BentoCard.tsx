@@ -1,39 +1,56 @@
-import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
+import React from "react";
 
 interface BentoCardProps {
-    children: ReactNode;
+    children: React.ReactNode;
     className?: string;
-    delay?: number;
     noPadding?: boolean;
 }
 
-export function BentoCard({ children, className = '', delay = 0, noPadding = false }: BentoCardProps) {
+export function BentoCard({ children, className, noPadding = false }: BentoCardProps) {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay }}
+        <div
             className={cn(
-                'bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 hover:border-white/20 transition-all',
-                !noPadding && 'p-6',
+                "relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow",
+                !noPadding && "p-6",
                 className
             )}
         >
             {children}
-        </motion.div>
+        </div>
     );
 }
 
-export function CardHeader({ children, className = '' }: { children: ReactNode; className?: string }) {
-    return <div className={cn('', className)}>{children}</div>;
+export function CardHeader({
+    className,
+    ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+    return (
+        <div
+            className={cn("flex flex-col space-y-1.5 p-6", className)}
+            {...props}
+        />
+    );
 }
 
-export function CardTitle({ children, className = '' }: { children: ReactNode; className?: string }) {
-    return <h3 className={cn('font-semibold', className)}>{children}</h3>;
+export function CardTitle({
+    className,
+    ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+    return (
+        <h3
+            className={cn(
+                "font-semibold leading-none tracking-tight",
+                className
+            )}
+            {...props}
+        />
+    );
 }
 
-export function CardContent({ children, className = '' }: { children: ReactNode; className?: string }) {
-    return <div className={cn('', className)}>{children}</div>;
+export function CardContent({
+    className,
+    ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+    return <div className={cn("p-6 pt-0", className)} {...props} />;
 }

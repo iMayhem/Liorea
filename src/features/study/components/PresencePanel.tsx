@@ -45,7 +45,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
               const lastSeen = getTimeAgo(user.last_seen);
 
               return (
-                <div key={user.username} className="flex items-center gap-3 group">
+                <div key={user.username} className="flex items-center gap-3 group pl-4">
                   <div className="relative">
                     <UserAvatar username={user.username} className="w-9 h-9" />
 
