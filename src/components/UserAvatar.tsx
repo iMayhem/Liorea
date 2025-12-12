@@ -68,7 +68,7 @@ export default function UserAvatar({ username, fallbackUrl, className, showStatu
 
       {/* Global Frame Overlay */}
       {frameItem && frameItem.assetUrl && (
-        <div className="absolute -top-[35%] -left-[35%] w-[180%] h-[180%] z-20 pointer-events-none select-none">
+        <div className="absolute -top-[45%] -left-[45%] w-[180%] h-[180%] z-20 pointer-events-none select-none">
           <LottiePreview
             url={getProxiedUrl(frameItem.assetUrl)}
             className="w-full h-full"
