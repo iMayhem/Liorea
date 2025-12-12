@@ -216,6 +216,9 @@ export default function ChatPanel() {
             } else if (e.key === 'Escape') {
                 setMentionQuery(null);
             }
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
         }
     };
 

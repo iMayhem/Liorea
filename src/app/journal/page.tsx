@@ -162,7 +162,7 @@ function JournalContent() {
         setPosts([]); setHasMore(true); setIsInitialLoaded(false); setLoadingMore(false);
         fetchPosts(activeJournal.id); fetchFollowers(activeJournal.id);
         const signalRef = ref(db, `journal_signals/${activeJournal.id}`);
-        const unsubscribe = onValue(signalRef, (snapshot) => { if (snapshot.exists()) fetchPosts(activeJournal.id, undefined, true); });
+        const unsubscribe = onValue(signalRef, (snapshot) => { if (snapshot.exists()) fetchPosts(activeJournal.id, undefined, false); });
         return () => unsubscribe();
     }, [activeJournal]);
 
