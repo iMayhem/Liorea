@@ -18,7 +18,21 @@ export default function GlobalUserContextMenu() {
   const menuRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // ... useEffect ...
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        closeMenu();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, closeMenu]);
 
   if (!isOpen || !targetUser) return null;
 
