@@ -96,9 +96,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = onValue(connectionRef, async (snap: any) => {
             if (snap.val() === true) {
                 let savedStatus = "";
+                let savedPhoto = userImage || "";
+
                 try {
                     const data = await api.auth.getStatus(username);
                     if (data.status_text) savedStatus = data.status_text;
+                    if (data.photoURL) {
+                        savedPhoto = data.photoURL;
+                        setUserImage(savedPhoto); // Update local state immediately
+                    }
                 } catch (e) { }
 
                 // Establish Presence
@@ -110,7 +116,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
                 update(commRef, {
                     username: username,
-                    photoURL: userImage || "",
+                    photoURL: savedPhoto,
                     status: 'Online',
                     last_seen: serverTimestamp(),
                     status_text: savedStatus,
