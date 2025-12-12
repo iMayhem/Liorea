@@ -1,10 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Clock, Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Award, Clock, Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter, ChevronDown } from 'lucide-react';
 import { StudyUser } from '@/features/study';
 import UserAvatar from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger as ShadcnTabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface LeaderboardProps {
   users: StudyUser[];
@@ -27,20 +32,27 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
   return (
     <Card className="bg-transparent border-none shadow-none text-white w-full h-full flex flex-col">
       <CardHeader className="p-0 pb-4 shrink-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold flex items-center gap-2">
             <Trophy className="text-yellow-500 w-5 h-5" />
             Leaderboard
           </CardTitle>
-        </div>
 
-        <Tabs defaultValue="daily" className="w-full" onValueChange={(v: string) => setFilter(v as any)}>
-          <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 border border-white/10 rounded-lg">
-            <ShadcnTabsTrigger value="daily" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-zinc-400 hover:text-zinc-200">Daily</ShadcnTabsTrigger>
-            <ShadcnTabsTrigger value="weekly" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-zinc-400 hover:text-zinc-200">Weekly</ShadcnTabsTrigger>
-            <ShadcnTabsTrigger value="all" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-zinc-400 hover:text-zinc-200">All Time</ShadcnTabsTrigger>
-          </TabsList>
-        </Tabs>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="outline-none">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-zinc-300 hover:bg-white/10 transition-colors">
+                <Calendar className="w-4 h-4 text-zinc-400" />
+                <span className="capitalize">{filter === 'all' ? 'All Time' : filter}</span>
+                <ChevronDown className="w-4 h-4 text-zinc-500" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32 bg-zinc-900 border-white/10 text-white">
+              <DropdownMenuItem onClick={() => setFilter('daily')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Daily</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('weekly')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Weekly</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilter('all')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">All Time</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
 
       <CardContent className="p-0 flex-1 overflow-y-auto no-scrollbar space-y-2">
