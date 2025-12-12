@@ -17,6 +17,7 @@ import { api } from '@/lib/api';
 import { Journal, Post, Reaction, GiphyResult } from '../types';
 import { FormattedMessage } from '@/components/chat/FormattedMessage';
 import { MessageActions } from '@/components/chat/MessageActions';
+import { MentionMenu } from '@/components/chat/MentionMenu';
 
 interface JournalChatProps {
     activeJournal: Journal | null;
@@ -355,16 +356,14 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                 </button>
             )}
 
-            {mentionQuery && mentionableUsers.length > 0 && (
-                <div className="absolute bottom-20 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
-                    <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
-                    {mentionableUsers.map((u, i) => (
-                        <div key={u} className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`} onClick={() => insertMention(u)}>
-                            <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <MentionMenu
+                isOpen={!!mentionQuery && mentionableUsers.length > 0}
+                query={mentionQuery}
+                options={mentionableUsers}
+                selectedIndex={mentionIndex}
+                onSelect={insertMention}
+                className="absolute bottom-20 left-4"
+            />
 
             <div className="p-4 glass-panel-light shrink-0">
                 <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
