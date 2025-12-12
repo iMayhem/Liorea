@@ -46,7 +46,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
                 <ChevronDown className="w-4 h-4 text-zinc-500" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContentNoPortal align="end" className="w-32 bg-black border border-white/10 text-white shadow-xl z-[100]">
+            <DropdownMenuContentNoPortal align="end" className="w-32 bg-[#2B2D31] border border-[#1F2023] text-zinc-200 shadow-xl z-[100]">
               <DropdownMenuItem onClick={() => setFilter('daily')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Daily</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('weekly')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Weekly</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('all')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">All Time</DropdownMenuItem>

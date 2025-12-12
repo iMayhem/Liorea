@@ -208,9 +208,33 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const sendReaction = useCallback(async (messageId: string, emoji: string) => {
         if (!username) return;
 
-        // Optimistic check: Do we already have this reaction?
+        // Optimistic Update
+        setMessages(prev => prev.map(msg => {
+            if (msg.id !== messageId) return msg;
+
+            const newReactions = { ...(msg.reactions || {}) };
+
+            // Find existing reaction key by this user for this emoji
+            let existingKey = null;
+            Object.entries(newReactions).forEach(([key, r]) => {
+                if (r.username === username && r.emoji === emoji) {
+                    existingKey = key;
+                }
+            });
+
+            if (existingKey) {
+                delete newReactions[existingKey];
+            } else {
+                const tempKey = `temp-${Date.now()}`;
+                newReactions[tempKey] = { username, emoji };
+            }
+
+            return { ...msg, reactions: newReactions };
+        }));
+
+        // Firebase Write
         const msg = messages.find(m => m.id === messageId);
-        if (!msg) return;
+        if (!msg) return; // Should not happen given optimistic check finding it above, but safe guard
 
         let existingReactionKey: string | null = null;
         if (msg.reactions) {
