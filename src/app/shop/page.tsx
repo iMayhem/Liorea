@@ -39,7 +39,7 @@ export default function ShopPage() {
     return (
         <div className="h-screen bg-[#111214] text-white p-6 md:p-12 font-sans overflow-y-auto pt-[80px]">
             {/* Header */}
-            <div className="max-w-6xl mx-auto flex items-center justify-between mb-8 sticky top-0 z-20 bg-[#111214]/80 backdrop-blur-md py-4">
+            <div className="max-w-6xl mx-auto flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold flex items-center gap-3">
