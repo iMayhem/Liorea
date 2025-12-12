@@ -6,10 +6,12 @@ import { useUserProfile } from "../context/UserProfileContext";
 import { api, getProxiedUrl } from "@/lib/api";
 import { db } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
-import { Loader2, Trophy, Coins, CalendarDays, X, Shield, Star, Medal } from "lucide-react";
+import { Loader2, Trophy, Coins, CalendarDays, X, Shield, Star, Medal, Settings, User } from "lucide-react";
 import { SHOP_ITEMS } from "../data/items";
 import { ShopItem } from "../types";
 import { LottiePreview } from "@/components/ui/LottiePreview";
+import { usePresence } from "@/features/study/context/PresenceContext";
+import { ProfileSettings } from "./ProfileSettings";
 
 interface ProfileStats {
     level: number;
@@ -24,10 +26,15 @@ interface ProfileStats {
     };
     joinDate?: string;
     current_streak?: number;
+    photoURL?: string | null;
 }
 
 export function UserProfileModal() {
     const { isOpen, targetUsername, closeProfile } = useUserProfile();
+    const { username: myUsername } = usePresence();
+    const isMe = myUsername === targetUsername;
+
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<ProfileStats | null>(null);
     const [allItems, setAllItems] = useState<ShopItem[]>(SHOP_ITEMS);
@@ -37,9 +44,6 @@ export function UserProfileModal() {
 
     useEffect(() => {
         if (isOpen && targetUsername) {
-            // Only show loader on initial open or hard refresh, not signal updates generally?
-            // But here we don't distinguish easily. It's fine to show loading for a split second on update.
-            // Or better, check if stats exist to decide on loading.
             if (!stats) setLoading(true);
 
             const fetchStats = async () => {
@@ -58,7 +62,8 @@ export function UserProfileModal() {
                             effect: data.equipped_effect || null,
                             color: data.name_color || null
                         },
-                        current_streak: data.current_streak || 0
+                        current_streak: data.current_streak || 0,
+                        photoURL: data.photoURL || null
                     });
                 } catch (e) {
                     console.error("Failed to load profile", e);
@@ -80,7 +85,6 @@ export function UserProfileModal() {
         });
     }, [isOpen, targetUsername]);
 
-    // Load Effect JSON
     // Fetch Dynamic Items on Mount
     useEffect(() => {
         api.gamification.getItems().then(items => {
@@ -98,7 +102,6 @@ export function UserProfileModal() {
     const frameItem = useMemo(() => stats?.equipped?.frame ? getItem(stats.equipped.frame) : null, [stats?.equipped?.frame, allItems]);
     const colorItem = useMemo(() => stats?.equipped?.color ? getItem(stats.equipped.color) : null, [stats?.equipped?.color, allItems]);
     const effectItem = useMemo(() => stats?.equipped?.effect ? getItem(stats.equipped.effect) : null, [stats?.equipped?.effect, allItems]);
-    // Dynamic fallback logic omitted for brevity as mainly static items are used for previews, real app would fetch all.
 
     // DEBUG LOGS
     useEffect(() => {
@@ -120,96 +123,114 @@ export function UserProfileModal() {
                 <DialogDescription className="sr-only">User Profile Details</DialogDescription>
 
                 {/* Main Card */}
-                <div className="relative w-full bg-[#111214]/95 backdrop-blur-xl border border-white/5 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                <div className="relative w-full bg-[#111214]/95 backdrop-blur-xl border border-white/5 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 min-h-[400px]">
 
-                    {/* Profile Effect (Overlay) */}
-                    {effectItem && effectItem.assetUrl && (
-                        <div className="absolute inset-0 pointer-events-none z-0">
-                            <LottiePreview url={getProxiedUrl(effectItem.assetUrl)} className="w-full h-full object-cover" />
-                        </div>
-                    )}
+                    {isSettingsOpen ? (
+                        <ProfileSettings allItems={allItems} onClose={() => setIsSettingsOpen(false)} />
+                    ) : (
+                        <>
+                            {/* SETTINGS BUTTON (Only if Me) */}
+                            {isMe && (
+                                <button
+                                    onClick={() => setIsSettingsOpen(true)}
+                                    className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full text-zinc-400 hover:text-white transition-all backdrop-blur-md"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                </button>
+                            )}
 
-
-
-                    {/* Content */}
-                    <div className="px-6 py-8 relative z-10 w-full">
-
-                        {/* Avatar Section */}
-                        <div className="relative mb-4 flex justify-between items-start">
-                            <div className="relative">
-                                {/* Frame Overlay */}
-                                {frameItem && frameItem.assetUrl && (
-                                    <img
-                                        src={getProxiedUrl(frameItem.assetUrl)}
-                                        className="absolute -top-[16%] -left-[16%] w-[132%] h-[132%] z-20 pointer-events-none"
-                                        alt=""
-                                    />
-                                )}
-
-                                {/* Avatar */}
-                                <div className="w-28 h-28 rounded-full bg-[#111214] p-[5px] relative">
-                                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-800 relative z-10">
-                                        <img
-                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUsername}`}
-                                            alt={targetUsername || ""}
-                                            className="w-full h-full object-cover transform scale-105"
-                                        />
-                                    </div>
-                                    {/* Status Dot */}
-                                    <div className="absolute bottom-1 right-1 w-7 h-7 bg-green-500 rounded-full border-[5px] border-[#111214] z-30" />
-                                </div>
-                            </div>
-
-                            {/* Badge */}
-                            {badgeItem && (
-                                <div className="bg-[#1e1f22]/90 backdrop-blur border border-white/5 px-3 py-1.5 rounded-full flex items-center gap-2 mb-2 shadow-lg">
-                                    <span className="text-lg leading-none">{badgeItem.previewUrl || "📦"}</span>
-                                    <span className="text-xs font-bold text-zinc-200">{badgeItem.name}</span>
+                            {/* Profile Effect (Overlay) */}
+                            {effectItem && effectItem.assetUrl && (
+                                <div className="absolute inset-0 pointer-events-none z-0">
+                                    <LottiePreview url={getProxiedUrl(effectItem.assetUrl)} className="w-full h-full object-cover" />
                                 </div>
                             )}
-                        </div>
 
-                        {/* User Info */}
-                        <div className="space-y-1 mb-6">
-                            <h2 className={`text-2xl font-bold ${colorItem ? 'text-transparent bg-clip-text' : 'text-white'}`}
-                                style={colorItem ? { backgroundImage: colorItem.assetUrl } : {}}
-                            >
-                                {targetUsername}
-                            </h2>
-                            <p className="text-zinc-400 text-sm font-medium">Explorer of the Digital Realm</p>
-                        </div>
+                            {/* Content */}
+                            <div className="px-6 py-8 relative z-10 w-full">
 
-                        {/* Divider */}
-                        <div className="h-px w-full bg-white/5 mb-6" />
+                                {/* Avatar Section */}
+                                <div className="relative mb-4 flex justify-between items-start">
+                                    <div className="relative">
+                                        {/* Frame Overlay */}
+                                        {frameItem && frameItem.assetUrl && (
+                                            <img
+                                                src={getProxiedUrl(frameItem.assetUrl)}
+                                                className="absolute -top-[16%] -left-[16%] w-[132%] h-[132%] z-20 pointer-events-none"
+                                                alt=""
+                                            />
+                                        )}
 
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 hover:bg-[#1e1f22] transition-colors">
-                                <Trophy className="w-5 h-5 text-yellow-500 mb-1" />
-                                <span className="text-2xl font-bold text-white">{stats?.xp?.toLocaleString() || 0}</span>
-                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Total XP</span>
-                            </div>
-                            <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 hover:bg-[#1e1f22] transition-colors">
-                                <Coins className="w-5 h-5 text-amber-400 mb-1" />
-                                <span className="text-2xl font-bold text-white">{stats?.coins?.toLocaleString() || 0}</span>
-                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Coins</span>
-                            </div>
-                        </div>
+                                        {/* Avatar */}
+                                        <div className="w-28 h-28 rounded-full bg-[#111214] p-[5px] relative">
+                                            <div className="w-full h-full rounded-full overflow-hidden bg-zinc-800 relative z-10 flex items-center justify-center">
+                                                {stats?.photoURL ? (
+                                                    <img
+                                                        src={getProxiedUrl(stats.photoURL)}
+                                                        alt={targetUsername || ""}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <User className="w-12 h-12 text-zinc-600" />
+                                                )}
+                                            </div>
+                                            {/* Status Dot */}
+                                            <div className="absolute bottom-1 right-1 w-7 h-7 bg-green-500 rounded-full border-[5px] border-[#111214] z-30" />
+                                        </div>
+                                    </div>
 
-                        <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:bg-[#1e1f22] transition-colors">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                    <span className="text-lg">🔥</span>
+                                    {/* Badge */}
+                                    {badgeItem && (
+                                        <div className="bg-[#1e1f22]/90 backdrop-blur border border-white/5 px-3 py-1.5 rounded-full flex items-center gap-2 mb-2 shadow-lg">
+                                            <span className="text-lg leading-none">{badgeItem.previewUrl || "📦"}</span>
+                                            <span className="text-xs font-bold text-zinc-200">{badgeItem.name}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-white">Current Streak</span>
-                                    <span className="text-xs text-zinc-500">Keep the momentum!</span>
-                                </div>
-                            </div>
-                            <span className="text-xl font-bold text-white">{stats?.current_streak || 0}</span>
-                        </div>
 
-                    </div>
+                                {/* User Info */}
+                                <div className="space-y-1 mb-6">
+                                    <h2 className={`text-2xl font-bold ${colorItem ? 'text-transparent bg-clip-text' : 'text-white'}`}
+                                        style={colorItem ? { backgroundImage: colorItem.assetUrl } : {}}
+                                    >
+                                        {targetUsername}
+                                    </h2>
+                                    <p className="text-zinc-400 text-sm font-medium">Explorer of the Digital Realm</p>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="h-px w-full bg-white/5 mb-6" />
+
+                                {/* Stats Grid */}
+                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                    <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 hover:bg-[#1e1f22] transition-colors">
+                                        <Trophy className="w-5 h-5 text-yellow-500 mb-1" />
+                                        <span className="text-2xl font-bold text-white">{stats?.xp?.toLocaleString() || 0}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Total XP</span>
+                                    </div>
+                                    <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 hover:bg-[#1e1f22] transition-colors">
+                                        <Coins className="w-5 h-5 text-amber-400 mb-1" />
+                                        <span className="text-2xl font-bold text-white">{stats?.coins?.toLocaleString() || 0}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Coins</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:bg-[#1e1f22] transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                            <span className="text-lg">🔥</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-white">Current Streak</span>
+                                            <span className="text-xs text-zinc-500">Keep the momentum!</span>
+                                        </div>
+                                    </div>
+                                    <span className="text-xl font-bold text-white">{stats?.current_streak || 0}</span>
+                                </div>
+
+                            </div>
+                        </>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
