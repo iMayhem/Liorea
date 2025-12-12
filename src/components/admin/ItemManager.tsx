@@ -160,6 +160,7 @@ export default function ItemManager() {
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                                 <SelectItem value="badge">Badge</SelectItem>
                                 <SelectItem value="frame">Frame</SelectItem>
+                                <SelectItem value="effect">Effect</SelectItem>
                                 <SelectItem value="color">Color</SelectItem>
                             </SelectContent>
                         </Select>

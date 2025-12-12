@@ -6,6 +6,7 @@ export interface GamificationStats {
     inventory: string[]; // Array of item IDs
     equipped_badge: string;
     equipped_frame: string;
+    equipped_effect: string;
     name_color: string;
 }
 
@@ -14,8 +15,8 @@ export interface ShopItem {
     name: string;
     description: string;
     price: number;
-    type: 'badge' | 'frame' | 'color' | 'wallpaper';
-    assetUrl?: string; // CSS class or Image URL
+    type: 'badge' | 'frame' | 'color' | 'effect' | 'wallpaper';
+    assetUrl?: string; // CSS class, Image URL, or JSON URL (Lottie)
     previewUrl?: string;
 }
 

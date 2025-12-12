@@ -11,7 +11,7 @@ interface GamificationContextType {
     refreshStats: () => Promise<void>;
     awardXP: (minutes: number) => Promise<void>;
     buyItem: (itemId: string, price: number) => Promise<boolean>;
-    equipItem: (itemId: string, type: 'badge' | 'frame' | 'color' | 'wallpaper') => Promise<boolean>;
+    equipItem: (itemId: string, type: 'badge' | 'frame' | 'color' | 'effect' | 'wallpaper') => Promise<boolean>;
     hasItem: (itemId: string) => boolean;
 }
 
@@ -23,6 +23,7 @@ const DEFAULT_STATS: GamificationStats = {
     inventory: [],
     equipped_badge: '',
     equipped_frame: '',
+    equipped_effect: '',
     name_color: ''
 };
 
@@ -122,12 +123,13 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [stats.coins, username, refreshStats, toast]);
 
-    const equipItem = useCallback(async (itemId: string, type: 'badge' | 'frame' | 'color' | 'wallpaper') => {
+    const equipItem = useCallback(async (itemId: string, type: 'badge' | 'frame' | 'color' | 'effect' | 'wallpaper') => {
         // Optimistic
         setStats(prev => {
             const update: any = {};
             if (type === 'badge') update.equipped_badge = itemId;
             if (type === 'frame') update.equipped_frame = itemId;
+            if (type === 'effect') update.equipped_effect = itemId;
             if (type === 'color') update.name_color = itemId;
             // Wallpaper handled separately or via preference context usually
             return { ...prev, ...update };

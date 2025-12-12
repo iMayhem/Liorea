@@ -44,6 +44,7 @@ export default function ShopPage() {
     const isEquipped = (item: typeof SHOP_ITEMS[0]) => {
         if (item.type === 'badge') return stats.equipped_badge === item.id;
         if (item.type === 'frame') return stats.equipped_frame === item.id;
+        if (item.type === 'effect') return stats.equipped_effect === item.id;
         if (item.type === 'color') return stats.name_color === item.id;
         return false;
     };
