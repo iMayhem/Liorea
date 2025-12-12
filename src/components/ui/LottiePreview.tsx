@@ -12,9 +12,10 @@ interface LottiePreviewProps {
     className?: string;
     loop?: boolean;
     autoplay?: boolean;
+    imageFallback?: boolean;
 }
 
-export function LottiePreview({ url, className, loop = true, autoplay = true }: LottiePreviewProps) {
+export function LottiePreview({ url, className, loop = true, autoplay = true, imageFallback = false }: LottiePreviewProps) {
     const [animationData, setAnimationData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -28,6 +29,11 @@ export function LottiePreview({ url, className, loop = true, autoplay = true }: 
 
         fetch(url)
             .then(res => {
+                const contentType = res.headers.get("content-type");
+                // If it's clearly an image, throw early to trigger fallback
+                if (contentType && contentType.startsWith("image/")) {
+                    throw new Error("Is image");
+                }
                 if (!res.ok) throw new Error("Failed to fetch Lottie");
                 return res.json();
             })
@@ -36,13 +42,20 @@ export function LottiePreview({ url, className, loop = true, autoplay = true }: 
                 setLoading(false);
             })
             .catch(err => {
-                console.error("Lottie fetch error:", err);
+                // console.error("Lottie fetch error:", err); // Suppress error log for fallback
                 setError(true);
                 setLoading(false);
             });
     }, [url]);
 
-    if (error) return <div className={`flex items-center justify-center bg-red-500/10 text-red-500 text-[10px] ${className}`}>Error</div>;
+    if (error) {
+        if (imageFallback) {
+            // Fallback to basic image rendering
+            return <img src={url} className={`object-contain ${className}`} alt="" />;
+        }
+        return <div className={`flex items-center justify-center bg-red-500/10 text-red-500 text-[10px] ${className}`}>Error</div>;
+    }
+
     if (loading) return <div className={`flex items-center justify-center ${className}`}><Loader2 className="w-4 h-4 animate-spin text-zinc-500" /></div>;
 
     return (

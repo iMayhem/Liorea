@@ -148,11 +148,11 @@ export default function CosmeticsLab() {
                                 {/* Frame */}
                                 {activeFrameItem && (
                                     <div className="absolute -top-[23%] -left-[23%] w-[146%] h-[146%] z-20 pointer-events-none select-none">
-                                        {activeFrameItem.assetUrl?.toLowerCase().includes('.json') ? (
-                                            <LottiePreview url={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full" />
-                                        ) : (
-                                            <img src={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full object-contain" alt="" />
-                                        )}
+                                        <LottiePreview
+                                            url={getProxiedUrl(activeFrameItem.assetUrl)}
+                                            className="w-full h-full"
+                                            imageFallback={true}
+                                        />
                                     </div>
                                 )}
                                 {/* Avatar */}

@@ -210,8 +210,12 @@ export default function ItemManager() {
                             {items.map(item => (
                                 <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-900/50">
                                     <TableCell>
-                                        {(item.type === 'effect' || item.assetUrl?.toLowerCase().includes('.json')) && item.assetUrl ? (
-                                            <LottiePreview url={getProxiedUrl(item.assetUrl)} className="w-8 h-8" />
+                                        {(item.type === 'effect' || item.type === 'frame' || item.assetUrl?.toLowerCase().includes('.json')) && item.assetUrl ? (
+                                            <LottiePreview
+                                                url={getProxiedUrl(item.assetUrl)}
+                                                className="w-8 h-8"
+                                                imageFallback={true}
+                                            />
                                         ) : item.assetUrl ? (
                                             <img src={getProxiedUrl(item.assetUrl)} className="w-8 h-8 object-contain" alt="" />
                                         ) : (
