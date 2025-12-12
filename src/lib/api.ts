@@ -99,7 +99,7 @@ export const api = {
     giphy: {
         search: (query: string) => request<{ data: any[] }>(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`),
         trending: () => request<{ data: any[] }>(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`),
-    }
+    },
     gamification: {
         getStats: async (username: string) => {
             const res = await fetch(`${WORKER_URL}/gamification/stats?username=${username}`);
