@@ -71,30 +71,30 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     };
 
     return (
-        <div className="p-6 space-y-6 bg-[#09090b] text-zinc-100 h-full overflow-y-auto w-full">
+        <div className="p-6 space-y-6 bg-discord-dark text-discord-text h-full overflow-y-auto w-full">
             <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <UserIcon className="w-5 h-5 text-blue-400" />
                     Profile Settings
                 </h2>
-                <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-zinc-800 rounded-full">
+                <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-discord-gray rounded-full">
                     <LogOut className="w-4 h-4 text-red-400" />
                 </Button>
             </div>
 
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="w-full grid grid-cols-4 bg-zinc-900 rounded-lg p-1">
-                    <TabsTrigger value="general" className="data-[state=active]:bg-zinc-800">General</TabsTrigger>
-                    <TabsTrigger value="appearance" className="data-[state=active]:bg-zinc-800">Cosmetics</TabsTrigger>
-                    <TabsTrigger value="ui" className="data-[state=active]:bg-zinc-800">Appearance</TabsTrigger>
-                    <TabsTrigger value="account" className="data-[state=active]:bg-zinc-800">Account</TabsTrigger>
+                <TabsList className="w-full grid grid-cols-4 bg-discord-gray rounded-lg p-1">
+                    <TabsTrigger value="general" className="data-[state=active]:bg-discord-light">General</TabsTrigger>
+                    <TabsTrigger value="appearance" className="data-[state=active]:bg-discord-light">Cosmetics</TabsTrigger>
+                    <TabsTrigger value="ui" className="data-[state=active]:bg-discord-light">Appearance</TabsTrigger>
+                    <TabsTrigger value="account" className="data-[state=active]:bg-discord-light">Account</TabsTrigger>
                 </TabsList>
 
                 {/* GENERAL TAB */}
                 <TabsContent value="general" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
                     {/* AVATAR */}
                     <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 min-w-[6rem] min-h-[6rem] shrink-0 rounded-full bg-zinc-900 overflow-hidden border-2 border-zinc-700 relative group shadow-lg">
+                        <div className="w-24 h-24 min-w-[6rem] min-h-[6rem] shrink-0 rounded-full bg-discord-gray overflow-hidden border-2 border-discord-light relative group shadow-lg">
                             {userImage ? (
                                 <img
                                     src={userImage}
@@ -102,7 +102,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                     alt="avatar"
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 group-hover:opacity-50 transition-opacity">
+                                <div className="w-full h-full flex items-center justify-center bg-discord-light text-discord-text-muted group-hover:opacity-50 transition-opacity">
                                     <UserIcon className="w-8 h-8" />
                                 </div>
                             )}
@@ -111,13 +111,13 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <Label className="text-zinc-400">Profile Picture</Label>
+                            <Label className="text-discord-text-muted">Profile Picture</Label>
                             <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={loading}>
                                 {loading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Upload className="w-3 h-3 mr-2" />}
                                 Upload Image
                             </Button>
                             <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleUploadAvatar} />
-                            <p className="text-xs text-zinc-500">Square images work best.</p>
+                            <p className="text-xs text-discord-text-muted">Square images work best.</p>
                         </div>
                     </div>
 
@@ -130,8 +130,8 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" /> Equipped Badge</Label>
                         <Select onValueChange={v => equipItem(v, 'badge')} value={stats.equipped_badge || "none"}>
-                            <SelectTrigger className="bg-zinc-900 border-zinc-700"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
                                 <SelectItem value="none">None</SelectItem>
                                 {myBadges.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                             </SelectContent>
@@ -141,8 +141,8 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                     <div className="space-y-2">
                         <Label>Avatar Frame</Label>
                         <Select onValueChange={v => equipItem(v, 'frame')} value={stats.equipped_frame || "none"}>
-                            <SelectTrigger className="bg-zinc-900 border-zinc-700"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
                                 <SelectItem value="none">None</SelectItem>
                                 {myFrames.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                             </SelectContent>
@@ -152,8 +152,8 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                     <div className="space-y-2">
                         <Label>Profile Effect</Label>
                         <Select onValueChange={v => equipItem(v, 'effect')} value={stats.equipped_effect || "none"}>
-                            <SelectTrigger className="bg-zinc-900 border-zinc-700"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
                                 <SelectItem value="none">None</SelectItem>
                                 {myEffects.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                             </SelectContent>
@@ -163,8 +163,8 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Palette className="w-4 h-4 text-purple-400" /> Name Color</Label>
                         <Select onValueChange={v => equipItem(v, 'color')} value={stats.name_color || "none"}>
-                            <SelectTrigger className="bg-zinc-900 border-zinc-700"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
+                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
                                 <SelectItem value="none">Default</SelectItem>
                                 {myColors.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                             </SelectContent>
@@ -175,7 +175,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                 {/* UI APPEARANCE TAB */}
                 <TabsContent value="ui" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-zinc-200">
+                        <div className="flex items-center gap-2 text-discord-text">
                             <Monitor className="w-5 h-5 text-emerald-400" />
                             <h3 className="font-semibold">Display Settings</h3>
                         </div>
@@ -205,7 +205,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                     Large
                                 </Button>
                             </div>
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-discord-text-muted">
                                 Adjust the global text size of the application.
                             </p>
                         </div>
@@ -214,10 +214,10 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
 
                 {/* ACCOUNT TAB */}
                 <TabsContent value="account" className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="p-4 bg-red-950 border border-red-900 rounded-lg">
-                        <h3 className="text-red-400 font-bold mb-2">Danger Zone</h3>
-                        <p className="text-xs text-red-300 mb-4">Once you sign out, you will need to log in again to access your account.</p>
-                        <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                    <div className="p-4 bg-discord-red/10 border border-discord-red/20 rounded-lg">
+                        <h3 className="text-discord-red font-bold mb-2">Danger Zone</h3>
+                        <p className="text-xs text-discord-red/70 mb-4">Once you sign out, you will need to log in again to access your account.</p>
+                        <Button variant="destructive" className="w-full bg-discord-red hover:bg-discord-red/90" onClick={handleLogout}>
                             <LogOut className="w-4 h-4 mr-2" /> Sign Out from Liorea
                         </Button>
                     </div>

@@ -44,7 +44,7 @@ export default function ShopPage() {
     };
 
     return (
-        <div className="h-screen bg-[#111214] text-white p-4 md:p-8 font-sans overflow-y-auto pt-[80px]">
+        <div className="h-screen bg-discord-dark text-discord-text p-4 md:p-8 font-sans overflow-y-auto pt-[80px]">
             {/* Header */}
             <div className="max-w-7xl mx-auto flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
@@ -53,17 +53,17 @@ export default function ShopPage() {
                             <ShoppingBag className="w-6 h-6 text-indigo-400" />
                             Item Shop
                         </h1>
-                        <p className="text-zinc-500 text-sm">Customize your profile and chat appearance.</p>
+                        <p className="text-discord-text-muted text-sm">Customize your profile and chat appearance.</p>
                     </div>
                 </div>
 
-                <div className="bg-[#1e1f22] border border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-3 shadow-lg">
+                <div className="bg-discord-gray border border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-3 shadow-lg">
                     <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
                         <Coins className="w-4 h-4 text-yellow-500" />
                     </div>
                     <div>
-                        <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Balance</p>
-                        <p className="text-lg font-bold text-white tabular-nums">{stats.coins}</p>
+                        <p className="text-[10px] text-discord-text-muted uppercase font-bold tracking-wider">Balance</p>
+                        <p className="text-lg font-bold text-discord-text tabular-nums">{stats.coins}</p>
                     </div>
                 </div>
             </div>
@@ -75,8 +75,8 @@ export default function ShopPage() {
                         key={cat}
                         onClick={() => setCategory(cat)}
                         className={`px-4 py-1.5 rounded-full border text-xs font-bold transition-all capitalize ${category === cat
-                            ? 'bg-white text-black border-white'
-                            : 'bg-transparent text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-white'
+                            ? 'bg-discord-text text-discord-dark border-discord-text'
+                            : 'bg-transparent text-discord-text-muted border-discord-light hover:border-discord-text hover:text-discord-text'
                             }`}
                     >
                         {cat === 'all' ? 'All' : cat + 's'}
@@ -102,8 +102,8 @@ export default function ShopPage() {
                                 className={`relative group rounded-xl p-3 border transition-all duration-300 flex flex-col items-center gap-2 ${equipped
                                     ? 'bg-indigo-500/10 border-indigo-500/50 shadow-[0_0_10px_rgba(99,102,241,0.2)]'
                                     : owned
-                                        ? 'bg-[#1e1f22] border-zinc-800'
-                                        : 'bg-[#1e1f22] border-zinc-800 hover:border-zinc-600'
+                                        ? 'bg-discord-gray border-discord-light'
+                                        : 'bg-discord-gray border-discord-light hover:border-discord-text-muted'
                                     }`}
                             >
                                 {/* Preview */}
@@ -118,8 +118,8 @@ export default function ShopPage() {
                                 </div>
 
                                 <div className="text-center w-full">
-                                    <h3 className="font-bold text-sm text-white truncate px-1" title={item.name}>{item.name}</h3>
-                                    <p className="text-[10px] text-zinc-500 line-clamp-1 h-4 px-1">{item.description}</p>
+                                    <h3 className="font-bold text-sm text-discord-text truncate px-1" title={item.name}>{item.name}</h3>
+                                    <p className="text-[10px] text-discord-text-muted line-clamp-1 h-4 px-1">{item.description}</p>
                                 </div>
 
                                 <div className="mt-auto w-full pt-1">
@@ -129,7 +129,7 @@ export default function ShopPage() {
                                             disabled={equipped}
                                             className={`w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${equipped
                                                 ? 'bg-green-500/20 text-green-400 cursor-default'
-                                                : 'bg-zinc-700 hover:bg-zinc-600 text-white'
+                                                : 'bg-discord-light hover:bg-discord-gray text-discord-text'
                                                 }`}
                                         >
                                             {equipped ? <><Check className="w-3 h-3" /> ON</> : "Equip"}
@@ -139,8 +139,8 @@ export default function ShopPage() {
                                             onClick={() => handleBuy(item)}
                                             disabled={!canAfford || buyingId === item.id}
                                             className={`w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${canAfford
-                                                ? 'bg-white hover:bg-zinc-200 text-black'
-                                                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
+                                                ? 'bg-discord-text hover:bg-zinc-200 text-black'
+                                                : 'bg-discord-light text-discord-text-muted cursor-not-allowed opacity-50'
                                                 }`}
                                         >
                                             {buyingId === item.id ? (

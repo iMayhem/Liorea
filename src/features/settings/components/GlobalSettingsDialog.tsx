@@ -23,15 +23,15 @@ export function GlobalSettingsDialog() {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 rounded-full" title="Global Settings">
+                <Button variant="ghost" size="icon" className="text-discord-text-muted hover:bg-discord-gray hover:text-discord-text rounded-full" title="Global Settings">
                     <Settings className="w-5 h-5" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl h-[80vh] p-0 bg-transparent border-none shadow-none text-white overflow-hidden">
+            <DialogContent className="max-w-2xl h-[80vh] p-0 bg-transparent border-none shadow-none text-discord-text overflow-hidden">
                 <VisuallyHidden>
                     <DialogTitle>Global Settings</DialogTitle>
                 </VisuallyHidden>
-                <div className="bg-[#09090b] border border-zinc-800 rounded-xl h-full flex flex-col overflow-hidden shadow-2xl relative z-50">
+                <div className="bg-discord-dark border border-discord-light rounded-xl h-full flex flex-col overflow-hidden shadow-2xl relative z-50">
                     <ProfileSettings
                         allItems={allItems}
                         onClose={() => setIsOpen(false)}

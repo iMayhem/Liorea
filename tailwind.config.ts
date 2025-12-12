@@ -1,4 +1,4 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -65,6 +65,18 @@ export default {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
+        },
+        discord: {
+          dark: '#09090b',
+          gray: '#1e1f22',
+          light: '#2b2d31',
+          blurple: '#5865F2',
+          green: '#23a559',
+          red: '#da373c',
+          text: {
+            DEFAULT: '#dbdee1',
+            muted: '#949ba4',
+          }
         },
       },
       borderRadius: {
