@@ -15,22 +15,8 @@ import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from '@/lib/api';
 import { Journal, Post, Reaction, GiphyResult } from '../types';
-
-const FormattedMessage = ({ content }: { content: string }) => {
-    const parts = content.split(/(@\w+)/g);
-    return (
-        <span>
-            {parts.map((part, i) => {
-                if (part.startsWith('@')) {
-                    return <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">{part}</span>;
-                }
-                return part;
-            })}
-        </span>
-    );
-};
-
-const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢", "🎉", "💯"];
+import { FormattedMessage } from '@/components/chat/FormattedMessage';
+import { MessageActions } from '@/components/chat/MessageActions';
 
 interface JournalChatProps {
     activeJournal: Journal | null;
@@ -345,34 +331,14 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                     </div>
                                 </div>
 
-                                <div className="absolute right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 -translate-y-1/2">
-                                    <Popover open={openReactionPopoverId === post.id} onOpenChange={(open) => setOpenReactionPopoverId(open ? post.id : null)}>
-                                        <PopoverTrigger asChild>
-                                            <button className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10">
-                                                <Smile className="w-4 h-4" />
-                                            </button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-1.5 bg-[#18181b] border border-white/10 rounded-full shadow-2xl backdrop-blur-md" side="top" sideOffset={5}>
-                                            <div className="flex gap-1.5">
-                                                {QUICK_EMOJIS.map(emoji => (
-                                                    <button key={emoji} className="p-1.5 hover:bg-white/10 rounded-full text-lg transition-colors" onClick={() => handleReact(post.id, emoji)}>{emoji}</button>
-                                                ))}
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-
-                                    {post.username === username && (
-                                        <button onClick={() => handleDeletePost(post.id)} className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    )}
-
-                                    {post.username !== username && (
-                                        <button onClick={() => handleReportMessage(post)} className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10">
-                                            <Flag className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
+                                <MessageActions
+                                    isCurrentUser={post.username === username}
+                                    onReact={(emoji) => handleReact(post.id, emoji)}
+                                    onDelete={() => handleDeletePost(post.id)}
+                                    onReport={() => handleReportMessage(post)}
+                                    isOpen={openReactionPopoverId === post.id}
+                                    onOpenChange={(open) => setOpenReactionPopoverId(open ? post.id : null)}
+                                />
                             </div>
                         );
                     })}

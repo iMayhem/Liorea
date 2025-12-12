@@ -17,27 +17,10 @@ import { useToast } from '@/hooks/use-toast';
 import { compressImage } from '@/lib/compress';
 
 import { api } from '@/lib/api';
-const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢"];
+import { FormattedMessage } from '@/components/chat/FormattedMessage';
+import { MessageActions } from '@/components/chat/MessageActions';
 
 type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; } }
-
-const FormattedMessage = ({ content }: { content: string }) => {
-    const parts = content.split(/(@\w+)/g);
-    return (
-        <span>
-            {parts.map((part, i) => {
-                if (part.startsWith('@')) {
-                    return (
-                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 font-medium cursor-pointer hover:bg-indigo-500/50 transition-colors select-none mx-0.5">
-                            {part}
-                        </span>
-                    );
-                }
-                return part;
-            })}
-        </span>
-    );
-};
 
 export default function ChatPanel() {
     const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore } = useChat();
@@ -244,14 +227,14 @@ export default function ChatPanel() {
     const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <div className="flex-1 flex flex-col h-full">
-            {/* Header - Native Discord Style */}
-            <div className="h-16 flex items-center px-6 py-5 shrink-0 justify-between select-none border-b border-[#1F2023] bg-[#2B2D31]">
+        <div className="flex-1 flex flex-col h-full glass-panel rounded-2xl overflow-hidden">
+            {/* Header - Native Discord Style -> Glass Style */}
+            <div className="h-16 flex items-center px-6 py-5 shrink-0 justify-between select-none glass-panel-light">
                 <div className="flex items-center gap-3">
-                    <MessageSquare className="w-5 h-5 text-zinc-400" />
+                    <MessageSquare className="w-5 h-5 text-white/70" />
                     <div>
-                        <span className="font-bold text-base text-zinc-100">Study Room</span>
-                        <span className="text-xs text-zinc-500 hidden sm:inline ml-2">General Channel</span>
+                        <span className="font-bold text-base text-white">Study Room</span>
+                        <span className="text-xs text-white/40 hidden sm:inline ml-2">General Channel</span>
                     </div>
                 </div>
             </div>
@@ -263,7 +246,7 @@ export default function ChatPanel() {
                 className={`flex-1 p-0 overflow-y-auto relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
             >
                 <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
-                    {hasMore && <div className="text-center py-4 text-xs text-zinc-500"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
+                    {hasMore && <div className="text-center py-4 text-xs text-white/30"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
 
                     {messages.map((msg, index) => {
                         const isSequence = index > 0 && messages[index - 1].username === msg.username;
@@ -276,13 +259,13 @@ export default function ChatPanel() {
                         return (
                             <div
                                 key={msg.id}
-                                className={`group relative flex gap-4 pr-4 hover:bg-[#2e3035] -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}
+                                className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}
                             >
                                 <div className="w-10 shrink-0 select-none pt-0.5">
                                     {showHeader ? (
                                         <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
                                     ) : (
-                                        <div className="text-[10px] text-zinc-600 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
+                                        <div className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
                                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                                         </div>
                                     )}
@@ -291,12 +274,12 @@ export default function ChatPanel() {
                                 <div className="flex-1 min-w-0">
                                     {showHeader && (
                                         <div className="flex items-center gap-2 mb-1 select-none">
-                                            <span className="text-base font-semibold text-zinc-100 hover:underline cursor-pointer">{msg.username}</span>
-                                            <span className="text-xs text-zinc-500 ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
+                                            <span className="text-base font-semibold text-white hover:underline cursor-pointer">{msg.username}</span>
+                                            <span className="text-xs text-white/30 ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
                                         </div>
                                     )}
 
-                                    <div className="text-base text-zinc-300 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
+                                    <div className="text-base text-white/90 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
                                         {msg.image_url ? (
                                             <img src={msg.image_url} alt="Attachment" className="max-w-[300px] max-h-80 w-auto object-contain rounded-lg mt-1 border border-white/10" loading="lazy" />
                                         ) : (
@@ -310,39 +293,23 @@ export default function ChatPanel() {
                                                 <button
                                                     key={emoji}
                                                     onClick={() => sendReaction(msg.id, emoji)}
-                                                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-[#2b2d31] border-transparent hover:border-zinc-700'}`}
+                                                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200' : 'bg-white/10 border-transparent hover:border-white/20 text-white/60'}`}
                                                 >
                                                     <span className="text-base">{emoji}</span>
-                                                    <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-zinc-400'}`}>{data.count}</span>
+                                                    <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-white/40'}`}>{data.count}</span>
                                                 </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* HOVER ACTIONS */}
-                                <div className="absolute right-4 -top-2 bg-[#1E1F22] shadow-sm rounded-[4px] border border-[#111214] opacity-0 group-hover:opacity-100 transition-opacity flex items-center p-0.5 z-10">
-                                    <Popover open={openReactionPopoverId === msg.id} onOpenChange={(open: boolean) => setOpenReactionPopoverId(open ? msg.id : null)}>
-                                        <PopoverTrigger asChild>
-                                            <button className="p-1.5 hover:bg-white/5 rounded text-zinc-400 hover:text-zinc-200 transition-colors">
-                                                <Smile className="w-4 h-4" />
-                                            </button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-1.5 bg-[#1E1F22] border border-[#111214] rounded-lg shadow-xl" side="top" align="end" sideOffset={5}>
-                                            <div className="flex gap-1">
-                                                {QUICK_EMOJIS.map(emoji => (
-                                                    <button key={emoji} className="p-2 hover:bg-white/5 rounded-md text-xl transition-colors" onClick={() => { sendReaction(msg.id, emoji); setOpenReactionPopoverId(null); }}>{emoji}</button>
-                                                ))}
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-
-                                    {!isCurrentUser && (
-                                        <button onClick={() => handleReportMessage(msg)} className="p-1.5 hover:bg-white/5 rounded text-zinc-400 hover:text-red-400 transition-colors" title="Report">
-                                            <Flag className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
+                                <MessageActions
+                                    isCurrentUser={isCurrentUser}
+                                    onReact={(emoji) => sendReaction(msg.id, emoji)}
+                                    onReport={() => handleReportMessage(msg)}
+                                    isOpen={openReactionPopoverId === msg.id}
+                                    onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}
+                                />
                             </div>
                         );
                     })}
@@ -360,19 +327,19 @@ export default function ChatPanel() {
             )}
 
             {typingUsers.length > 0 && (
-                <div className="absolute bottom-16 left-4 text-xs text-zinc-400 italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
+                <div className="absolute bottom-16 left-4 text-xs text-white/40 italic animate-pulse bg-black/40 px-2 py-1 rounded z-20">
                     {getTypingMessage()}
                 </div>
             )}
 
             {/* Mention Dropup */}
             {mentionQuery && mentionableUsers.length > 0 && (
-                <div className="absolute bottom-16 left-4 bg-[#1E1F22] border border-[#111214] rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
-                    <div className="px-3 py-2 text-xs uppercase font-bold text-zinc-500 tracking-wider bg-black/20">Members</div>
+                <div className="absolute bottom-16 left-4 bg-[#1e1e24] border border-white/10 rounded-lg shadow-2xl overflow-hidden w-64 z-50 select-none animate-in slide-in-from-bottom-2 fade-in">
+                    <div className="px-3 py-2 text-xs uppercase font-bold text-white/40 tracking-wider bg-white/5">Members</div>
                     {mentionableUsers.map((u, i) => (
                         <div
                             key={u}
-                            className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-[#5865F2]/20 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'}`}
+                            className={`px-3 py-2 flex items-center gap-3 cursor-pointer ${i === mentionIndex ? 'bg-indigo-500/20 text-white' : 'text-white/70 hover:bg-white/5'}`}
                             onClick={() => insertMention(u)}
                         >
                             <UserAvatar username={u} className="w-6 h-6" /><span className="text-sm">{u}</span>
@@ -382,7 +349,7 @@ export default function ChatPanel() {
             )}
 
             {/* Input Area - Journal Style */}
-            <div className="p-4 shrink-0 bg-[#2B2D31] border-t border-[#1F2023]">
+            <div className="p-4 shrink-0 glass-panel-light">
                 <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
 
                     {/* Hidden Date Input for Image Upload */}
@@ -443,4 +410,4 @@ export default function ChatPanel() {
             </div>
         </div>
     );
-}
+};
