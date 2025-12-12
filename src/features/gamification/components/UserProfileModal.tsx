@@ -111,15 +111,12 @@ export function UserProfileModal() {
 
                     {/* Profile Effect (Overlay) */}
                     {effectData && (
-                        <div className="absolute inset-0 pointer-events-none z-0 opacity-80 mix-blend-screen">
-                            <LottiePlayer animationData={effectData} loop={true} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 pointer-events-none z-0">
+                            <LottiePlayer animationData={effectData} loop={true} autoplay={true} className="w-full h-full object-cover" />
                         </div>
                     )}
 
-                    {/* Close Button MOVED */}
-                    <button onClick={closeProfile} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-all z-50">
-                        <X className="w-4 h-4" />
-                    </button>
+
 
                     {/* Content */}
                     <div className="px-6 py-8 relative z-10 w-full">

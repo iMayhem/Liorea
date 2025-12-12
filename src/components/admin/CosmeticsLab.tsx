@@ -131,7 +131,7 @@ export default function CosmeticsLab() {
                 <div className="w-full relative shadow-2xl rounded-[32px] overflow-hidden bg-[#111214]/95 border border-white/5 backdrop-blur-xl">
                     {/* EFFECT OVERLAY */}
                     {activeEffectItem && activeEffectItem.assetUrl && (
-                        <div className="absolute inset-0 z-0 pointer-events-none opacity-80 mix-blend-screen">
+                        <div className="absolute inset-0 z-0 pointer-events-none">
                             <LottiePreview url={getProxiedUrl(activeEffectItem.assetUrl)} className="w-full h-full object-cover" />
                         </div>
                     )}
