@@ -13,6 +13,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Leaderboard } from '@/features/study';
+import { XPProgressBar } from '@/features/gamification/components/XPProgressBar';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -44,6 +45,9 @@ export default function SidebarControlPanel() {
                 </TooltipProvider>
 
                 <div className="h-[2px] w-8 bg-zinc-700/50 rounded-full mx-auto" />
+
+                {/* Level Indicator */}
+                <XPProgressBar variant="compact" />
             </div>
 
             {/* Middle: Controls */}

@@ -100,4 +100,34 @@ export const api = {
         search: (query: string) => request<{ data: any[] }>(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`),
         trending: () => request<{ data: any[] }>(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`),
     }
+    gamification: {
+        getStats: async (username: string) => {
+            const res = await fetch(`${WORKER_URL}/gamification/stats?username=${username}`);
+            if (!res.ok) return null;
+            return res.json();
+        },
+        award: async (username: string, minutes: number) => {
+            // Secure call - ideally needs Auth token, but for MVP using simple post
+            await fetch(`${WORKER_URL}/gamification/award`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, minutes })
+            });
+        },
+        buy: async (username: string, itemId: string, price: number) => {
+            const res = await fetch(`${WORKER_URL}/gamification/shop/buy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, itemId, price })
+            });
+            return res.ok;
+        },
+        equip: async (username: string, itemId: string, type: string) => {
+            await fetch(`${WORKER_URL}/gamification/equip`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, itemId, type })
+            });
+        }
+    }
 };
