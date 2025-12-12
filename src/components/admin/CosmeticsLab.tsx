@@ -142,8 +142,12 @@ export default function CosmeticsLab() {
                             <div className="relative">
                                 {/* Frame */}
                                 {activeFrameItem && (
-                                    <div className="absolute -top-[22%] -left-[22%] w-[144%] h-[144%] z-20 pointer-events-none select-none">
-                                        <img src={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full object-contain" alt="" />
+                                    <div className="absolute -top-[23%] -left-[23%] w-[146%] h-[146%] z-20 pointer-events-none select-none">
+                                        {activeFrameItem.assetUrl?.endsWith('.json') ? (
+                                            <LottiePreview url={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full" />
+                                        ) : (
+                                            <img src={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full object-contain" alt="" />
+                                        )}
                                     </div>
                                 )}
                                 {/* Avatar */}
