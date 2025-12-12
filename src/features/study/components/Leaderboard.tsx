@@ -35,10 +35,10 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
         </div>
 
         <Tabs defaultValue="daily" className="w-full" onValueChange={(v: string) => setFilter(v as any)}>
-          <TabsList className="grid w-full grid-cols-3 bg-black/20">
-            <ShadcnTabsTrigger value="daily">Daily</ShadcnTabsTrigger>
-            <ShadcnTabsTrigger value="weekly">Weekly</ShadcnTabsTrigger>
-            <ShadcnTabsTrigger value="all">All Time</ShadcnTabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 border border-white/10 rounded-lg">
+            <ShadcnTabsTrigger value="daily" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-zinc-400 hover:text-zinc-200">Daily</ShadcnTabsTrigger>
+            <ShadcnTabsTrigger value="weekly" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-zinc-400 hover:text-zinc-200">Weekly</ShadcnTabsTrigger>
+            <ShadcnTabsTrigger value="all" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-zinc-400 hover:text-zinc-200">All Time</ShadcnTabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>
@@ -49,35 +49,44 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
             const isMe = currentUsername === user.username;
             const rank = index + 1;
 
-            let rankStyle = "text-muted-foreground font-mono font-bold text-sm w-6 text-center";
-            let rowBg = isMe ? "bg-indigo-500/20 border-indigo-500/50" : "bg-black/20 border-white/5 hover:bg-white/5";
+            let rankStyle = "text-zinc-500 font-mono font-bold text-sm bg-zinc-800/50";
+            let rowBg = isMe
+              ? "bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border-emerald-500/30 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]"
+              : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10";
 
             if (index === 0) {
-              rankStyle = "text-yellow-400 drop-shadow-md";
-              rowBg = isMe ? "bg-yellow-500/20 border-yellow-500/50" : "bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/30";
+              rankStyle = "text-yellow-400 bg-yellow-400/10 border border-yellow-400/20";
+              rowBg = isMe
+                ? "bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-yellow-500/50 shadow-[0_0_20px_-5px_rgba(234,179,8,0.3)]"
+                : "bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/20";
             } else if (index === 1) {
-              rankStyle = "text-gray-300 drop-shadow-md";
-              rowBg = isMe ? "bg-slate-500/20 border-slate-500/50" : "bg-gradient-to-r from-slate-500/10 to-transparent border-slate-500/30";
+              rankStyle = "text-slate-300 bg-slate-400/10 border border-slate-400/20";
+              rowBg = isMe
+                ? "bg-gradient-to-r from-slate-400/20 to-slate-500/10 border-slate-400/50 shadow-[0_0_20px_-5px_rgba(148,163,184,0.3)]"
+                : "bg-gradient-to-r from-slate-500/10 to-transparent border-slate-500/20";
             } else if (index === 2) {
-              rankStyle = "text-orange-400 drop-shadow-md";
-              rowBg = isMe ? "bg-orange-500/20 border-orange-500/50" : "bg-gradient-to-r from-orange-500/10 to-transparent border-orange-500/30";
+              rankStyle = "text-orange-400 bg-orange-400/10 border border-orange-400/20";
+              rowBg = isMe
+                ? "bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-500/50 shadow-[0_0_20px_-5px_rgba(249,115,22,0.3)]"
+                : "bg-gradient-to-r from-orange-500/10 to-transparent border-orange-500/20";
             }
 
             return (
               <motion.div
                 key={user.username}
                 layout
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-                className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${rowBg}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                whileHover={{ scale: 1.02, x: 5 }}
+                whileTap={{ scale: 0.98 }}
+                className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-default relative overflow-hidden group ${rowBg}`}
               >
                 {/* Rank */}
-                <div className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-black/40 ${rankStyle}`}>
-                  {index < 3 ? <Award className="w-5 h-5" /> : <span>#{rank}</span>}
+                <div className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-lg shadow-inner ${rankStyle}`}>
+                  {index < 3 ? <Award className="w-5 h-5" /> : <span>{rank}</span>}
                 </div>
-
                 {/* Avatar */}
                 <div className="relative shrink-0">
                   <UserAvatar username={user.username} className="w-10 h-10 border border-white/10" />
