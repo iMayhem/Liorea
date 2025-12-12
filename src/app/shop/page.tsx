@@ -1,7 +1,7 @@
 "use client";
 
 import { useGamification } from "@/features/gamification/context/GamificationContext";
-import { Coins, ShoppingBag, Check } from "lucide-react";
+import { Coins, ShoppingBag, Check, User as UserIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, getProxiedUrl } from '@/lib/api';
@@ -113,12 +113,20 @@ export default function ShopPage() {
                             >
                                 {/* Preview */}
                                 <div className="h-24 w-full relative flex items-center justify-center p-2 bg-black/20 rounded-lg overflow-hidden">
-                                    {item.type === 'effect' && item.assetUrl ? (
-                                        <LottiePreview url={getProxiedUrl(item.assetUrl)} className="w-20 h-20" />
+                                    {/* Avatar Placeholder for Frames */}
+                                    {item.type === 'frame' && (
+                                        <div className="absolute w-[60px] h-[60px] rounded-full bg-discord-gray border-2 border-discord-light z-0 overflow-hidden">
+                                            <UserIcon className="w-full h-full p-3 text-discord-text-muted opacity-50" />
+                                        </div>
+                                    )}
+
+                                    {/* Asset Rendering */}
+                                    {item.assetUrl && item.assetUrl.endsWith('.json') ? (
+                                        <LottiePreview url={getProxiedUrl(item.assetUrl)} className={item.type === 'frame' ? "w-[80px] h-[80px] z-10 absolute pointer-events-none" : "w-20 h-20"} />
                                     ) : item.assetUrl ? (
-                                        <img src={getProxiedUrl(item.assetUrl)} className="w-20 h-20 object-contain drop-shadow-xl" alt="" />
+                                        <img src={getProxiedUrl(item.assetUrl)} className={item.type === 'frame' ? "w-[80px] h-[80px] z-10 absolute pointer-events-none object-contain drop-shadow-xl" : "w-20 h-20 object-contain drop-shadow-xl"} alt="" />
                                     ) : (
-                                        <span className="text-4xl">{item.previewUrl || '📦'}</span>
+                                        <span className="text-4xl relative z-10">{item.previewUrl || '📦'}</span>
                                     )}
                                 </div>
 

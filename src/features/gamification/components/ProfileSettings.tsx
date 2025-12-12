@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { useGamification } from '@/features/gamification/context/GamificationContext';
+import dynamic from 'next/dynamic';
+import { getProxiedUrl } from '@/lib/api';
+
+const LottiePreview = dynamic(() => import('@/components/ui/LottiePreview').then(mod => mod.LottiePreview), {
+    ssr: false
+});
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -106,7 +112,23 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                     <UserIcon className="w-8 h-8" />
                                 </div>
                             )}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+
+                            {/* Frame Overlay */}
+                            {stats.equipped_frame && stats.equipped_frame !== 'none' && (
+                                <div className="absolute inset-0 z-10 pointer-events-none scale-[1.35]">
+                                    {(() => {
+                                        const frame = myFrames.find(f => f.id === stats.equipped_frame);
+                                        if (frame?.assetUrl?.endsWith('.json')) {
+                                            return <LottiePreview url={getProxiedUrl(frame.assetUrl)} className="w-full h-full" />;
+                                        } else if (frame?.assetUrl) {
+                                            return <img src={getProxiedUrl(frame.assetUrl)} className="w-full h-full object-contain" alt="" />;
+                                        }
+                                        return null;
+                                    })()}
+                                </div>
+                            )}
+
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none z-20">
                                 <Upload className="w-6 h-6 text-white" />
                             </div>
                         </div>
