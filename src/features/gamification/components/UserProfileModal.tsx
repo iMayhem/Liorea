@@ -4,9 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useUserProfile } from "../context/UserProfileContext";
 import { api } from "@/lib/api";
-import { Loader2, Trophy, Coins, CalendarDays, X } from "lucide-react";
+import { Loader2, Trophy, Coins, CalendarDays, X, Shield, Star, Medal } from "lucide-react";
 import { SHOP_ITEMS } from "../data/items";
-import Lottie from "lottie-react";
 import dynamic from 'next/dynamic';
 
 // Dynamically import Lottie to avoid SSR issues
@@ -61,14 +60,12 @@ export function UserProfileModal() {
             if (effectItem && effectItem.assetUrl) {
                 fetch(effectItem.assetUrl).then(r => r.json()).then(setEffectData).catch(console.error);
             } else {
-                // Try fetching dynamic items list to find it (omitted for brevity, assume Effect is mostly static or URL based)
-                // Actually, if it's dynamic, assetUrl is a URL. fetch it.
                 api.gamification.getItems().then(items => {
                     const found = items.find(i => i.id === stats.equipped.effect);
                     if (found && found.assetUrl) {
                         fetch(found.assetUrl).then(r => r.json()).then(setEffectData).catch(console.error);
                     }
-                })
+                }).catch(console.error);
             }
         } else {
             setEffectData(null);
@@ -80,50 +77,115 @@ export function UserProfileModal() {
     const badgeItem = useMemo(() => stats?.equipped?.badge ? SHOP_ITEMS.find(i => i.id === stats.equipped.badge) : null, [stats?.equipped?.badge]);
     const frameItem = useMemo(() => stats?.equipped?.frame ? SHOP_ITEMS.find(i => i.id === stats.equipped.frame) : null, [stats?.equipped?.frame]);
     const colorItem = useMemo(() => stats?.equipped?.color ? SHOP_ITEMS.find(i => i.id === stats.equipped.color) : null, [stats?.equipped?.color]);
-    // Dynamic fallback for badges/frames would need the full list hook, but sticking to basic for now as fallback
+    // Dynamic fallback logic omitted for brevity as mainly static items are used for previews, real app would fetch all.
 
     if (!isOpen) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && closeProfile()}>
-            <Medal className="w-5 h-5 text-orange-500 mb-1" />
-            <span className="text-lg font-bold text-white">{stats?.coins}</span>
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Coins</span>
-        </div>
-                            </div >
+            <DialogContent className="bg-transparent border-none shadow-none p-0 overflow-visible max-w-sm sm:max-w-md">
+                <DialogTitle className="sr-only">{targetUsername}'s Profile</DialogTitle>
 
-        {/* Achievements / Inventory Preview (Placeholder) */ }
-    {
-        stats?.inventory && stats.inventory.length > 0 && (
-            <div>
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Collection</h3>
-                <div className="flex flex-wrap gap-2">
-                    {stats.inventory.slice(0, 5).map(itemId => {
-                        const item = SHOP_ITEMS.find(i => i.id === itemId);
-                        if (!item) return null;
-                        return (
-                            <div key={itemId} className="w-8 h-8 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg" title={item.name}>
-                                {item.previewUrl || '📦'}
-                            </div>
-                        );
-                    })}
-                    {stats.inventory.length > 5 && (
-                        <div className="w-8 h-8 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-xs text-zinc-500">
-                            +{stats.inventory.length - 5}
+                {/* Main Card */}
+                <div className="relative w-full bg-[#111214]/95 backdrop-blur-xl border border-white/5 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+
+                    {/* Profile Effect (Overlay) */}
+                    {effectData && (
+                        <div className="absolute inset-0 pointer-events-none z-0 opacity-80 mix-blend-screen">
+                            <LottiePlayer animationData={effectData} loop={true} className="w-full h-full object-cover" />
                         </div>
                     )}
+
+                    {/* Banner */}
+                    <div className="h-32 relative overflow-hidden">
+                        <div className={`absolute inset-0 ${colorItem?.assetUrl || 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'}`} />
+                        <div className="absolute inset-0 bg-black/20" />
+
+                        {/* Close Button */}
+                        <button onClick={closeProfile} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-all z-50">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="px-6 pb-8 relative z-10">
+
+                        {/* Avatar Section */}
+                        <div className="relative -mt-16 mb-4 flex justify-between items-end">
+                            <div className="relative">
+                                {/* Frame */}
+                                {frameItem && (
+                                    <div className="absolute -top-[22%] -left-[22%] w-[144%] h-[144%] z-20 pointer-events-none select-none">
+                                        <img src={frameItem.assetUrl} className="w-full h-full object-contain" alt="" />
+                                    </div>
+                                )}
+
+                                {/* Avatar */}
+                                <div className="w-28 h-28 rounded-full bg-[#111214] p-[5px] relative">
+                                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-800 relative z-10">
+                                        <img
+                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUsername}`}
+                                            alt={targetUsername || ""}
+                                            className="w-full h-full object-cover transform scale-105"
+                                        />
+                                    </div>
+                                    {/* Status Dot */}
+                                    <div className="absolute bottom-1 right-1 w-7 h-7 bg-green-500 rounded-full border-[5px] border-[#111214] z-30" />
+                                </div>
+                            </div>
+
+                            {/* Badge */}
+                            {badgeItem && (
+                                <div className="bg-[#1e1f22]/90 backdrop-blur border border-white/5 px-3 py-1.5 rounded-full flex items-center gap-2 mb-2 shadow-lg">
+                                    <span className="text-lg leading-none">{badgeItem.previewUrl || "📦"}</span>
+                                    <span className="text-xs font-bold text-zinc-200">{badgeItem.name}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* User Info */}
+                        <div className="space-y-1 mb-6">
+                            <h2 className={`text-2xl font-bold ${colorItem ? 'text-transparent bg-clip-text' : 'text-white'}`}
+                                style={colorItem ? { backgroundImage: colorItem.assetUrl } : {}}
+                            >
+                                {targetUsername}
+                            </h2>
+                            <p className="text-zinc-400 text-sm font-medium">Explorer of the Digital Realm</p>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px w-full bg-white/5 mb-6" />
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 hover:bg-[#1e1f22] transition-colors">
+                                <Trophy className="w-5 h-5 text-yellow-500 mb-1" />
+                                <span className="text-2xl font-bold text-white">{stats?.xp?.toLocaleString() || 0}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Total XP</span>
+                            </div>
+                            <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 hover:bg-[#1e1f22] transition-colors">
+                                <Coins className="w-5 h-5 text-amber-400 mb-1" />
+                                <span className="text-2xl font-bold text-white">{stats?.coins?.toLocaleString() || 0}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Coins</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-[#1e1f22]/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:bg-[#1e1f22] transition-colors">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                    <span className="text-lg">🔥</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-white">Current Streak</span>
+                                    <span className="text-xs text-zinc-500">Keep the momentum!</span>
+                                </div>
+                            </div>
+                            <span className="text-xl font-bold text-white">{stats?.current_streak || 0}</span>
+                        </div>
+
+                    </div>
                 </div>
-            </div>
-                                    <Medal className="w-5 h-5 text-orange-500 mb-1" />
-                                    <span className="text-lg font-bold text-white">{stats?.coins}</span>
-                                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Coins</span>
-                                </div >
-                            </div >
-                        </div >
-                    )
-    }
-                </div >
-            </DialogContent >
-        </Dialog >
+            </DialogContent>
+        </Dialog>
     );
 }
