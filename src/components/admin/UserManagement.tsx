@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { db } from "@/lib/firebase";
+import { ref, set } from "firebase/database";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -83,6 +85,9 @@ export default function UserManagement() {
 
                 await api.gamification.award(editingUser.username, amount); // Input is "minutes worth"
             }
+
+            // TRIGGER REAL-TIME UPDATE (Poke the user)
+            set(ref(db, `signals/${editingUser.username}/refresh_stats`), Date.now());
 
             toast({ title: "Updated!", description: `Granted rewards equivalent to ${amount} minutes.` });
             setEditingUser(null);

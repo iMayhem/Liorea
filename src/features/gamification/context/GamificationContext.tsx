@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { api } from '@/lib/api';
+import { db } from '@/lib/firebase';
+import { ref, onValue, set } from 'firebase/database';
 import { GamificationStats, LEVEL_FORMULA } from '../types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,8 +57,19 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [username]);
 
+    // Initial Load
     useEffect(() => {
         if (username) refreshStats();
+    }, [username, refreshStats]);
+
+    // Real-time Signal Listener
+    useEffect(() => {
+        if (!username) return;
+        const signalRef = ref(db, `signals/${username}/refresh_stats`);
+        // Listen for "pokes" from admin
+        return onValue(signalRef, () => {
+            refreshStats();
+        });
     }, [username, refreshStats]);
 
     // Award XP
@@ -137,6 +150,8 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
 
         try {
             await api.gamification.equip(username!, itemId, type);
+            // Broadcast change to everyone (including self and profile viewers)
+            set(ref(db, `signals/${username}/refresh_stats`), Date.now());
             return true;
         } catch (e) {
             console.error("Equip failed", e);

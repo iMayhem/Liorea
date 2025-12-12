@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useUserProfile } from "../context/UserProfileContext";
 import { api, getProxiedUrl } from "@/lib/api";
+import { db } from "@/lib/firebase";
+import { ref, onValue } from "firebase/database";
 import { Loader2, Trophy, Coins, CalendarDays, X, Shield, Star, Medal } from "lucide-react";
 import { SHOP_ITEMS } from "../data/items";
 import dynamic from 'next/dynamic';
@@ -32,9 +34,15 @@ export function UserProfileModal() {
     const [stats, setStats] = useState<ProfileStats | null>(null);
     const [effectData, setEffectData] = useState<any>(null);
 
+    const [refreshKey, setRefreshKey] = useState(0);
+
     useEffect(() => {
         if (isOpen && targetUsername) {
-            setLoading(true);
+            // Only show loader on initial open or hard refresh, not signal updates generally?
+            // But here we don't distinguish easily. It's fine to show loading for a split second on update.
+            // Or better, check if stats exist to decide on loading.
+            if (!stats) setLoading(true);
+
             const fetchStats = async () => {
                 try {
                     const data = await api.gamification.getStats(targetUsername);
@@ -50,6 +58,16 @@ export function UserProfileModal() {
             };
             fetchStats();
         }
+    }, [isOpen, targetUsername, refreshKey]);
+
+    // Listen for Real-time Updates
+    useEffect(() => {
+        if (!isOpen || !targetUsername) return;
+        const signalRef = ref(db, `signals/${targetUsername}/refresh_stats`);
+        return onValue(signalRef, (snapshot) => {
+            // Force refresh when signal comes
+            setRefreshKey(k => k + 1);
+        });
     }, [isOpen, targetUsername]);
 
     // Load Effect JSON
@@ -98,22 +116,16 @@ export function UserProfileModal() {
                         </div>
                     )}
 
-                    {/* Banner */}
-                    <div className="h-32 relative overflow-hidden">
-                        <div className={`absolute inset-0 ${colorItem?.assetUrl || 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'}`} />
-                        <div className="absolute inset-0 bg-black/20" />
-
-                        {/* Close Button */}
-                        <button onClick={closeProfile} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-all z-50">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {/* Close Button MOVED */}
+                    <button onClick={closeProfile} className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-all z-50">
+                        <X className="w-4 h-4" />
+                    </button>
 
                     {/* Content */}
-                    <div className="px-6 pb-8 relative z-10">
+                    <div className="px-6 py-8 relative z-10 w-full">
 
                         {/* Avatar Section */}
-                        <div className="relative -mt-16 mb-4 flex justify-between items-end">
+                        <div className="relative mb-4 flex justify-between items-start">
                             <div className="relative">
                                 {/* Frame Overlay */}
                                 {stats?.equipped?.frame && (() => {

@@ -137,12 +137,8 @@ export default function CosmeticsLab() {
                     )}
 
                     {/* Banner */}
-                    <div className="h-32 relative overflow-hidden bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                        <div className="absolute inset-0 bg-black/20" />
-                    </div>
-
-                    <div className="px-6 pb-8 relative z-10 -mt-16">
-                        <div className="flex justify-between items-end mb-4">
+                    <div className="px-6 py-8 relative z-10 w-full">
+                        <div className="flex justify-between items-start mb-4">
                             <div className="relative">
                                 {/* Frame */}
                                 {activeFrameItem && (
