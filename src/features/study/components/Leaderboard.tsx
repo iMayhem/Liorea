@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import {
   DropdownMenu,
-  DropdownMenuContent,
+  DropdownMenuContentNoPortal,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -46,11 +46,11 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
                 <ChevronDown className="w-4 h-4 text-zinc-500" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32 bg-zinc-950 border border-white/10 text-white shadow-xl z-[60]">
+            <DropdownMenuContentNoPortal align="end" className="w-32 bg-zinc-950 border border-white/10 text-white shadow-xl z-[60]">
               <DropdownMenuItem onClick={() => setFilter('daily')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Daily</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('weekly')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Weekly</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('all')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">All Time</DropdownMenuItem>
-            </DropdownMenuContent>
+            </DropdownMenuContentNoPortal>
           </DropdownMenu>
         </div>
       </CardHeader>
