@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { usePresence } from "../context/PresenceContext"
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+import { api } from '@/lib/api';
 
 export default function StudyCalendar() {
   const { username } = usePresence();
@@ -22,15 +22,8 @@ export default function StudyCalendar() {
 
     const fetchLogs = async () => {
       try {
-        const res = await fetch(`${WORKER_URL}/study/history?username=${username}`);
-        if (res.ok) {
-          const data = await res.json();
-          setStudyLogs(data);
-        } else {
-          // Fallback for visual demo
-          const todayKey = format(new Date(), 'yyyy-MM-dd');
-          setStudyLogs({ [todayKey]: 60 });
-        }
+        const data = await api.study.getHistory(username);
+        setStudyLogs(data);
       } catch (e) {
         const todayKey = format(new Date(), 'yyyy-MM-dd');
         setStudyLogs({ [todayKey]: 60 });

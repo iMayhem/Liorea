@@ -16,8 +16,7 @@ import { ref, push, serverTimestamp } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { compressImage } from '@/lib/compress';
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
-const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
+import { api } from '@/lib/api';
 const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢"];
 
 type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; } }
@@ -70,14 +69,7 @@ export default function ChatPanel() {
         setIsUploading(true);
         try {
             const compressed = await compressImage(e.target.files[0]);
-            const uploadRes = await fetch(`${WORKER_URL}/upload`, {
-                method: 'PUT',
-                body: compressed
-            });
-
-            if (!uploadRes.ok) throw new Error("Upload failed");
-
-            const { url } = await uploadRes.json();
+            const { url } = await api.upload.put(compressed);
             sendMessage("", url); // Send message with image URL
         } catch (error) {
             console.error(error);
@@ -91,7 +83,7 @@ export default function ChatPanel() {
     // Mention State
     const [mentionQuery, setMentionQuery] = useState<string | null>(null);
     const [mentionIndex, setMentionIndex] = useState(0);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     // --- SCROLL LOGIC ---
     useLayoutEffect(() => {
@@ -179,11 +171,7 @@ export default function ChatPanel() {
     const fetchGifs = async (query: string = "") => {
         setLoadingGifs(true);
         try {
-            const endpoint = query
-                ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`
-                : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
-            const res = await fetch(endpoint);
-            const data = await res.json();
+            const data = await (query ? api.giphy.search(query) : api.giphy.trending());
             setGifs(data.data);
         } catch (error) { console.error("Failed to fetch GIFs", error); } finally { setLoadingGifs(false); }
     };
@@ -194,7 +182,7 @@ export default function ChatPanel() {
         return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5);
     }, [mentionQuery, leaderboardUsers]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
         setNewMessage(val);
         sendTypingEvent();
@@ -214,7 +202,7 @@ export default function ChatPanel() {
         inputRef.current?.focus();
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (mentionQuery && mentionableUsers.length > 0) {
             if (e.key === 'ArrowUp') {
                 e.preventDefault();

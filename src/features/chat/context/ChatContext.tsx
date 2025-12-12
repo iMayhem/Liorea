@@ -5,7 +5,7 @@ import { usePresence } from '@/features/study/context/PresenceContext';
 import { db } from '@/lib/firebase';
 import { ref, push, onValue, query, limitToLast, serverTimestamp, remove } from 'firebase/database';
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+import { api } from '@/lib/api';
 const CHAT_ROOM = "study-room-1";
 const LOCAL_STORAGE_KEY = 'liorea_chat_history';
 
@@ -113,9 +113,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             // We fetch the latest chunk to ensure we have recent context, 
             // rely on dedupe to fix overlaps with LocalStorage
             try {
-                const res = await fetch(`${WORKER_URL}/chat/history?room=${CHAT_ROOM}`);
-                if (res.ok && mounted) {
-                    const d1Messages = await res.json();
+                const d1Messages = await api.chat.getHistory(CHAT_ROOM);
+                if (mounted) {
                     initialMessages = mergeAndDedupe(initialMessages, d1Messages);
 
                     // Trim local storage if too big
@@ -169,9 +168,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         const oldestMessage = messages[0];
         try {
-            const res = await fetch(`${WORKER_URL}/chat/history?room=${CHAT_ROOM}&before=${oldestMessage.timestamp}`);
-            if (res.ok) {
-                const olderMessages: ChatMessage[] = await res.json();
+            const olderMessages: ChatMessage[] = await api.chat.getHistory(CHAT_ROOM, oldestMessage.timestamp);
+            if (olderMessages) {
                 if (olderMessages.length < 20) setHasMore(false);
 
                 if (olderMessages.length > 0) {
@@ -196,15 +194,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         });
 
         // Backup to D1 (Silent)
-        fetch(`${WORKER_URL}/chat/send`, {
-            method: "POST",
-            body: JSON.stringify({
-                room_id: CHAT_ROOM,
-                username,
-                message,
-                photoURL: userImage || ""
-            }),
-            headers: { "Content-Type": "application/json" }
+        // Backup to D1 (Silent)
+        api.chat.send({
+            room_id: CHAT_ROOM,
+            username,
+            message,
+            photoURL: userImage || ""
         }).catch(e => console.error("D1 Backup failed:", e));
 
     }, [username, userImage]);

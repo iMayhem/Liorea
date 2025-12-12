@@ -8,8 +8,7 @@ import { Trash2 } from 'lucide-react';
 import { usePresence } from '@/features/study';
 import { useToast } from '@/hooks/use-toast';
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { api } from '@/lib/api';
 
 type Journal = {
   id: number;
@@ -20,7 +19,6 @@ type Journal = {
 
 export default function JournalManagement() {
   const { username } = usePresence();
-  const { token } = useAuthToken();
   const { toast } = useToast();
   const [journals, setJournals] = useState<Journal[]>([]);
 
@@ -30,8 +28,8 @@ export default function JournalManagement() {
 
   const fetchJournals = async () => {
     try {
-      const res = await fetch(`${WORKER_URL}/journals/list`);
-      if (res.ok) setJournals(await res.json());
+      const data = await api.journal.list();
+      setJournals(data);
     } catch (e) { console.error(e); }
   };
 
@@ -40,20 +38,13 @@ export default function JournalManagement() {
     if (!username) return;
 
     try {
-      const res = await fetch(`${WORKER_URL}/journals/delete`, {
-        method: 'DELETE',
-        body: JSON.stringify({ id, username }),
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-      });
-
-      if (res.ok) {
-        toast({ title: "Journal Deleted" });
-        fetchJournals();
-      } else {
-        toast({ variant: "destructive", title: "Error", description: "Failed (Are you admin?)" });
-      }
-    } catch (e) { console.error(e); }
+      await api.journal.delete(id, username);
+      toast({ title: "Journal deleted by admin" });
+      setJournals(prev => prev.filter(j => j.id !== id));
+    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Error deleting" }); }
   };
+
+
 
   return (
     <Card className="bg-black/10 backdrop-blur-md border border-white/20 text-white mt-8">

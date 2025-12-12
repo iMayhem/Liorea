@@ -26,7 +26,7 @@ interface BackgroundContextType {
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+
 
 export const BackgroundProvider = ({ children }: { children: ReactNode }) => {
   const [allFiles, setAllFiles] = useState<R2File[]>([]);

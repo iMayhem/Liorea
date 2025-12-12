@@ -34,7 +34,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { useAuthToken } from '@/hooks/useAuthToken';
+import { api } from '@/lib/api';
 
 // ... (TYPES AND HELPERS REMAIN SAME AS BEFORE) ...
 
@@ -60,7 +60,6 @@ const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢", "🎉", 
 
 function JournalContent() {
     const { username, leaderboardUsers } = usePresence();
-    const { token } = useAuthToken(); // Add hook
     const { addNotification } = useNotifications();
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -98,34 +97,30 @@ function JournalContent() {
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
 
     // ... (API FUNCTIONS REMAIN SAME) ...
-    const fetchJournals = async () => { try { const res = await fetch(`${WORKER_URL}/journals/list`); if (res.ok) setJournals(await res.json()); } catch (e) { console.error(e); } };
+    const fetchJournals = async () => { try { const data = await api.journal.list(); setJournals(data); } catch (e) { console.error(e); } };
     const fetchPosts = async (id: number, before?: number, isUpdate = false) => {
         try {
-            const url = `${WORKER_URL}/journals/posts?id=${id}${before ? `&before=${before}` : ''}`;
-            const res = await fetch(url);
-            if (res.ok) {
-                const newPosts: Post[] = await res.json();
-                if (before) {
-                    if (newPosts.length < 20) setHasMore(false);
-                    if (newPosts.length > 0) setPosts(prev => [...newPosts, ...prev]);
-                    setLoadingMore(false);
+            const newPosts: Post[] = await api.journal.getPosts(id, before);
+            if (before) {
+                if (newPosts.length < 20) setHasMore(false);
+                if (newPosts.length > 0) setPosts(prev => [...newPosts, ...prev]);
+                setLoadingMore(false);
+            } else {
+                if (isUpdate) {
+                    setPosts(prev => {
+                        const existingIds = new Set(prev.map(p => p.id));
+                        const uniqueNew = newPosts.filter(p => !existingIds.has(p.id));
+                        if (uniqueNew.length === 0) return prev;
+                        return [...prev, ...uniqueNew];
+                    });
                 } else {
-                    if (isUpdate) {
-                        setPosts(prev => {
-                            const existingIds = new Set(prev.map(p => p.id));
-                            const uniqueNew = newPosts.filter(p => !existingIds.has(p.id));
-                            if (uniqueNew.length === 0) return prev;
-                            return [...prev, ...uniqueNew];
-                        });
-                    } else {
-                        setPosts(newPosts);
-                        if (newPosts.length < 20) setHasMore(false);
-                    }
+                    setPosts(newPosts);
+                    if (newPosts.length < 20) setHasMore(false);
                 }
             }
         } catch (e) { console.error(e); setLoadingMore(false); }
     };
-    const fetchFollowers = async (id: number) => { try { const res = await fetch(`${WORKER_URL}/journals/followers?id=${id}`); if (res.ok) setCurrentFollowers(await res.json()); } catch (e) { } };
+    const fetchFollowers = async (id: number) => { try { const data = await api.journal.getFollowers(id); setCurrentFollowers(data); } catch (e) { } };
 
     const handleReportMessage = async (msg: Post) => {
         if (!username || !activeJournal) return;
@@ -146,13 +141,13 @@ function JournalContent() {
     // ... (USE EFFECTS REMAIN SAME) ...
     useEffect(() => {
         const init = async () => {
-            if (username) { try { const fRes = await fetch(`${WORKER_URL}/journals/following?username=${username}`); if (fRes.ok) setFollowedIds(await fRes.json()); } catch (e) { } }
+            if (username) { try { const data = await api.journal.getFollowing(username); setFollowedIds(data); } catch (e) { } }
             if (journals.length === 0) await fetchJournals();
             const targetId = searchParams.get('id');
             if (targetId) {
                 const found = journals.find(j => j.id.toString() === targetId);
                 if (!found) {
-                    const res = await fetch(`${WORKER_URL}/journals/list`); if (res.ok) { const list: Journal[] = await res.json(); setJournals(list); const freshFound = list.find(j => j.id.toString() === targetId); if (freshFound) { setActiveJournal(freshFound); } }
+                    try { const list = await api.journal.list(); setJournals(list); const freshFound = list.find(j => j.id.toString() === targetId); if (freshFound) { setActiveJournal(freshFound); } } catch (e) { }
                 } else { setActiveJournal(found); }
             } else { setActiveJournal(null); }
         };
@@ -217,11 +212,45 @@ function JournalContent() {
     }, [posts]);
 
     // ... (REST OF HANDLERS REMAIN SAME) ...
-    const fetchGifs = async (query: string = "") => { setLoadingGifs(true); try { const endpoint = query ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g` : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`; const res = await fetch(endpoint); const data = await res.json(); setGifs(data.data); } catch (error) { console.error(error); } finally { setLoadingGifs(false); } };
-    const handleSendGif = async (url: string) => { if (!activeJournal || !username) return; const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() }; setPosts(prev => [...prev, tempPost]); try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }), headers: { "Content-Type": "application/json", ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
+    const fetchGifs = async (query: string = "") => { setLoadingGifs(true); try { const data = await (query ? api.giphy.search(query) : api.giphy.trending()); setGifs(data.data); } catch (error) { console.error(error); } finally { setLoadingGifs(false); } };
+
+    const handleSendGif = async (url: string) => {
+        if (!activeJournal || !username) return;
+        const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
+        setPosts(prev => [...prev, tempPost]);
+        try {
+            await api.journal.post({ journal_id: activeJournal.id, username, content: "", image_url: url });
+            notifyChatUpdate(activeJournal.id);
+        } catch (e) { console.error(e); }
+    };
+
     const sortedJournals = useMemo(() => { return [...journals].sort((a, b) => { const aFollow = followedIds.includes(a.id) ? 1 : 0; const bFollow = followedIds.includes(b.id) ? 1 : 0; if (aFollow !== bFollow) return bFollow - aFollow; return b.last_updated - a.last_updated; }); }, [journals, followedIds]);
-    const handleFollowToggle = async () => { if (!activeJournal || !username) return; const isFollowing = followedIds.includes(activeJournal.id); if (isFollowing) { setFollowedIds(prev => prev.filter(id => id !== activeJournal.id)); setCurrentFollowers(prev => prev.filter(u => u !== username)); } else { setFollowedIds(prev => [...prev, activeJournal.id]); setCurrentFollowers(prev => [username, ...prev]); } try { await fetch(`${WORKER_URL}/journals/follow`, { method: 'POST', body: JSON.stringify({ journal_id: activeJournal.id, username }), headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); } catch (e) { console.error(e); } };
-    const handleReact = async (post_id: number, emoji: string) => { if (!username || !activeJournal) return; setOpenReactionPopoverId(null); setPosts(currentPosts => currentPosts.map(p => { if (p.id !== post_id) return p; const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji); let newReactions = p.reactions ? [...p.reactions] : []; if (existingReactionIndex !== undefined && existingReactionIndex > -1) { newReactions.splice(existingReactionIndex, 1); } else { newReactions.push({ post_id, username, emoji }); } return { ...p, reactions: newReactions }; })); try { await fetch(`${WORKER_URL}/journals/react`, { method: 'POST', body: JSON.stringify({ post_id, username, emoji }), headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
+
+    const handleFollowToggle = async () => {
+        if (!activeJournal || !username) return;
+        const isFollowing = followedIds.includes(activeJournal.id);
+        if (isFollowing) {
+            setFollowedIds(prev => prev.filter(id => id !== activeJournal.id));
+            setCurrentFollowers(prev => prev.filter(u => u !== username));
+        } else {
+            setFollowedIds(prev => [...prev, activeJournal.id]);
+            setCurrentFollowers(prev => [username, ...prev]);
+        }
+        try {
+            await api.journal.toggleFollow(activeJournal.id, username);
+        } catch (e) { console.error(e); }
+    };
+
+    const handleReact = async (post_id: number, emoji: string) => {
+        if (!username || !activeJournal) return;
+        setOpenReactionPopoverId(null);
+        setPosts(currentPosts => currentPosts.map(p => { if (p.id !== post_id) return p; const existingReactionIndex = p.reactions?.findIndex(r => r.username === username && r.emoji === emoji); let newReactions = p.reactions ? [...p.reactions] : []; if (existingReactionIndex !== undefined && existingReactionIndex > -1) { newReactions.splice(existingReactionIndex, 1); } else { newReactions.push({ post_id, username, emoji }); } return { ...p, reactions: newReactions }; }));
+        try {
+            await api.journal.react(post_id, username, emoji);
+            notifyChatUpdate(activeJournal.id);
+        } catch (e) { console.error(e); }
+    };
+
     const getReactionGroups = (reactions: Reaction[] | undefined) => { if (!reactions) return {}; const groups: Record<string, { count: number, hasReacted: boolean }> = {}; reactions.forEach(r => { if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false }; groups[r.emoji].count++; if (r.username === username) groups[r.emoji].hasReacted = true; }); return groups; };
     const mentionableUsers = useMemo(() => { if (!mentionQuery) return []; const chatUsers = posts.map(p => p.username); const lbUsers = leaderboardUsers.map(u => u.username); const allUsers = Array.from(new Set([...chatUsers, ...lbUsers])); return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); }, [mentionQuery, posts, leaderboardUsers]);
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const val = e.target.value; setNewMessage(val); const cursorPos = e.target.selectionStart; const textBeforeCursor = val.slice(0, cursorPos); const match = textBeforeCursor.match(/@(\w*)$/); if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); } };
@@ -232,13 +261,85 @@ function JournalContent() {
     const handleBackToGallery = () => { router.push('/journal'); };
     const notifyGlobalUpdate = () => set(ref(db, 'journal_global_signal/last_updated'), serverTimestamp());
     const notifyChatUpdate = (journalId: number) => set(ref(db, `journal_signals/${journalId}`), serverTimestamp());
-    const handleDeleteJournal = async () => { if (!journalToDelete || !username) return; try { const res = await fetch(`${WORKER_URL}/journals/delete`, { method: 'DELETE', body: JSON.stringify({ id: journalToDelete, username }), headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); if (res.ok) { toast({ title: "Deleted" }); setJournalToDelete(null); if (activeJournal?.id === journalToDelete) router.push('/journal'); notifyGlobalUpdate(); } } catch (e) { console.error(e); } };
-    const handleDeletePost = async (postId: number) => { if (!username) return; setPosts(posts.filter(p => p.id !== postId)); try { await fetch(`${WORKER_URL}/journals/post/delete`, { method: 'DELETE', body: JSON.stringify({ id: postId, username }), headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); if (activeJournal) notifyChatUpdate(activeJournal.id); } catch (e) { if (activeJournal) fetchPosts(activeJournal.id); } };
+
+    const handleDeleteJournal = async () => {
+        if (!journalToDelete || !username) return;
+        try {
+            await api.journal.delete(journalToDelete, username);
+            toast({ title: "Deleted" });
+            setJournalToDelete(null);
+            if (activeJournal?.id === journalToDelete) router.push('/journal');
+            notifyGlobalUpdate();
+        } catch (e) { console.error(e); }
+    };
+
+    const handleDeletePost = async (postId: number) => {
+        if (!username) return;
+        setPosts(posts.filter(p => p.id !== postId));
+        try {
+            await api.journal.deletePost(postId, username);
+            if (activeJournal) notifyChatUpdate(activeJournal.id);
+        } catch (e) {
+            if (activeJournal) fetchPosts(activeJournal.id);
+        }
+    };
+
     const handleCardUploadClick = (journalId: number, e: React.MouseEvent) => { e.stopPropagation(); setUpdatingJournalId(journalId); cardFileInputRef.current?.click(); };
-    const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files || !updatingJournalId || !username) return; const files = Array.from(e.target.files); if (files.length > 4) { toast({ variant: "destructive", title: "Limit" }); return; } toast({ title: "Uploading..." }); try { const urls: string[] = []; for (const file of files) { const compressed = await compressImage(file); const res = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressed }); if (res.ok) urls.push((await res.json()).url); } const updateRes = await fetch(`${WORKER_URL}/journals/update_images`, { method: 'POST', body: JSON.stringify({ id: updatingJournalId, images: urls.join(","), username }), headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); if (updateRes.ok) notifyGlobalUpdate(); } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; } };
-    const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return; setIsUploadingChatImage(true); try { const compressed = await compressImage(e.target.files[0]); const uploadRes = await fetch(`${WORKER_URL}/upload`, { method: 'PUT', body: compressed }); if (!uploadRes.ok) throw new Error("Upload failed"); const { url } = await uploadRes.json(); const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() }; setPosts(prev => [...prev, tempPost]); await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: "", image_url: url }), headers: { "Content-Type": "application/json", ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); notifyChatUpdate(activeJournal.id); } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setIsUploadingChatImage(false); if (chatFileInputRef.current) chatFileInputRef.current.value = ""; } };
-    const createJournal = async () => { if (!newTitle.trim() || !username) return; try { await fetch(`${WORKER_URL}/journals/create`, { method: "POST", body: JSON.stringify({ username, title: newTitle, tags: newTags, images: "", theme: "bg-black" }), headers: { "Content-Type": "application/json", ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); setNewTitle(""); setNewTags(""); setIsDialogOpen(false); notifyGlobalUpdate(); } catch (e) { console.error(e); } };
-    const sendPost = async () => { if (!newMessage.trim() || !activeJournal || !username) return; const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() }; setPosts(prev => [...prev, tempPost]); setNewMessage(""); const mentions = tempPost.content.match(/@(\w+)/g); if (mentions) { const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); uniqueUsers.forEach(taggedUser => { if (taggedUser !== username) { addNotification(`${username} mentioned you in "${activeJournal.title}"`, taggedUser, `/journal?id=${activeJournal.id}`); } }); } try { await fetch(`${WORKER_URL}/journals/post`, { method: "POST", body: JSON.stringify({ journal_id: activeJournal.id, username, content: tempPost.content }), headers: { "Content-Type": "application/json", ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } }); notifyChatUpdate(activeJournal.id); } catch (e) { console.error(e); } };
+
+    const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !updatingJournalId || !username) return;
+        const files = Array.from(e.target.files);
+        if (files.length > 4) { toast({ variant: "destructive", title: "Limit" }); return; }
+        toast({ title: "Uploading..." });
+        try {
+            const urls: string[] = [];
+            for (const file of files) {
+                const compressed = await compressImage(file);
+                const { url } = await api.upload.put(compressed);
+                urls.push(url);
+            }
+            await api.journal.updateImages(updatingJournalId, urls.join(","), username);
+            notifyGlobalUpdate();
+        } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setUpdatingJournalId(null); if (cardFileInputRef.current) cardFileInputRef.current.value = ""; }
+    };
+
+    const handleChatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files[0] || !activeJournal || !username) return;
+        setIsUploadingChatImage(true);
+        try {
+            const compressed = await compressImage(e.target.files[0]);
+            const { url } = await api.upload.put(compressed);
+            const tempPost = { id: Date.now(), username, content: "", image_url: url, created_at: Date.now() };
+            setPosts(prev => [...prev, tempPost]);
+            await api.journal.post({ journal_id: activeJournal.id, username, content: "", image_url: url });
+            notifyChatUpdate(activeJournal.id);
+        } catch (error) { toast({ variant: "destructive", title: "Error" }); } finally { setIsUploadingChatImage(false); if (chatFileInputRef.current) chatFileInputRef.current.value = ""; }
+    };
+
+    const createJournal = async () => {
+        if (!newTitle.trim() || !username) return;
+        try {
+            await api.journal.create({ username, title: newTitle, tags: newTags, images: "", theme: "bg-black" });
+            setNewTitle(""); setNewTitle(""); setIsDialogOpen(false); notifyGlobalUpdate();
+        } catch (e) { console.error(e); }
+    };
+
+    const sendPost = async () => {
+        if (!newMessage.trim() || !activeJournal || !username) return;
+        const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() };
+        setPosts(prev => [...prev, tempPost]);
+        setNewMessage("");
+        const mentions = tempPost.content.match(/@(\w+)/g);
+        if (mentions) { const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); uniqueUsers.forEach(taggedUser => { if (taggedUser !== username) { addNotification(`${username} mentioned you in "${activeJournal.title}"`, taggedUser, `/journal?id=${activeJournal.id}`); } }); }
+        try {
+            await api.journal.post({ journal_id: activeJournal.id, username, content: tempPost.content });
+            notifyChatUpdate(activeJournal.id);
+        } catch (e) { console.error(e); }
+    };
+
+    const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    const JournalCollage = ({ imagesStr }: { imagesStr?: string }) => { const images = imagesStr ? imagesStr.split(',').filter(Boolean) : []; if (images.length === 0) return <div className="w-full h-full bg-black/40" />; return (<div className="grid grid-cols-2 grid-rows-2 w-full h-full"> <div className={`relative ${images.length === 1 ? 'col-span-2 row-span-2' : ''} ${images.length === 3 ? 'row-span-2' : ''} overflow-hidden border-r border-b border-black/10`}><img src={images[0]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div> {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/10`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/10`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} </div>); };
     const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     const JournalCollage = ({ imagesStr }: { imagesStr?: string }) => { const images = imagesStr ? imagesStr.split(',').filter(Boolean) : []; if (images.length === 0) return <div className="w-full h-full bg-black/40" />; return (<div className="grid grid-cols-2 grid-rows-2 w-full h-full"> <div className={`relative ${images.length === 1 ? 'col-span-2 row-span-2' : ''} ${images.length === 3 ? 'row-span-2' : ''} overflow-hidden border-r border-b border-black/10`}><img src={images[0]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div> {images.length >= 2 && <div className={`relative ${images.length === 2 ? 'row-span-2' : ''} overflow-hidden border-b border-black/10`}><img src={images[1]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 3 && <div className={`relative ${images.length === 3 ? 'col-start-2' : ''} overflow-hidden border-r border-black/10`}><img src={images[2]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} {images.length >= 4 && <div className="relative overflow-hidden"><img src={images[3]} className="w-full h-full object-cover" alt="cover" loading="lazy" /></div>} </div>); };

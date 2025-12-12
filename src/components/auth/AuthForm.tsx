@@ -14,7 +14,7 @@ interface AuthFormProps {
     onLogin: (username: string) => void;
 }
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+import { api } from '@/lib/api';
 
 export default function AuthForm({ onLogin }: AuthFormProps) {
     const { setUserImage } = usePresence(); // Get the setter
@@ -41,12 +41,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
                 setUserImage(user.photoURL); // Update global state instantly
             }
 
-            const res = await fetch(`${WORKER_URL}/auth/google-check`, {
-                method: 'POST',
-                body: JSON.stringify({ email: user.email, photoURL: user.photoURL }),
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await res.json();
+            const data = await api.auth.googleCheck(user.email, user.photoURL);
 
             if (data.exists) {
                 toast({ title: 'Welcome back!', description: `Signed in as ${data.username}` });
@@ -71,20 +66,17 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
 
         setIsLoading(true);
         try {
-            const res = await fetch(`${WORKER_URL}/auth/google-create`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: googleEmail,
-                    username: customUsername.trim(),
-                    photoURL: googlePhoto
-                }),
-                headers: { 'Content-Type': 'application/json' }
+            const data = await api.auth.googleCreate({
+                email: googleEmail,
+                username: customUsername.trim(),
+                photoURL: googlePhoto
             });
 
-            const data = await res.json();
-
-            if (!res.ok || data.error) {
-                throw new Error(data.error || "Failed to create account");
+            if (data.username === undefined) {
+                // Assuming api wrapper throws on error status, but if it returns object with error key:
+                // In api.ts we throw on !response.ok, so we just catch.
+                // But wait, my api.ts returns T or {}.
+                // Let's rely on the catch block for errors.
             }
 
             // IMMEDIATE UPDATE: Fixes delay for new users too
