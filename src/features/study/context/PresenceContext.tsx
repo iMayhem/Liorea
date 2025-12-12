@@ -12,6 +12,8 @@ export interface StudyUser {
     total_study_time: number;
     status: 'Online';
     photoURL?: string;
+    status_text?: string;
+    trend?: 'up' | 'down' | 'same';
 }
 
 export interface CommunityUser {
@@ -27,7 +29,7 @@ interface PresenceContextType {
     username: string | null;
     userImage: string | null;
     setUsername: (name: string | null) => void;
-    setUserImage: (url: string | null) => void; // EXPORTED NOW
+    setUserImage: (url: string | null) => void;
     studyUsers: StudyUser[];
     communityUsers: CommunityUser[];
     leaderboardUsers: StudyUser[];
@@ -36,7 +38,7 @@ interface PresenceContextType {
     leaveSession: () => void;
     updateStatusMessage: (msg: string) => Promise<void>;
     renameUser: (newName: string) => Promise<boolean>;
-    getUserImage: (username: string) => string | undefined; // NEW CENTRAL LOOKUP
+    getUserImage: (username: string) => string | undefined;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -239,13 +241,23 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         const map = new Map<string, StudyUser>();
         historicalLeaderboard.forEach(user => { if (user.username) map.set(user.username, user); });
         studyUsers.forEach(user => { if (user.username) map.set(user.username, user); });
+
         communityUsers.forEach(user => {
             if (user.username && map.has(user.username)) {
                 const existing = map.get(user.username)!;
                 if (!existing.photoURL && user.photoURL) existing.photoURL = user.photoURL;
+                // MERGE STATUS TEXT
+                if (user.status_text) existing.status_text = user.status_text;
             }
         });
-        return Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
+
+        const list = Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
+
+        // ADD MOCK TRENDS
+        return list.map((u, i) => ({
+            ...u,
+            trend: (i % 3 === 0 ? 'up' : i % 3 === 1 ? 'down' : 'same') as 'up' | 'down' | 'same'
+        }));
     }, [historicalLeaderboard, studyUsers, communityUsers]);
 
     // --- CENTRAL IMAGE LOOKUP ---

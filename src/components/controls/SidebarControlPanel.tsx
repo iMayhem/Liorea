@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function SidebarControlPanel() {
-    const { studyUsers, leaderboardUsers, leaveSession } = usePresence();
+    const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
     const router = useRouter();
     const [isMuted, setIsMuted] = useState(false); // Mock state for now
 
@@ -78,7 +78,7 @@ export default function SidebarControlPanel() {
                             <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
                         </SheetHeader>
                         <div className="py-4 space-y-8">
-                            <Leaderboard users={leaderboardUsers} />
+                            <Leaderboard users={leaderboardUsers} currentUsername={username} />
                         </div>
                     </SheetContent>
                 </Sheet>

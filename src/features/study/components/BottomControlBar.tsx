@@ -17,7 +17,7 @@ import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
 
 export default function BottomControlBar() {
-    const { studyUsers, leaderboardUsers, leaveSession } = usePresence();
+    const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
     const router = useRouter();
 
     const handleLeave = () => {
@@ -47,13 +47,12 @@ export default function BottomControlBar() {
                                 <Trophy className="w-5 h-5" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="bottom" className="bg-[#313338] border-t-[#1F2023] text-zinc-100 h-[80vh]">
+                        <SheetContent side="left" className="bg-[#313338] border-r-[#1F2023] text-zinc-100 w-[85vw] sm:w-[540px] pt-10">
                             <SheetHeader>
-                                <SheetTitle className="text-zinc-100">Leaderboard</SheetTitle>
-                                <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
+                                {/* Accessibile Hidden Title if needed, or just visual header */}
                             </SheetHeader>
-                            <div className="py-3 space-y-8 h-full overflow-y-auto">
-                                <Leaderboard users={leaderboardUsers} />
+                            <div className="py-2 h-[calc(100vh-80px)]">
+                                <Leaderboard users={leaderboardUsers} currentUsername={username} />
                             </div>
                         </SheetContent>
                     </Sheet>
