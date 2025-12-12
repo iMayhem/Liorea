@@ -13,6 +13,7 @@ export interface StudyUser {
     status: 'Online';
     photoURL?: string;
     status_text?: string;
+    equipped_frame?: string;
     trend?: 'up' | 'down' | 'same';
 }
 
@@ -23,6 +24,7 @@ export interface CommunityUser {
     status_text?: string;
     is_studying: boolean;
     photoURL?: string;
+    equipped_frame?: string;
 }
 
 interface PresenceContextType {
@@ -38,6 +40,7 @@ interface PresenceContextType {
     leaveSession: () => void;
     updateStatusMessage: (msg: string) => Promise<void>;
     getUserImage: (username: string) => string | undefined;
+    getUserFrame: (username: string) => string | undefined;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -45,6 +48,7 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const [username, setUsernameState] = useState<string | null>(null);
     const [userImage, setUserImageState] = useState<string | null>(null);
+    const [userFrame, setUserFrameState] = useState<string | null>(null);
 
     const setUserImage = useCallback((url: string | null) => {
         setUserImageState(url);
@@ -83,6 +87,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             localStorage.removeItem('liorea-username');
             localStorage.removeItem('liorea-user-image');
             setUserImage(null);
+            setUserFrameState(null);
             setIsStudying(false);
         }
     }, [username]);
@@ -97,6 +102,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             if (snap.val() === true) {
                 let savedStatus = "";
                 let savedPhoto = userImage || "";
+                let savedFrame = userFrame || "";
 
                 try {
                     const data = await api.auth.getStatus(username);
@@ -104,6 +110,10 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     if (data.photoURL) {
                         savedPhoto = data.photoURL;
                         setUserImage(savedPhoto); // Update local state immediately
+                    }
+                    if (data.equipped_frame) {
+                        savedFrame = data.equipped_frame;
+                        setUserFrameState(savedFrame);
                     }
                 } catch (e) { }
 
@@ -117,6 +127,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 update(commRef, {
                     username: username,
                     photoURL: savedPhoto,
+                    equipped_frame: savedFrame,
                     status: 'Online',
                     last_seen: serverTimestamp(),
                     status_text: savedStatus,
@@ -128,7 +139,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             unsubscribe();
             onDisconnect(commRef).cancel(); // CRITICAL: Cancel onDisconnect when username changes/unmounts
         };
-    }, [username, userImage]);
+    }, [username, userImage, userFrame]);
 
     // --- ACTIVE STUDY LOGIC ---
     useEffect(() => {
@@ -152,6 +163,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 set(studyRef, {
                     username: username,
                     photoURL: userImage || "",
+                    equipped_frame: userFrame || "",
                     total_study_time: initialSeconds,
                     status: 'Online'
                 });
@@ -173,7 +185,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 update(commRef, { is_studying: false }).catch(() => { });
             }
         };
-    }, [username, isStudying, userImage]);
+    }, [username, isStudying, userImage, userFrame]);
 
     // ... (DATA LISTENERS unchanged) ...
 
@@ -190,7 +202,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                         username: u.username,
                         total_study_time: (u.total_minutes || 0) * 60,
                         status: 'Online',
-                        photoURL: u.photoURL
+                        photoURL: u.photoURL,
+                        // Note: Leaderboard API likely needs update to return equipped_frame too if we want it there
+                        // but we can merge it from community list below
                     }));
                 setHistoricalLeaderboard(formatted);
             } catch (e) { console.error("Leaderboard fetch failed", e); }
@@ -210,6 +224,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     .map((u: any) => ({
                         username: u.username,
                         photoURL: u.photoURL,
+                        equipped_frame: u.equipped_frame,
                         total_study_time: Number(u.total_study_time) || 0,
                         status: 'Online'
                     }));
@@ -229,6 +244,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     .map((u: any) => ({
                         username: u.username,
                         photoURL: u.photoURL,
+                        equipped_frame: u.equipped_frame,
                         status: u.status || 'Offline',
                         last_seen: u.last_seen || Date.now(),
                         status_text: u.status_text || "",
@@ -269,6 +285,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             if (user.username && map.has(user.username)) {
                 const existing = map.get(user.username)!;
                 if (!existing.photoURL && user.photoURL) existing.photoURL = user.photoURL;
+                if (!existing.equipped_frame && user.equipped_frame) existing.equipped_frame = user.equipped_frame;
                 // MERGE STATUS TEXT
                 if (user.status_text) existing.status_text = user.status_text;
             }
@@ -283,24 +300,35 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         }));
     }, [historicalLeaderboard, studyUsers, communityUsers]);
 
-    // --- CENTRAL IMAGE LOOKUP ---
-    const userImageMap = useMemo(() => {
-        const map = new Map<string, string>();
+    // --- CENTRAL IMAGE/FRAME LOOKUP ---
+    const userLookups = useMemo(() => {
+        const imageMap = new Map<string, string>();
+        const frameMap = new Map<string, string>();
 
         // 1. Current User (Priority)
-        if (username && userImage) map.set(username, userImage);
+        if (username) {
+            if (userImage) imageMap.set(username, userImage);
+            if (userFrame) frameMap.set(username, userFrame);
+        }
 
         // 2. Data Sources
-        historicalLeaderboard.forEach(u => { if (u.photoURL) map.set(u.username, u.photoURL); });
-        communityUsers.forEach(u => { if (u.photoURL) map.set(u.username, u.photoURL); });
-        studyUsers.forEach(u => { if (u.photoURL) map.set(u.username, u.photoURL); });
+        [historicalLeaderboard, communityUsers, studyUsers].forEach(list => {
+            list.forEach(u => {
+                if (u.photoURL) imageMap.set(u.username, u.photoURL);
+                if (u.equipped_frame) frameMap.set(u.username, u.equipped_frame);
+            });
+        });
 
-        return map;
-    }, [username, userImage, historicalLeaderboard, communityUsers, studyUsers]);
+        return { imageMap, frameMap };
+    }, [username, userImage, userFrame, historicalLeaderboard, communityUsers, studyUsers]);
 
     const getUserImage = useCallback((targetUsername: string) => {
-        return userImageMap.get(targetUsername);
-    }, [userImageMap]);
+        return userLookups.imageMap.get(targetUsername);
+    }, [userLookups]);
+
+    const getUserFrame = useCallback((targetUsername: string) => {
+        return userLookups.frameMap.get(targetUsername);
+    }, [userLookups]);
 
     // --- TIMER ---
     useEffect(() => {
@@ -344,8 +372,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         username, userImage, setUsername, setUserImage,
         studyUsers, leaderboardUsers, communityUsers,
         isStudying, joinSession, leaveSession, updateStatusMessage,
-        getUserImage
-    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage]);
+        getUserImage, getUserFrame
+    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame]);
 
     return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };

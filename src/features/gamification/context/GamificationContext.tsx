@@ -5,7 +5,7 @@ import { usePresence } from '@/features/study/context/PresenceContext';
 import { api } from '@/lib/api';
 import { db } from '@/lib/firebase';
 import { ref, onValue, set } from 'firebase/database';
-import { GamificationStats, LEVEL_FORMULA } from '../types';
+import { GamificationStats, LEVEL_FORMULA, ShopItem } from '../types';
 import { useToast } from '@/hooks/use-toast';
 
 interface GamificationContextType {
@@ -15,6 +15,7 @@ interface GamificationContextType {
     buyItem: (itemId: string, price: number) => Promise<boolean>;
     equipItem: (itemId: string, type: 'badge' | 'frame' | 'color' | 'effect' | 'wallpaper') => Promise<boolean>;
     hasItem: (itemId: string) => boolean;
+    getItem: (itemId: string) => ShopItem | undefined;
 }
 
 const DEFAULT_STATS: GamificationStats = {
@@ -37,12 +38,18 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
     const [stats, setStats] = useState<GamificationStats>(DEFAULT_STATS);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Fetch Stats
+    const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+
+    // Fetch Stats & Items
     const refreshStats = useCallback(async () => {
         if (!username) return;
         try {
-            // Using a generic endpoint for now - user requires worker update to support this
+            // Fetch Items first to ensure lookup available
+            const items = await api.gamification.getItems();
+            if (Array.isArray(items)) setShopItems(items);
+
             const data = await api.gamification.getStats(username);
+
             if (data) {
                 // Calculate level client-side to ensure sync given new XP
                 const calculatedLevel = LEVEL_FORMULA(data.xp || 0);
@@ -60,6 +67,10 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
     // Initial Load
     useEffect(() => {
         if (username) refreshStats();
+        // Fallback fetch for items if not logged in (though this context implies auth)
+        api.gamification.getItems().then(items => {
+            if (Array.isArray(items)) setShopItems(items);
+        }).catch(() => { });
     }, [username, refreshStats]);
 
     // Real-time Signal Listener
@@ -150,8 +161,19 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
 
         try {
             await api.gamification.equip(username!, itemId, type);
-            // Broadcast change to everyone (including self and profile viewers)
+            // Broadcast change to everyone
             set(ref(db, `signals/${username}/refresh_stats`), Date.now());
+
+            // CRITICAL: Push frame update to presence immediately so chat/lists see it
+            if (type === 'frame') {
+                // We don't have the full presence ref here, but we can construct it
+                const commRef = ref(db, `/community_presence/${username}`);
+                // Using update to avoid overwriting other fields
+                // Note: This relies on firebase being initialized
+                const { update: firebaseUpdate } = await import('firebase/database');
+                await firebaseUpdate(commRef, { equipped_frame: itemId });
+            }
+
             return true;
         } catch (e) {
             console.error("Equip failed", e);
@@ -163,7 +185,11 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
         return stats.inventory.includes(itemId);
     }, [stats.inventory]);
 
-    const value = { stats, refreshStats, awardXP, buyItem, equipItem, hasItem };
+    const getItem = useCallback((itemId: string) => {
+        return shopItems.find(i => i.id === itemId);
+    }, [shopItems]);
+
+    const value = { stats, refreshStats, awardXP, buyItem, equipItem, hasItem, getItem };
 
     return <GamificationContext.Provider value={value}>{children}</GamificationContext.Provider>;
 };

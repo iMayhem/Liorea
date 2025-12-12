@@ -4,6 +4,14 @@ import { usePresence } from "@/features/study";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUserContextMenu } from "@/context/UserContextMenuContext";
+import { useGamification } from "@/features/gamification/context/GamificationContext";
+import { getProxiedUrl } from "@/lib/api";
+import dynamic from "next/dynamic";
+
+const LottiePreview = dynamic(() => import('@/components/ui/LottiePreview').then(mod => mod.LottiePreview), {
+  ssr: false,
+  loading: () => null
+});
 
 interface UserAvatarProps {
   username: string;
@@ -18,12 +26,22 @@ const USER_COLORS = [
   'bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500'
 ];
 
-export default function UserAvatar({ username, fallbackUrl, className, showStatus = false, decorationUrl }: UserAvatarProps) {
-  const { getUserImage, studyUsers } = usePresence(); // Using studyUsers to check online status if needed
+export default function UserAvatar({ username, fallbackUrl, className, showStatus = false, decorationUrl, maskClass }: UserAvatarProps) {
+  const { getUserImage, getUserFrame, studyUsers } = usePresence();
   const { openMenu } = useUserContextMenu();
+  // Safe access to gamification context (optional incase used outside provider, though unlikely)
+  let getItem: ((id: string) => any) | undefined;
+  try {
+    const g = useGamification();
+    getItem = g.getItem;
+  } catch (e) { }
 
   const liveImage = getUserImage(username);
   const displayImage = liveImage || fallbackUrl;
+
+  // Resolve Frame
+  const frameId = getUserFrame ? getUserFrame(username) : null;
+  const frameItem = (frameId && getItem) ? getItem(frameId) : null;
 
   const charCodeSum = username ? username.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) : 0;
   const colorClass = USER_COLORS[charCodeSum % USER_COLORS.length];
@@ -39,13 +57,26 @@ export default function UserAvatar({ username, fallbackUrl, className, showStatu
 
   return (
     <div className="relative inline-block group">
-      {/* Decoration / Frame (APNG) */}
+      {/* Decoration / Effect (Legacy prop) */}
       {decorationUrl && (
         <img
           src={decorationUrl}
           className="absolute -top-[15%] -left-[15%] w-[130%] h-[130%] z-20 pointer-events-none"
           alt=""
         />
+      )}
+
+      {/* Global Frame Overlay */}
+      {frameItem && frameItem.assetUrl && (
+        <div className="absolute -top-[23%] -left-[23%] w-[146%] h-[146%] z-20 pointer-events-none select-none">
+          <LottiePreview
+            url={getProxiedUrl(frameItem.assetUrl)}
+            className="w-full h-full"
+            imageFallback={true}
+            loop={true}
+            autoplay={true}
+          />
+        </div>
       )}
 
       <Avatar

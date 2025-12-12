@@ -64,7 +64,7 @@ export const api = {
 
         updateProfile: (photoURL: string) => request('/user/profile', { method: 'POST', body: JSON.stringify({ photoURL }) }),
         updateStatus: (username: string, status_text: string) => request('/user/status', { method: 'POST', body: JSON.stringify({ username, status_text }) }),
-        getStatus: (username: string) => request<{ status_text: string }>(`/user/status?username=${username}`),
+        getStatus: (username: string) => request<{ status_text: string, photoURL?: string, equipped_frame?: string }>(`/user/status?username=${username}`),
     },
 
     journal: {
