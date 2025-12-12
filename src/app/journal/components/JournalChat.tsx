@@ -356,17 +356,18 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                 </button>
             )}
 
-            <MentionMenu
-                isOpen={!!mentionQuery && mentionableUsers.length > 0}
-                query={mentionQuery}
-                options={mentionableUsers}
-                selectedIndex={mentionIndex}
-                onSelect={insertMention}
-                className="absolute bottom-20 left-4"
-            />
+
 
             <div className="p-4 glass-panel-light shrink-0">
                 <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+                    <MentionMenu
+                        isOpen={!!mentionQuery && mentionableUsers.length > 0}
+                        query={mentionQuery}
+                        options={mentionableUsers}
+                        selectedIndex={mentionIndex}
+                        onSelect={insertMention}
+                        className="absolute bottom-full left-0 mb-2 w-64"
+                    />
 
                     <Popover>
                         <PopoverTrigger asChild>

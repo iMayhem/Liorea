@@ -334,18 +334,20 @@ export default function ChatPanel() {
             )}
 
             {/* Mention Dropup */}
-            <MentionMenu
-                isOpen={!!mentionQuery && mentionableUsers.length > 0}
-                query={mentionQuery}
-                options={mentionableUsers}
-                selectedIndex={mentionIndex}
-                onSelect={insertMention}
-                className="absolute bottom-16 left-4"
-            />
+
 
             {/* Input Area - Journal Style */}
             <div className="p-4 shrink-0 glass-panel-light">
                 <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+                    {/* Mention Menu */}
+                    <MentionMenu
+                        isOpen={!!mentionQuery && mentionableUsers.length > 0}
+                        query={mentionQuery}
+                        options={mentionableUsers}
+                        selectedIndex={mentionIndex}
+                        onSelect={insertMention}
+                        className="absolute bottom-full left-0 mb-2 w-64"
+                    />
 
                     {/* Hidden Date Input for Image Upload */}
                     <Input

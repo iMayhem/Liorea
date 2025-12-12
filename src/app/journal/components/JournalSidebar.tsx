@@ -44,7 +44,7 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
                     <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
                         <BookOpen className="w-5 h-5 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Your Playlists</h1>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Journals</h1>
                 </div>
                 <Dialog>
                     <DialogTrigger asChild>
