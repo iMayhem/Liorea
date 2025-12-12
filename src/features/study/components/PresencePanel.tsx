@@ -27,8 +27,8 @@ export default function PresencePanel({ users }: PresencePanelProps) {
   return (
     // UPDATED CLASSNAME:
     // UPDATED CLASSNAME:
-    <BentoCard className="w-full h-full flex flex-col text-white shadow-md" noPadding>
-      <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0 border-b border-[#1F2023] bg-[#2B2D31]">
+    <BentoCard className="w-full h-full flex flex-col text-white shadow-md bg-[#1E1F22] border-[#2B2D31]" noPadding>
+      <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0 border-b border-[#2B2D31] bg-[#1E1F22]">
         <div className="flex items-center gap-3">
           <Users className="text-zinc-400 w-5 h-5" />
           <CardTitle className="text-base text-zinc-100 font-semibold">Community</CardTitle>
