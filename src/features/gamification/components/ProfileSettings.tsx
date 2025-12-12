@@ -46,7 +46,11 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
         setLoading(true);
         try {
             const { url } = await api.upload.put(file);
-            setUserImage(url);
+            setUserImage(url); // Updates Context + Firebase RTDB
+
+            // Persist to D1 (So other users/API see it)
+            await api.auth.updateProfile(url);
+
             toast({ title: "Avatar Updated" });
         } catch (e) {
             console.error(e);

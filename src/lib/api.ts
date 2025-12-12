@@ -62,6 +62,7 @@ export const api = {
         googleCheck: (email: string, photoURL: string | null) => request<{ exists: boolean, username: string }>('/auth/google-check', { method: 'POST', body: JSON.stringify({ email, photoURL }) }),
         googleCreate: (data: { email: string | null, username: string, photoURL: string | null }) => request<{ username: string }>('/auth/google-create', { method: 'POST', body: JSON.stringify(data) }),
 
+        updateProfile: (photoURL: string) => request('/user/profile', { method: 'POST', body: JSON.stringify({ photoURL }) }),
         updateStatus: (username: string, status_text: string) => request('/user/status', { method: 'POST', body: JSON.stringify({ username, status_text }) }),
         getStatus: (username: string) => request<{ status_text: string }>(`/user/status?username=${username}`),
     },
@@ -102,7 +103,7 @@ export const api = {
                 method: 'PUT',
                 body: file,
                 headers: {
-                    ...headerAuth
+                    ...(headerAuth as any)
                 }
             });
             if (!response.ok) throw new Error("Upload failed");
