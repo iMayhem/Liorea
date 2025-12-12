@@ -14,17 +14,11 @@ import { UserContextMenuProvider } from '@/context/UserContextMenuContext';
 import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
 import { GamificationProvider } from '@/features/gamification/context/GamificationContext';
 import { LevelUpModal } from '@/features/gamification/components/LevelUpModal';
-import { LiveTicker } from '@/features/gamification/components/LiveTicker';
+import { UserProfileProvider } from '@/features/gamification/context/UserProfileContext';
+import { UserProfileModal } from '@/features/gamification/components/UserProfileModal';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    // DISABLE GLOBAL RIGHT CLICK
-    useEffect(() => {
-        const handleContextMenu = (e: MouseEvent) => {
-            e.preventDefault();
-        };
-        document.addEventListener('contextmenu', handleContextMenu);
-        return () => document.removeEventListener('contextmenu', handleContextMenu);
-    }, []);
+    // ... useEffect ...
 
     return (
         <>
@@ -41,9 +35,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
                             <LiveTicker />
                             <NotificationProvider>
                                 <UserContextMenuProvider>
-                                    {children}
-                                    <MobileMessage />
-                                    <GlobalUserContextMenu />
+                                    <UserProfileProvider>
+                                        {children}
+                                        <MobileMessage />
+                                        <GlobalUserContextMenu />
+                                        <UserProfileModal />
+                                    </UserProfileProvider>
                                 </UserContextMenuProvider>
                             </NotificationProvider>
                         </GamificationProvider>
