@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, Clock, Trophy } from 'lucide-react';
 import { StudyUser } from '@/features/study';
-import UserAvatar from '../UserAvatar';
+import UserAvatar from '@/components/UserAvatar';
 
 interface LeaderboardProps {
   users: StudyUser[];
