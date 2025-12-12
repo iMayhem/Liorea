@@ -1,7 +1,7 @@
 import { auth } from '@/lib/firebase';
 
-const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
-const GIPHY_API_KEY = "15K9ijqVrmDOKdieZofH1b6SFR7KuqG5";
+const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "";
 
 // Helper to get token securely
 const getAuthHeaders = async () => {

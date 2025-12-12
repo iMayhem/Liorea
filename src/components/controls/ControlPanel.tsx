@@ -14,7 +14,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import Leaderboard from '../study/Leaderboard';
+import { Leaderboard } from '@/features/study';
 
 
 export default function ControlPanel() {

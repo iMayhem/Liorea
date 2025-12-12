@@ -10,7 +10,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import Leaderboard from '@/components/study/Leaderboard';
+import { Leaderboard } from '@/features/study';
 import { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
