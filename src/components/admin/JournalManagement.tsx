@@ -9,6 +9,7 @@ import { usePresence } from '@/features/study';
 import { useToast } from '@/hooks/use-toast';
 
 const WORKER_URL = "https://r2-gallery-api.sujeetunbeatable.workers.dev";
+import { useAuthToken } from '@/hooks/useAuthToken';
 
 type Journal = {
   id: number;
@@ -19,6 +20,7 @@ type Journal = {
 
 export default function JournalManagement() {
   const { username } = usePresence();
+  const { token } = useAuthToken();
   const { toast } = useToast();
   const [journals, setJournals] = useState<Journal[]>([]);
 
@@ -41,7 +43,7 @@ export default function JournalManagement() {
       const res = await fetch(`${WORKER_URL}/journals/delete`, {
         method: 'DELETE',
         body: JSON.stringify({ id, username }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
       });
 
       if (res.ok) {
