@@ -44,7 +44,13 @@ const PresenceContext = createContext<PresenceContextType | undefined>(undefined
 
 export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const [username, setUsernameState] = useState<string | null>(null);
-    const [userImage, setUserImage] = useState<string | null>(null);
+    const [userImage, setUserImageState] = useState<string | null>(null);
+
+    const setUserImage = useCallback((url: string | null) => {
+        setUserImageState(url);
+        if (url) localStorage.setItem('liorea-user-image', url);
+        else localStorage.removeItem('liorea-user-image');
+    }, []);
 
     const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
     const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
@@ -58,7 +64,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         const storedUser = localStorage.getItem('liorea-username');
         const storedImage = localStorage.getItem('liorea-user-image');
         if (storedUser) setUsernameState(storedUser);
-        if (storedImage) setUserImage(storedImage);
+        if (storedImage) setUserImageState(storedImage); // Load immediately
     }, []);
 
     const setUsername = useCallback((name: string | null) => {
