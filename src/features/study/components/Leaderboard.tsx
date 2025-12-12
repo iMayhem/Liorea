@@ -31,7 +31,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
 
   return (
     <Card className="bg-transparent border-none shadow-none text-white w-full h-full flex flex-col">
-      <CardHeader className="p-0 pb-4 shrink-0">
+      <CardHeader className="p-0 pb-4 shrink-0 relative z-10">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold flex items-center gap-2">
             <Trophy className="text-yellow-500 w-5 h-5" />
@@ -46,7 +46,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
                 <ChevronDown className="w-4 h-4 text-zinc-500" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContentNoPortal align="end" className="w-32 bg-zinc-950 border border-white/10 text-white shadow-xl z-[60]">
+            <DropdownMenuContentNoPortal align="end" className="w-32 bg-black border border-white/10 text-white shadow-xl z-[100]">
               <DropdownMenuItem onClick={() => setFilter('daily')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Daily</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('weekly')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Weekly</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilter('all')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">All Time</DropdownMenuItem>
