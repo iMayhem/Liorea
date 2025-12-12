@@ -14,6 +14,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { usePresence } from '@/features/study';
+import { GlobalSettingsDialog } from '@/features/settings/components/GlobalSettingsDialog';
 import { db } from '@/lib/firebase';
 import { ref, push, serverTimestamp } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
@@ -65,6 +66,7 @@ export default function Header() {
                     Liorea
                 </Link>
                 <nav className="flex items-center gap-2">
+                    <GlobalSettingsDialog />
                     <Link href="/shop">
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" title="Item Shop">
                             <ShoppingBag className="w-5 h-5" />

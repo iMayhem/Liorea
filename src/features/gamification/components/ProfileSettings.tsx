@@ -12,6 +12,8 @@ import { api } from '@/lib/api';
 import { ShopItem } from '../types';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { useSettings } from '@/context/SettingsContext';
+import { Monitor } from 'lucide-react';
 
 interface ProfileSettingsProps {
     allItems: ShopItem[];
@@ -22,6 +24,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     const { username, setUsername, userImage, setUserImage } = usePresence();
     const { stats, equipItem, refreshStats } = useGamification();
     const { toast } = useToast();
+    const { textSize, setTextSize } = useSettings();
     const [loading, setLoading] = useState(false);
 
     // Form States
@@ -94,9 +97,10 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
             </div>
 
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="w-full grid grid-cols-3 bg-zinc-900 rounded-lg p-1">
+                <TabsList className="w-full grid grid-cols-4 bg-zinc-900 rounded-lg p-1">
                     <TabsTrigger value="general" className="data-[state=active]:bg-zinc-800">General</TabsTrigger>
                     <TabsTrigger value="appearance" className="data-[state=active]:bg-zinc-800">Cosmetics</TabsTrigger>
+                    <TabsTrigger value="ui" className="data-[state=active]:bg-zinc-800">Appearance</TabsTrigger>
                     <TabsTrigger value="account" className="data-[state=active]:bg-zinc-800">Account</TabsTrigger>
                 </TabsList>
 
@@ -193,6 +197,46 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                 {myColors.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
+                    </div>
+                </TabsContent>
+
+                {/* UI APPEARANCE TAB */}
+                <TabsContent value="ui" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-zinc-200">
+                            <Monitor className="w-5 h-5 text-emerald-400" />
+                            <h3 className="font-semibold">Display Settings</h3>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label>Text Size</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Button
+                                    variant={textSize === 'sm' ? "default" : "outline"}
+                                    onClick={() => setTextSize('sm')}
+                                    className="text-xs"
+                                >
+                                    Small
+                                </Button>
+                                <Button
+                                    variant={textSize === 'md' ? "default" : "outline"}
+                                    onClick={() => setTextSize('md')}
+                                    className="text-sm"
+                                >
+                                    Medium
+                                </Button>
+                                <Button
+                                    variant={textSize === 'lg' ? "default" : "outline"}
+                                    onClick={() => setTextSize('lg')}
+                                    className="text-base"
+                                >
+                                    Large
+                                </Button>
+                            </div>
+                            <p className="text-xs text-zinc-500">
+                                Adjust the global text size of the application.
+                            </p>
+                        </div>
                     </div>
                 </TabsContent>
 

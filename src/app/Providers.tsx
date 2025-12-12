@@ -17,6 +17,7 @@ import { LevelUpModal } from '@/features/gamification/components/LevelUpModal';
 import { UserProfileProvider } from '@/features/gamification/context/UserProfileContext';
 import { UserProfileModal } from '@/features/gamification/components/UserProfileModal';
 import { LiveTicker } from '@/features/gamification/components/LiveTicker';
+import { SettingsProvider } from '@/context/SettingsContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     // ... useEffect ...
@@ -27,26 +28,28 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <NavigationEvents />
             </Suspense>
             <BackgroundProvider>
-                <BackgroundDisplay />
-                <FocusProvider>
-                    <FocusOverlay />
-                    <PresenceProvider>
-                        <GamificationProvider>
-                            <LevelUpModal />
-                            <LiveTicker />
-                            <NotificationProvider>
-                                <UserContextMenuProvider>
-                                    <UserProfileProvider>
-                                        {children}
-                                        <MobileMessage />
-                                        <GlobalUserContextMenu />
-                                        <UserProfileModal />
-                                    </UserProfileProvider>
-                                </UserContextMenuProvider>
-                            </NotificationProvider>
-                        </GamificationProvider>
-                    </PresenceProvider>
-                </FocusProvider>
+                <SettingsProvider>
+                    <BackgroundDisplay />
+                    <FocusProvider>
+                        <FocusOverlay />
+                        <PresenceProvider>
+                            <GamificationProvider>
+                                <LevelUpModal />
+                                <LiveTicker />
+                                <NotificationProvider>
+                                    <UserContextMenuProvider>
+                                        <UserProfileProvider>
+                                            {children}
+                                            <MobileMessage />
+                                            <GlobalUserContextMenu />
+                                            <UserProfileModal />
+                                        </UserProfileProvider>
+                                    </UserContextMenuProvider>
+                                </NotificationProvider>
+                            </GamificationProvider>
+                        </PresenceProvider>
+                    </FocusProvider>
+                </SettingsProvider>
             </BackgroundProvider>
             <Toaster />
         </>
