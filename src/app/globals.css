@@ -76,6 +76,16 @@
   }
 }
 
+@layer utilities {
+  .glass-panel {
+    @apply bg-card border border-white/5 shadow-xl;
+  }
+
+  .glass-panel-light {
+    @apply bg-black/20 border-b border-white/5;
+  }
+}
+
 /* Discord-like Avatar Mask (Small/Default) */
 .discord-mask {
   mask-image: radial-gradient(circle 6px at calc(100% - 4px) calc(100% - 4px), transparent 5px, black 6px);
