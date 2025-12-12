@@ -10,7 +10,12 @@ import { useGamification } from "@/features/gamification/context/GamificationCon
 import { useToast } from "@/hooks/use-toast";
 import { api, getProxiedUrl } from "@/lib/api";
 import { ShopItem } from "@/features/gamification/types";
-import { LottiePreview } from "@/components/ui/LottiePreview";
+import dynamic from 'next/dynamic';
+
+const LottiePreview = dynamic(() => import('@/components/ui/LottiePreview').then(mod => mod.LottiePreview), {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-white/5 animate-pulse rounded-full" />
+});
 
 export default function CosmeticsLab() {
     const { equipItem, stats } = useGamification();
@@ -143,7 +148,7 @@ export default function CosmeticsLab() {
                                 {/* Frame */}
                                 {activeFrameItem && (
                                     <div className="absolute -top-[23%] -left-[23%] w-[146%] h-[146%] z-20 pointer-events-none select-none">
-                                        {activeFrameItem.assetUrl?.endsWith('.json') ? (
+                                        {activeFrameItem.assetUrl?.toLowerCase().includes('.json') ? (
                                             <LottiePreview url={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full" />
                                         ) : (
                                             <img src={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full object-contain" alt="" />

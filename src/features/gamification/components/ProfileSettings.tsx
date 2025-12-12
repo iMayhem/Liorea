@@ -118,7 +118,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                 <div className="absolute inset-0 z-10 pointer-events-none scale-[1.35]">
                                     {(() => {
                                         const frame = myFrames.find(f => f.id === stats.equipped_frame);
-                                        if (frame?.assetUrl?.endsWith('.json')) {
+                                        if (frame?.assetUrl?.toLowerCase().includes('.json')) {
                                             return <LottiePreview url={getProxiedUrl(frame.assetUrl)} className="w-full h-full" />;
                                         } else if (frame?.assetUrl) {
                                             return <img src={getProxiedUrl(frame.assetUrl)} className="w-full h-full object-contain" alt="" />;

@@ -121,7 +121,7 @@ export default function ShopPage() {
                                     )}
 
                                     {/* Asset Rendering */}
-                                    {item.assetUrl && item.assetUrl.endsWith('.json') ? (
+                                    {item.assetUrl && item.assetUrl.toLowerCase().includes('.json') ? (
                                         <LottiePreview url={getProxiedUrl(item.assetUrl)} className={item.type === 'frame' ? "w-[80px] h-[80px] z-10 absolute pointer-events-none" : "w-20 h-20"} />
                                     ) : item.assetUrl ? (
                                         <img src={getProxiedUrl(item.assetUrl)} className={item.type === 'frame' ? "w-[80px] h-[80px] z-10 absolute pointer-events-none object-contain drop-shadow-xl" : "w-20 h-20 object-contain drop-shadow-xl"} alt="" />
