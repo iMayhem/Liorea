@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api, getProxiedUrl } from "@/lib/api";
 import { ShopItem } from "@/features/gamification/types";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -211,9 +211,9 @@ export default function ItemManager() {
                                 <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-900/50">
                                     <TableCell>
                                         {item.type === 'effect' && item.assetUrl ? (
-                                            <LottiePreview url={item.assetUrl} className="w-8 h-8" />
+                                            <LottiePreview url={getProxiedUrl(item.assetUrl)} className="w-8 h-8" />
                                         ) : item.assetUrl ? (
-                                            <img src={item.assetUrl} className="w-8 h-8 object-contain" alt="" />
+                                            <img src={getProxiedUrl(item.assetUrl)} className="w-8 h-8 object-contain" alt="" />
                                         ) : (
                                             <span className="text-xl">{item.previewUrl || '📦'}</span>
                                         )}

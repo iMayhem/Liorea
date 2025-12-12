@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { api, getProxiedUrl } from '@/lib/api';
 import { ShopItem } from "@/features/gamification/types";
 import { LottiePreview } from "@/components/ui/LottiePreview";
 
@@ -114,14 +114,13 @@ export default function ShopPage() {
                                     }`}
                             >
                                 {/* Preview */}
-                                <div className="w-24 h-24 rounded-2xl bg-[#111214] flex items-center justify-center text-4xl mb-2 relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                                    {item.previewUrl && <span className="z-10">{item.previewUrl}</span>}
-                                    {/* Visualize Frames roughly */}
-                                    {item.type === 'frame' && (
-                                        <div className={`absolute inset-4 rounded-full border-4 ${item.assetUrl?.split(' ')[0] || 'border-white'}`} />
-                                    )}
-                                    {item.type === 'color' && (
-                                        <span className={`font-bold ${item.assetUrl}`}>Name</span>
+                                <div className="h-32 mb-4 relative flex items-center justify-center p-4 bg-black/20 rounded-xl">
+                                    {item.type === 'effect' && item.assetUrl ? (
+                                        <LottiePreview url={getProxiedUrl(item.assetUrl)} className="w-24 h-24" />
+                                    ) : item.assetUrl ? (
+                                        <img src={getProxiedUrl(item.assetUrl)} className="w-24 h-24 object-contain drop-shadow-2xl" alt="" />
+                                    ) : (
+                                        <span className="text-6xl">{item.previewUrl || '📦'}</span>
                                     )}
                                 </div>
 

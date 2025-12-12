@@ -3,6 +3,15 @@ import { auth } from '@/lib/firebase';
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || "https://r2-gallery-api.sujeetunbeatable.workers.dev";
 const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || "";
 
+export const getProxiedUrl = (url: string | undefined | null) => {
+    if (!url) return "";
+    if (url.includes("r2.dev/")) {
+        const key = url.split("r2.dev/")[1];
+        return `${WORKER_URL}/content/${key}`;
+    }
+    return url;
+};
+
 // Helper to get token securely
 const getAuthHeaders = async () => {
     const user = auth.currentUser;

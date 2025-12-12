@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useGamification } from "@/features/gamification/context/GamificationContext";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
+import { api, getProxiedUrl } from "@/lib/api";
 import { ShopItem } from "@/features/gamification/types";
 import { LottiePreview } from "@/components/ui/LottiePreview";
 
@@ -132,7 +132,7 @@ export default function CosmeticsLab() {
                     {/* EFFECT OVERLAY */}
                     {activeEffectItem && activeEffectItem.assetUrl && (
                         <div className="absolute inset-0 z-0 pointer-events-none opacity-80 mix-blend-screen">
-                            <LottiePreview url={activeEffectItem.assetUrl} className="w-full h-full object-cover" />
+                            <LottiePreview url={getProxiedUrl(activeEffectItem.assetUrl)} className="w-full h-full object-cover" />
                         </div>
                     )}
 
@@ -147,7 +147,7 @@ export default function CosmeticsLab() {
                                 {/* Frame */}
                                 {activeFrameItem && (
                                     <div className="absolute -top-[22%] -left-[22%] w-[144%] h-[144%] z-20 pointer-events-none select-none">
-                                        <img src={activeFrameItem.assetUrl} className="w-full h-full object-contain" alt="" />
+                                        <img src={getProxiedUrl(activeFrameItem.assetUrl)} className="w-full h-full object-contain" alt="" />
                                     </div>
                                 )}
                                 {/* Avatar */}
