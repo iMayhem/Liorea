@@ -23,7 +23,7 @@ export function GlobalSettingsDialog() {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" title="Global Settings">
+                <Button variant="ghost" size="icon" className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 rounded-full" title="Global Settings">
                     <Settings className="w-5 h-5" />
                 </Button>
             </DialogTrigger>

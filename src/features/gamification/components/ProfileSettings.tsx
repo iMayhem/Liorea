@@ -214,9 +214,9 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
 
                 {/* ACCOUNT TAB */}
                 <TabsContent value="account" className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="p-4 bg-red-950/20 border border-red-900/50 rounded-lg">
+                    <div className="p-4 bg-red-950 border border-red-900 rounded-lg">
                         <h3 className="text-red-400 font-bold mb-2">Danger Zone</h3>
-                        <p className="text-xs text-red-300/70 mb-4">Once you sign out, you will need to log in again to access your account.</p>
+                        <p className="text-xs text-red-300 mb-4">Once you sign out, you will need to log in again to access your account.</p>
                         <Button variant="destructive" className="w-full" onClick={handleLogout}>
                             <LogOut className="w-4 h-4 mr-2" /> Sign Out from Liorea
                         </Button>
