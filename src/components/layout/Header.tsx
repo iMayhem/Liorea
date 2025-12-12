@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2 } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,11 @@ export default function Header() {
                     Liorea
                 </Link>
                 <nav className="flex items-center gap-2">
+                    <Link href="/shop">
+                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" title="Item Shop">
+                            <ShoppingBag className="w-5 h-5" />
+                        </Button>
+                    </Link>
 
                     {/* BUG REPORT / FEEDBACK BUTTON */}
                     <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>

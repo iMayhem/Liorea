@@ -67,12 +67,7 @@ export default function BottomControlBar() {
                         </SheetContent>
                     </Sheet>
 
-                    {/* Shop */}
-                    <Link href="/shop">
-                        <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 hover:bg-[#313338] text-zinc-400 hover:text-indigo-400 transition-colors">
-                            <ShoppingBag className="w-5 h-5" />
-                        </Button>
-                    </Link>
+                    {/* Shop - Moved to Main Header */}
 
                     {/* Sound Controls */}
                     <SoundscapeMixer sounds={sounds} sidebarMode={false} />

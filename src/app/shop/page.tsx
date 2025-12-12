@@ -37,13 +37,10 @@ export default function ShopPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#111214] text-white p-6 md:p-12 font-sans overflow-y-auto">
+        <div className="h-screen bg-[#111214] text-white p-6 md:p-12 font-sans overflow-y-auto pt-[80px]">
             {/* Header */}
             <div className="max-w-6xl mx-auto flex items-center justify-between mb-8 sticky top-0 z-20 bg-[#111214]/80 backdrop-blur-md py-4">
                 <div className="flex items-center gap-4">
-                    <Link href="/journal" className="p-2 rounded-full hover:bg-white/10 transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-zinc-400" />
-                    </Link>
                     <div>
                         <h1 className="text-3xl font-bold flex items-center gap-3">
                             <ShoppingBag className="w-8 h-8 text-indigo-400" />
@@ -71,8 +68,8 @@ export default function ShopPage() {
                         key={cat}
                         onClick={() => setCategory(cat)}
                         className={`px-6 py-2 rounded-full border text-sm font-bold transition-all capitalize ${category === cat
-                                ? 'bg-white text-black border-white'
-                                : 'bg-transparent text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-white'
+                            ? 'bg-white text-black border-white'
+                            : 'bg-transparent text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-white'
                             }`}
                     >
                         {cat === 'all' ? 'All Items' : cat + 's'}
@@ -96,10 +93,10 @@ export default function ShopPage() {
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 key={item.id}
                                 className={`relative group rounded-2xl p-6 border transition-all duration-300 flex flex-col items-center gap-4 ${equipped
-                                        ? 'bg-indigo-500/10 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
-                                        : owned
-                                            ? 'bg-[#1e1f22] border-zinc-700'
-                                            : 'bg-[#1e1f22] border-zinc-800 hover:border-zinc-600'
+                                    ? 'bg-indigo-500/10 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
+                                    : owned
+                                        ? 'bg-[#1e1f22] border-zinc-700'
+                                        : 'bg-[#1e1f22] border-zinc-800 hover:border-zinc-600'
                                     }`}
                             >
                                 {/* Preview */}
@@ -125,8 +122,8 @@ export default function ShopPage() {
                                             onClick={() => handleEquip(item)}
                                             disabled={equipped}
                                             className={`w-full py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${equipped
-                                                    ? 'bg-green-500/20 text-green-400 cursor-default'
-                                                    : 'bg-zinc-700 hover:bg-zinc-600 text-white'
+                                                ? 'bg-green-500/20 text-green-400 cursor-default'
+                                                : 'bg-zinc-700 hover:bg-zinc-600 text-white'
                                                 }`}
                                         >
                                             {equipped ? (
@@ -140,8 +137,8 @@ export default function ShopPage() {
                                             onClick={() => handleBuy(item)}
                                             disabled={!canAfford || buyingId === item.id}
                                             className={`w-full py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${canAfford
-                                                    ? 'bg-white hover:bg-zinc-200 text-black'
-                                                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
+                                                ? 'bg-white hover:bg-zinc-200 text-black'
+                                                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50'
                                                 }`}
                                         >
                                             {buyingId === item.id ? (
