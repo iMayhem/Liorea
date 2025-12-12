@@ -8,10 +8,8 @@ import { db } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
 import { Loader2, Trophy, Coins, CalendarDays, X, Shield, Star, Medal } from "lucide-react";
 import { SHOP_ITEMS } from "../data/items";
-import dynamic from 'next/dynamic';
-
-// Dynamically import Lottie to avoid SSR issues
-const LottiePlayer = dynamic(() => import("lottie-react"), { ssr: false });
+import { ShopItem } from "../types";
+import { LottiePreview } from "@/components/ui/LottiePreview";
 
 interface ProfileStats {
     level: number;
@@ -32,8 +30,9 @@ export function UserProfileModal() {
     const { isOpen, targetUsername, closeProfile } = useUserProfile();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<ProfileStats | null>(null);
-    const [effectData, setEffectData] = useState<any>(null);
+    const [allItems, setAllItems] = useState<ShopItem[]>(SHOP_ITEMS);
 
+    // Refresh Key for signals
     const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
@@ -71,32 +70,23 @@ export function UserProfileModal() {
     }, [isOpen, targetUsername]);
 
     // Load Effect JSON
+    // Fetch Dynamic Items on Mount
     useEffect(() => {
-        if (stats?.equipped?.effect) {
-            const effectItem = SHOP_ITEMS.find(i => i.id === stats.equipped.effect);
-            // Also check dynamic items if not found in static
-            if (effectItem && effectItem.assetUrl) {
-                fetch(getProxiedUrl(effectItem.assetUrl)).then(r => r.json()).then(setEffectData).catch(console.error);
-            } else {
-                api.gamification.getItems().then(items => {
-                    const found = items.find(i => i.id === stats.equipped.effect);
-                    if (found && found.assetUrl) {
-                        fetch(getProxiedUrl(found.assetUrl)).then(r => r.json()).then(setEffectData).catch(console.error);
-                    }
-                }).catch(console.error);
+        api.gamification.getItems().then(items => {
+            if (Array.isArray(items)) {
+                const newItems = items.filter(d => !SHOP_ITEMS.find(s => s.id === d.id));
+                setAllItems([...SHOP_ITEMS, ...newItems]);
             }
-        } else {
-            setEffectData(null);
-        }
-    }, [stats?.equipped?.effect]);
+        }).catch(e => console.error("Failed to fetch dynamic items", e));
+    }, []);
 
-    const getFrame = (frameId: string) => SHOP_ITEMS.find(i => i.id === frameId);
-    const getBadge = (badgeId: string) => SHOP_ITEMS.find(i => i.id === badgeId);
+    const getItem = (id: string) => allItems.find(i => i.id === id);
 
     // Resolve cosmetic items
-    const badgeItem = useMemo(() => stats?.equipped?.badge ? getBadge(stats.equipped.badge) : null, [stats?.equipped?.badge]);
-    const frameItem = useMemo(() => stats?.equipped?.frame ? getFrame(stats.equipped.frame) : null, [stats?.equipped?.frame]);
-    const colorItem = useMemo(() => stats?.equipped?.color ? SHOP_ITEMS.find(i => i.id === stats.equipped.color) : null, [stats?.equipped?.color]);
+    const badgeItem = useMemo(() => stats?.equipped?.badge ? getItem(stats.equipped.badge) : null, [stats?.equipped?.badge, allItems]);
+    const frameItem = useMemo(() => stats?.equipped?.frame ? getItem(stats.equipped.frame) : null, [stats?.equipped?.frame, allItems]);
+    const colorItem = useMemo(() => stats?.equipped?.color ? getItem(stats.equipped.color) : null, [stats?.equipped?.color, allItems]);
+    const effectItem = useMemo(() => stats?.equipped?.effect ? getItem(stats.equipped.effect) : null, [stats?.equipped?.effect, allItems]);
     // Dynamic fallback logic omitted for brevity as mainly static items are used for previews, real app would fetch all.
 
     if (!isOpen) return null;
@@ -110,9 +100,9 @@ export function UserProfileModal() {
                 <div className="relative w-full bg-[#111214]/95 backdrop-blur-xl border border-white/5 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
 
                     {/* Profile Effect (Overlay) */}
-                    {effectData && (
+                    {effectItem && effectItem.assetUrl && (
                         <div className="absolute inset-0 pointer-events-none z-0">
-                            <LottiePlayer animationData={effectData} loop={true} autoplay={true} className="w-full h-full object-cover" />
+                            <LottiePreview url={getProxiedUrl(effectItem.assetUrl)} className="w-full h-full object-cover" />
                         </div>
                     )}
 
@@ -125,18 +115,13 @@ export function UserProfileModal() {
                         <div className="relative mb-4 flex justify-between items-start">
                             <div className="relative">
                                 {/* Frame Overlay */}
-                                {stats?.equipped?.frame && (() => {
-                                    const frame = getFrame(stats.equipped.frame);
-                                    if (frame && frame.assetUrl) {
-                                        return (
-                                            <img
-                                                src={getProxiedUrl(frame.assetUrl)}
-                                                className="absolute -top-[16%] -left-[16%] w-[132%] h-[132%] z-20 pointer-events-none"
-                                                alt=""
-                                            />
-                                        )
-                                    }
-                                })()}
+                                {frameItem && frameItem.assetUrl && (
+                                    <img
+                                        src={getProxiedUrl(frameItem.assetUrl)}
+                                        className="absolute -top-[16%] -left-[16%] w-[132%] h-[132%] z-20 pointer-events-none"
+                                        alt=""
+                                    />
+                                )}
 
                                 {/* Avatar */}
                                 <div className="w-28 h-28 rounded-full bg-[#111214] p-[5px] relative">
