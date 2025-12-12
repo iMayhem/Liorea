@@ -96,6 +96,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     if (data.status_text) savedStatus = data.status_text;
                 } catch (e) { }
 
+                // Establish Presence
+                await onDisconnect(commRef).update({
+                    status: 'Offline',
+                    last_seen: serverTimestamp(),
+                    is_studying: false
+                });
+
                 update(commRef, {
                     username: username,
                     photoURL: userImage || "",
@@ -103,15 +110,13 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     last_seen: serverTimestamp(),
                     status_text: savedStatus,
                 });
-
-                onDisconnect(commRef).update({
-                    status: 'Offline',
-                    last_seen: serverTimestamp(),
-                    is_studying: false
-                });
             }
         });
-        return () => unsubscribe();
+
+        return () => {
+            unsubscribe();
+            onDisconnect(commRef).cancel(); // CRITICAL: Cancel onDisconnect when username changes/unmounts
+        };
     }, [username, userImage]);
 
     // --- ACTIVE STUDY LOGIC ---
@@ -131,6 +136,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     }
                 } catch (e) { }
 
+                await onDisconnect(studyRef).remove(); // Ensure remove is queued first
+
                 set(studyRef, {
                     username: username,
                     photoURL: userImage || "",
@@ -139,8 +146,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 });
 
                 update(commRef, { is_studying: true });
-                onDisconnect(studyRef).remove();
             } else {
+                onDisconnect(studyRef).cancel(); // Clean up
                 remove(studyRef);
                 update(commRef, { is_studying: false });
             }
@@ -149,12 +156,17 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         initializeStudySession();
 
         return () => {
+            // Basic Cleanup
             if (!isStudying && username) {
                 remove(studyRef);
                 update(commRef, { is_studying: false }).catch(() => { });
             }
         };
     }, [username, isStudying, userImage]);
+
+    // ... (DATA LISTENERS unchanged) ...
+
+
 
     // --- DATA LISTENERS ---
     useEffect(() => {
@@ -321,6 +333,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
         try {
             await api.auth.renameUser(oldName, newName);
+
+            // CRITICAL: Cancel "Offline" write trigger for the old name
+            await onDisconnect(ref(db, `/community_presence/${oldName}`)).cancel();
+            if (isStudying) {
+                await onDisconnect(ref(db, `/study_room_presence/${oldName}`)).cancel();
+            }
 
             await remove(ref(db, `/community_presence/${oldName}`));
             if (isStudying) {
