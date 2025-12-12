@@ -35,10 +35,12 @@ interface ProfileStats {
 
 export function UserProfileModal() {
     const { isOpen, targetUsername, closeProfile } = useUserProfile();
-    const { username: myUsername } = usePresence();
+    const { username: myUsername, communityUsers } = usePresence();
     const isMe = (myUsername && targetUsername) ? myUsername.toLowerCase().trim() === targetUsername.toLowerCase().trim() : false;
 
-    // Logs removed
+    // Get real-time status from presence context
+    const targetPresence = communityUsers.find(u => u.username.toLowerCase() === targetUsername?.toLowerCase());
+    const aboutMe = targetPresence?.status_text || (stats?.current_streak ? `🔥 On a ${stats.current_streak} day streak!` : null);
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<ProfileStats | null>(null);
@@ -122,7 +124,7 @@ export function UserProfileModal() {
                 <DialogTitle className="sr-only">{targetUsername}'s Profile</DialogTitle>
                 <DialogDescription className="sr-only">User Profile Details</DialogDescription>
 
-                <div className="w-full bg-[#111214] rounded-lg overflow-hidden shadow-2xl flex flex-col relative animate-in zoom-in-95 duration-200">
+                <div className="w-[340px] bg-[#111214] rounded-lg overflow-hidden shadow-2xl flex flex-col relative animate-in zoom-in-95 duration-200">
 
                     {/* BANNER (105px height typical for Discord user popout) */}
                     <div className="h-[105px] w-full bg-discord-blurple relative overflow-hidden">
