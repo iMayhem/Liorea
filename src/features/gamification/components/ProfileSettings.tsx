@@ -26,13 +26,11 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     const { toast } = useToast();
     const { textSize, setTextSize } = useSettings();
     const [loading, setLoading] = useState(false);
-
-    // Form States
-    const [newName, setNewName] = useState(username || "");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Derived Lists - Items user owns OR are free (price 0)
     // We treat 'inventory' as list of IDs.
+    // Removed rename state and logic as per request.
     const hasItem = (id: string) => stats.inventory.includes(id) || allItems.find(i => i.id === id)?.price === 0;
 
     const myBadges = allItems.filter(i => i.type === 'badge' && hasItem(i.id));
@@ -40,22 +38,6 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     const myEffects = allItems.filter(i => i.type === 'effect' && hasItem(i.id));
     const myColors = allItems.filter(i => i.type === 'color' && hasItem(i.id));
 
-    const handleRename = async () => {
-        if (!newName || newName === username) return;
-        setLoading(true);
-        try {
-            await api.auth.renameUser(username!, newName);
-            // Updating local context
-            setUsername(newName);
-            toast({ title: "Name Updated", description: `You are now known as ${newName}` });
-            // Close or refresh?
-            onClose();
-        } catch (e: any) {
-            toast({ variant: "destructive", title: "Rename Failed", description: e.message || "Could not rename user." });
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -135,21 +117,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                         </div>
                     </div>
 
-                    {/* NAME */}
-                    <div className="space-y-3">
-                        <Label>Display Name</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                value={newName}
-                                onChange={e => setNewName(e.target.value)}
-                                placeholder="Username"
-                                className="bg-zinc-900 border-zinc-700"
-                            />
-                            <Button onClick={handleRename} disabled={loading || newName === username}>
-                                <Save className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
+
                 </TabsContent>
 
                 {/* COSMETICS TAB */}

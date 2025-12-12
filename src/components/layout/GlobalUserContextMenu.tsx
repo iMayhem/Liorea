@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useUserContextMenu } from '@/context/UserContextMenuContext';
 import { Card } from '@/components/ui/card';
-import { User, Ban, MessageSquare, XCircle } from 'lucide-react';
+import { User, Ban, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePresence } from '@/features/study'; // Import to identify who is reporting
 import { db } from '@/lib/firebase'; // Import existing Firebase DB instance
@@ -43,27 +43,35 @@ export default function GlobalUserContextMenu() {
       className="fixed z-[100] w-48 animate-in fade-in zoom-in-95 duration-100"
       style={{ top: position.y, left: position.x }}
     >
-      <Card className="bg-[#18181b]/95 backdrop-blur-xl border border-white/10 p-1 shadow-2xl text-white">
-        <div className="px-2 py-1.5 text-xs font-semibold text-white/50 border-b border-white/5 mb-1">
+      <Card className="bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 p-1.5 shadow-2xl text-zinc-200 overflow-hidden rounded-xl w-52 ring-1 ring-white/5">
+        <div className="px-3 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1 select-none">
           @{targetUser}
         </div>
 
-        <button onClick={handleViewProfile} className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-white/10 transition-colors text-left">
-          <User className="w-4 h-4" /> View Profile
+        <button
+          onClick={handleViewProfile}
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-zinc-800/80 hover:text-white transition-all text-left group"
+        >
+          <User className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+          View Profile
         </button>
 
-        <button onClick={() => handleAction('Message')} className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-white/10 transition-colors text-left">
-          <MessageSquare className="w-4 h-4" /> Message
+        <div className="h-px bg-zinc-800/50 my-1.5 mx-1" />
+
+        <button
+          onClick={() => handleAction('Block User')}
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors text-left"
+        >
+          <Ban className="w-4 h-4" />
+          Block User
         </button>
 
-        <div className="h-px bg-white/10 my-1" />
-
-        <button onClick={() => handleAction('Block User')} className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-left">
-          <Ban className="w-4 h-4" /> Block
-        </button>
-
-        <button onClick={handleReport} className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-left">
-          <XCircle className="w-4 h-4" /> Report
+        <button
+          onClick={handleReport}
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors text-left"
+        >
+          <XCircle className="w-4 h-4" />
+          Report Abuse
         </button>
       </Card>
     </div>

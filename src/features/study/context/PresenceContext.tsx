@@ -37,7 +37,6 @@ interface PresenceContextType {
     joinSession: () => void;
     leaveSession: () => void;
     updateStatusMessage: (msg: string) => Promise<void>;
-    renameUser: (newName: string) => Promise<boolean>;
     getUserImage: (username: string) => string | undefined;
 }
 
@@ -327,40 +326,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         toast({ title: "Status Updated" });
     }, [username, toast]);
 
-    const renameUser = useCallback(async (newName: string) => {
-        if (!username) return false;
-        const oldName = username;
 
-        try {
-            await api.auth.renameUser(oldName, newName);
-
-            // CRITICAL: Cancel "Offline" write trigger for the old name
-            await onDisconnect(ref(db, `/community_presence/${oldName}`)).cancel();
-            if (isStudying) {
-                await onDisconnect(ref(db, `/study_room_presence/${oldName}`)).cancel();
-            }
-
-            await remove(ref(db, `/community_presence/${oldName}`));
-            if (isStudying) {
-                await remove(ref(db, `/study_room_presence/${oldName}`));
-            }
-
-            setUsername(newName);
-            toast({ title: "Success", description: `Renamed to ${newName}` });
-            return true;
-
-        } catch (e: any) {
-            toast({ variant: "destructive", title: "Rename Failed", description: e.message });
-            return false;
-        }
-    }, [username, isStudying, setUsername, toast]);
 
     const value = useMemo(() => ({
         username, userImage, setUsername, setUserImage,
         studyUsers, leaderboardUsers, communityUsers,
-        isStudying, joinSession, leaveSession, updateStatusMessage, renameUser,
+        isStudying, joinSession, leaveSession, updateStatusMessage,
         getUserImage
-    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, renameUser, getUserImage]);
+    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage]);
 
     return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };

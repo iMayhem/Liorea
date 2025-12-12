@@ -61,7 +61,7 @@ export const api = {
     auth: {
         googleCheck: (email: string, photoURL: string | null) => request<{ exists: boolean, username: string }>('/auth/google-check', { method: 'POST', body: JSON.stringify({ email, photoURL }) }),
         googleCreate: (data: { email: string | null, username: string, photoURL: string | null }) => request<{ username: string }>('/auth/google-create', { method: 'POST', body: JSON.stringify(data) }),
-        renameUser: (oldUsername: string, newUsername: string) => request('/user/rename', { method: 'POST', body: JSON.stringify({ oldUsername, newUsername }) }),
+
         updateStatus: (username: string, status_text: string) => request('/user/status', { method: 'POST', body: JSON.stringify({ username, status_text }) }),
         getStatus: (username: string) => request<{ status_text: string }>(`/user/status?username=${username}`),
     },
