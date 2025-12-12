@@ -16,6 +16,7 @@ import { GamificationProvider } from '@/features/gamification/context/Gamificati
 import { LevelUpModal } from '@/features/gamification/components/LevelUpModal';
 import { UserProfileProvider } from '@/features/gamification/context/UserProfileContext';
 import { UserProfileModal } from '@/features/gamification/components/UserProfileModal';
+import { LiveTicker } from '@/features/gamification/components/LiveTicker';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     // ... useEffect ...
