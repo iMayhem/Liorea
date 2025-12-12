@@ -45,6 +45,7 @@ export function UserProfileModal() {
             const fetchStats = async () => {
                 try {
                     const data = await api.gamification.getStats(targetUsername);
+                    console.log("🔍 [UserProfileModal] Fetched Stats:", data);
                     setStats(data || {
                         level: 1, xp: 0, coins: 0, inventory: [],
                         equipped: { badge: null, frame: null, effect: null, color: null }
@@ -88,6 +89,17 @@ export function UserProfileModal() {
     const colorItem = useMemo(() => stats?.equipped?.color ? getItem(stats.equipped.color) : null, [stats?.equipped?.color, allItems]);
     const effectItem = useMemo(() => stats?.equipped?.effect ? getItem(stats.equipped.effect) : null, [stats?.equipped?.effect, allItems]);
     // Dynamic fallback logic omitted for brevity as mainly static items are used for previews, real app would fetch all.
+
+    // DEBUG LOGS
+    useEffect(() => {
+        if (isOpen) {
+            console.log("🔍 [UserProfileModal] Stats:", stats);
+            console.log("🔍 [UserProfileModal] All Items:", allItems);
+            console.log("🔍 [UserProfileModal] Resolved Badge:", badgeItem);
+            console.log("🔍 [UserProfileModal] Resolved Frame:", frameItem);
+            console.log("🔍 [UserProfileModal] Resolved Effect:", effectItem);
+        }
+    }, [isOpen, stats, allItems, badgeItem, frameItem, effectItem]);
 
     if (!isOpen) return null;
 
