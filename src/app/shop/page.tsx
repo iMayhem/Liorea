@@ -9,8 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { ShopItem } from "@/features/gamification/types";
+import { LottiePreview } from "@/components/ui/LottiePreview";
 
-type Category = 'all' | 'badge' | 'frame' | 'color';
+type Category = 'all' | 'badge' | 'frame' | 'color' | 'effect';
 
 export default function ShopPage() {
     const { stats, buyItem, equipItem, hasItem } = useGamification();
@@ -76,7 +77,7 @@ export default function ShopPage() {
 
             {/* Categories */}
             <div className="max-w-6xl mx-auto mb-8 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                {(['all', 'badge', 'frame', 'color'] as Category[]).map(cat => (
+                {(['all', 'badge', 'frame', 'effect', 'color'] as Category[]).map(cat => (
                     <button
                         key={cat}
                         onClick={() => setCategory(cat)}

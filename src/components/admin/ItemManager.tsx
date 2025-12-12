@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus, Upload, Loader2, Image as ImageIcon } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { LottiePreview } from "@/components/ui/LottiePreview";
 
 export default function ItemManager() {
     const { toast } = useToast();
@@ -209,7 +210,9 @@ export default function ItemManager() {
                             {items.map(item => (
                                 <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-900/50">
                                     <TableCell>
-                                        {item.assetUrl ? (
+                                        {item.type === 'effect' && item.assetUrl ? (
+                                            <LottiePreview url={item.assetUrl} className="w-8 h-8" />
+                                        ) : item.assetUrl ? (
                                             <img src={item.assetUrl} className="w-8 h-8 object-contain" alt="" />
                                         ) : (
                                             <span className="text-xl">{item.previewUrl || '📦'}</span>
