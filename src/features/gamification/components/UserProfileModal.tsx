@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useUserProfile } from "../context/UserProfileContext";
 import { api, getProxiedUrl } from "@/lib/api";
 import { db } from "@/lib/firebase";
@@ -46,9 +46,19 @@ export function UserProfileModal() {
                 try {
                     const data = await api.gamification.getStats(targetUsername);
                     console.log("🔍 [UserProfileModal] Fetched Stats:", data);
-                    setStats(data || {
-                        level: 1, xp: 0, coins: 0, inventory: [],
-                        equipped: { badge: null, frame: null, effect: null, color: null }
+                    // Map flat API response to nested structure
+                    setStats({
+                        level: 1, // Placeholder
+                        xp: data.xp || 0,
+                        coins: data.coins || 0,
+                        inventory: data.inventory || [],
+                        equipped: {
+                            badge: data.equipped_badge || null,
+                            frame: data.equipped_frame || null,
+                            effect: data.equipped_effect || null,
+                            color: data.name_color || null
+                        },
+                        current_streak: data.current_streak || 0
                     });
                 } catch (e) {
                     console.error("Failed to load profile", e);
@@ -107,6 +117,7 @@ export function UserProfileModal() {
         <Dialog open={isOpen} onOpenChange={(open) => !open && closeProfile()}>
             <DialogContent className="bg-transparent border-none shadow-none p-0 overflow-visible max-w-sm sm:max-w-md">
                 <DialogTitle className="sr-only">{targetUsername}'s Profile</DialogTitle>
+                <DialogDescription className="sr-only">User Profile Details</DialogDescription>
 
                 {/* Main Card */}
                 <div className="relative w-full bg-[#111214]/95 backdrop-blur-xl border border-white/5 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
