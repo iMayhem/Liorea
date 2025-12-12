@@ -14,6 +14,7 @@ import { UserContextMenuProvider } from '@/context/UserContextMenuContext';
 import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
 import { GamificationProvider } from '@/features/gamification/context/GamificationContext';
 import { LevelUpModal } from '@/features/gamification/components/LevelUpModal';
+import { LiveTicker } from '@/features/gamification/components/LiveTicker';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     // DISABLE GLOBAL RIGHT CLICK
@@ -37,6 +38,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <PresenceProvider>
                         <GamificationProvider>
                             <LevelUpModal />
+                            <LiveTicker />
                             <NotificationProvider>
                                 <UserContextMenuProvider>
                                     {children}

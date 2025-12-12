@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import SoundscapeMixer from './SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
 import { usePresence } from '@/features/study';
-import { Users, LogOut, Trophy, Mic, MicOff, Settings, Home, BookOpen, ShoppingBag } from 'lucide-react';
+import { Users, LogOut, Trophy, Mic, MicOff, Settings, Home, BookOpen, ShoppingBag, Timer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
     Sheet,
@@ -13,7 +13,9 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Leaderboard } from '@/features/study';
+import { PomodoroTimer } from '@/features/timer';
 import { XPProgressBar } from '@/features/gamification/components/XPProgressBar';
+import { StreakIndicator } from '@/features/gamification/components/StreakIndicator';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -48,6 +50,9 @@ export default function SidebarControlPanel() {
 
                 {/* Level Indicator */}
                 <XPProgressBar variant="compact" />
+
+                {/* Streak */}
+                <StreakIndicator />
             </div>
 
             {/* Middle: Controls */}
@@ -73,6 +78,33 @@ export default function SidebarControlPanel() {
                         </Tooltip>
                     </TooltipProvider>
                 </Link>
+
+                {/* Timer */}
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <div className="cursor-pointer">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-zinc-400 hover:bg-[#313338] hover:text-red-400 rounded-[16px] w-12 h-12 transition-all">
+                                            <Timer className="w-5 h-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right"><p>Pomodoro Timer</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="bg-[#313338] border-r-[#1F2023] text-zinc-100 w-[380px] pt-10">
+                        <SheetHeader>
+                            <SheetTitle className="text-zinc-100">Focus Timer</SheetTitle>
+                            <SheetDescription className="text-zinc-400">Stay productive with the Pomodoro technique.</SheetDescription>
+                        </SheetHeader>
+                        <div className="py-8 flex justify-center">
+                            <PomodoroTimer />
+                        </div>
+                    </SheetContent>
+                </Sheet>
 
                 {/* Leaderboard */}
                 <Sheet>
