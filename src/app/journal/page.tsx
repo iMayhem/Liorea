@@ -237,7 +237,7 @@ function JournalContent() {
             setCurrentFollowers(prev => [username, ...prev]);
         }
         try {
-            await api.journal.toggleFollow(activeJournal.id, username);
+            await api.journal.follow(activeJournal.id, username);
         } catch (e) { console.error(e); }
     };
 
