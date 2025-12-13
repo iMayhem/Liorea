@@ -104,7 +104,7 @@
   /* THEMES */
 
   /* Midnight */
-  html.theme-midnight {
+  html.dark.theme-midnight {
     --header-bg: #1e1b4b;
     --background: 265 40% 10%;
     --foreground: 210 40% 98%;
@@ -126,7 +126,7 @@
   }
 
   /* Forest */
-  html.theme-forest {
+  html.dark.theme-forest {
     --header-bg: #052e16;
     --background: 145 30% 10%;
     --foreground: 210 40% 98%;
@@ -148,7 +148,7 @@
   }
 
   /* Berry */
-  html.theme-berry {
+  html.dark.theme-berry {
     --header-bg: #4a044e;
     --background: 300 30% 10%;
     --foreground: 210 40% 98%;
@@ -170,7 +170,7 @@
   }
 
   /* Sunset */
-  html.theme-sunset {
+  html.dark.theme-sunset {
     --header-bg: #431407;
     --background: 20 30% 10%;
     --foreground: 210 40% 98%;
@@ -192,7 +192,7 @@
   }
 
   /* Ocean */
-  html.theme-ocean {
+  html.dark.theme-ocean {
     --header-bg: #083344;
     --background: 190 40% 10%;
     --foreground: 210 40% 98%;
