@@ -102,19 +102,44 @@ export default function PomodoroTimer() {
       <CardContent className="flex flex-col items-center gap-6 p-6 text-center">
         <h2 className="text-lg font-semibold uppercase tracking-wider text-white/80">Focus Time</h2>
 
-        <div className="w-full">
-          <div className="font-mono text-7xl font-bold text-white tracking-tighter mb-4">
-            {formatTime(secondsLeft)}
+        {/* Circular Progress Clock */}
+        <div className="relative flex items-center justify-center">
+          <svg className="transform -rotate-90 w-64 h-64">
+            <circle
+              cx="128"
+              cy="128"
+              r="120"
+              stroke="currentColor"
+              strokeWidth="8"
+              fill="transparent"
+              className="text-white/10"
+            />
+            <circle
+              cx="128"
+              cy="128"
+              r="120"
+              stroke="currentColor"
+              strokeWidth="8"
+              fill="transparent"
+              strokeDasharray={2 * Math.PI * 120}
+              strokeDashoffset={2 * Math.PI * 120 * ((100 - progress) / 100)}
+              className="text-white transition-all duration-1000 ease-linear"
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="font-mono text-6xl font-bold text-white tracking-tighter">
+              {formatTime(secondsLeft)}
+            </div>
           </div>
-          <Progress value={progress} className="h-1 bg-white/20 [&>div]:bg-white" />
         </div>
 
-        <div className="flex items-center gap-4">
-          <Button onClick={toggleTimer} variant="ghost" size="icon" className="w-12 h-12 rounded-full hover:bg-white/10">
-            {isActive ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+        <div className="flex items-center gap-4 mt-2">
+          <Button onClick={toggleTimer} variant="ghost" className="w-16 h-16 rounded-full hover:bg-white/10 bg-white text-black hover:text-white transition-colors flex items-center justify-center">
+            {isActive ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
           </Button>
-          <Button onClick={resetTimer} variant="ghost" size="icon" className="w-12 h-12 rounded-full hover:bg-white/10">
-            <RefreshCw className="w-6 h-6" />
+          <Button onClick={resetTimer} variant="ghost" className="w-12 h-12 rounded-full hover:bg-white/10 border border-white/20 text-white/70 hover:text-white flex items-center justify-center">
+            <RefreshCw className="w-5 h-5" />
           </Button>
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useGamification } from "@/features/gamification/context/GamificationContext";
-import { Coins, ShoppingBag, Check, User as UserIcon } from "lucide-react";
+import { Coins, ShoppingBag, Check, User as UserIcon, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, getProxiedUrl } from '@/lib/api';
@@ -148,16 +148,21 @@ export default function ShopPage() {
 
                                 <div className="mt-auto w-full pt-1">
                                     {owned ? (
-                                        <button
-                                            onClick={() => handleEquip(item)}
-                                            disabled={equipped}
-                                            className={`w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${equipped
-                                                ? 'bg-green-500/20 text-green-400 cursor-default'
-                                                : 'bg-discord-light hover:bg-discord-gray text-discord-text'
-                                                }`}
-                                        >
-                                            {equipped ? <><Check className="w-3 h-3" /> ON</> : "Equip"}
-                                        </button>
+                                        equipped ? (
+                                            <button
+                                                onClick={() => equipItem('none', item.type)}
+                                                className="w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                                            >
+                                                <X className="w-3 h-3" /> Remove
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleEquip(item)}
+                                                className="w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all bg-discord-light hover:bg-discord-gray text-discord-text"
+                                            >
+                                                Equip
+                                            </button>
+                                        )
                                     ) : (
                                         <button
                                             onClick={() => handleBuy(item)}
