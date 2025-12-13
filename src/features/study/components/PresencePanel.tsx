@@ -27,13 +27,13 @@ export default function PresencePanel({ users }: PresencePanelProps) {
   return (
     // UPDATED CLASSNAME:
     // UPDATED CLASSNAME:
-    <BentoCard className="w-full h-full flex flex-col text-white shadow-md bg-[#1E1F22] border-[#2B2D31]" noPadding>
-      <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0 border-b border-[#2B2D31] bg-[#1E1F22]">
+    <BentoCard className="w-full h-full flex flex-col text-foreground shadow-md bg-card border-border" noPadding>
+      <CardHeader className="flex flex-row items-center justify-between p-4 shrink-0 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <Users className="text-zinc-400 w-5 h-5" />
-          <CardTitle className="text-base text-zinc-100 font-semibold">Community</CardTitle>
+          <Users className="text-muted-foreground w-5 h-5" />
+          <CardTitle className="text-base text-foreground font-semibold">Community</CardTitle>
         </div>
-        <div className="bg-[#1E1F22] text-zinc-400 text-xs h-6 flex items-center px-3 rounded-full hover:bg-[#111214] transition-colors border border-[#111214]">
+        <div className="bg-muted text-muted-foreground text-xs h-6 flex items-center px-3 rounded-full hover:bg-accent transition-colors border border-border">
           {onlineCount} Online
         </div>
       </CardHeader>

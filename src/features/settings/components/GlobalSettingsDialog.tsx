@@ -31,7 +31,7 @@ export function GlobalSettingsDialog() {
                 <VisuallyHidden>
                     <DialogTitle>Global Settings</DialogTitle>
                 </VisuallyHidden>
-                <div className="bg-discord-dark border border-discord-light rounded-xl h-full flex flex-col overflow-hidden shadow-2xl relative z-50">
+                <div className="bg-background border border-discord-light rounded-xl h-full flex flex-col overflow-hidden shadow-2xl relative z-50">
                     <ProfileSettings
                         allItems={allItems}
                         onClose={() => setIsOpen(false)}

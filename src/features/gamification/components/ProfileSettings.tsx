@@ -78,7 +78,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     };
 
     return (
-        <div className="flex h-full bg-discord-dark text-discord-text overflow-hidden">
+        <div className="flex h-full bg-background text-foreground overflow-hidden">
             <Tabs defaultValue="general" orientation="vertical" className="flex w-full h-full">
 
                 {/* SIDEBAR */}
@@ -128,7 +128,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                 </div>
 
                 {/* MAIN CONTENT Area */}
-                <div className="flex-1 flex flex-col h-full bg-discord-dark relative min-w-0">
+                <div className="flex-1 flex flex-col h-full bg-background relative min-w-0">
                     {/* Close Button Floating - ONLY if onClose is provided */}
                     {onClose && (
                         <div className="absolute top-6 right-6 z-50">

@@ -34,7 +34,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-discord-dark overflow-hidden">
+        <div className="flex flex-col h-screen bg-background overflow-hidden">
             <Header />
             <div className="flex-1 pt-[72px] relative z-0">
                 {/* Added pt to account for fixed header and z-0 for context */}
