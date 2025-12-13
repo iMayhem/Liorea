@@ -27,7 +27,8 @@ export type Post = {
 export type GiphyResult = {
     id: string;
     images: {
-        fixed_height: { url: string };
-        original: { url: string };
-    }
+        fixed_height: { url: string; width: string; height: string };
+        original: { url: string; width: string; height: string };
+        downsized: { url: string };
+    };
 };
