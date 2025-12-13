@@ -206,6 +206,12 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                                     { id: 'berry', name: 'Berry', color: '#4a044e' },
                                                     { id: 'sunset', name: 'Sunset', color: '#431407' },
                                                     { id: 'ocean', name: 'Ocean', color: '#083344' },
+                                                    { id: 'lavender', name: 'Lavender', color: '#2e1065' },
+                                                    { id: 'rose', name: 'Rose', color: '#4c0519' },
+                                                    { id: 'slate', name: 'Slate', color: '#0f172a' },
+                                                    { id: 'amber', name: 'Amber', color: '#451a03' },
+                                                    { id: 'teal', name: 'Teal', color: '#042f2e' },
+                                                    { id: 'emerald', name: 'Emerald', color: '#022c22' },
                                                 ] as const
                                             ).map((t) => (
                                                 <button
