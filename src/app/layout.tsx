@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import './globals.css';
 import { Providers } from "./Providers";
+import DisableContextMenu from "@/components/DisableContextMenu";
 
 export const metadata: Metadata = {
   title: "Liorea",
@@ -18,6 +19,7 @@ export default function RootLayout({
         <link rel="icon" href="https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/favicon/favicon.svg" />
       </head>
       <body className="font-body antialiased h-screen w-screen overflow-hidden select-none">
+        <DisableContextMenu />
         <Providers>
           <div className="hidden md:block h-full w-full">
             {children}
