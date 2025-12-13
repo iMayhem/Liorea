@@ -106,60 +106,110 @@
   /* Midnight */
   html.theme-midnight {
     --header-bg: #1e1b4b;
-    /* Indigo 950 */
     --background: 265 40% 10%;
-    /* Deep Purple Tint */
+    --foreground: 210 40% 98%;
+    --card: 265 40% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 265 40% 12%;
+    --popover-foreground: 210 40% 98%;
     --primary: 263 70% 50%;
-    /* Purple */
     --primary-foreground: 0 0% 100%;
+    --secondary: 265 30% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 265 30% 20%;
+    --muted-foreground: 265 20% 65%;
+    --accent: 265 30% 25%;
+    --accent-foreground: 210 40% 98%;
+    --border: 265 30% 20%;
+    --input: 265 30% 20%;
     --ring: 263 70% 50%;
   }
 
   /* Forest */
   html.theme-forest {
     --header-bg: #052e16;
-    /* Green 950 */
     --background: 145 30% 10%;
-    /* Green Tint */
+    --foreground: 210 40% 98%;
+    --card: 145 30% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 145 30% 12%;
+    --popover-foreground: 210 40% 98%;
     --primary: 142 71% 45%;
-    /* Green */
     --primary-foreground: 0 0% 100%;
+    --secondary: 145 20% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 145 20% 20%;
+    --muted-foreground: 145 10% 65%;
+    --accent: 145 20% 25%;
+    --accent-foreground: 210 40% 98%;
+    --border: 145 20% 20%;
+    --input: 145 20% 20%;
     --ring: 142 71% 45%;
   }
 
   /* Berry */
   html.theme-berry {
     --header-bg: #4a044e;
-    /* Fuchsia 950 */
     --background: 300 30% 10%;
-    /* Pink Tint */
+    --foreground: 210 40% 98%;
+    --card: 300 30% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 300 30% 12%;
+    --popover-foreground: 210 40% 98%;
     --primary: 310 60% 50%;
-    /* Pink */
     --primary-foreground: 0 0% 100%;
+    --secondary: 300 20% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 300 20% 20%;
+    --muted-foreground: 300 10% 65%;
+    --accent: 300 20% 25%;
+    --accent-foreground: 210 40% 98%;
+    --border: 300 20% 20%;
+    --input: 300 20% 20%;
     --ring: 310 60% 50%;
   }
 
   /* Sunset */
   html.theme-sunset {
     --header-bg: #431407;
-    /* Orange 950 */
     --background: 20 30% 10%;
-    /* Orange Tint */
+    --foreground: 210 40% 98%;
+    --card: 20 30% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 20 30% 12%;
+    --popover-foreground: 210 40% 98%;
     --primary: 24 95% 53%;
-    /* Orange */
     --primary-foreground: 0 0% 100%;
+    --secondary: 20 20% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 20 20% 20%;
+    --muted-foreground: 20 10% 65%;
+    --accent: 20 20% 25%;
+    --accent-foreground: 210 40% 98%;
+    --border: 20 20% 20%;
+    --input: 20 20% 20%;
     --ring: 24 95% 53%;
   }
 
   /* Ocean */
   html.theme-ocean {
     --header-bg: #083344;
-    /* Cyan 950 */
     --background: 190 40% 10%;
-    /* Cyan Tint */
+    --foreground: 210 40% 98%;
+    --card: 190 40% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 190 40% 12%;
+    --popover-foreground: 210 40% 98%;
     --primary: 188 78% 41%;
-    /* Cyan */
     --primary-foreground: 0 0% 100%;
+    --secondary: 190 30% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 190 30% 20%;
+    --muted-foreground: 190 20% 65%;
+    --accent: 190 30% 25%;
+    --accent-foreground: 210 40% 98%;
+    --border: 190 30% 20%;
+    --input: 190 30% 20%;
     --ring: 188 78% 41%;
   }
 }

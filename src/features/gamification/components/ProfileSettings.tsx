@@ -82,10 +82,10 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
             <Tabs defaultValue="general" orientation="vertical" className="flex w-full h-full">
 
                 {/* SIDEBAR */}
-                <div className="w-64 shrink-0 flex flex-col bg-discord-gray/30 border-r border-white/5 pt-6 pb-4">
+                <div className="w-64 shrink-0 flex flex-col bg-muted/30 border-r border-border pt-6 pb-4">
                     <div className="px-6 mb-6">
-                        <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-                            <Settings className="w-6 h-6 text-discord-blurple" />
+                        <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
+                            <Settings className="w-6 h-6 text-primary" />
                             Settings
                         </h2>
                     </div>
