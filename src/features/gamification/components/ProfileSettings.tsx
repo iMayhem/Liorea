@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X, CheckCheck } from "lucide-react";
+import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X, CheckCheck, Settings } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import { ShopItem } from '../types';
@@ -78,225 +78,236 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     };
 
     return (
-        <div className="p-6 space-y-6 bg-discord-dark text-discord-text h-full overflow-y-auto w-full">
-            <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                    <UserIcon className="w-5 h-5 text-blue-400" />
-                    Profile Settings
-                </h2>
-                <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/10 rounded-full">
-                    <X className="w-5 h-5 text-white/70" />
-                </Button>
-            </div>
+        <div className="flex h-full bg-discord-dark text-discord-text overflow-hidden">
+            <Tabs defaultValue="general" orientation="vertical" className="flex w-full h-full">
 
-            <Tabs defaultValue="general" className="w-full">
-                <TabsList className="w-full grid grid-cols-4 bg-discord-gray rounded-lg p-1">
-                    <TabsTrigger value="general" className="data-[state=active]:bg-discord-light">General</TabsTrigger>
-                    {/* <TabsTrigger value="appearance" className="data-[state=active]:bg-discord-light">Cosmetics</TabsTrigger> */}
-                    <TabsTrigger value="ui" className="data-[state=active]:bg-discord-light">Appearance</TabsTrigger>
-                    <TabsTrigger value="account" className="data-[state=active]:bg-discord-light">Account</TabsTrigger>
-                </TabsList>
-
-                {/* GENERAL TAB */}
-                <TabsContent value="general" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
-                    {/* AVATAR */}
-                    <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 min-w-[6rem] min-h-[6rem] shrink-0 rounded-full bg-discord-gray overflow-hidden border-2 border-discord-light relative group shadow-lg">
-                            {userImage ? (
-                                <img
-                                    src={userImage}
-                                    className="w-full h-full object-cover transition-opacity group-hover:opacity-50"
-                                    alt="avatar"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-discord-light text-discord-text-muted group-hover:opacity-50 transition-opacity">
-                                    <UserIcon className="w-8 h-8" />
-                                </div>
-                            )}
-
-                            {/* Frame Overlay */}
-                            {stats.equipped_frame && stats.equipped_frame !== 'none' && (
-                                <div className="absolute inset-0 z-10 pointer-events-none scale-[1.35]">
-                                    {(() => {
-                                        const frame = myFrames.find(f => f.id === stats.equipped_frame);
-                                        if (frame?.assetUrl) {
-                                            return (
-                                                <LottiePreview
-                                                    url={getProxiedUrl(frame.assetUrl)}
-                                                    className="w-full h-full"
-                                                    imageFallback={true}
-                                                />
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-                                </div>
-                            )}
-
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none z-20">
-                                <Upload className="w-6 h-6 text-white" />
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-discord-text-muted">Profile Picture</Label>
-                            <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={loading}>
-                                {loading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Upload className="w-3 h-3 mr-2" />}
-                                Upload Image
-                            </Button>
-                            <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleUploadAvatar} />
-                            <p className="text-xs text-discord-text-muted">Square images work best.</p>
-                        </div>
+                {/* SIDEBAR */}
+                <div className="w-64 shrink-0 flex flex-col bg-discord-gray/30 border-r border-white/5 pt-6 pb-4">
+                    <div className="px-6 mb-6">
+                        <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+                            <Settings className="w-6 h-6 text-discord-blurple" />
+                            Settings
+                        </h2>
                     </div>
 
+                    <ScrollArea className="flex-1 px-3">
+                        <TabsList className="flex flex-col h-auto bg-transparent p-0 gap-1 w-full text-left">
+                            <TabsTrigger
+                                value="general"
+                                className="w-full justify-start px-4 py-2 text-discord-text-muted data-[state=active]:bg-discord-blurple data-[state=active]:text-white rounded-md transition-all font-medium"
+                            >
+                                <UserIcon className="w-4 h-4 mr-3" />
+                                My Account
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="ui"
+                                className="w-full justify-start px-4 py-2 text-discord-text-muted data-[state=active]:bg-discord-blurple data-[state=active]:text-white rounded-md transition-all font-medium"
+                            >
+                                <Palette className="w-4 h-4 mr-3" />
+                                Appearance
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="account"
+                                className="w-full justify-start px-4 py-2 text-discord-text-muted data-[state=active]:bg-red-500/10 data-[state=active]:text-red-400 hover:text-red-400 rounded-md transition-all font-medium mt-auto"
+                            >
+                                <LogOut className="w-4 h-4 mr-3" />
+                                Log Out
+                            </TabsTrigger>
+                        </TabsList>
+                    </ScrollArea>
+                </div>
 
-                </TabsContent>
-
-                {/* COSMETICS TAB - HIDDEN */}
-                {/* <TabsContent value="appearance" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" /> Equipped Badge</Label>
-                        <Select onValueChange={v => equipItem(v, 'badge')} value={stats.equipped_badge || "none"}>
-                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
-                                <SelectItem value="none">None</SelectItem>
-                                {myBadges.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Avatar Frame</Label>
-                        <Select onValueChange={v => equipItem(v, 'frame')} value={stats.equipped_frame || "none"}>
-                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
-                                <SelectItem value="none">None</SelectItem>
-                                {myFrames.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Profile Effect</Label>
-                        <Select onValueChange={v => equipItem(v, 'effect')} value={stats.equipped_effect || "none"}>
-                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
-                                <SelectItem value="none">None</SelectItem>
-                                {myEffects.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Palette className="w-4 h-4 text-purple-400" /> Name Color</Label>
-                        <Select onValueChange={v => equipItem(v, 'color')} value={stats.name_color || "none"}>
-                            <SelectTrigger className="bg-discord-gray border-discord-light"><SelectValue placeholder="None" /></SelectTrigger>
-                            <SelectContent className="bg-discord-gray border-discord-light text-discord-text">
-                                <SelectItem value="none">Default</SelectItem>
-                                {myColors.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </TabsContent> */}
-
-                {/* UI APPEARANCE TAB */}
-                <TabsContent value="ui" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-discord-text">
-                            <Monitor className="w-5 h-5 text-emerald-400" />
-                            <h3 className="font-semibold">Display Settings</h3>
-                        </div>
-
-                        <div className="space-y-3">
-                            <Label>Text Size</Label>
-                            <div className="grid grid-cols-3 gap-2">
-                                <Button
-                                    variant={textSize === 'sm' ? "default" : "outline"}
-                                    onClick={() => setTextSize('sm')}
-                                    className="text-xs"
-                                >
-                                    Small
-                                </Button>
-                                <Button
-                                    variant={textSize === 'md' ? "default" : "outline"}
-                                    onClick={() => setTextSize('md')}
-                                    className="text-sm"
-                                >
-                                    Medium
-                                </Button>
-                                <Button
-                                    variant={textSize === 'lg' ? "default" : "outline"}
-                                    onClick={() => setTextSize('lg')}
-                                    className="text-base"
-                                >
-                                    Large
-                                </Button>
-                            </div>
-                            <p className="text-xs text-discord-text-muted">
-                                Adjust the global text size of the application.
-                            </p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <Label>Font Family</Label>
-                            <ScrollArea className="h-48 rounded-md border border-white/10 p-2">
-                                <div className="grid grid-cols-3 gap-2">
-                                    {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans'] as const).map((f) => (
-                                        <Button
-                                            key={f}
-                                            variant={font === f ? "default" : "outline"}
-                                            onClick={() => setFont(f)}
-                                            className="capitalize text-sm"
-                                            style={{ fontFamily: `var(--font-${f})` }}
-                                        >
-                                            {f.replace('-', ' ')}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                            <div className="space-y-3">
-                                <Label>Theme</Label>
-                                <div className="flex flex-wrap gap-3">
-                                    {(
-                                        [
-                                            { id: 'default', name: 'Original', color: '#313338' },
-                                            { id: 'midnight', name: 'Midnight', color: '#1e1b4b' },
-                                            { id: 'forest', name: 'Forest', color: '#052e16' },
-                                            { id: 'berry', name: 'Berry', color: '#4a044e' },
-                                            { id: 'sunset', name: 'Sunset', color: '#431407' },
-                                            { id: 'ocean', name: 'Ocean', color: '#083344' },
-                                        ] as const
-                                    ).map((t) => (
-                                        <button
-                                            key={t.id}
-                                            onClick={() => setTheme(t.id)}
-                                            className={`group relative w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${theme === t.id ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
-                                            title={t.name}
-                                        >
-                                            <div className="absolute inset-0" style={{ backgroundColor: t.color }}></div>
-                                            {theme === t.id && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                                    <CheckCheck className="w-5 h-5 text-white" />
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="text-xs text-discord-text-muted">
-                                    Personalize your workspace colors.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* ACCOUNT TAB */}
-                <TabsContent value="account" className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                        <h3 className="text-red-500 font-bold mb-2">Danger Zone</h3>
-                        <p className="text-xs text-red-400/70 mb-4">Once you sign out, you will need to log in again to access your account.</p>
-                        <Button variant="destructive" className="w-full bg-red-600 hover:bg-red-700 text-white" onClick={handleLogout}>
-                            <LogOut className="w-4 h-4 mr-2" /> Sign Out from Liorea
+                {/* MAIN CONTENT Area */}
+                <div className="flex-1 flex flex-col h-full bg-discord-dark relative">
+                    {/* Close Button Floating */}
+                    <div className="absolute top-6 right-6 z-50">
+                        <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/10 rounded-full h-8 w-8 text-white/50 hover:text-white">
+                            <X className="w-5 h-5" />
                         </Button>
                     </div>
-                </TabsContent>
 
+                    <ScrollArea className="flex-1 h-full">
+                        <div className="p-8 md:p-10 max-w-3xl mx-auto pb-20">
+
+                            {/* GENERAL TAB */}
+                            <TabsContent value="general" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white mb-2">My Account</h2>
+                                    <p className="text-discord-text-muted">Manage your profile details and avatar.</p>
+                                </div>
+
+                                {/* AVATAR SECTION */}
+                                <div className="p-6 bg-black/20 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-8">
+                                        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                            <div className="w-24 h-24 rounded-full bg-discord-gray overflow-hidden border-4 border-discord-dark shadow-xl text-discord-text-muted flex items-center justify-center relative">
+                                                {userImage ? (
+                                                    <img src={userImage || undefined} className="w-full h-full object-cover" alt="avatar" />
+                                                ) : (
+                                                    <UserIcon className="w-10 h-10 opacity-50" />
+                                                )}
+                                            </div>
+                                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Upload className="w-8 h-8 text-white" />
+                                            </div>
+                                            {/* Status Indicator */}
+                                            <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-discord-dark"></div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="space-y-1">
+                                                <h3 className="font-semibold text-lg text-white">{username || 'User'}</h3>
+                                                <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={loading}>
+                                                    {loading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
+                                                    Change Avatar
+                                                </Button>
+                                                <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleUploadAvatar} />
+                                            </div>
+                                            <p className="text-xs text-discord-text-muted">
+                                                Recommended size: 256x256px.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            {/* APPEARANCE TAB */}
+                            <TabsContent value="ui" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white mb-2">Appearance</h2>
+                                    <p className="text-discord-text-muted">Customize how Zenith looks and feels.</p>
+                                </div>
+
+                                <div className="space-y-8">
+                                    {/* THEME */}
+                                    <section className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-base font-semibold text-white">Theme</Label>
+                                            <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Color Scheme</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            {(
+                                                [
+                                                    { id: 'default', name: 'Original', color: '#313338' },
+                                                    { id: 'midnight', name: 'Midnight', color: '#1e1b4b' },
+                                                    { id: 'forest', name: 'Forest', color: '#052e16' },
+                                                    { id: 'berry', name: 'Berry', color: '#4a044e' },
+                                                    { id: 'sunset', name: 'Sunset', color: '#431407' },
+                                                    { id: 'ocean', name: 'Ocean', color: '#083344' },
+                                                ] as const
+                                            ).map((t) => (
+                                                <button
+                                                    key={t.id}
+                                                    onClick={() => setTheme(t.id)}
+                                                    className={`group relative flex items-center gap-3 p-2 rounded-lg border transition-all hover:bg-white/5 ${theme === t.id ? 'border-discord-blurple bg-discord-blurple/10' : 'border-white/10'}`}
+                                                >
+                                                    <div className="w-10 h-10 rounded-full shadow-inner shrink-0" style={{ backgroundColor: t.color }}>
+                                                        {theme === t.id && (
+                                                            <div className="w-full h-full flex items-center justify-center text-white">
+                                                                <CheckCheck className="w-5 h-5 drop-shadow-md" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <div className={`font-medium ${theme === t.id ? 'text-white' : 'text-discord-text'}`}>{t.name}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <div className="h-px bg-white/10" />
+
+                                    {/* FONT */}
+                                    <section className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-base font-semibold text-white">Font Family</Label>
+                                            <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Typography</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans'] as const).map((f) => (
+                                                <div
+                                                    key={f}
+                                                    onClick={() => setFont(f)}
+                                                    className={`cursor-pointer border rounded-lg p-3 flex items-center justify-between transition-all hover:border-discord-blurple/50 ${font === f ? 'border-discord-blurple bg-discord-blurple/10' : 'border-white/10 bg-black/20'}`}
+                                                >
+                                                    <span className="capitalize text-sm font-medium" style={{ fontFamily: `var(--font-${f})` }}>
+                                                        {f.replace('-', ' ')}
+                                                    </span>
+                                                    {font === f && <CheckCheck className="w-4 h-4 text-discord-blurple" />}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <div className="h-px bg-white/10" />
+
+                                    {/* TEXT SIZE */}
+                                    <section className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-base font-semibold text-white">Text Size</Label>
+                                            <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Scaling</span>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-black/20 p-1 rounded-lg border border-white/10 w-fit">
+                                            <Button
+                                                variant={textSize === 'sm' ? "secondary" : "ghost"}
+                                                onClick={() => setTextSize('sm')}
+                                                className="h-8 text-xs px-4"
+                                            >
+                                                Small
+                                            </Button>
+                                            <Button
+                                                variant={textSize === 'md' ? "secondary" : "ghost"}
+                                                onClick={() => setTextSize('md')}
+                                                className="h-8 text-sm px-4"
+                                            >
+                                                Medium
+                                            </Button>
+                                            <Button
+                                                variant={textSize === 'lg' ? "secondary" : "ghost"}
+                                                onClick={() => setTextSize('lg')}
+                                                className="h-8 text-base px-4"
+                                            >
+                                                Large
+                                            </Button>
+                                        </div>
+                                    </section>
+                                </div>
+                            </TabsContent>
+
+                            {/* ACCOUNT / LOGOUT */}
+                            <TabsContent value="account" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white mb-2">Log Out</h2>
+                                    <p className="text-discord-text-muted">Are you sure you want to sign out?</p>
+                                </div>
+                                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-xl space-y-4">
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-2 bg-red-500/20 rounded-lg text-red-500">
+                                            <LogOut className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-white">Sign Out of Zenith</h3>
+                                            <p className="text-red-200/60 text-sm mt-1">
+                                                You will be returned to the login screen. Your settings will be saved on this device.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="pt-2">
+                                        <Button
+                                            variant="destructive"
+                                            onClick={handleLogout}
+                                            className="bg-red-600 hover:bg-red-700 text-white font-medium px-8"
+                                        >
+                                            Log Out
+                                        </Button>
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                        </div>
+                    </ScrollArea>
+                </div>
             </Tabs>
         </div>
     );
