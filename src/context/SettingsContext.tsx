@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type TextSize = "sm" | "md" | "lg";
 export type FontOption = 'inter' | 'roboto' | 'lato' | 'montserrat' | 'open-sans';
-export type ThemeOption = 'default' | 'midnight' | 'forest' | 'berry' | 'sunset' | 'ocean';
+export type ThemeOption = 'default' | 'midnight' | 'forest' | 'berry' | 'sunset' | 'ocean' | 'lavender' | 'rose' | 'slate' | 'amber' | 'teal' | 'emerald';
 
 interface SettingsContextType {
     textSize: TextSize;
@@ -40,7 +40,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const storedTheme = localStorage.getItem("liorea-theme") as ThemeOption;
         if (storedTheme) {
             setThemeState(storedTheme);
-            document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean');
+            document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean', 'theme-lavender', 'theme-rose', 'theme-slate', 'theme-amber', 'theme-teal', 'theme-emerald');
             document.documentElement.classList.add(`theme-${storedTheme}`);
         } else {
             document.documentElement.classList.add(`theme-default`);
@@ -68,7 +68,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const setTheme = (newTheme: ThemeOption) => {
         setThemeState(newTheme);
         localStorage.setItem("liorea-theme", newTheme);
-        document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean');
+        document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean', 'theme-lavender', 'theme-rose', 'theme-slate', 'theme-amber', 'theme-teal', 'theme-emerald');
         document.documentElement.classList.add(`theme-${newTheme}`);
     };
 
