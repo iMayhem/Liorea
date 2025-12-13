@@ -57,7 +57,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const prevScrollHeight = useRef(0);
-    const prevScrollHeight = useRef(0);
+
     // const prevPostsLength = useRef(0); // Removed unused ref
     const chatFileInputRef = useRef<HTMLInputElement>(null);
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -331,7 +331,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {Object.entries(reactionGroups).map(([emoji, data]) => (
-                                            <button key={emoji} onClick={() => handleReact(post.id, emoji)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/60 text-indigo-100' : 'bg-white/10 border-white/10 text-white/70 hover:bg-white/20'}`}>
+                                            <button key={emoji} onClick={() => handleReact(post.id, emoji)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/60 text-indigo-100' : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'}`}>
                                                 <span className="text-base leading-none">{emoji}</span>
                                                 <span className="text-xs font-bold">{data.count}</span>
                                             </button>

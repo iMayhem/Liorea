@@ -294,7 +294,7 @@ export default function ChatPanel() {
                                                 <button
                                                     key={emoji}
                                                     onClick={() => sendReaction(msg.id, emoji)}
-                                                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200' : 'bg-white/10 border-transparent hover:border-white/20 text-white/60'}`}
+                                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-200' : 'bg-white/10 border-transparent hover:border-white/20 text-white/60'}`}
                                                 >
                                                     <span className="text-base">{emoji}</span>
                                                     <span className={`text-xs font-bold ${data.hasReacted ? 'text-indigo-200' : 'text-white/40'}`}>{data.count}</span>
