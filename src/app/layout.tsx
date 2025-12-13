@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   description: "Your personalized virtual workspace.",
 };
 
+import MobileWarning from "@/components/MobileWarning";
+
+// ... (other imports)
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,6 +41,7 @@ export default function RootLayout({
       <body className="font-body antialiased h-screen w-screen overflow-hidden select-none">
         <DisableContextMenu />
         <Providers>
+          <MobileWarning />
           <div className="hidden md:block h-full w-full">
             {children}
           </div>
