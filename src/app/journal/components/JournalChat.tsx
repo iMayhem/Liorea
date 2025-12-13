@@ -372,8 +372,8 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
 
 
-            <div className="p-4 glass-panel-light shrink-0">
-                <div className="relative flex items-end gap-2 bg-white/5 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+            <div className="p-4 bg-card/10 shrink-0 border-t border-white/5">
+                <div className="relative flex items-end gap-2 bg-muted/20 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
                     <MentionMenu
                         isOpen={!!mentionQuery && mentionableUsers.length > 0}
                         query={mentionQuery}
