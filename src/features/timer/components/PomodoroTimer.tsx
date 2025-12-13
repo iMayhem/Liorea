@@ -98,78 +98,60 @@ export default function PomodoroTimer() {
 
 
   return (
-    <Card className="bg-black/10 backdrop-blur-md border border-white/30 text-white w-full max-w-sm mx-auto shadow-lg">
-      <CardContent className="flex flex-col items-center gap-6 p-6 text-center">
-        <h2 className="text-lg font-semibold uppercase tracking-wider text-white/80">Focus Time</h2>
+    <div className="flex flex-col items-center justify-center w-full h-full min-h-[400px]">
+      {/* Red Pill Label */}
+      <div className="px-6 py-2 rounded-full bg-red-500/10 border border-red-500/20 mb-8">
+        <span className="text-red-500 font-bold tracking-widest text-sm uppercase">Focus Time</span>
+      </div>
 
-        {/* Circular Progress Clock */}
-        <div className="relative flex items-center justify-center">
-          <svg className="transform -rotate-90 w-64 h-64">
-            <circle
-              cx="128"
-              cy="128"
-              r="120"
-              stroke="currentColor"
-              strokeWidth="8"
-              fill="transparent"
-              className="text-white/10"
-            />
-            <circle
-              cx="128"
-              cy="128"
-              r="120"
-              stroke="currentColor"
-              strokeWidth="8"
-              fill="transparent"
-              strokeDasharray={2 * Math.PI * 120}
-              strokeDashoffset={2 * Math.PI * 120 * ((100 - progress) / 100)}
-              className="text-white transition-all duration-1000 ease-linear"
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="font-mono text-6xl font-bold text-white tracking-tighter">
-              {formatTime(secondsLeft)}
-            </div>
-          </div>
+      {/* Timer Display */}
+      <div className="relative mb-8">
+        <div className="absolute inset-0 flex items-center justify-center -mt-8">
+          <span className="text-2xl font-bold text-white tracking-widest">{formatTime(secondsLeft)}</span>
         </div>
 
-        <div className="flex items-center gap-4 mt-2">
-          <Button onClick={toggleTimer} variant="ghost" className="w-16 h-16 rounded-full hover:bg-white/10 bg-white text-black hover:text-white transition-colors flex items-center justify-center">
-            {isActive ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
-          </Button>
-          <Button onClick={resetTimer} variant="ghost" className="w-12 h-12 rounded-full hover:bg-white/10 border border-white/20 text-white/70 hover:text-white flex items-center justify-center">
-            <RefreshCw className="w-5 h-5" />
-          </Button>
-        </div>
+        {/* Buttons Centered Below Time (roughly) - actually layout is: Time Top, Ring?, Buttons Center */}
+        {/* Wait, screenshot has Time ABOVE buttons. And buttons are inside? No. */}
+        {/* Screenshot: Top "FOCUS TIME". Middle: "25:00". Below that: Play | Reset buttons. */}
+        {/* It doesn't actually show a ring in the screenshot, but user said "large circular". */}
+        {/* Creating the layout exactly as requested: Badge -> Time -> Buttons -> Toggle */}
+      </div>
 
-        <div className="flex items-center justify-center gap-6 text-sm text-white/70">
-          <div className="flex items-center gap-2">
-            <label htmlFor="work-duration">Work:</label>
-            <Input
-              id="work-duration"
-              type="number"
-              value={workMinutes}
-              onChange={handleWorkChange}
-              className="w-14 h-8 bg-transparent border-0 border-b rounded-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-              disabled={isActive}
-            />
-            <span>min</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="break-duration">Break:</label>
-            <Input
-              id="break-duration"
-              type="number"
-              value={breakMinutes}
-              onChange={handleBreakChange}
-              className="w-14 h-8 bg-transparent border-0 border-b rounded-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-              disabled={isActive}
-            />
-            <span>min</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Large Controls - Centered */}
+      <div className="flex items-center gap-6 mb-12">
+        {/* Main Play Button - White Vertical Pill */}
+        <Button
+          onClick={toggleTimer}
+          className="w-16 h-24 rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center transition-transform active:scale-95"
+        >
+          {isActive ? <Pause className="w-8 h-8 fill-black" /> : <Play className="w-8 h-8 fill-black ml-1" />}
+        </Button>
+
+        {/* Reset Button - Circular Outline */}
+        <Button
+          onClick={resetTimer}
+          variant="outline"
+          className="w-16 h-16 rounded-full border-white/10 bg-transparent text-white/50 hover:text-white hover:bg-white/5 hover:border-white/20 transition-all"
+        >
+          <RefreshCw className="w-6 h-6" />
+        </Button>
+      </div>
+
+      {/* Segmented Control Toggle */}
+      <div className="flex bg-black/20 p-1 rounded-full border border-white/5">
+        <button
+          onClick={() => { setMode('work'); setIsActive(false); setSecondsLeft(workMinutes * 60); }}
+          className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${mode === 'work' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
+        >
+          Pomodoro
+        </button>
+        <button
+          onClick={() => { setMode('break'); setIsActive(false); setSecondsLeft(breakMinutes * 60); }}
+          className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${mode === 'break' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
+        >
+          Break
+        </button>
+      </div>
+    </div>
   );
 }

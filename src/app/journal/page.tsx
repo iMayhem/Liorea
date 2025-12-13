@@ -37,6 +37,7 @@ function JournalContent() {
     const [newTags, setNewTags] = useState("");
     const [journalToDelete, setJournalToDelete] = useState<number | null>(null);
     const [updatingJournalId, setUpdatingJournalId] = useState<number | null>(null);
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const cardFileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchJournals = async () => { try { const data = await api.journal.list(); setJournals(data); } catch (e) { console.error(e); } };
@@ -68,7 +69,7 @@ function JournalContent() {
         if (!newTitle.trim() || !username) return;
         try {
             await api.journal.create({ username, title: newTitle, tags: newTags, images: "", theme: "bg-black" });
-            setNewTitle(""); setNewTags(""); notifyGlobalUpdate();
+            setNewTitle(""); setNewTags(""); setIsCreateDialogOpen(false); notifyGlobalUpdate();
         } catch (e) { console.error(e); }
     };
 
@@ -136,6 +137,8 @@ function JournalContent() {
                     newTags={newTags}
                     setNewTags={setNewTags}
                     onCreateJournal={createJournal}
+                    isCreateDialogOpen={isCreateDialogOpen}
+                    setIsCreateDialogOpen={setIsCreateDialogOpen}
                 />
 
                 <JournalChat

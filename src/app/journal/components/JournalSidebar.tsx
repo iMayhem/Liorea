@@ -20,6 +20,8 @@ interface JournalSidebarProps {
     newTags: string;
     setNewTags: (s: string) => void;
     onCreateJournal: () => void;
+    isCreateDialogOpen: boolean;
+    setIsCreateDialogOpen: (open: boolean) => void;
 }
 
 export const JournalSidebar: React.FC<JournalSidebarProps> = ({
@@ -34,14 +36,16 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
     setNewTitle,
     newTags,
     setNewTags,
-    onCreateJournal
+    onCreateJournal,
+    isCreateDialogOpen,
+    setIsCreateDialogOpen
 }) => {
     return (
         <div className={`w-full xl:w-[480px] flex flex-col shrink-0 h-full ${activeJournal ? 'hidden xl:flex' : 'flex'}`}>
             {/* Header */}
             <div className="flex items-center justify-end mb-6">
 
-                <Dialog>
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-white text-black hover:bg-white/90 gap-2 font-medium shadow-lg shadow-white/10 transition-all hover:scale-105 active:scale-95">
                             <Plus className="w-4 h-4" />
