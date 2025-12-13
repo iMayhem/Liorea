@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette } from "lucide-react";
+import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import { ShopItem } from '../types';
@@ -83,8 +83,8 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                     <UserIcon className="w-5 h-5 text-blue-400" />
                     Profile Settings
                 </h2>
-                <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-discord-gray rounded-full">
-                    <LogOut className="w-4 h-4 text-red-400" />
+                <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/10 rounded-full">
+                    <X className="w-5 h-5 text-white/70" />
                 </Button>
             </div>
 
@@ -236,10 +236,10 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
 
                 {/* ACCOUNT TAB */}
                 <TabsContent value="account" className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="p-4 bg-discord-red/10 border border-discord-red/20 rounded-lg">
-                        <h3 className="text-discord-red font-bold mb-2">Danger Zone</h3>
-                        <p className="text-xs text-discord-red/70 mb-4">Once you sign out, you will need to log in again to access your account.</p>
-                        <Button variant="destructive" className="w-full bg-discord-red hover:bg-discord-red/90" onClick={handleLogout}>
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <h3 className="text-red-500 font-bold mb-2">Danger Zone</h3>
+                        <p className="text-xs text-red-400/70 mb-4">Once you sign out, you will need to log in again to access your account.</p>
+                        <Button variant="destructive" className="w-full bg-red-600 hover:bg-red-700 text-white" onClick={handleLogout}>
                             <LogOut className="w-4 h-4 mr-2" /> Sign Out from Liorea
                         </Button>
                     </div>

@@ -57,7 +57,8 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const prevScrollHeight = useRef(0);
-    const prevPostsLength = useRef(0);
+    const prevScrollHeight = useRef(0);
+    // const prevPostsLength = useRef(0); // Removed unused ref
     const chatFileInputRef = useRef<HTMLInputElement>(null);
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -110,19 +111,25 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         }
     }, [posts, isInitialLoaded, activeJournal]);
 
+    const lastPostIdRef = useRef<number | null>(null);
+
     useEffect(() => {
         const lastPost = posts[posts.length - 1];
-        const prevLastPost = posts.length > prevPostsLength.current ? posts[prevPostsLength.current - 1] : null;
-        if (isInitialLoaded && lastPost && prevLastPost && lastPost.id !== prevLastPost.id) {
-            const container = scrollContainerRef.current;
-            if (container) {
-                const { scrollTop, scrollHeight, clientHeight } = container;
-                if (lastPost.username === username || scrollHeight - scrollTop - clientHeight < 200) {
-                    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (isInitialLoaded && lastPost) {
+            // Basic Logic: If the LAST post ID changed, it means a new message arrived at the bottom.
+            // If we just loaded older history, the last post ID remains the same, so this won't trigger.
+            if (lastPostIdRef.current !== lastPost.id) {
+                const container = scrollContainerRef.current;
+                if (container) {
+                    const { scrollTop, scrollHeight, clientHeight } = container;
+                    // If user sent it OR if they are already near bottom
+                    if (lastPost.username === username || scrollHeight - scrollTop - clientHeight < 200) {
+                        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+                    }
                 }
             }
+            lastPostIdRef.current = lastPost.id;
         }
-        prevPostsLength.current = posts.length;
     }, [posts, isInitialLoaded, username]);
 
     useLayoutEffect(() => {
@@ -256,8 +263,8 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                 <div className="flex items-center gap-1 ml-2 border-l border-white/10 pl-2">
                     <TooltipProvider>
                         <div className="flex -space-x-1.5">
-                            {currentFollowers.map((u, i) => (
-                                <Tooltip key={i} delayDuration={0}>
+                            {currentFollowers.map((u) => (
+                                <Tooltip key={u} delayDuration={0}>
                                     <TooltipTrigger asChild>
                                         <div className="cursor-pointer">
                                             <UserAvatar username={u} className="w-6 h-6 border border-black hover:z-10 transition-transform hover:scale-110" />

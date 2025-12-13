@@ -37,7 +37,7 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
     onCreateJournal
 }) => {
     return (
-        <div className={`w-full xl:w-[480px] flex flex-col glass-panel rounded-2xl p-4 xl:p-6 shrink-0 h-full ${activeJournal ? 'hidden xl:flex' : 'flex'}`}>
+        <div className={`w-full xl:w-[480px] flex flex-col shrink-0 h-full ${activeJournal ? 'hidden xl:flex' : 'flex'}`}>
             {/* Header */}
             <div className="flex items-center justify-end mb-6">
 

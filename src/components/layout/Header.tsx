@@ -189,7 +189,7 @@ export default function Header() {
                         'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
                         pathname === '/home' && 'bg-white/10 text-white'
                     )}>
-                        <Home className="w-4 h-4 text-accent" />
+                        <Home className="w-4 h-4" />
                         <span className="hidden sm:inline">Home</span>
                     </Link>
 
@@ -198,7 +198,7 @@ export default function Header() {
                         'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
                         pathname === '/study-together' && 'bg-white/10 text-white'
                     )}>
-                        <Sparkles className="w-4 h-4 text-accent" />
+                        <Sparkles className="w-4 h-4" />
                         <span className="hidden sm:inline">Study Room</span>
                     </Link>
 
@@ -207,7 +207,7 @@ export default function Header() {
                         'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
                         pathname === '/journal' && 'bg-white/10 text-white'
                     )}>
-                        <NotebookText className="w-4 h-4 text-accent" />
+                        <NotebookText className="w-4 h-4" />
                         <span className="hidden sm:inline">Journal</span>
                     </Link>
 
