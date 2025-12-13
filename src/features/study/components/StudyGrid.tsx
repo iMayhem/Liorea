@@ -16,7 +16,8 @@ const formatTime = (seconds: number = 0) => {
 };
 
 export default function StudyGrid({ users }: StudyGridProps) {
-  const sortedUsers = [...users].sort((a, b) => a.username.localeCompare(b.username));
+  // Use users directly as they are already sorted by study time in the context
+  const sortedUsers = users;
 
   return (
     <div className="w-full h-full p-0">

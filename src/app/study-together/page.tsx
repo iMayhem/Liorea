@@ -86,7 +86,7 @@ export default function StudyTogetherPage() {
 
           {/* LEFT: Study Grid Panel (Solid) - No Header */}
           <div className="w-[45%] flex flex-col bg-card/80 backdrop-blur-xl rounded-2xl border border-border shadow-xl overflow-hidden p-6">
-            <StudyGrid users={studyUsers} />
+            <StudyGrid users={usePresence().leaderboardUsers} />
           </div>
 
           {/* RIGHT: Chat Panel (Solid) */}
