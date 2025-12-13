@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X } from "lucide-react";
+import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X, CheckCheck } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import { ShopItem } from '../types';
@@ -30,7 +31,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     const { username, setUsername, userImage, setUserImage } = usePresence();
     const { stats, equipItem, refreshStats } = useGamification();
     const { toast } = useToast();
-    const { textSize, setTextSize, font, setFont } = useSettings();
+    const { textSize, setTextSize, font, setFont, theme, setTheme } = useSettings();
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -234,24 +235,54 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
 
                         <div className="space-y-3">
                             <Label>Font Family</Label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans'] as const).map((f) => (
-                                    <Button
-                                        key={f}
-                                        variant={font === f ? "default" : "outline"}
-                                        onClick={() => setFont(f)}
-                                        className="capitalize text-sm"
-                                        style={{ fontFamily: `var(--font-${f})` }}
-                                    >
-                                        {f.replace('-', ' ')}
-                                    </Button>
-                                ))}
+                            <ScrollArea className="h-48 rounded-md border border-white/10 p-2">
+                                <div className="grid grid-cols-3 gap-2">
+                                    {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans'] as const).map((f) => (
+                                        <Button
+                                            key={f}
+                                            variant={font === f ? "default" : "outline"}
+                                            onClick={() => setFont(f)}
+                                            className="capitalize text-sm"
+                                            style={{ fontFamily: `var(--font-${f})` }}
+                                        >
+                                            {f.replace('-', ' ')}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                            <div className="space-y-3">
+                                <Label>Theme</Label>
+                                <div className="flex flex-wrap gap-3">
+                                    {(
+                                        [
+                                            { id: 'default', name: 'Original', color: '#313338' },
+                                            { id: 'midnight', name: 'Midnight', color: '#1e1b4b' },
+                                            { id: 'forest', name: 'Forest', color: '#052e16' },
+                                            { id: 'berry', name: 'Berry', color: '#4a044e' },
+                                            { id: 'sunset', name: 'Sunset', color: '#431407' },
+                                            { id: 'ocean', name: 'Ocean', color: '#083344' },
+                                        ] as const
+                                    ).map((t) => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => setTheme(t.id)}
+                                            className={`group relative w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${theme === t.id ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
+                                            title={t.name}
+                                        >
+                                            <div className="absolute inset-0" style={{ backgroundColor: t.color }}></div>
+                                            {theme === t.id && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                    <CheckCheck className="w-5 h-5 text-white" />
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-discord-text-muted">
+                                    Personalize your workspace colors.
+                                </p>
                             </div>
-                            <p className="text-xs text-discord-text-muted">
-                                Choose the font style for the application.
-                            </p>
                         </div>
-                    </div>
                 </TabsContent>
 
                 {/* ACCOUNT TAB */}

@@ -7,6 +7,11 @@
     --font-body: var(--font-inter);
     /* Default */
 
+    --header-bg: #313338;
+    /* Default Discord-like Dark */
+    --theme-primary: 222.2 47.4% 11.2%;
+    /* Default Primary */
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -94,6 +99,68 @@
 
   html.font-open-sans {
     --font-body: var(--font-open-sans);
+  }
+
+  /* THEMES */
+
+  /* Midnight */
+  html.theme-midnight {
+    --header-bg: #1e1b4b;
+    /* Indigo 950 */
+    --background: 265 40% 10%;
+    /* Deep Purple Tint */
+    --primary: 263 70% 50%;
+    /* Purple */
+    --primary-foreground: 0 0% 100%;
+    --ring: 263 70% 50%;
+  }
+
+  /* Forest */
+  html.theme-forest {
+    --header-bg: #052e16;
+    /* Green 950 */
+    --background: 145 30% 10%;
+    /* Green Tint */
+    --primary: 142 71% 45%;
+    /* Green */
+    --primary-foreground: 0 0% 100%;
+    --ring: 142 71% 45%;
+  }
+
+  /* Berry */
+  html.theme-berry {
+    --header-bg: #4a044e;
+    /* Fuchsia 950 */
+    --background: 300 30% 10%;
+    /* Pink Tint */
+    --primary: 310 60% 50%;
+    /* Pink */
+    --primary-foreground: 0 0% 100%;
+    --ring: 310 60% 50%;
+  }
+
+  /* Sunset */
+  html.theme-sunset {
+    --header-bg: #431407;
+    /* Orange 950 */
+    --background: 20 30% 10%;
+    /* Orange Tint */
+    --primary: 24 95% 53%;
+    /* Orange */
+    --primary-foreground: 0 0% 100%;
+    --ring: 24 95% 53%;
+  }
+
+  /* Ocean */
+  html.theme-ocean {
+    --header-bg: #083344;
+    /* Cyan 950 */
+    --background: 190 40% 10%;
+    /* Cyan Tint */
+    --primary: 188 78% 41%;
+    /* Cyan */
+    --primary-foreground: 0 0% 100%;
+    --ring: 188 78% 41%;
   }
 }
 

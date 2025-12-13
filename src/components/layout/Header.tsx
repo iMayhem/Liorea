@@ -53,10 +53,13 @@ export default function Header() {
     };
 
     return (
-        <header className={cn(
-            "fixed top-0 left-0 right-0 z-30 px-4 h-[72px] flex items-center",
-            "bg-[#313338] border-b border-[#1F2023]"
-        )}>
+        <header
+            className={cn(
+                "fixed top-0 left-0 right-0 z-30 px-4 h-[72px] flex items-center",
+                "border-b border-[#1F2023] transition-colors duration-500"
+            )}
+            style={{ backgroundColor: 'var(--header-bg)' }}
+        >
             <div className="container mx-auto flex justify-between items-center">
                 <Link href="/home" className={cn(
                     "flex items-center gap-2 text-xl font-bold tracking-tight",
