@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { Button } from '@/components/ui/button';
