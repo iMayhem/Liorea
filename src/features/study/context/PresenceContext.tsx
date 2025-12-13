@@ -401,10 +401,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             if (minutesToAdd > 0) {
                 unsavedMinutesRef.current = 0;
                 api.study.updateTime(username, minutesToAdd)
-                    .then(() => toast({ title: "Debug: Saved to DB", description: `Synced ${minutesToAdd} min` }))
                     .catch(e => {
                         console.error("Failed to save to D1", e);
-                        toast({ variant: "destructive", title: "Debug: Save Failed", description: "Check console errors" });
                     });
             }
         };
