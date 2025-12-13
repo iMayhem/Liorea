@@ -31,17 +31,17 @@ export default function StatusPanel() {
   };
 
   return (
-    <BentoCard className="w-full max-w-sm mx-auto shadow-lg bg-[#2B2D31] border-none" noPadding>
+    <BentoCard className="w-full max-w-sm mx-auto shadow-lg bg-card border-none" noPadding>
       <CardContent className="p-3">
         {isEditingStatus ? (
           <div className="flex items-center gap-2 w-full">
-            <Smile className="text-zinc-400 w-5 h-5 flex-shrink-0" />
+            <Smile className="text-muted-foreground w-5 h-5 flex-shrink-0" />
             <Input
               placeholder="How are you feeling?"
               value={tempStatus}
               onChange={(e) => setTempStatus(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="bg-[#1E1F22] border-none text-zinc-200 placeholder:text-zinc-500 focus-visible:ring-0 h-8 text-sm"
+              className="bg-muted border-none text-foreground placeholder:text-muted-foreground focus-visible:ring-0 h-8 text-sm"
               autoFocus
               onBlur={handleStatusSave}
             />
@@ -49,12 +49,12 @@ export default function StatusPanel() {
         ) : (
           <div
             onClick={() => setIsEditingStatus(true)}
-            className="flex items-center gap-3 w-full cursor-pointer group p-1 hover:bg-[#35373C] rounded transition-colors"
+            className="flex items-center gap-3 w-full cursor-pointer group p-1 hover:bg-accent rounded transition-colors"
           >
-            <div className="p-1 rounded-full bg-[#1E1F22] text-zinc-400 group-hover:text-zinc-200 transition-colors">
+            <div className="p-1 rounded-full bg-muted text-muted-foreground group-hover:text-foreground transition-colors">
               <Smile className="w-5 h-5" />
             </div>
-            <span className={`text-sm font-medium truncate ${currentStatus ? 'text-zinc-200' : 'text-zinc-500'}`}>
+            <span className={`text-sm font-medium truncate ${currentStatus ? 'text-foreground' : 'text-muted-foreground'}`}>
               {currentStatus || "Set a status..."}
             </span>
           </div>
