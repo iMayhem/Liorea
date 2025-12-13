@@ -42,7 +42,7 @@ export default function BigPomodoroTimer() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isActive, mode, workMinutes, breakMinutes, awardXP]);
+    }, [isActive, mode, workMinutes, breakMinutes]);
 
     const toggleTimer = () => setIsActive(!isActive);
     const resetTimer = () => {

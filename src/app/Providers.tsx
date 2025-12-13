@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { NotificationProvider } from '@/context/NotificationContext';
 import { BackgroundProvider } from '@/context/BackgroundContext';
@@ -11,16 +11,10 @@ import FocusOverlay from '@/components/layout/FocusOverlay';
 import { NavigationEvents } from '@/components/layout/NavigationEvents';
 import MobileMessage from '@/components/layout/MobileMessage';
 import { UserContextMenuProvider } from '@/context/UserContextMenuContext';
-import { GamificationProvider } from '@/features/gamification/context/GamificationContext';
-import { UserProfileProvider } from '@/features/gamification/context/UserProfileContext';
-import { UserProfileModal } from '@/features/gamification/components/UserProfileModal';
-import { LiveTicker } from '@/features/gamification/components/LiveTicker';
 import { SettingsProvider } from '@/context/SettingsContext';
 import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    // ... useEffect ...
-
     return (
         <>
             <Suspense>
@@ -32,19 +26,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <FocusProvider>
                         <FocusOverlay />
                         <PresenceProvider>
-                            <GamificationProvider>
-                                <LiveTicker />
-                                <NotificationProvider>
-                                    <UserContextMenuProvider>
-                                        <UserProfileProvider>
-                                            {children}
-                                        </NotificationProvider>
-                                    </GamificationProvider>
-                                </PresenceProvider>
-                            </FocusProvider>
-                        </SettingsProvider>
-                    </BackgroundProvider>
-                    <Toaster />
-                </>
-                );
+                            <NotificationProvider>
+                                <UserContextMenuProvider>
+                                    {children}
+                                    <MobileMessage />
+                                    <GlobalUserContextMenu />
+                                </UserContextMenuProvider>
+                            </NotificationProvider>
+                        </PresenceProvider>
+                    </FocusProvider>
+                </SettingsProvider>
+            </BackgroundProvider>
+            <Toaster />
+        </>
+    );
 }
