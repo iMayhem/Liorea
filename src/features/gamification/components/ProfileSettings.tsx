@@ -283,6 +283,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                 </p>
                             </div>
                         </div>
+                    </div>
                 </TabsContent>
 
                 {/* ACCOUNT TAB */}
