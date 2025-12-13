@@ -24,6 +24,8 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     openReactionPopoverId, onReact, onReport, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
+    if (!msg.message && !msg.image_url) return null;
+
     return (
         <div className={`group relative flex gap-4 pr-4 hover:bg-muted/30 -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}>
             <div className="w-10 shrink-0 select-none pt-0.5">

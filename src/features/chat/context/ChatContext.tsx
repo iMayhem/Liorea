@@ -259,7 +259,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         if (!username) return;
 
         // Optimistic Update
-        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        setMessages(prev => prev.filter(msg => String(msg.id) !== String(messageId)));
 
         // Firebase Remove
         // Note: We need to know if it's a Firebase ID or D1 ID.
