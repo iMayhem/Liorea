@@ -129,41 +129,4 @@ export const api = {
             return await res.json();
         },
     },
-    gamification: {
-        getStats: async (username: string) => {
-            const res = await fetch(`${WORKER_URL}/gamification/stats?username=${username}`);
-            if (!res.ok) return null;
-            return res.json();
-        },
-        award: async (username: string, minutes: number) => {
-            // Secure call - ideally needs Auth token, but for MVP using simple post
-            await fetch(`${WORKER_URL}/gamification/award`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, minutes })
-            });
-        },
-        buy: async (username: string, itemId: string, price: number) => {
-            const res = await fetch(`${WORKER_URL}/gamification/shop/buy`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, itemId, price })
-            });
-            return res.ok;
-        },
-        equip: async (username: string, itemId: string, type: string) => {
-            await fetch(`${WORKER_URL}/gamification/equip`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, itemId, type })
-            });
-        },
-        // Dynamic Shop API
-        getItems: () => request<any[]>('/gamification/shop/items'),
-        admin: {
-            init: () => request('/gamification/admin/init-db'),
-            createItem: (item: any) => request('/gamification/admin/items', { method: 'POST', body: JSON.stringify(item) }),
-            deleteItem: (id: string) => request('/gamification/admin/items', { method: 'DELETE', body: JSON.stringify({ id }) }),
-        }
-    }
 };

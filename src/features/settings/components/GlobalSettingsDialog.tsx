@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { ProfileSettings } from '@/features/gamification/components/ProfileSettings';
+import { ProfileSettings } from '@/features/settings/components/ProfileSettings';
 import { api } from '@/lib/api';
-import { ShopItem } from '@/features/gamification/types';
+
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -12,13 +12,8 @@ import { DialogTitle } from '@radix-ui/react-dialog';
 
 export function GlobalSettingsDialog() {
     const [isOpen, setIsOpen] = useState(false);
-    const [allItems, setAllItems] = useState<ShopItem[]>([]);
 
-    useEffect(() => {
-        if (isOpen && allItems.length === 0) {
-            api.gamification.getItems().then(items => setAllItems(items || [])).catch(console.error);
-        }
-    }, [isOpen, allItems.length]);
+    // Sync with state changes if needed, but context handles it., allItems.length]);
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -32,10 +27,11 @@ export function GlobalSettingsDialog() {
                     <DialogTitle>Global Settings</DialogTitle>
                 </VisuallyHidden>
                 <div className="bg-background border border-discord-light rounded-xl h-full flex flex-col overflow-hidden shadow-2xl relative z-50">
-                    <ProfileSettings
-                        allItems={allItems}
-                        onClose={() => setIsOpen(false)}
-                    />
+                    <div className="h-full overflow-hidden">
+                        <ProfileSettings
+                            onClose={() => setIsOpen(false)}
+                        />
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

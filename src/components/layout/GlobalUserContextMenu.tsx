@@ -9,12 +9,10 @@ import { usePresence } from '@/features/study'; // Import to identify who is rep
 import { db } from '@/lib/firebase'; // Import existing Firebase DB instance
 import { ref, push, serverTimestamp } from 'firebase/database'; // Firebase functions
 
-import { useUserProfile } from '@/features/gamification/context/UserProfileContext';
 
 export default function GlobalUserContextMenu() {
   const { isOpen, position, targetUser, closeMenu } = useUserContextMenu();
   const { username: myUsername } = usePresence();
-  const { openProfile } = useUserProfile();
   const menuRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -42,13 +40,6 @@ export default function GlobalUserContextMenu() {
   const handleAction = (action: string) => {
     toast({ title: `${action}`, description: `Action performed on ${targetUser}` });
     closeMenu();
-  };
-
-  const handleViewProfile = () => {
-    if (targetUser) {
-      openProfile(targetUser);
-      closeMenu();
-    }
   };
 
   return (

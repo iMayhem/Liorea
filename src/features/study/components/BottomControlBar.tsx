@@ -10,8 +10,6 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Leaderboard } from '@/features/study';
-import { XPProgressBar } from '@/features/gamification/components/XPProgressBar';
-import { StreakIndicator } from '@/features/gamification/components/StreakIndicator';
 import { Timer } from 'lucide-react';
 import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
@@ -41,12 +39,6 @@ export default function BottomControlBar({ }: BottomControlBarProps) {
 
                 {/* CENTER: Controls */}
                 <div className="flex items-center gap-3 md:gap-4">
-
-                    {/* Level & Streak (Compact) */}
-                    <div className="flex items-center gap-2 mr-2">
-                        <XPProgressBar variant="compact" />
-                        <StreakIndicator />
-                    </div>
 
                     {/* Timer Toggle Removed */}
 
