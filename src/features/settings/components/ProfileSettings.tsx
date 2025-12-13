@@ -221,7 +221,7 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
                                             <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Typography</span>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
-                                            {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans'] as const).map((f) => (
+                                            {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans', 'poppins', 'oswald', 'playfair', 'merriweather', 'space-mono'] as const).map((f) => (
                                                 <div
                                                     key={f}
                                                     onClick={() => setFont(f)}

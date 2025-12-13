@@ -13,6 +13,7 @@ interface ChatMessageItemProps {
     openReactionPopoverId: string | null;
     onReact: (id: string, emoji: string) => void;
     onReport: (msg: ChatMessage) => void;
+    onDelete: (id: string) => void;
     onOpenChange: (open: boolean) => void;
     formatDate: (ts: number) => string;
     formatTime: (ts: number) => string;
@@ -20,7 +21,7 @@ interface ChatMessageItemProps {
 
 export const ChatMessageItem = React.memo(function ChatMessageItem({
     msg, isSequence, showHeader, isCurrentUser, reactionGroups,
-    openReactionPopoverId, onReact, onReport, onOpenChange,
+    openReactionPopoverId, onReact, onReport, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
     return (
@@ -71,6 +72,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 isCurrentUser={isCurrentUser}
                 onReact={(emoji) => onReact(msg.id, emoji)}
                 onReport={() => onReport(msg)}
+                onDelete={() => onDelete(msg.id)}
                 isOpen={openReactionPopoverId === msg.id}
                 onOpenChange={onOpenChange}
             />

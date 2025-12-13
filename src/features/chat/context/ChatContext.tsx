@@ -33,6 +33,7 @@ interface ChatContextType {
     typingUsers: string[];
     loadMoreMessages: () => Promise<void>;
     hasMore: boolean;
+    deleteMessage: (messageId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -253,11 +254,38 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [username, messages]);
 
+    // 5. DELETE MESSAGE
+    const deleteMessage = useCallback(async (messageId: string) => {
+        if (!username) return;
+
+        // Optimistic Update
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+
+        // Firebase Remove
+        // Note: We need to know if it's a Firebase ID or D1 ID.
+        // If it's D1 (number-like string), we can't delete directly from Firebase if it's not there.
+        // But for "live" messages, they are in Firebase.
+        // We will attempt to remove from Firebase 'chats/{id}'.
+        try {
+            await remove(ref(db, `chats/${messageId}`));
+        } catch (e) {
+            // Might be a D1 archived message, so Firebase remove implies nothing
+        }
+
+        // D1 Remove
+        api.chat.delete({
+            room_id: CHAT_ROOM,
+            message_id: messageId,
+            username
+        }).catch(e => console.error("D1 Delete failed:", e));
+
+    }, [username]);
+
     const sendTypingEvent = useCallback(async () => { }, []);
 
     const value = useMemo(() => ({
-        messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore
-    }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore]);
+        messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage
+    }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage]);
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };

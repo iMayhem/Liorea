@@ -25,14 +25,10 @@ import { ChatMessageItem } from './ChatMessageItem';
 
 type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; downsized: { url: string }; } }
 // ... (skip down to map)
-{
-    loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-muted-foreground">Loading...</div> : gifs.map(gif => (
-        <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.downsized.url)} />
-    ))
-}
+
 
 export default function ChatPanel() {
-    const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore } = useChat();
+    const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore, deleteMessage } = useChat();
     const { username, leaderboardUsers } = usePresence();
     const { addNotification } = useNotifications();
     const { toast } = useToast();
@@ -283,6 +279,7 @@ export default function ChatPanel() {
                                 openReactionPopoverId={openReactionPopoverId}
                                 onReact={sendReaction}
                                 onReport={handleReportMessage}
+                                onDelete={deleteMessage}
                                 onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}
                                 formatDate={formatDate}
                                 formatTime={formatTime}
