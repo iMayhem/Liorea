@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X, CheckCheck, Settings } from "lucide-react";
+import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X, CheckCheck, Settings, Home } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import { ShopItem } from '../types';
@@ -24,7 +24,7 @@ import { Monitor } from 'lucide-react';
 
 interface ProfileSettingsProps {
     allItems: ShopItem[];
-    onClose: () => void;
+    onClose?: () => void;
 }
 
 export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
@@ -113,21 +113,33 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                                 <LogOut className="w-4 h-4 mr-3" />
                                 Log Out
                             </TabsTrigger>
+
+
+                            {/* Back to Home Button if not in a dialog */}
+                            {!onClose && (
+                                <a href="/home" className="flex items-center w-full justify-start px-4 py-2 text-discord-text-muted hover:bg-white/5 hover:text-white rounded-md transition-all font-medium mt-2">
+                                    <Home className="w-4 h-4 mr-3" />
+                                    Back to Home
+                                </a>
+                            )}
+
                         </TabsList>
                     </ScrollArea>
                 </div>
 
                 {/* MAIN CONTENT Area */}
-                <div className="flex-1 flex flex-col h-full bg-discord-dark relative">
-                    {/* Close Button Floating */}
-                    <div className="absolute top-6 right-6 z-50">
-                        <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/10 rounded-full h-8 w-8 text-white/50 hover:text-white">
-                            <X className="w-5 h-5" />
-                        </Button>
-                    </div>
+                <div className="flex-1 flex flex-col h-full bg-discord-dark relative min-w-0">
+                    {/* Close Button Floating - ONLY if onClose is provided */}
+                    {onClose && (
+                        <div className="absolute top-6 right-6 z-50">
+                            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/10 rounded-full h-8 w-8 text-white/50 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </Button>
+                        </div>
+                    )}
 
-                    <ScrollArea className="flex-1 h-full">
-                        <div className="p-8 md:p-10 max-w-3xl mx-auto pb-20">
+                    <ScrollArea className="flex-1 h-full w-full">
+                        <div className="p-6 md:p-8 max-w-3xl mx-auto pb-20">
 
                             {/* GENERAL TAB */}
                             <TabsContent value="general" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">

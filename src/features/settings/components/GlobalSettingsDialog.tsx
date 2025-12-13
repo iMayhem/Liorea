@@ -27,7 +27,7 @@ export function GlobalSettingsDialog() {
                     <Settings className="w-5 h-5" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-5xl h-[85vh] p-0 bg-transparent border-none shadow-none text-discord-text overflow-hidden">
+            <DialogContent className="w-[90vw] max-w-5xl h-[80vh] max-h-[800px] p-0 bg-transparent border-none shadow-none text-discord-text overflow-hidden">
                 <VisuallyHidden>
                     <DialogTitle>Global Settings</DialogTitle>
                 </VisuallyHidden>
