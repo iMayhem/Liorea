@@ -112,19 +112,21 @@ export const api = {
     },
 
     giphy: {
-        search: (query: string) => {
+        search: async (query: string) => {
             if (!GIPHY_API_KEY) {
                 console.warn("GIPHY_API_KEY is missing. Please add NEXT_PUBLIC_GIPHY_API_KEY to your environment variables.");
-                return Promise.resolve({ data: [] });
+                return { data: [] };
             }
-            return request<{ data: any[] }>(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`);
+            const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${query}&limit=20&rating=g`);
+            return await res.json();
         },
-        trending: () => {
+        trending: async () => {
             if (!GIPHY_API_KEY) {
                 console.warn("GIPHY_API_KEY is missing. Please add NEXT_PUBLIC_GIPHY_API_KEY to your environment variables.");
-                return Promise.resolve({ data: [] });
+                return { data: [] };
             }
-            return request<{ data: any[] }>(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`);
+            const res = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`);
+            return await res.json();
         },
     },
     gamification: {
