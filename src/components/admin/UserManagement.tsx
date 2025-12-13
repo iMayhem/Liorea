@@ -46,6 +46,7 @@ export default function UserManagement() {
     const [actionType, setActionType] = useState<'adjust_balance' | 'ban' | 'reset_stats' | null>(null);
     const [amount, setAmount] = useState(0);
     const [resource, setResource] = useState<'xp' | 'coins'>('coins');
+    const [resetScope, setResetScope] = useState<'daily' | 'weekly' | 'all'>('daily');
     const [showGlobalReset, setShowGlobalReset] = useState(false);
 
     const handleGlobalReset = async () => {
