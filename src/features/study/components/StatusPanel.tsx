@@ -54,9 +54,17 @@ export default function StatusPanel() {
             <div className="p-1 rounded-full bg-muted text-muted-foreground group-hover:text-foreground transition-colors">
               <Smile className="w-5 h-5" />
             </div>
-            <span className={`text-sm font-medium truncate ${currentStatus ? 'text-foreground' : 'text-muted-foreground'}`}>
-              {currentStatus || "Set a status..."}
-            </span>
+            {currentStatus ? (
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p className="text-sm text-foreground truncate">
+                  {currentStatus}
+                </p>
+              </div>
+            ) : (
+              <span className="text-sm font-medium text-muted-foreground">
+                Set a status...
+              </span>
+            )}
           </div>
         )}
       </CardContent>
