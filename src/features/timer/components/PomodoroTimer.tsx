@@ -99,59 +99,56 @@ export default function PomodoroTimer() {
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full min-h-[400px]">
-      {/* Red Pill Label */}
-      <div className="px-6 py-2 rounded-full bg-red-500/10 border border-red-500/20 mb-8">
-        <span className="text-red-500 font-bold tracking-widest text-sm uppercase">Focus Time</span>
+      <div className="text-center mb-8 space-y-1">
+        <h2 className="text-blue-500 font-black tracking-widest text-lg uppercase">Global Session</h2>
+        <p className="text-white/50 text-xs font-medium">Syncs automatically every 50 mins</p>
       </div>
 
-      {/* Timer Display */}
-      <div className="relative mb-8">
-        <div className="absolute inset-0 flex items-center justify-center -mt-8">
-          <span className="text-2xl font-bold text-white tracking-widest">{formatTime(secondsLeft)}</span>
+      <div className="relative group cursor-pointer" onClick={toggleTimer}>
+        {/* Ring Glow Effect (Subtle) */}
+        <div className="absolute inset-0 rounded-full blur-2xl bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+        <svg className="transform -rotate-90 w-72 h-72 relative z-10">
+          <circle
+            cx="144"
+            cy="144"
+            r="130"
+            stroke="currentColor"
+            strokeWidth="12"
+            fill="transparent"
+            className="text-white/5"
+          />
+          <circle
+            cx="144"
+            cy="144"
+            r="130"
+            stroke="currentColor"
+            strokeWidth="12"
+            fill="transparent"
+            strokeDasharray={2 * Math.PI * 130}
+            strokeDashoffset={2 * Math.PI * 130 * ((100 - progress) / 100)}
+            className="text-blue-500 transition-all duration-1000 ease-linear drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+            strokeLinecap="round"
+          />
+        </svg>
+
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+          <span className="text-6xl font-medium text-white tracking-tight tabular-nums relative top-[-4px]">
+            {formatTime(secondsLeft)}
+          </span>
+          <div className="flex items-center gap-1.5 mt-2 text-white/40">
+            <RefreshCw className={`w-3 h-3 ${isActive ? 'animate-spin-slow' : ''}`} />
+            <span className="text-[10px] font-bold tracking-widest uppercase">Time Remaining</span>
+          </div>
         </div>
 
-        {/* Buttons Centered Below Time (roughly) - actually layout is: Time Top, Ring?, Buttons Center */}
-        {/* Wait, screenshot has Time ABOVE buttons. And buttons are inside? No. */}
-        {/* Screenshot: Top "FOCUS TIME". Middle: "25:00". Below that: Play | Reset buttons. */}
-        {/* It doesn't actually show a ring in the screenshot, but user said "large circular". */}
-        {/* Creating the layout exactly as requested: Badge -> Time -> Buttons -> Toggle */}
+        {/* Hover Controls Hint */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-30">
+          {isActive ? <Pause className="w-12 h-12 text-white fill-white" /> : <Play className="w-12 h-12 text-white fill-white" />}
+        </div>
       </div>
 
-      {/* Large Controls - Centered */}
-      <div className="flex items-center gap-6 mb-12">
-        {/* Main Play Button - White Vertical Pill */}
-        <Button
-          onClick={toggleTimer}
-          className="w-16 h-24 rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center transition-transform active:scale-95"
-        >
-          {isActive ? <Pause className="w-8 h-8 fill-black" /> : <Play className="w-8 h-8 fill-black ml-1" />}
-        </Button>
-
-        {/* Reset Button - Circular Outline */}
-        <Button
-          onClick={resetTimer}
-          variant="outline"
-          className="w-16 h-16 rounded-full border-white/10 bg-transparent text-white/50 hover:text-white hover:bg-white/5 hover:border-white/20 transition-all"
-        >
-          <RefreshCw className="w-6 h-6" />
-        </Button>
-      </div>
-
-      {/* Segmented Control Toggle */}
-      <div className="flex bg-black/20 p-1 rounded-full border border-white/5">
-        <button
-          onClick={() => { setMode('work'); setIsActive(false); setSecondsLeft(workMinutes * 60); }}
-          className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${mode === 'work' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
-        >
-          Pomodoro
-        </button>
-        <button
-          onClick={() => { setMode('break'); setIsActive(false); setSecondsLeft(breakMinutes * 60); }}
-          className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${mode === 'break' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
-        >
-          Break
-        </button>
-      </div>
+      {/* Hidden reset for continuity if needed, or just double-click ring? Stick to simple click toggle for now. */}
     </div>
   );
 }
