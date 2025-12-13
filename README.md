@@ -1,7 +1,7 @@
 <div align="center">
   <br />
-    <a href="https://github.com/iMayhem/Zenith" target="_blank">
-      <img src="public/banner.png" alt="Project Banner" width="100%">
+    <a href="https://github.com/iMayhem/Liorea" target="_blank">
+      
     </a>
   <br />
 
@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/-Firebase-black?style=for-the-badge&logoColor=white&logo=firebase&color=FFCA28" alt="firebase" />
   </div>
 
-  <h3 align="center">Zenith - A Virtual Study Environment</h3>
+  <h3 align="center">Liorea - A Virtual Study Environment</h3>
 </div>
 
 ## 📋 <a name="table">Table of Contents</a>
@@ -25,9 +25,9 @@
 
 ## <a name="introduction">🤖 Introduction</a>
 
-**Zenith** is an immersive virtual study environment designed to enhance productivity and focus. It brings users together in a shared digital space where they can track their study time, compete on leaderboards, and chat with peers.
+**Liorea** is an immersive virtual study environment designed to enhance productivity and focus. It brings users together in a shared digital space where they can track their study time, compete on leaderboards, and chat with peers.
 
-Built with performance and aesthetics in mind, Zenith features a modern, dark-themed UI with glassmorphism effects, offering tools like a synchronized Pomodoro timer, study analytics, and a personal journal.
+Built with performance and aesthetics in mind, Liorea features a modern, dark-themed UI with glassmorphism effects, offering tools like a synchronized Pomodoro timer, study analytics, and a personal journal.
 
 ## <a name="features">🚀 Features</a>
 
