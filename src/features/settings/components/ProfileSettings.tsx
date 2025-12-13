@@ -77,13 +77,7 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
                                 <UserIcon className="w-4 h-4 mr-3" />
                                 My Account
                             </TabsTrigger>
-                            <TabsTrigger
-                                value="ui"
-                                className="w-full justify-start px-4 py-2 text-discord-text-muted data-[state=active]:bg-discord-blurple data-[state=active]:text-white rounded-md transition-all font-medium"
-                            >
-                                <Palette className="w-4 h-4 mr-3" />
-                                Appearance
-                            </TabsTrigger>
+
                             <TabsTrigger
                                 value="account"
                                 className="w-full justify-start px-4 py-2 text-discord-text-muted data-[state=active]:bg-red-500/10 data-[state=active]:text-red-400 hover:text-red-400 rounded-md transition-all font-medium mt-auto"
@@ -93,13 +87,7 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
                             </TabsTrigger>
 
 
-                            {/* Back to Home Button if not in a dialog */}
-                            {!onClose && (
-                                <a href="/home" className="flex items-center w-full justify-start px-4 py-2 text-discord-text-muted hover:bg-white/5 hover:text-white rounded-md transition-all font-medium mt-2">
-                                    <Home className="w-4 h-4 mr-3" />
-                                    Back to Home
-                                </a>
-                            )}
+
 
                         </TabsList>
                     </ScrollArea>
@@ -161,115 +149,7 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
                                 </div>
                             </TabsContent>
 
-                            {/* APPEARANCE TAB */}
-                            <TabsContent value="ui" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Appearance</h2>
-                                    <p className="text-discord-text-muted">Customize how Zenith looks and feels.</p>
-                                </div>
 
-                                <div className="space-y-8">
-                                    {/* THEME */}
-                                    <section className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-base font-semibold text-white">Theme</Label>
-                                            <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Color Scheme</span>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            {(
-                                                [
-                                                    { id: 'default', name: 'Original', color: '#313338' },
-                                                    { id: 'midnight', name: 'Midnight', color: '#1e1b4b' },
-                                                    { id: 'forest', name: 'Forest', color: '#052e16' },
-                                                    { id: 'berry', name: 'Berry', color: '#4a044e' },
-                                                    { id: 'sunset', name: 'Sunset', color: '#431407' },
-                                                    { id: 'ocean', name: 'Ocean', color: '#083344' },
-                                                    { id: 'lavender', name: 'Lavender', color: '#2e1065' },
-                                                    { id: 'rose', name: 'Rose', color: '#4c0519' },
-                                                    { id: 'slate', name: 'Slate', color: '#0f172a' },
-                                                    { id: 'amber', name: 'Amber', color: '#451a03' },
-                                                    { id: 'teal', name: 'Teal', color: '#042f2e' },
-                                                    { id: 'emerald', name: 'Emerald', color: '#022c22' },
-                                                ] as const
-                                            ).map((t) => (
-                                                <button
-                                                    key={t.id}
-                                                    onClick={() => setTheme(t.id)}
-                                                    className={`group relative flex items-center gap-3 p-2 rounded-lg border transition-all hover:bg-white/5 ${theme === t.id ? 'border-discord-blurple bg-discord-blurple/10' : 'border-white/10'}`}
-                                                >
-                                                    <div className="w-10 h-10 rounded-full shadow-inner shrink-0" style={{ backgroundColor: t.color }}>
-                                                        {theme === t.id && (
-                                                            <div className="w-full h-full flex items-center justify-center text-white">
-                                                                <CheckCheck className="w-5 h-5 drop-shadow-md" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <div className={`font-medium ${theme === t.id ? 'text-white' : 'text-discord-text'}`}>{t.name}</div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </section>
-
-                                    <div className="h-px bg-white/10" />
-
-                                    {/* FONT */}
-                                    <section className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-base font-semibold text-white">Font Family</Label>
-                                            <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Typography</span>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans', 'poppins', 'oswald', 'playfair', 'merriweather', 'space-mono'] as const).map((f) => (
-                                                <div
-                                                    key={f}
-                                                    onClick={() => setFont(f)}
-                                                    className={`cursor-pointer border rounded-lg p-3 flex items-center justify-between transition-all hover:border-discord-blurple/50 ${font === f ? 'border-discord-blurple bg-discord-blurple/10' : 'border-white/10 bg-black/20'}`}
-                                                >
-                                                    <span className="capitalize text-sm font-medium" style={{ fontFamily: `var(--font-${f})` }}>
-                                                        {f.replace('-', ' ')}
-                                                    </span>
-                                                    {font === f && <CheckCheck className="w-4 h-4 text-discord-blurple" />}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-
-                                    <div className="h-px bg-white/10" />
-
-                                    {/* TEXT SIZE */}
-                                    <section className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-base font-semibold text-white">Text Size</Label>
-                                            <span className="text-xs text-discord-text-muted uppercase tracking-wider font-bold">Scaling</span>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-black/20 p-1 rounded-lg border border-white/10 w-fit">
-                                            <Button
-                                                variant={textSize === 'sm' ? "secondary" : "ghost"}
-                                                onClick={() => setTextSize('sm')}
-                                                className="h-8 text-xs px-4"
-                                            >
-                                                Small
-                                            </Button>
-                                            <Button
-                                                variant={textSize === 'md' ? "secondary" : "ghost"}
-                                                onClick={() => setTextSize('md')}
-                                                className="h-8 text-sm px-4"
-                                            >
-                                                Medium
-                                            </Button>
-                                            <Button
-                                                variant={textSize === 'lg' ? "secondary" : "ghost"}
-                                                onClick={() => setTextSize('lg')}
-                                                className="h-8 text-base px-4"
-                                            >
-                                                Large
-                                            </Button>
-                                        </div>
-                                    </section>
-                                </div>
-                            </TabsContent>
 
                             {/* ACCOUNT / LOGOUT */}
                             <TabsContent value="account" className="mt-0 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">

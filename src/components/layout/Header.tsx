@@ -14,8 +14,8 @@ import UserAvatar from '@/components/UserAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { usePresence } from '@/features/study';
-// import { GlobalSettingsDialog } from '@/features/settings/components/GlobalSettingsDialog';
-import { Settings } from 'lucide-react';
+import { AppearanceSettings } from '@/features/settings/components/AppearanceSettings';
+import { Settings, Palette } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { ref, push, serverTimestamp } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
@@ -70,6 +70,17 @@ export default function Header() {
                     Liorea
                 </Link>
                 <nav className="flex items-center gap-2">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-discord-text-muted hover:bg-discord-gray hover:text-discord-text rounded-full" title="Appearance">
+                                <Palette className="w-5 h-5 text-white/80" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[85vh] p-0 bg-background border-border overflow-hidden rounded-xl">
+                            <AppearanceSettings />
+                        </DialogContent>
+                    </Dialog>
+
                     <Link href="/settings">
                         <Button variant="ghost" size="icon" className="text-discord-text-muted hover:bg-discord-gray hover:text-discord-text rounded-full" title="Settings">
                             <Settings className="w-5 h-5 text-white/80" />

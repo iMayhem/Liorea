@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type TextSize = "sm" | "md" | "lg";
-export type FontOption = 'inter' | 'roboto' | 'lato' | 'montserrat' | 'open-sans' | 'poppins' | 'oswald' | 'playfair' | 'merriweather' | 'space-mono';
+export type FontOption = 'inter' | 'roboto' | 'lato' | 'montserrat' | 'open-sans' | 'poppins' | 'oswald' | 'playfair' | 'merriweather' | 'space-mono' | 'nunito' | 'raleway' | 'ubuntu';
 export type ThemeOption = 'default' | 'midnight' | 'forest' | 'berry' | 'sunset' | 'ocean' | 'lavender' | 'rose' | 'slate' | 'amber' | 'teal' | 'emerald';
 
 interface SettingsContextType {
@@ -66,7 +66,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("liorea-font", newFont);
         document.documentElement.classList.remove(
             'font-inter', 'font-roboto', 'font-lato', 'font-montserrat', 'font-open-sans',
-            'font-poppins', 'font-oswald', 'font-playfair', 'font-merriweather', 'font-space-mono'
+            'font-poppins', 'font-oswald', 'font-playfair', 'font-merriweather', 'font-space-mono',
+            'font-nunito', 'font-raleway', 'font-ubuntu'
         );
         document.documentElement.classList.add(`font-${newFont}`);
     };
