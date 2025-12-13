@@ -11,7 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { db } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp, push } from 'firebase/database';
 import { compressImage } from '@/lib/compress';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from '@/lib/api';
 import { Journal, Post, Reaction, GiphyResult } from '../types';
@@ -409,7 +410,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                             <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><Smile className="w-5 h-5" /></Button>
                         </PopoverTrigger>
                         <PopoverContent side="top" className="w-auto p-0 border-none bg-transparent shadow-none">
-                            <EmojiPicker theme={Theme.DARK} onEmojiClick={handleEmojiClick} height={400} searchDisabled={false} skinTonesDisabled />
+                            <EmojiPicker theme={'dark' as any} onEmojiClick={handleEmojiClick} height={400} searchDisabled={false} skinTonesDisabled />
                         </PopoverContent>
                     </Popover>
 

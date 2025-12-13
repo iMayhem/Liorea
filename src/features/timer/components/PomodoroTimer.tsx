@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Play, Pause, RefreshCw } from 'lucide-react';
-import * as Tone from 'tone';
+// import * as Tone from 'tone';
 
 
 export default function PomodoroTimer() {
@@ -15,12 +15,14 @@ export default function PomodoroTimer() {
   const [isActive, setIsActive] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(workMinutes * 60);
 
-  const synth = useRef<Tone.Synth | null>(null);
+  const synth = useRef<any>(null);
 
   useEffect(() => {
     // Initialize synth on the client
     if (typeof window !== 'undefined' && !synth.current) {
-      synth.current = new Tone.Synth().toDestination();
+      import('tone').then(Tone => {
+        synth.current = new Tone.Synth().toDestination();
+      });
     }
   }, []);
 

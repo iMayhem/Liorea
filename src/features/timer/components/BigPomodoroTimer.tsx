@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import * as Tone from 'tone';
+// import * as Tone from 'tone'; // Removed static import
 import { Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -13,11 +13,13 @@ export default function BigPomodoroTimer() {
     const [isActive, setIsActive] = useState(false);
     const [secondsLeft, setSecondsLeft] = useState(workMinutes * 60);
 
-    const synth = useRef<Tone.Synth | null>(null);
+    const synth = useRef<any>(null); // Use any to avoid type dependency
 
     useEffect(() => {
         if (typeof window !== 'undefined' && !synth.current) {
-            synth.current = new Tone.Synth().toDestination();
+            import('tone').then((Tone) => {
+                synth.current = new Tone.Synth().toDestination();
+            });
         }
     }, []);
 
