@@ -7,10 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Play, Pause, RefreshCw } from 'lucide-react';
 import * as Tone from 'tone';
 
-import { useGamification } from '@/features/gamification/context/GamificationContext';
 
 export default function PomodoroTimer() {
-  const { awardXP } = useGamification();
   const [workMinutes, setWorkMinutes] = useState(25);
   const [breakMinutes, setBreakMinutes] = useState(5);
   const [mode, setMode] = useState<'work' | 'break'>('work');
@@ -40,9 +38,9 @@ export default function PomodoroTimer() {
           // Play a sound when the timer finishes
           synth.current?.triggerAttackRelease("C5", "8n");
 
-          // Award XP if finishing a work session
+          // Timer finished
           if (mode === 'work') {
-            awardXP(workMinutes);
+            // Logic removed as per request - pure timer now
           }
 
           const nextMode = mode === 'work' ? 'break' : 'work';
