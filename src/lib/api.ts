@@ -84,7 +84,7 @@ export const api = {
     },
 
     study: {
-        getLeaderboard: () => request<any[]>('/leaderboard'),
+        getLeaderboard: (timeframe: string = 'all') => request<any[]>(`/leaderboard?timeframe=${timeframe}`),
         getStats: (username: string) => request<{ total_minutes: number }>(`/study/stats?username=${username}`),
         getHistory: (username: string) => request<Record<string, number>>(`/study/history?username=${username}`),
         updateTime: (username: string, minutes: number) => request('/study/update', { method: 'POST', body: JSON.stringify({ username, minutes }) }),

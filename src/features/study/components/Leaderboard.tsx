@@ -41,7 +41,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
     const loadLeaderboard = async () => {
       // setIsLoading(true); // Don't show spinner on background refresh, maybe only first time?
       try {
-        const data = await fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/leaderboard?timeframe=daily`).then(res => res.json());
+        const data = await api.study.getLeaderboard('daily');
 
         if (Array.isArray(data)) {
           const formatted: LeaderboardEntry[] = data.map((u: any) => ({
