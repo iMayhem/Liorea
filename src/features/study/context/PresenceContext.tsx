@@ -191,7 +191,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
 
 
-    // --- DATA LISTENERS ---
+    // --- DATA LISTENERS (THROTTLED) ---
+    // We use a ref to store the latest raw data from Firebase, and a timer to update React state
+    // only once per second. This prevents "millisecond" updates from re-rendering the whole app.
+
+    // 1. Leaderboard (Historical)
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {
@@ -203,23 +207,26 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                         total_study_time: (u.total_minutes || 0) * 60,
                         status: 'Online',
                         photoURL: u.photoURL,
-                        // Note: Leaderboard API likely needs update to return equipped_frame too if we want it there
-                        // but we can merge it from community list below
                     }));
                 setHistoricalLeaderboard(formatted);
             } catch (e) { console.error("Leaderboard fetch failed", e); }
         };
         fetchLeaderboard();
-        const interval = setInterval(fetchLeaderboard, 60000);
+        const interval = setInterval(fetchLeaderboard, 60000); // Keep 60s poll for leaderboards
         return () => clearInterval(interval);
     }, []);
 
+    // 2. Study Room Users (Throttled)
     useEffect(() => {
         const roomRef = ref(db, '/study_room_presence');
-        return onValue(roomRef, (snapshot: any) => {
-            const data = snapshot.val();
-            if (data) {
-                const list: StudyUser[] = Object.values(data)
+        let latestData: any = null;
+        let lastUpdate = 0;
+        let animationFrameId: number;
+
+        const processUpdates = () => {
+            const now = Date.now();
+            if (now - lastUpdate > 1000 && latestData) { // 1 second throttle
+                const list: StudyUser[] = Object.values(latestData)
                     .filter((u: any) => u && u.username)
                     .map((u: any) => ({
                         username: u.username,
@@ -229,17 +236,41 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                         status: 'Online'
                     }));
                 list.sort((a, b) => b.total_study_time - a.total_study_time);
-                setStudyUsers(list);
-            } else { setStudyUsers([]); }
+
+                // Only update state if serialized data actually changed to avoid ref equality churn
+                setStudyUsers(prev => {
+                    const isSame = JSON.stringify(prev) === JSON.stringify(list);
+                    return isSame ? prev : list;
+                });
+                lastUpdate = now;
+            }
+            animationFrameId = requestAnimationFrame(processUpdates);
+        };
+
+        const unsubscribe = onValue(roomRef, (snapshot) => {
+            latestData = snapshot.val();
         });
+
+        // Start loop
+        processUpdates();
+
+        return () => {
+            unsubscribe();
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
+    // 3. Community Presence (Throttled)
     useEffect(() => {
         const globalRef = query(ref(db, '/community_presence'), limitToLast(100));
-        return onValue(globalRef, (snapshot: any) => {
-            const data = snapshot.val();
-            if (data) {
-                const rawList = Object.values(data)
+        let latestData: any = null;
+        let lastUpdate = 0;
+        let animationFrameId: number;
+
+        const processUpdates = () => {
+            const now = Date.now();
+            if (now - lastUpdate > 1000 && latestData) { // 1 second throttle
+                const rawList = Object.values(latestData)
                     .filter((u: any) => u && u.username)
                     .map((u: any) => ({
                         username: u.username,
@@ -271,9 +302,29 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     if (a.status !== 'Online' && b.status === 'Online') return 1;
                     return b.last_seen - a.last_seen;
                 });
-                setCommunityUsers(list);
-            } else { setCommunityUsers([]); }
+
+                setCommunityUsers(prev => {
+                    // Simple length check optimization first
+                    if (prev.length !== list.length) return list;
+                    // Deep compare fallback
+                    const isSame = JSON.stringify(prev) === JSON.stringify(list);
+                    return isSame ? prev : list;
+                });
+                lastUpdate = now;
+            }
+            animationFrameId = requestAnimationFrame(processUpdates);
+        };
+
+        const unsubscribe = onValue(globalRef, (snapshot) => {
+            latestData = snapshot.val();
         });
+
+        processUpdates();
+
+        return () => {
+            unsubscribe();
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
     const leaderboardUsers = useMemo(() => {

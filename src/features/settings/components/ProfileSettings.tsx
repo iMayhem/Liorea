@@ -1,50 +1,26 @@
 import React, { useState, useRef } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
-import { useGamification } from '@/features/gamification/context/GamificationContext';
-import dynamic from 'next/dynamic';
-import { getProxiedUrl } from '@/lib/api';
-
-const LottiePreview = dynamic(() => import('@/components/ui/LottiePreview').then(mod => mod.LottiePreview), {
-    ssr: false
-});
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, LogOut, Save, User as UserIcon, Sparkles, Palette, X, CheckCheck, Settings, Home } from "lucide-react";
+import { Loader2, Upload, LogOut, User as UserIcon, Palette, X, CheckCheck, Settings, Home } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-import { ShopItem } from '../types';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useSettings } from '@/context/SettingsContext';
-import { Monitor } from 'lucide-react';
 
 interface ProfileSettingsProps {
-    allItems: ShopItem[];
     onClose?: () => void;
 }
 
-export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
-    const { username, setUsername, userImage, setUserImage } = usePresence();
-    const { stats, equipItem, refreshStats } = useGamification();
+export function ProfileSettings({ onClose }: ProfileSettingsProps) {
+    const { username, setUserImage, userImage } = usePresence();
     const { toast } = useToast();
     const { textSize, setTextSize, font, setFont, theme, setTheme } = useSettings();
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Derived Lists - Items user owns OR are free (price 0)
-    // We treat 'inventory' as list of IDs.
-    // Removed rename state and logic as per request.
-    const hasItem = (id: string) => stats.inventory.includes(id) || allItems.find(i => i.id === id)?.price === 0;
-
-    const myBadges = allItems.filter(i => i.type === 'badge' && hasItem(i.id));
-    const myFrames = allItems.filter(i => i.type === 'frame' && hasItem(i.id));
-    const myEffects = allItems.filter(i => i.type === 'effect' && hasItem(i.id));
-    const myColors = allItems.filter(i => i.type === 'color' && hasItem(i.id));
-
 
     const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

@@ -38,18 +38,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
                                     <UserContextMenuProvider>
                                         <UserProfileProvider>
                                             {children}
-                                            <MobileMessage />
-                                            <GlobalUserContextMenu />
-                                            <UserProfileModal />
-                                        </UserProfileProvider>
-                                    </UserContextMenuProvider>
-                                </NotificationProvider>
-                            </GamificationProvider>
-                        </PresenceProvider>
-                    </FocusProvider>
-                </SettingsProvider>
-            </BackgroundProvider>
-            <Toaster />
-        </>
-    );
+                                        </NotificationProvider>
+                                    </GamificationProvider>
+                                </PresenceProvider>
+                            </FocusProvider>
+                        </SettingsProvider>
+                    </BackgroundProvider>
+                    <Toaster />
+                </>
+                );
 }

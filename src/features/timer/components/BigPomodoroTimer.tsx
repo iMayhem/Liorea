@@ -1,14 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw } from 'lucide-react';
 import * as Tone from 'tone';
-import { useGamification } from '@/features/gamification/context/GamificationContext';
+import { Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 export default function BigPomodoroTimer() {
-    const { awardXP } = useGamification();
     const [workMinutes, setWorkMinutes] = useState(25);
     const [breakMinutes, setBreakMinutes] = useState(5);
     const [mode, setMode] = useState<'work' | 'break'>('work');
@@ -35,7 +33,6 @@ export default function BigPomodoroTimer() {
             setSecondsLeft(prevSeconds => {
                 if (prevSeconds <= 1) {
                     synth.current?.triggerAttackRelease("C5", "8n");
-                    if (mode === 'work') awardXP(workMinutes);
                     const nextMode = mode === 'work' ? 'break' : 'work';
                     setMode(nextMode);
                     return (nextMode === 'work' ? workMinutes : breakMinutes) * 60;
