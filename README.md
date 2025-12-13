@@ -1,6 +1,6 @@
 <div align="center">
   <br />
-    <a href="https://github.com/Sujeet-Mukherjee/Zenith" target="_blank">
+    <a href="https://github.com/iMayhem/Zenith" target="_blank">
       <img src="public/banner.png" alt="Project Banner" width="100%">
     </a>
   <br />
