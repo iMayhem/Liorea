@@ -4,6 +4,9 @@
 
 @layer base {
   :root {
+    --font-body: var(--font-inter);
+    /* Default */
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -73,6 +76,24 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  html.font-roboto {
+    --font-body: var(--font-roboto);
+  }
+
+  html.font-lato {
+    --font-body: var(--font-lato);
+  }
+
+  html.font-montserrat {
+    --font-body: var(--font-montserrat);
+  }
+
+  html.font-open-sans {
+    --font-body: var(--font-open-sans);
   }
 }
 

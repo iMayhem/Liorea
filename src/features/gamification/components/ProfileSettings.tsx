@@ -30,7 +30,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
     const { username, setUsername, userImage, setUserImage } = usePresence();
     const { stats, equipItem, refreshStats } = useGamification();
     const { toast } = useToast();
-    const { textSize, setTextSize } = useSettings();
+    const { textSize, setTextSize, font, setFont } = useSettings();
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -229,6 +229,26 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                             </div>
                             <p className="text-xs text-discord-text-muted">
                                 Adjust the global text size of the application.
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label>Font Family</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {(['inter', 'roboto', 'lato', 'montserrat', 'open-sans'] as const).map((f) => (
+                                    <Button
+                                        key={f}
+                                        variant={font === f ? "default" : "outline"}
+                                        onClick={() => setFont(f)}
+                                        className="capitalize text-sm"
+                                        style={{ fontFamily: `var(--font-${f})` }}
+                                    >
+                                        {f.replace('-', ' ')}
+                                    </Button>
+                                ))}
+                            </div>
+                            <p className="text-xs text-discord-text-muted">
+                                Choose the font style for the application.
                             </p>
                         </div>
                     </div>
