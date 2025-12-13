@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import './globals.css';
 import { Providers } from "./Providers";
 import DisableContextMenu from "@/components/DisableContextMenu";
+import { ThemeDebugger } from "@/components/ThemeDebugger";
 
 import { Inter, Roboto, Lato, Montserrat, Open_Sans } from "next/font/google";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased h-screen w-screen overflow-hidden select-none">
         <DisableContextMenu />
+        <ThemeDebugger />
         <Providers>
           <div className="hidden md:block h-full w-full">
             {children}
