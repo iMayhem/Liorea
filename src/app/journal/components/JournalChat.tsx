@@ -53,6 +53,13 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const [gifSearch, setGifSearch] = useState("");
     const [loadingGifs, setLoadingGifs] = useState(false);
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
+    const [isGifPopoverOpen, setIsGifPopoverOpen] = useState(false);
+
+    useEffect(() => {
+        if (isGifPopoverOpen && gifs.length === 0) {
+            fetchGifs();
+        }
+    }, [isGifPopoverOpen]);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -376,7 +383,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                         className="absolute bottom-full left-0 mb-2 w-64"
                     />
 
-                    <Popover>
+                    <Popover open={isGifPopoverOpen} onOpenChange={setIsGifPopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><Film className="w-5 h-5" /></Button>
                         </PopoverTrigger>
