@@ -97,58 +97,103 @@ export default function PomodoroTimer() {
   };
 
 
+  // Determine Color Theme based on mode
+  const themeColor = mode === 'work' ? 'text-red-500' : 'text-emerald-500';
+  const ringColor = mode === 'work' ? 'text-red-500' : 'text-emerald-500';
+  const glowColor = mode === 'work' ? 'bg-red-500/10' : 'bg-emerald-500/10';
+  const strokeColor = mode === 'work' ? 'stroke-red-500' : 'stroke-emerald-500';
+
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full min-h-[400px]">
-      <div className="text-center mb-8 space-y-1">
-        <h2 className="text-blue-500 font-black tracking-widest text-lg uppercase">Global Session</h2>
-        <p className="text-white/50 text-xs font-medium">Syncs automatically every 50 mins</p>
+    <div className="flex flex-col items-center justify-center w-full h-full min-h-[400px] select-none">
+
+      {/* Top Pill - Mode Indicator */}
+      <div className={`px-6 py-2 rounded-full ${mode === 'work' ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'} border mb-8 transition-colors duration-500`}>
+        <span className={`${themeColor} font-bold tracking-[0.2em] text-xs uppercase animate-pulse`}>
+          {mode === 'work' ? 'Focus Time' : 'Break Time'}
+        </span>
       </div>
 
-      <div className="relative group cursor-pointer" onClick={toggleTimer}>
-        {/* Ring Glow Effect (Subtle) */}
-        <div className="absolute inset-0 rounded-full blur-2xl bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* Main Timer Ring */}
+      <div className="relative group cursor-pointer mb-8" onClick={toggleTimer}>
 
-        <svg className="transform -rotate-90 w-72 h-72 relative z-10">
+        {/* Ambient Glow */}
+        <div className={`absolute inset-0 rounded-full blur-3xl ${glowColor} opacity-20 group-hover:opacity-40 transition-all duration-700`} />
+
+        <svg className="transform -rotate-90 w-72 h-72 relative z-10 drop-shadow-2xl">
+          {/* Track */}
           <circle
             cx="144"
             cy="144"
             r="130"
             stroke="currentColor"
-            strokeWidth="12"
+            strokeWidth="8"
             fill="transparent"
             className="text-white/5"
           />
+          {/* Progress Ring */}
           <circle
             cx="144"
             cy="144"
             r="130"
             stroke="currentColor"
-            strokeWidth="12"
+            strokeWidth="8"
             fill="transparent"
             strokeDasharray={2 * Math.PI * 130}
             strokeDashoffset={2 * Math.PI * 130 * ((100 - progress) / 100)}
-            className="text-blue-500 transition-all duration-1000 ease-linear drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+            className={`${ringColor} transition-all duration-1000 ease-in-out`}
             strokeLinecap="round"
           />
         </svg>
 
+        {/* Center UI */}
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <span className="text-6xl font-medium text-white tracking-tight tabular-nums relative top-[-4px]">
+          <span className="text-7xl font-bold text-white tracking-tighter tabular-nums leading-none">
             {formatTime(secondsLeft)}
           </span>
-          <div className="flex items-center gap-1.5 mt-2 text-white/40">
-            <RefreshCw className={`w-3 h-3 ${isActive ? 'animate-spin-slow' : ''}`} />
-            <span className="text-[10px] font-bold tracking-widest uppercase">Time Remaining</span>
+          <div className="flex items-center gap-2 mt-4 opacity-50 text-xs uppercase tracking-widest text-white">
+            {isActive ? (
+              <span className="flex items-center gap-1 animate-pulse"><Pause className="w-3 h-3" /> Running</span>
+            ) : (
+              <span className="flex items-center gap-1"><Play className="w-3 h-3" /> Paused</span>
+            )}
           </div>
         </div>
 
-        {/* Hover Controls Hint */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-30">
-          {isActive ? <Pause className="w-12 h-12 text-white fill-white" /> : <Play className="w-12 h-12 text-white fill-white" />}
+        {/* Hover Action Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* Subtle glass effect on hover within the ring */}
+          <div className="absolute inset-4 rounded-full bg-black/40 backdrop-blur-[2px]" />
+          <div className="relative z-40 transform scale-90 group-hover:scale-100 transition-transform duration-300">
+            {isActive ? <Pause className="w-16 h-16 text-white fill-white/20" /> : <Play className="w-16 h-16 text-white fill-white/20 ml-2" />}
+          </div>
         </div>
       </div>
 
-      {/* Hidden reset for continuity if needed, or just double-click ring? Stick to simple click toggle for now. */}
+      {/* Controls / Toggles */}
+      <div className="flex items-center gap-4">
+        <div className="flex bg-white/5 p-1 rounded-full border border-white/5 backdrop-blur-sm">
+          <button
+            onClick={(e) => { e.stopPropagation(); setMode('work'); setIsActive(false); setSecondsLeft(workMinutes * 60); }}
+            className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${mode === 'work' ? 'bg-red-500 shadow-lg shadow-red-900/20 text-white' : 'text-white/30 hover:text-white/60'}`}
+          >
+            Work
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setMode('break'); setIsActive(false); setSecondsLeft(breakMinutes * 60); }}
+            className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${mode === 'break' ? 'bg-emerald-500 shadow-lg shadow-emerald-900/20 text-white' : 'text-white/30 hover:text-white/60'}`}
+          >
+            Short Break
+          </button>
+        </div>
+
+        <Button
+          onClick={(e) => { e.stopPropagation(); resetTimer(); }}
+          variant="ghost"
+          className="w-10 h-10 rounded-full hover:bg-white/10 text-white/30 hover:text-white transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 }
