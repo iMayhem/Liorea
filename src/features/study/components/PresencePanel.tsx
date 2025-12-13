@@ -2,7 +2,7 @@ import { BentoCard, CardContent, CardHeader, CardTitle } from '@/components/ui/B
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CommunityUser } from '../context/PresenceContext';
-import { Users, BookOpen } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserAvatar from '@/components/UserAvatar';
 
@@ -57,20 +57,17 @@ export default function PresencePanel({ users }: PresencePanelProps) {
 
                   <div className="flex-grow overflow-hidden">
                     <div className="flex justify-between items-center">
-                      <p className={cn("font-semibold text-sm truncate transition-colors", isOnline ? "text-white" : "text-white/60")}>
+                      <p className={cn("font-semibold text-sm truncate transition-colors", isOnline ? "text-foreground" : "text-muted-foreground")}>
                         {user.username}
                       </p>
-                      {user.is_studying && isOnline && (
-                        <BookOpen className="w-3 h-3 text-accent animate-pulse" />
-                      )}
                     </div>
 
                     {user.status_text ? (
-                      <p className="text-xs text-white/70 italic truncate">
+                      <p className="text-xs text-muted-foreground italic truncate">
                         {user.status_text}
                       </p>
                     ) : (
-                      <p className={cn("text-xs", isOnline ? "text-green-400/80" : "text-gray-400")}>
+                      <p className={cn("text-xs", isOnline ? "text-green-500/80" : "text-muted-foreground/60")}>
                         {isOnline ? (user.is_studying ? 'Studying' : 'Online') : lastSeen}
                       </p>
                     )}
