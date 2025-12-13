@@ -91,7 +91,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
             <Tabs defaultValue="general" className="w-full">
                 <TabsList className="w-full grid grid-cols-4 bg-discord-gray rounded-lg p-1">
                     <TabsTrigger value="general" className="data-[state=active]:bg-discord-light">General</TabsTrigger>
-                    <TabsTrigger value="appearance" className="data-[state=active]:bg-discord-light">Cosmetics</TabsTrigger>
+                    {/* <TabsTrigger value="appearance" className="data-[state=active]:bg-discord-light">Cosmetics</TabsTrigger> */}
                     <TabsTrigger value="ui" className="data-[state=active]:bg-discord-light">Appearance</TabsTrigger>
                     <TabsTrigger value="account" className="data-[state=active]:bg-discord-light">Account</TabsTrigger>
                 </TabsList>
@@ -150,9 +150,8 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
 
                 </TabsContent>
 
-                {/* COSMETICS TAB */}
-                <TabsContent value="appearance" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
-                    {/* BADGE */}
+                {/* COSMETICS TAB - HIDDEN */}
+                {/* <TabsContent value="appearance" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" /> Equipped Badge</Label>
                         <Select onValueChange={v => equipItem(v, 'badge')} value={stats.equipped_badge || "none"}>
@@ -163,7 +162,6 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                    {/* FRAME */}
                     <div className="space-y-2">
                         <Label>Avatar Frame</Label>
                         <Select onValueChange={v => equipItem(v, 'frame')} value={stats.equipped_frame || "none"}>
@@ -174,7 +172,6 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                    {/* EFFECT */}
                     <div className="space-y-2">
                         <Label>Profile Effect</Label>
                         <Select onValueChange={v => equipItem(v, 'effect')} value={stats.equipped_effect || "none"}>
@@ -185,7 +182,6 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                    {/* NAME COLOR */}
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Palette className="w-4 h-4 text-purple-400" /> Name Color</Label>
                         <Select onValueChange={v => equipItem(v, 'color')} value={stats.name_color || "none"}>
@@ -196,7 +192,7 @@ export function ProfileSettings({ allItems, onClose }: ProfileSettingsProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                </TabsContent>
+                </TabsContent> */}
 
                 {/* UI APPEARANCE TAB */}
                 <TabsContent value="ui" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">

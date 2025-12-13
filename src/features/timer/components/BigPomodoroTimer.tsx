@@ -83,7 +83,6 @@ export default function BigPomodoroTimer() {
                 <div className="flex items-center gap-6">
                     <Button
                         onClick={toggleTimer}
-                        size="icon"
                         className={cn(
                             "w-24 h-24 rounded-full transition-all shadow-xl hover:scale-105 active:scale-95",
                             isActive ? "bg-zinc-800 text-white hover:bg-zinc-700" : "bg-white text-black hover:bg-zinc-200"
@@ -95,7 +94,6 @@ export default function BigPomodoroTimer() {
                     <Button
                         onClick={resetTimer}
                         variant="outline"
-                        size="icon"
                         className="w-16 h-16 rounded-full border-zinc-700 bg-transparent text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
                     >
                         <RotateCcw className="w-6 h-6" />

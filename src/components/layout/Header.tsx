@@ -67,11 +67,11 @@ export default function Header() {
                 </Link>
                 <nav className="flex items-center gap-2">
                     <GlobalSettingsDialog />
-                    <Link href="/shop">
+                    {/* <Link href="/shop">
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" title="Item Shop">
                             <ShoppingBag className="w-5 h-5" />
                         </Button>
-                    </Link>
+                    </Link> */}
 
                     {/* BUG REPORT / FEEDBACK BUTTON */}
                     <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
