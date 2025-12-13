@@ -347,7 +347,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
             set(myStudyTimeRef, increment(60));
             unsavedMinutesRef.current += 1;
-            if (unsavedMinutesRef.current >= 5) flushToCloudflare();
+            if (unsavedMinutesRef.current >= 1) flushToCloudflare();
         }, 60000);
 
         return () => {

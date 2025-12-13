@@ -17,11 +17,10 @@ import SoundscapeMixer from '@/components/controls/SoundscapeMixer';
 import { sounds } from '@/lib/sounds';
 
 interface BottomControlBarProps {
-    onTimerClick?: () => void;
-    isTimerMode?: boolean;
+    // Props removed as Timer is gone
 }
 
-export default function BottomControlBar({ onTimerClick, isTimerMode }: BottomControlBarProps) {
+export default function BottomControlBar({ }: BottomControlBarProps) {
     const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
     const router = useRouter();
 
@@ -49,18 +48,8 @@ export default function BottomControlBar({ onTimerClick, isTimerMode }: BottomCo
                         <StreakIndicator />
                     </div>
 
-                    {/* Timer Toggle */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onTimerClick}
-                        className={`rounded-full w-9 h-9 transition-colors ${isTimerMode
-                                ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
-                                : "hover:bg-[#313338] text-zinc-400 hover:text-red-400"
-                            }`}
-                    >
-                        <Timer className="w-5 h-5" />
-                    </Button>
+                    {/* Timer Toggle Removed */}
+
 
                     {/* Shop - Moved to Main Header */}
 

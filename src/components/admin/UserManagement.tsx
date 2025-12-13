@@ -46,9 +46,26 @@ export default function UserManagement() {
     const [actionType, setActionType] = useState<'adjust_balance' | 'ban' | 'reset_stats' | null>(null);
     const [amount, setAmount] = useState(0);
     const [resource, setResource] = useState<'xp' | 'coins'>('coins');
-    const [resetScope, setResetScope] = useState<'daily' | 'weekly' | 'all'>('daily');
+    const [showGlobalReset, setShowGlobalReset] = useState(false);
 
-    // Fetch Users
+    const handleGlobalReset = async () => {
+        try {
+            const token = await import('firebase/auth').then(auth => auth.getAuth().currentUser?.getIdToken());
+            if (!token) throw new Error("No token");
+
+            await fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/gamification/admin/reset-stats`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ username: 'ALL', type: 'global_daily' })
+            });
+
+            toast({ title: "Global Reset Complete", description: "Daily leaderboard has been cleared for everyone." });
+            setShowGlobalReset(false);
+            loadUsers();
+        } catch (e) {
+            toast({ variant: 'destructive', title: 'Global Reset Failed' });
+        }
+    };
     const loadUsers = async () => {
         setLoading(true);
         try {
@@ -162,9 +179,14 @@ export default function UserManagement() {
                         <CardTitle>User Directory</CardTitle>
                         <CardDescription>Manage user accounts, balances, and permissions.</CardDescription>
                     </div>
-                    <Button onClick={loadUsers} variant="outline" size="sm" className="gap-2">
-                        <Loader2 className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={() => setShowGlobalReset(true)} variant="destructive" size="sm" className="gap-2">
+                            <ShieldAlert className="w-4 h-4" /> Reset Daily Leaderboard
+                        </Button>
+                        <Button onClick={loadUsers} variant="outline" size="sm" className="gap-2">
+                            <Loader2 className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+                        </Button>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
@@ -319,6 +341,23 @@ export default function UserManagement() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditingUser(null)} className="border-zinc-600 text-zinc-300 hover:bg-zinc-800">Cancel</Button>
                         <Button onClick={handleResetStats} className="bg-red-600 hover:bg-red-700 text-white">Confirm Reset</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* GLOBAL RESET DIALOG */}
+            <Dialog open={showGlobalReset} onOpenChange={setShowGlobalReset}>
+                <DialogContent className="bg-[#2b2d31] border-zinc-700 text-white">
+                    <DialogHeader>
+                        <DialogTitle>Reset Global Daily Leaderboard?</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            This will reset the "Daily Study Time" for ALL users to 0.
+                            <br />
+                            <span className="text-red-400 font-bold">⚠️ This action cannot be undone.</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowGlobalReset(false)} className="border-zinc-600 text-zinc-300 hover:bg-zinc-800">Cancel</Button>
+                        <Button onClick={handleGlobalReset} className="bg-red-600 hover:bg-red-700 text-white">Confirm Global Reset</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -34,7 +34,6 @@ const loadingCircleTransition = {
 export default function StudyTogetherPage() {
   const { studyUsers, joinSession, leaveSession } = usePresence();
   const [isJoining, setIsJoining] = useState(true);
-  const [isTimerMode, setIsTimerMode] = useState(false);
 
   useEffect(() => {
     // Start the session
@@ -90,42 +89,15 @@ export default function StudyTogetherPage() {
             <StudyGrid users={studyUsers} />
           </div>
 
-          {/* RIGHT: Chat Panel OR Timer (Solid) */}
+          {/* RIGHT: Chat Panel (Solid) */}
           <div className="flex-1 flex flex-col bg-[#2B2D31] rounded-2xl border border-[#1F2023] shadow-xl overflow-hidden relative">
-            <AnimatePresence mode="wait">
-              {isTimerMode ? (
-                <motion.div
-                  key="timer"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0 z-10"
-                >
-                  <BigPomodoroTimer />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="chat"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0 z-0"
-                >
-                  <ChatPanel />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <ChatPanel />
           </div>
 
         </main>
 
         {/* BOTTOM CONTROL BAR */}
-        <BottomControlBar
-          onTimerClick={() => setIsTimerMode(!isTimerMode)}
-          isTimerMode={isTimerMode}
-        />
+        <BottomControlBar />
 
       </div>
     </ChatProvider>

@@ -33,35 +33,23 @@ interface LeaderboardEntry {
 }
 
 export default function Leaderboard({ users, currentUsername }: LeaderboardProps) {
-  const [filter, setFilter] = useState<'daily' | 'weekly' | 'all'>('daily');
+  // Always Daily
   const [fetchedUsers, setFetchedUsers] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initial load uses props, but we immediately fetch based on default filter 'daily'
   useEffect(() => {
     const loadLeaderboard = async () => {
-      setIsLoading(true);
+      // setIsLoading(true); // Don't show spinner on background refresh, maybe only first time?
       try {
-        // If 'all' and we have props, we *could* use props, but fetching ensures fresh stats if API is source of truth
-        // Actually, the prop `users` comes from PresenceContext which might be real-time for ONLINE users, 
-        // but Leaderboard should show ALL users (offline too).
-        // So we should always fetch from the endpoint for the true leaderboard.
-
-        const data = await fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/leaderboard?timeframe=${filter}`).then(res => res.json());
+        const data = await fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/leaderboard?timeframe=daily`).then(res => res.json());
 
         if (Array.isArray(data)) {
-          // Map API response to UI shape
-          // API returns { username, total_minutes, photoURL } (total_minutes in minutes)
-          // UI expects seconds for formatTime? 
-          // formatTime takes seconds. API returns minutes.
-          // Need to convert minutes -> seconds for display consistency
-
           const formatted: LeaderboardEntry[] = data.map((u: any) => ({
             username: u.username,
-            total_minutes: u.total_minutes * 60, // Convert to seconds for the helper
+            total_minutes: u.total_minutes * 60, // Convert to seconds
             photoURL: u.photoURL,
             status_text: u.status_text || "",
-            trend: 'same' // Trend logic would need history comparison, simplifying for now
+            trend: 'same'
           }));
           setFetchedUsers(formatted);
         }
@@ -72,12 +60,15 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
       }
     };
 
-    loadLeaderboard();
-  }, [filter]);
+    setIsLoading(true);
+    loadLeaderboard().then(() => setIsLoading(false));
 
-  // Use fetched data, fallback to props only if fetch fails and mode is 'all' (maybe)
-  // Actually, we should prefer fetched data for the actual leaderboard logic requested.
-  const displayUsers = fetchedUsers.length > 0 ? fetchedUsers : (filter === 'all' ? users : []);
+    // Refresh every 10 seconds for "Live" feel
+    const interval = setInterval(loadLeaderboard, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayUsers = fetchedUsers;
 
   return (
     <Card className="bg-transparent border-none shadow-none text-white w-full h-full flex flex-col">
@@ -85,23 +76,13 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold flex items-center gap-2">
             <Trophy className="text-yellow-500 w-5 h-5" />
-            Leaderboard
+            Daily Leaderboard
           </CardTitle>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-zinc-300 hover:bg-white/10 transition-colors">
-                <Calendar className="w-4 h-4 text-zinc-400" />
-                <span className="capitalize">{filter === 'all' ? 'All Time' : filter}</span>
-                <ChevronDown className="w-4 h-4 text-zinc-500" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContentNoPortal align="end" className="w-32 bg-[#2B2D31] border border-[#1F2023] text-zinc-200 shadow-xl z-[100]">
-              <DropdownMenuItem onClick={() => setFilter('daily')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Daily</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('weekly')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">Weekly</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilter('all')} className="cursor-pointer hover:bg-white/10 focus:bg-white/10">All Time</DropdownMenuItem>
-            </DropdownMenuContentNoPortal>
-          </DropdownMenu>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-400">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span>Live</span>
+          </div>
         </div>
       </CardHeader>
 
