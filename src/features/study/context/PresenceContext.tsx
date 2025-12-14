@@ -12,6 +12,7 @@ import {
     onSnapshot,
     doc,
     setDoc,
+    getDoc,
     increment as incrementFirestore,
     serverTimestamp as serverTimestampFirestore
 } from 'firebase/firestore';
@@ -410,11 +411,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
         const list = Array.from(map.values()).sort((a, b) => b.total_study_time - a.total_study_time);
 
-        // ADD MOCK TRENDS
-        return list.map((u, i) => ({
-            ...u,
-            trend: (i % 3 === 0 ? 'up' : i % 3 === 1 ? 'down' : 'same') as 'up' | 'down' | 'same'
-        }));
+        return list;
     }, [historicalLeaderboard, studyUsers, communityUsers, firestoreProfiles]);
 
     // --- CENTRAL IMAGE/FRAME LOOKUP ---
@@ -458,16 +455,36 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             studyRef = ref(db, `rooms/${joinedRoomId}/presence/${username}`);
         }
 
-        const initialSeconds = 0; // Or fetch from somewhere if persisting session
+        const initializeSession = async () => {
+            let initialSeconds = 0;
 
-        // Write presence
-        set(studyRef, {
-            username: username,
-            photoURL: userImage || "",
-            equipped_frame: userFrame || "",
-            total_study_time: initialSeconds,
-            status: 'Online'
-        });
+            try {
+                // Fetch today's existing minutes from Firestore so we don't reset to 0
+                const today = new Date().toISOString().split('T')[0];
+                const statsRef = doc(firestore, 'daily_stats', `${today}_${username}`);
+                const statsSnap = await getDoc(statsRef);
+
+                if (statsSnap.exists()) {
+                    const data = statsSnap.data();
+                    if (data.minutes) {
+                        initialSeconds = data.minutes * 60;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch initial stats", e);
+            }
+
+            // Write presence
+            set(studyRef, {
+                username: username,
+                photoURL: userImage || "",
+                equipped_frame: userFrame || "",
+                total_study_time: initialSeconds,
+                status: 'Online'
+            });
+        };
+
+        initializeSession();
 
         // Offline handler
         onDisconnect(studyRef).remove();
