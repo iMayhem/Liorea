@@ -193,11 +193,6 @@ export default function Header() {
                                 </div>
                                 <Separator className="bg-white/10" />
                                 <div className="flex h-full flex-col">
-                                    {/* DEBUG LOG */}
-                                    {(() => {
-                                        console.log("[Header] Rendering Notification List. Count:", notifications.length);
-                                        return null;
-                                    })()}
                                     <ScrollArea className="h-72">
                                         {notifications.length > 0 ? (
                                             <div className="grid gap-2">

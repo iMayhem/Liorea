@@ -46,21 +46,20 @@ export default function AdminDashboard() {
     }, []);
 
     const handleSendGlobalNotification = async () => {
-        if (notificationMessage.trim()) {
-            console.log("[AdminDashboard] Sending global notification:", notificationMessage.trim());
-            setIsSending(true);
-            try {
-                await addNotification(notificationMessage.trim(), undefined, undefined, 'global');
-                console.log("[AdminDashboard] Notification sent successfully");
-                toast({ title: "Sent!", description: "Notification broadcasted." });
-                setNotificationMessage('');
-            } catch (error) {
-                console.error("[AdminDashboard] Failed to send notification:", error);
-                toast({ variant: "destructive", title: "Error", description: "Failed to send." });
-            } finally {
-                setIsSending(false);
+        const handleSendGlobalNotification = async () => {
+            if (notificationMessage.trim()) {
+                setIsSending(true);
+                try {
+                    await addNotification(notificationMessage.trim(), undefined, undefined, 'global');
+                    toast({ title: "Sent!", description: "Notification broadcasted." });
+                    setNotificationMessage('');
+                } catch (error) {
+                    toast({ variant: "destructive", title: "Error", description: "Failed to send." });
+                } finally {
+                    setIsSending(false);
+                }
             }
-        }
+        };
     };
 
     return (

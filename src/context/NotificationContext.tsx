@@ -81,13 +81,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   // 2. LISTEN TO USER-SPECIFIC FIRESTORE COLLECTION
   useEffect(() => {
     if (!username) return;
-    console.log("[NotificationContext] Subscribing to user notifications (Firestore) for:", username);
 
     const notificationsRef = collection(firestore, 'users', username, 'notifications');
     const q = query(notificationsRef, orderBy('timestamp', 'asc'), limit(50));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log("[NotificationContext] User data received (Firestore):", snapshot.size);
       const loaded: Notification[] = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -107,12 +105,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // 3. LISTEN TO GLOBAL NOTIFICATIONS (FIRESTORE)
   useEffect(() => {
-    console.log("[NotificationContext] Subscribing to GLOBAL notifications (Firestore)");
     const globalRef = collection(firestore, 'global_notifications');
     const q = query(globalRef, orderBy('timestamp', 'asc'), limit(50));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log("[NotificationContext] Global data received (Firestore):", snapshot.size);
       const loaded: Notification[] = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -170,11 +166,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const isRecent = timeDiff < 10000;
     const isRead = readIds.includes(latest.id);
 
-    // DEBUG LOG
-    console.log("[NotificationContext] Checking side effects. Latest:", latest.id, "Diff:", timeDiff, "isRecent:", isRecent, "isRead:", isRead, "LastToasted:", lastToastedIdRef.current);
-
+    // Check triggers
     if (isRecent && !isRead && latest.id !== lastToastedIdRef.current) {
-      console.log("[NotificationContext] TRIGGERING TOAST for:", latest.message);
       lastToastedIdRef.current = latest.id;
       toast({
         title: latest.type === 'global' ? "System Broadcast" : "New Notification",
@@ -186,8 +179,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // 3. SEND TO FIREBASE
   // 3. SEND TO FIRESTORE
+  // 3. SEND TO FIRESTORE
   const addNotification = async (message: string, targetUser?: string, link?: string, type: 'global' | 'personal' = 'global') => {
-    console.log("[NotificationContext] addNotification called:", { message, targetUser, type });
     try {
       if (targetUser) {
         // Personal Notification
@@ -209,7 +202,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           timestamp: serverTimestamp()
         });
       }
-      console.log("[NotificationContext] Notification pushed successfully to Firestore");
     } catch (error) {
       console.error("[NotificationContext] Failed to add notification", error);
     }
