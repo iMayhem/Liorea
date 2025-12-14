@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Users, Timer, Activity, Send, Loader2, LayoutDashboard, FlaskConical, ShoppingBag } from 'lucide-react';
+import { Users, Timer, Activity, Send, Loader2, LayoutDashboard, FlaskConical, ShoppingBag, Bug } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { useState, useEffect } from 'react';
@@ -12,7 +12,9 @@ import { api } from '@/lib/api';
 import { usePresence } from '@/features/study';
 
 // Placeholder components for new tabs
+// Placeholder components for new tabs
 import UserManagement from './UserManagement';
+import FeedbackManagement from './FeedbackManagement';
 
 export default function AdminDashboard() {
     const [notificationMessage, setNotificationMessage] = useState('');
@@ -82,6 +84,9 @@ export default function AdminDashboard() {
                     <TabsTrigger value="users" className="gap-2">
                         <Users className="w-4 h-4" /> User Management
                     </TabsTrigger>
+                    <TabsTrigger value="feedback" className="gap-2">
+                        <Bug className="w-4 h-4" /> Feedback
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* DASHBOARD TAB */}
@@ -149,6 +154,10 @@ export default function AdminDashboard() {
                 {/* USER MANAGEMENT TAB */}
                 <TabsContent value="users" className="mt-6">
                     <UserManagement />
+                </TabsContent>
+
+                <TabsContent value="feedback" className="mt-6">
+                    <FeedbackManagement />
                 </TabsContent>
             </Tabs>
         </div>
