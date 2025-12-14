@@ -391,12 +391,14 @@
 .beautiful-mode .bg-muted\/80,
 .beautiful-mode .glass-panel,
 .beautiful-mode .glass-panel-light {
-  background-color: rgba(0, 0, 0, 0.25) !important;
-  /* Slightly increased opacity for better readability on panels */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  /* Slightly more transparent to show blur */
+  backdrop-filter: blur(24px) saturate(140%);
+  /* Strong Gaussian blur + saturation boost */
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
   border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;
+  /* Soft diffuse shadow */
 }
 
 /* Hide black gradients in beautiful mode (e.g. StudyUserCard, JournalCard) */
