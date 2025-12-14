@@ -14,6 +14,7 @@ export const getProxiedUrl = (url: string | undefined | null) => {
 
 // Helper to get token securely
 const getAuthHeaders = async () => {
+    await auth.authStateReady(); // Ensure auth is initialized
     const user = auth.currentUser;
     if (user) {
         try {

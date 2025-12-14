@@ -116,40 +116,18 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
     const fetchFollowers = async (id: number) => { try { const data = await api.journal.getFollowers(id); setCurrentFollowers(data); } catch (e) { } };
 
-    // FIRESTORE LIVE LISTENER
+    // FIRESTORE LIVE LISTENER (Firestore Only)
     useEffect(() => {
         if (!activeJournal) return;
 
-        // 1. Load historic data first (from D1)
+        // Reset state
         setPosts([]); setHasMore(true); setIsInitialLoaded(false); setLoadingMore(false);
-        fetchPosts(activeJournal.id);
         fetchFollowers(activeJournal.id);
-
-        // 2. Listen to Firestore for NEW posts
-        // We use a query for posts created AFTER now? Or just recent?
-        // If we mix D1 (static) and Firestore (live), we need to avoid duplicates.
-        // Simplest: Listen to ALL recent Firestore posts for this journal.
-        // D1 API might return them too if D1 is synced? 
-        // The current D1 API reads from Cloudflare D1.
-        // The `sendPost` below will write to D1 (via api calls) AND Firestore.
-        // So D1 will have the data eventually.
-        // To avoid dupes, we rely on IDs. Firestore IDs are strings. D1 IDs are numbers (usually).
-        // If we use `Date.now()` as ID in D1, and Firestore ID in Firestore... mismatch.
-        // PLAN: Use `Date.now()` (timestamp) as the ID for both if possible, or handle string/number.
-        // Better: Use Firestore Doc ID as the canonical ID.
-        // But D1 expects integers for IDs in some schemas?
-        // `Post` type says `id: number`. CONSTRICTION.
-        // We need to change `Post.id` to string | number in types or force number.
-        // Firestore IDs are strings.
-        // Workaround: We will use `Date.now()` + Random for a numeric-like ID but stored as DocID? 
-        // No, Firestore DocID is string. 
-        // Let's look at `types.ts`. `Post` has `id: number`.
-        // We must update `types.ts` to allow `id: string | number`.
 
         const q = query(
             collection(firestore, `journals/${activeJournal.id}/posts`),
             orderBy('created_at', 'asc'),
-            limit(50)
+            limit(100)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -157,15 +135,12 @@ export const JournalChat: React.FC<JournalChatProps> = ({
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
                 livePosts.push({
-                    id: doc.id as any, // Temporary cast until we fix types. Actually we can use data.id if we store it?
-                    // We should store 'id' field in Firestore as number to match D1 expectations if we sync back?
-                    // Or just cast.
+                    id: doc.id as any,
                     username: data.username,
                     content: data.content,
                     image_url: data.image_url,
                     created_at: data.created_at?.toMillis ? data.created_at.toMillis() : data.created_at,
-                    replyTo: data.replyTo ? JSON.parse(data.replyTo) : undefined, // We stored as string in old logic?
-                    // New logic we can store object.
+                    replyTo: data.replyTo ? JSON.parse(data.replyTo) : undefined,
                     reactions: data.reactions ?
                         Object.entries(data.reactions).reduce((acc: any[], [uid, emoji]) => ([
                             ...acc,
@@ -174,14 +149,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                         : []
                 });
             });
-
-            setPosts(prev => {
-                const combined = [...prev, ...livePosts];
-                // Dedupe by ID
-                const unique = new Map();
-                combined.forEach(p => unique.set(String(p.id), p));
-                return Array.from(unique.values()).sort((a, b) => a.created_at - b.created_at);
-            });
+            setPosts(livePosts); // Direct set
         });
 
         return () => unsubscribe();
@@ -246,10 +214,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         try {
             await deleteDoc(doc(firestore, `journals/${activeJournal.id}/posts`, String(postId)));
             // Also call D1 delete for data consistency if ID is number?
-            // D1 delete expects Number. If `postId` is string, it might be Firestore-only.
-            if (typeof postId === 'number') {
-                await api.journal.deletePost(postId, username);
-            }
+
             if (activeJournal) notifyChatUpdate(activeJournal.id);
         } catch (e) {
             console.error(e);
@@ -391,13 +356,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
             });
             notifyChatUpdate(activeJournal.id);
 
-            // D1 Backup
-            await api.journal.post({
-                journal_id: activeJournal.id,
-                username,
-                content,
-                replyTo: replyingTo ? JSON.stringify(replyingTo) : undefined
-            });
+
 
         } catch (e) { console.error(e); }
     };
@@ -409,7 +368,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         const tempPost = { id: Date.now(), username, content: contentString, created_at: Date.now() };
         setPosts(prev => [...prev, tempPost]);
         try {
-            await api.journal.post({ journal_id: activeJournal.id, username, content: contentString });
+            // await api.journal.post({ journal_id: activeJournal.id, username, content: contentString });
             notifyChatUpdate(activeJournal.id);
         } catch (e) { console.error(e); }
     };

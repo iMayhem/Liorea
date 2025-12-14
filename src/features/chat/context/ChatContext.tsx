@@ -49,44 +49,19 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     const [hasMore, setHasMore] = useState(false); // Pagination not fully implemented for Firestore yet in this step
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
-    // 1. LIVE LISTENER (Firestore) + Legacy History (D1)
+    // 1. LIVE LISTENER (Firestore Only)
     useEffect(() => {
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
 
-        let d1History: ChatMessage[] = [];
-
-        // Fetch D1 history first (one-off)
-        const fetchHistory = async () => {
-            try {
-                const history = await api.chat.getHistory(effectiveRoomId);
-                d1History = history.map((msg: any) => ({
-                    ...msg,
-                    id: String(msg.id), // Ensure string ID
-                    // Map legacy fields if needed
-                    reactions: msg.reactions || {} // Assuming structure matches or empty
-                }));
-                // Set initial
-                setMessages(prev => {
-                    const combined = [...d1History, ...prev];
-                    const unique = new Map();
-                    combined.forEach(m => unique.set(String(m.id), m));
-                    return Array.from(unique.values()).sort((a, b) => a.timestamp - b.timestamp);
-                });
-            } catch (e) {
-                console.error("Failed to fetch legacy history:", e);
-            }
-        };
-        fetchHistory();
-
+        // Simple Firestore Query
         const q = query(
             collection(firestore, collectionPath),
             orderBy('timestamp', 'asc'),
-            limit(50) // Initial limit
+            limit(100) // Increase limit since we don't have backfill
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const msgs: ChatMessage[] = [];
-
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
                 msgs.push({
@@ -106,58 +81,11 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                         : {}
                 });
             });
-
-            // Merge with D1 history
-            setMessages(prev => {
-                // Merge Logic:
-                // We have 'd1History' (Legacy) and 'msgs' (Live Firestore).
-                // Problem: New messages are written to BOTH, but with different IDs (Firestore auto-id vs D1 auto-id).
-                // This causes duplicates.
-                // Optimized Deduplication Strategy:
-                // 1. Combine all unique messages by ID first (to update modified Firestore docs).
-                // 2. Then apply Fuzzy Deduplication to merge dual-writes (D1 vs Firestore).
-
-                // A. Update existing items with new Firestore data (priority by ID)
-                const idMap = new Map<string, ChatMessage>();
-                prev.forEach(m => idMap.set(m.id, m));
-                msgs.forEach(m => idMap.set(m.id, m));
-
-                let allMessages = Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
-
-                // B. Fuzzy Dedupe: Remove duplicate content within 5 seconds window
-                // (Fixes "Double Messages" from dual-write with different IDs/Times)
-                const deduped: ChatMessage[] = [];
-                if (allMessages.length > 0) deduped.push(allMessages[0]);
-
-                for (let i = 1; i < allMessages.length; i++) {
-                    const current = allMessages[i];
-                    const previous = deduped[deduped.length - 1];
-
-                    const isSameUser = current.username === previous.username;
-                    const isSameContent = current.message === previous.message && current.image_url === previous.image_url;
-                    const timeDiff = Math.abs(current.timestamp - previous.timestamp);
-                    // Increased window to 60s to handle significant clock skew between D1 and Firestore
-                    const isWithinWindow = timeDiff < 60000;
-
-                    if (isSameUser && isSameContent && isWithinWindow) {
-                        // It's a duplicate. Keep the one that looks "better" (e.g. Firestore ID usually longer or local pref).
-                        // Actually, Firestore IDs are random strings, D1 might be numeric or strings.
-                        // We prefer the one that is NOT 'temp-' if any.
-                        // Or just keep 'current' (later one, likely Firestore verified) and replace 'previous'?
-                        // Let's keep 'current' (Firestore snapshot usually updates last with server timestamp).
-                        deduped.pop();
-                        deduped.push(current);
-                    } else {
-                        deduped.push(current);
-                    }
-                }
-
-                return deduped;
-            });
+            setMessages(msgs); // Direct set, no merging/deduping needed
         });
 
         return () => unsubscribe();
-    }, [roomId, isPublic, effectiveRoomId]);
+    }, [roomId, isPublic]);
 
     // 3. SEND MESSAGE
     const sendMessage = useCallback(async (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => {
@@ -176,13 +104,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                 reactions: {}
             });
 
-            // D1 Backup (Fire & Forget)
-            api.chat.send({
-                room_id: effectiveRoomId,
-                username,
-                message,
-                photoURL: userImage || ""
-            }).catch(e => console.error("D1 Backup failed:", e));
+
 
         } catch (e) {
             console.error("Error sending message:", e);
@@ -230,12 +152,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
             const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
             await updateDoc(doc(firestore, collectionPath, messageId), { deleted: true });
 
-            // D1 Remove
-            api.chat.delete({
-                room_id: effectiveRoomId,
-                message_id: messageId,
-                username
-            }).catch(e => console.error("D1 Delete failed:", e));
+
         } catch (e) {
             console.error("Firestore delete failed:", e);
         }
