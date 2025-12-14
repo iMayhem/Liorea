@@ -29,7 +29,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     // We use a ref for the sync hook to avoid stale closures in listeners
     const deletedIdsRef = useRef<Set<string>>(new Set());
     // We use state to trigger re-renders when deletion happens
-    const [, setDeletedTick] = useState(0);
+    const [deletedTick, setDeletedTick] = useState(0);
 
     // Initialize Deleted IDs
     useEffect(() => {
@@ -38,13 +38,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             if (stored) {
                 try {
                     deletedIdsRef.current = new Set(JSON.parse(stored));
+                    // Trigger tick to force sync hook to re-filter
+                    console.log('[CONTEXT] Loaded deleted IDs from LS. Count:', deletedIdsRef.current.size);
                     setDeletedTick(t => t + 1);
                 } catch (e) { }
             }
         }
     }, []);
 
-    const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync(deletedIdsRef);
+    const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync(deletedIdsRef, deletedTick);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
     // 3. SEND MESSAGE
@@ -126,14 +128,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     // 5. DELETE MESSAGE
     const deleteMessage = useCallback(async (messageId: string) => {
+        console.log('[DELETE] Attempting to delete:', messageId);
         if (!username) return;
 
         const idStr = String(messageId);
 
         // 1. Update Blacklist (Local Persistence)
-        deletedIdsRef.current.add(idStr);
-        if (typeof window !== "undefined") {
-            localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(deletedIdsRef.current)));
+        if (deletedIdsRef.current) {
+            deletedIdsRef.current.add(idStr);
+            console.log('[DELETE] Added to blacklist. Size:', deletedIdsRef.current.size);
+            if (typeof window !== "undefined") {
+                localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(deletedIdsRef.current)));
+            }
         }
 
         // Trigger re-render if needed via setDeletedTick, though setMessages below usually handles UI

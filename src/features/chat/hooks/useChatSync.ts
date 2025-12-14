@@ -5,14 +5,36 @@ import { api } from '@/lib/api';
 import { CHAT_ROOM, LOCAL_STORAGE_KEY } from '@/lib/constants';
 import { ChatMessage } from '../types';
 
-export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>) => {
+export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>, deletedTick: number) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
+    // --- RE-FILTERING EFFECT ---
+    // React to changes in the blacklist (e.g. after initial load or deletion)
+    useEffect(() => {
+        const currentDeleted = deletedMessageIdsRef.current || new Set<string>();
+        setMessages(prev => {
+            const filetered = prev.filter(msg => !currentDeleted.has(String(msg.id)));
+            // Only update if count changes to avoid loops? 
+            // setMessages is stable, but creating new array might be wasteful if no change. 
+            // But correctness first.
+            if (filetered.length !== prev.length) {
+                console.log('[SYNC] Re-filtering messages due to tick update. Removed:', prev.length - filetered.length);
+                return filetered;
+            }
+            return prev;
+        });
+    }, [deletedTick, deletedMessageIdsRef]);
+
     // --- DEDUPLICATION HELPER ---
     const mergeAndDedupe = useCallback((current: ChatMessage[], incoming: ChatMessage[], deletedIds: Set<string>) => {
-        const combined = [...current, ...incoming].filter(msg => !deletedIds.has(String(msg.id)));
+        // console.log('[SYNC] Merging. Deleted Count:', deletedIds.size);
+        const combined = [...current, ...incoming].filter(msg => {
+            const isDeleted = deletedIds.has(String(msg.id));
+            if (isDeleted) console.log('[SYNC] Filtering out deleted msg:', msg.id);
+            return !isDeleted;
+        });
 
         // 1. Sort by time
         combined.sort((a, b) => a.timestamp - b.timestamp);
