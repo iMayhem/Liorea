@@ -1,8 +1,20 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
-import { db } from '@/lib/firebase';
+import { db, firestore } from '@/lib/firebase';
 import { ref, onValue, set, onDisconnect, serverTimestamp, increment, update, remove, query, limitToLast } from 'firebase/database';
+import {
+    collection,
+    query as queryFirestore,
+    where,
+    orderBy,
+    limit as limitFirestore,
+    onSnapshot,
+    doc,
+    setDoc,
+    increment as incrementFirestore,
+    serverTimestamp as serverTimestampFirestore
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 import { api } from '@/lib/api';
@@ -98,151 +110,117 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [username]);
 
-    // --- GLOBAL PRESENCE ---
+    // --- GLOBAL PRESENCE (Write) ---
     useEffect(() => {
         if (!username) return;
+
+        // 1. Realtime DB: Ephemeral Status
         const commRef = ref(db, `/community_presence/${username}`);
         const connectionRef = ref(db, '.info/connected');
 
+        // 2. Firestore: Persistent Profile
+        const userRef = doc(firestore, 'users', username);
+
         const unsubscribe = onValue(connectionRef, async (snap: any) => {
             if (snap.val() === true) {
+                // Fetch latest profile data from D1 to ensure Firestore is up to date on connect
                 let savedStatus = "";
                 let savedPhoto = userImage || "";
                 let savedFrame = userFrame || "";
 
                 try {
+                    // SYNC FROM D1 (Source of Truth)
                     const data = await api.auth.getStatus(username);
                     if (data.status_text) savedStatus = data.status_text;
                     if (data.photoURL) {
                         savedPhoto = data.photoURL;
-                        setUserImage(savedPhoto); // Update local state immediately
+                        setUserImage(savedPhoto); // Sync to local state
                     }
                     if (data.equipped_frame) {
                         savedFrame = data.equipped_frame;
                         setUserFrameState(savedFrame);
                     }
-                } catch (e) { }
 
-                // Establish Presence
-                await onDisconnect(commRef).update({
-                    status: 'Offline',
-                    last_seen: serverTimestamp(),
-                    is_studying: false
-                });
+                    // SYNC TO FIRESTORE (Read Replica for Realtime)
+                    await setDoc(userRef, {
+                        username,
+                        photoURL: savedPhoto,
+                        equipped_frame: savedFrame,
+                        last_seen: serverTimestampFirestore(),
+                        status_text: savedStatus // Sync status too
+                    }, { merge: true });
 
-                update(commRef, {
-                    username: username,
-                    photoURL: savedPhoto,
-                    equipped_frame: savedFrame,
-                    status: 'Online',
-                    last_seen: serverTimestamp(),
-                    status_text: savedStatus,
-                });
+                    // Also update Realtime DB for "I am here"
+                    await onDisconnect(commRef).update({
+                        status: 'Offline',
+                        last_seen: serverTimestamp(),
+                        is_studying: false
+                    });
+
+                    update(commRef, {
+                        username: username, // key for identification
+                        status: 'Online',
+                        last_seen: serverTimestamp(),
+                        is_studying: false // Default false until joinSession
+                    });
+
+                } catch (e) { console.error("Presence sync failed", e); }
             }
         });
 
         return () => {
             unsubscribe();
-            onDisconnect(commRef).cancel(); // CRITICAL: Cancel onDisconnect when username changes/unmounts
+            onDisconnect(commRef).cancel();
         };
     }, [username, userImage, userFrame]);
 
-    // --- ROLES LISTENER ---
+    // --- DATA LISTENERS ---
+
+    // 0. Firestore Users List (Profile Data Source)
+    // We listen to ALL users (assuming reasonable scale) or we could query.
+    // Ideally we only fetch profiles of online users, but for now we'll listen to the collection to get updates.
+    const [firestoreProfiles, setFirestoreProfiles] = useState<Map<string, any>>(new Map());
     useEffect(() => {
-        const rolesRef = ref(db, 'roles');
-        const unsubscribe = onValue(rolesRef, (snapshot) => {
-            if (snapshot.exists()) {
-                setUserRoles(snapshot.val());
-            } else {
-                setUserRoles({});
-            }
+        const q = queryFirestore(collection(firestore, 'users'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const map = new Map<string, any>();
+            snapshot.docs.forEach(doc => {
+                map.set(doc.id, doc.data());
+            });
+            setFirestoreProfiles(map);
         });
         return () => unsubscribe();
     }, []);
 
-    // --- ACTIVE STUDY LOGIC ---
+    // 1. Leaderboard (Live from Firestore 'daily_stats')
     useEffect(() => {
-        if (!username || !joinedRoomId) return;
+        const today = new Date().toISOString().split('T')[0];
+        const q = queryFirestore(
+            collection(firestore, 'daily_stats'),
+            where('date', '==', today),
+            orderBy('minutes', 'desc'),
+            limitFirestore(50)
+        );
 
-        // Dynamic Room Path: Legacy support for "public" -> root /study_room_presence
-        let studyRef;
-        if (joinedRoomId === 'public') {
-            studyRef = ref(db, `/study_room_presence/${username}`);
-        } else {
-            studyRef = ref(db, `rooms/${joinedRoomId}/presence/${username}`);
-        }
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list: StudyUser[] = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    username: data.username,
+                    total_study_time: (data.minutes || 0) * 60,
+                    status: 'Online',
+                    photoURL: data.photoURL,
+                    status_text: data.status_text,
+                    equipped_frame: data.equipped_frame
+                };
+            });
+            setHistoricalLeaderboard(list);
+        });
 
-        const commRef = ref(db, `/community_presence/${username}`);
-
-        const initializeStudySession = async () => {
-            if (isStudying) {
-                let initialSeconds = 0;
-                try {
-                    const data = await api.study.getStats(username);
-                    if (data.total_minutes) {
-                        initialSeconds = data.total_minutes * 60;
-                    }
-                } catch (e) { }
-
-                await onDisconnect(studyRef).remove(); // Ensure remove is queued first
-
-                set(studyRef, {
-                    username: username,
-                    photoURL: userImage || "",
-                    equipped_frame: userFrame || "",
-                    total_study_time: initialSeconds,
-                    status: 'Online'
-                });
-
-                update(commRef, { is_studying: true });
-            } else {
-                onDisconnect(studyRef).cancel(); // Clean up
-                remove(studyRef);
-                update(commRef, { is_studying: false });
-            }
-        };
-
-        initializeStudySession();
-
-        return () => {
-            // Basic Cleanup
-            if (!isStudying && username) {
-                remove(studyRef);
-                update(commRef, { is_studying: false }).catch(() => { });
-            }
-        };
-    }, [username, isStudying, joinedRoomId, userImage, userFrame]);
-
-    // ... (DATA LISTENERS unchanged) ...
-
-
-
-    // --- DATA LISTENERS (THROTTLED) ---
-    // We use a ref to store the latest raw data from Firebase, and a timer to update React state
-    // only once per second. This prevents "millisecond" updates from re-rendering the whole app.
-
-    // 1. Leaderboard (Historical)
-    useEffect(() => {
-        const fetchLeaderboard = async () => {
-            try {
-                const data = await api.study.getLeaderboard();
-                const formatted: StudyUser[] = data
-                    .filter((u: any) => u && u.username)
-                    .map((u: any) => ({
-                        username: u.username,
-                        total_study_time: (u.total_minutes || 0) * 60,
-                        status: 'Online',
-                        photoURL: u.photoURL,
-                    }));
-                setHistoricalLeaderboard(formatted);
-            } catch (e) { console.error("Leaderboard fetch failed", e); }
-        };
-        fetchLeaderboard();
-        const interval = setInterval(fetchLeaderboard, 60000); // Keep 60s poll for leaderboards
-        return () => clearInterval(interval);
+        return () => unsubscribe();
     }, []);
 
-    // 2. Study Room Users (Throttled) - Depends on joinedRoomId
+    // 2. Study Room Users (Throttled)
     useEffect(() => {
         if (!joinedRoomId) {
             setStudyUsers([]);
@@ -257,7 +235,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
         const processUpdates = () => {
             const now = Date.now();
-            if (now - lastUpdate > 1000 && latestData) { // 1 second throttle
+            if (now - lastUpdate > 1000 && latestData) {
                 const list: StudyUser[] = Object.values(latestData)
                     .filter((u: any) => u && u.username)
                     .map((u: any) => ({
@@ -269,18 +247,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     }));
                 list.sort((a, b) => b.total_study_time - a.total_study_time);
 
-                // Optimized comparison: Check length and total_study_time of top user
                 setStudyUsers(prev => {
                     if (prev.length !== list.length) return list;
-                    const prevTop = prev[0];
-                    const newTop = list[0];
-                    // If top user changed or their score changed, update (good heuristic for leaderboard)
-                    // For perfect accuracy we'd check all, but for performance let's check a simplified hash or just top items
-                    // Actually, let's just trust React's reconciliation if we pass a new reference?
-                    // No, we want to AVOID passing new reference if data is same to prevent re-renders downstream.
-                    // Let's use JSON.stringify but only if length is small, otherwise assume changed?
-                    // list is usually small (<20). JSON.stringify is fine for 20 items.
-                    // But wait, the user said clogging.
                     const isSame = prev.length === list.length && prev[0]?.username === list[0]?.username && prev[0]?.total_study_time === list[0]?.total_study_time;
                     return isSame ? prev : list;
                 });
@@ -292,17 +260,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         const unsubscribe = onValue(roomRef, (snapshot) => {
             latestData = snapshot.val();
         });
-
-        // Start loop
         processUpdates();
-
         return () => {
             unsubscribe();
             cancelAnimationFrame(animationFrameId);
         };
     }, [joinedRoomId]);
 
-    // 3. Community Presence (Throttled)
+    // 3. Community Presence (State Source)
     useEffect(() => {
         const globalRef = query(ref(db, '/community_presence'), limitToLast(100));
         let latestData: any = null;
@@ -312,17 +277,24 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         const processUpdates = () => {
             const now = Date.now();
             if (now - lastUpdate > 1000 && latestData) { // 1 second throttle
+                // 1. Get raw presence data
                 const rawList = Object.values(latestData)
                     .filter((u: any) => u && u.username)
-                    .map((u: any) => ({
-                        username: u.username,
-                        photoURL: u.photoURL,
-                        equipped_frame: u.equipped_frame,
-                        status: u.status || 'Offline',
-                        last_seen: u.last_seen || Date.now(),
-                        status_text: u.status_text || "",
-                        is_studying: u.is_studying || false
-                    }));
+                    .map((u: any) => {
+                        // 2. Merge with Firestore Profile Data
+                        const profile = firestoreProfiles.get(u.username) || {};
+                        return {
+                            username: u.username,
+                            status: u.status || 'Offline',
+                            last_seen: u.last_seen || Date.now(),
+                            is_studying: u.is_studying || false,
+
+                            // Merged Fields
+                            photoURL: profile.photoURL || u.photoURL || "", // Fallback to RDB if migrated slowly
+                            equipped_frame: profile.equipped_frame || u.equipped_frame || "",
+                            status_text: profile.status_text || u.status_text || ""
+                        };
+                    });
 
                 const uniqueMap = new Map<string, CommunityUser>();
                 rawList.forEach((user: any) => {
@@ -346,10 +318,6 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 });
 
                 setCommunityUsers(prev => {
-                    // Naive check removed: Always update if data is fresh to ensure status_text changes propagate.
-                    // React key diffing will handle DOM updates efficiently.
-                    // To prevent loop if data is identical, we can do a deep equality check or just JSON stringify.
-                    // JSON stringify is fast enough for <100 items.
                     if (JSON.stringify(prev) === JSON.stringify(list)) return prev;
                     return list;
                 });
@@ -368,7 +336,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             unsubscribe();
             cancelAnimationFrame(animationFrameId);
         };
-    }, []);
+    }, [firestoreProfiles]); // Re-run when profiles update
 
     const leaderboardUsers = useMemo(() => {
         const map = new Map<string, StudyUser>();
@@ -424,24 +392,45 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         return userLookups.frameMap.get(targetUsername);
     }, [userLookups]);
 
-    // --- TIMER ---
+    // --- TIMER (Writes to Firestore) ---
     useEffect(() => {
         if (!username || !isStudying) return;
 
+        const updateFirestore = async () => {
+            const today = new Date().toISOString().split('T')[0];
+            const docId = `${today}_${username}`;
+            const docRef = doc(firestore, 'daily_stats', docId);
+
+            try {
+                // Don't include status_text here to avoid overwriting it with empty string
+                await setDoc(docRef, {
+                    username,
+                    minutes: incrementFirestore(1),
+                    date: today,
+                    photoURL: userImage || "",
+                    last_updated: serverTimestampFirestore(),
+                }, { merge: true });
+            } catch (e) { console.error("Firestore timer update failed", e); }
+        };
+
         const flushToCloudflare = () => {
+            // Keep D1 backup functionality for redundancy
             const minutesToAdd = unsavedMinutesRef.current;
             if (minutesToAdd > 0) {
                 unsavedMinutesRef.current = 0;
                 api.study.updateTime(username, minutesToAdd)
-                    .catch(e => {
-                        console.error("Failed to save to D1", e);
-                    });
+                    .catch(e => { });
             }
         };
 
         const interval = setInterval(() => {
-            const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
-            set(myStudyTimeRef, increment(60));
+            // Legacy Realtime DB update (Optional? Removing to be pure Firestore as requested)
+            // const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
+            // set(myStudyTimeRef, increment(60));
+
+            // Sync to Firestore
+            updateFirestore();
+
             unsavedMinutesRef.current += 1;
             if (unsavedMinutesRef.current >= 1) flushToCloudflare();
         }, 60000);
@@ -450,7 +439,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             clearInterval(interval);
             flushToCloudflare();
         };
-    }, [username, isStudying]); // Timer is independent of room? Yes, personal study time.
+    }, [username, isStudying, userImage]);
 
     const joinSession = useCallback((roomId: string = "public") => {
         setJoinedRoomId(roomId);
@@ -464,8 +453,22 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
     const updateStatusMessage = useCallback(async (msg: string) => {
         if (!username) return;
+
+        // 1. Update Realtime DB (Legacy/Community Panel Immediate)
         update(ref(db, `/community_presence/${username}`), { status_text: msg });
+
+        // 2. Update Firestore Profile
+        const userRef = doc(firestore, 'users', username);
+        setDoc(userRef, { status_text: msg }, { merge: true });
+
+        // 3. Update Daily Stats (for Leaderboard visibility)
+        const today = new Date().toISOString().split('T')[0];
+        const statsRef = doc(firestore, 'daily_stats', `${today}_${username}`);
+        setDoc(statsRef, { status_text: msg }, { merge: true });
+
+        // 4. D1 Backup
         api.auth.updateStatus(username, msg);
+
         toast({ title: "Status Updated" });
     }, [username, toast]);
 

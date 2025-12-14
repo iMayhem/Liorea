@@ -33,42 +33,9 @@ interface LeaderboardEntry {
 }
 
 export default function Leaderboard({ users, currentUsername }: LeaderboardProps) {
-  // Always Daily
-  const [fetchedUsers, setFetchedUsers] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      // setIsLoading(true); // Don't show spinner on background refresh, maybe only first time?
-      try {
-        const data = await api.study.getLeaderboard('daily');
-
-        if (Array.isArray(data)) {
-          const formatted: LeaderboardEntry[] = data.map((u: any) => ({
-            username: u.username,
-            total_minutes: u.total_minutes * 60, // Convert to seconds
-            photoURL: u.photoURL,
-            status_text: u.status_text || "",
-            trend: 'same'
-          }));
-          setFetchedUsers(formatted);
-        }
-      } catch (e) {
-        console.error("Leaderboard fetch failed", e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    setIsLoading(true);
-    loadLeaderboard().then(() => setIsLoading(false));
-
-    // Refresh every 10 seconds for "Live" feel
-    const interval = setInterval(loadLeaderboard, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const displayUsers = fetchedUsers;
+  // Use props directly
+  const displayUsers = users;
+  const isLoading = false; // Data is pushed from context live
 
   return (
     <Card className="bg-transparent border-none shadow-none text-white w-full h-full flex flex-col">
