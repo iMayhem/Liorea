@@ -192,54 +192,61 @@ export default function Header() {
                                     )}
                                 </div>
                                 <Separator className="bg-white/10" />
-                                <ScrollArea className="h-72">
-                                    {notifications.length > 0 ? (
-                                        <div className="grid gap-2">
-                                            {notifications.map((notification) => {
-                                                const fromUser = notification.message.split(' ')[0];
-                                                return (
-                                                    <div
-                                                        key={notification.id}
-                                                        className={cn(
-                                                            "mb-2 grid grid-cols-[auto_1fr] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
-                                                            !notification.read && "bg-white/5"
-                                                        )}
-                                                        onClick={() => {
-                                                            markAsRead(notification.id);
-                                                            if (notification.link) {
-                                                                window.location.href = notification.link;
-                                                            }
-                                                        }}
-                                                    >
-                                                        <div className="relative mt-1">
-                                                            {notification.type === 'global' ? (
-                                                                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                                                                    <Sparkles className="w-4 h-4 text-accent" />
-                                                                </div>
-                                                            ) : (
-                                                                <UserAvatar username={fromUser} className="w-8 h-8" />
+                                <div className="flex h-full flex-col">
+                                    {/* DEBUG LOG */}
+                                    {(() => {
+                                        console.log("[Header] Rendering Notification List. Count:", notifications.length);
+                                        return null;
+                                    })()}
+                                    <ScrollArea className="h-72">
+                                        {notifications.length > 0 ? (
+                                            <div className="grid gap-2">
+                                                {notifications.map((notification) => {
+                                                    const fromUser = notification.message.split(' ')[0];
+                                                    return (
+                                                        <div
+                                                            key={notification.id}
+                                                            className={cn(
+                                                                "mb-2 grid grid-cols-[auto_1fr] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
+                                                                !notification.read && "bg-white/5"
                                                             )}
-                                                            {!notification.read && (
-                                                                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
-                                                            )}
-                                                        </div>
+                                                            onClick={() => {
+                                                                markAsRead(notification.id);
+                                                                if (notification.link) {
+                                                                    window.location.href = notification.link;
+                                                                }
+                                                            }}
+                                                        >
+                                                            <div className="relative mt-1">
+                                                                {notification.type === 'global' ? (
+                                                                    <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                                                                        <Sparkles className="w-4 h-4 text-accent" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <UserAvatar username={fromUser} className="w-8 h-8" />
+                                                                )}
+                                                                {!notification.read && (
+                                                                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
+                                                                )}
+                                                            </div>
 
-                                                        <div className="space-y-1">
-                                                            <p className={`text-sm leading-snug ${!notification.read ? 'font-semibold text-white' : 'text-white/80'}`}>
-                                                                {notification.message}
-                                                            </p>
-                                                            <p className="text-[10px] text-muted-foreground">
-                                                                {new Date(notification.timestamp).toLocaleString()}
-                                                            </p>
+                                                            <div className="space-y-1">
+                                                                <p className={`text-sm leading-snug ${!notification.read ? 'font-semibold text-white' : 'text-white/80'}`}>
+                                                                    {notification.message}
+                                                                </p>
+                                                                <p className="text-[10px] text-muted-foreground">
+                                                                    {new Date(notification.timestamp).toLocaleString()}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground text-center py-8">No new notifications.</p>
-                                    )}
-                                </ScrollArea>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground text-center py-8">No new notifications.</p>
+                                        )}
+                                    </ScrollArea>
+                                </div>
                             </div>
                         </PopoverContent>
                     </Popover>
