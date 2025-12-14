@@ -46,7 +46,7 @@ const loadingCircleTransition = {
 import { Suspense } from 'react';
 
 function PersonalStudyContent() {
-    const { studyUsers, joinSession, leaveSession, username } = usePresence();
+    const { studyUsers, joinSession, leaveSession, username, leaderboardUsers } = usePresence();
     const searchParams = useSearchParams();
     const { addNotification } = useNotifications();
     const { toast } = useToast();
@@ -200,14 +200,42 @@ function PersonalStudyContent() {
                                                 </DialogDescription>
                                             </DialogHeader>
                                             <div className="grid gap-4 py-4">
-                                                <div className="flex flex-col gap-2">
+                                                <div className="flex flex-col gap-2 relative">
                                                     <Input
                                                         id="invite-username"
                                                         placeholder="Enter username..."
                                                         value={inviteUsername}
                                                         onChange={(e) => setInviteUsername(e.target.value)}
                                                         className="col-span-3 bg-black/20 border-zinc-700 text-white focus:ring-indigo-500"
+                                                        autoComplete="off"
                                                     />
+                                                    {/* User Dropdown */}
+                                                    {inviteUsername.length > 0 && (
+                                                        <div className="absolute top-full left-0 right-0 mt-1 bg-[#2b2d31] border border-zinc-700 rounded-md shadow-lg max-h-48 overflow-y-auto z-50">
+                                                            {leaderboardUsers
+                                                                .filter(u => u.username.toLowerCase().includes(inviteUsername.toLowerCase()) && u.username !== username)
+                                                                .slice(0, 5)
+                                                                .map(user => (
+                                                                    <button
+                                                                        key={user.username}
+                                                                        className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-indigo-500/20 hover:text-white flex items-center gap-2 transition-colors"
+                                                                        onClick={() => setInviteUsername(user.username)}
+                                                                    >
+                                                                        {user.photoURL ? (
+                                                                            <img src={user.photoURL} alt={user.username} className="w-5 h-5 rounded-full object-cover" />
+                                                                        ) : (
+                                                                            <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px] text-indigo-300">
+                                                                                {user.username[0].toUpperCase()}
+                                                                            </div>
+                                                                        )}
+                                                                        {user.username}
+                                                                    </button>
+                                                                ))}
+                                                            {leaderboardUsers.filter(u => u.username.toLowerCase().includes(inviteUsername.toLowerCase()) && u.username !== username).length === 0 && (
+                                                                <div className="px-3 py-2 text-sm text-zinc-500 italic">No users found</div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <DialogFooter>
