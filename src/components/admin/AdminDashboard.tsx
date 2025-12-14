@@ -46,20 +46,18 @@ export default function AdminDashboard() {
     }, []);
 
     const handleSendGlobalNotification = async () => {
-        const handleSendGlobalNotification = async () => {
-            if (notificationMessage.trim()) {
-                setIsSending(true);
-                try {
-                    await addNotification(notificationMessage.trim(), undefined, undefined, 'global');
-                    toast({ title: "Sent!", description: "Notification broadcasted." });
-                    setNotificationMessage('');
-                } catch (error) {
-                    toast({ variant: "destructive", title: "Error", description: "Failed to send." });
-                } finally {
-                    setIsSending(false);
-                }
+        if (notificationMessage.trim()) {
+            setIsSending(true);
+            try {
+                await addNotification(notificationMessage.trim(), undefined, undefined, 'global');
+                toast({ title: "Sent!", description: "Notification broadcasted." });
+                setNotificationMessage('');
+            } catch (error) {
+                toast({ variant: "destructive", title: "Error", description: "Failed to send." });
+            } finally {
+                setIsSending(false);
             }
-        };
+        }
     };
 
     return (
