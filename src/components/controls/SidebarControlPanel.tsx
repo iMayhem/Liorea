@@ -78,7 +78,7 @@ export default function SidebarControlPanel() {
                                 <SheetTitle className="text-zinc-100">Leaderboard</SheetTitle>
                                 <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
                             </SheetHeader>
-                            <div className="flex-1 min-h-0 relative">
+                            <div className="flex-1 min-h-0 relative h-full">
                                 <Leaderboard users={leaderboardUsers} currentUsername={username} />
                             </div>
                         </div>

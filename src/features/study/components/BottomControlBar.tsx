@@ -55,11 +55,11 @@ export default function BottomControlBar({ }: BottomControlBarProps) {
                                 <Trophy className="w-5 h-5" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="bg-background border-r-border text-foreground w-[85vw] sm:w-[540px] pt-10">
-                            <SheetHeader>
+                        <SheetContent side="left" className="bg-background border-r-border text-foreground w-[85vw] sm:w-[540px] pt-10 flex flex-col h-full">
+                            <SheetHeader className="shrink-0">
                                 <SheetTitle className="text-foreground text-left">Leaderboard</SheetTitle>
                             </SheetHeader>
-                            <div className="py-2 h-[calc(100vh-80px)]">
+                            <div className="flex-1 min-h-0 overflow-hidden py-2">
                                 <Leaderboard users={leaderboardUsers} currentUsername={username} />
                             </div>
                         </SheetContent>
