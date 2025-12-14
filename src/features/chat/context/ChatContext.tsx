@@ -23,11 +23,16 @@ export interface ChatMessage {
     photoURL?: string;
     image_url?: string;
     reactions?: Record<string, ChatReaction>;
+    replyTo?: {
+        id: string;
+        username: string;
+        message: string;
+    };
 }
 
 interface ChatContextType {
     messages: ChatMessage[];
-    sendMessage: (message: string, image_url?: string) => void;
+    sendMessage: (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => void;
     sendReaction: (messageId: string, emoji: string) => void;
     sendTypingEvent: () => void;
     typingUsers: string[];
@@ -182,7 +187,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }, [messages, loadingMore, hasMore]);
 
     // 3. SEND MESSAGE
-    const sendMessage = useCallback(async (message: string, image_url?: string) => {
+    const sendMessage = useCallback(async (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => {
         if ((!message.trim() && !image_url) || !username) return;
 
         // Send to Firebase (UI updates via listener)
@@ -191,7 +196,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             message,
             image_url: image_url || "",
             photoURL: userImage || "",
-            timestamp: serverTimestamp()
+            timestamp: serverTimestamp(),
+            replyTo: replyTo || null
         });
 
         // Backup to D1 (Silent)

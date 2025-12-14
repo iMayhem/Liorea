@@ -14,6 +14,7 @@ interface ChatMessageItemProps {
     reactionGroups: Record<string, { count: number, hasReacted: boolean, users: string[] }>;
     openReactionPopoverId: string | null;
     onReact: (id: string, emoji: string) => void;
+    onReply: (element: HTMLElement) => void;
     onReport: (msg: ChatMessage) => void;
     onDelete: (id: string) => void;
     onOpenChange: (open: boolean) => void;
@@ -23,7 +24,7 @@ interface ChatMessageItemProps {
 
 export const ChatMessageItem = React.memo(function ChatMessageItem({
     msg, isSequence, showHeader, isCurrentUser, reactionGroups,
-    openReactionPopoverId, onReact, onReport, onDelete, onOpenChange,
+    openReactionPopoverId, onReact, onReply, onReport, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -47,6 +48,14 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                     <div className="flex items-center gap-2 mb-1 select-none">
                         <span className="text-base font-semibold text-foreground hover:underline cursor-pointer">{msg.username}</span>
                         <span className="text-xs text-muted-foreground ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
+                    </div>
+                )}
+
+                {msg.replyTo && (
+                    <div className="flex items-center gap-1 mb-1 opacity-70 text-xs">
+                        <div className="w-0.5 h-3 bg-primary/40 rounded-full"></div>
+                        <span className="font-semibold text-primary">{msg.replyTo.username}</span>
+                        <span className="text-muted-foreground truncate max-w-[200px]">{msg.replyTo.message}</span>
                     </div>
                 )}
 
@@ -103,6 +112,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
             <MessageActions
                 isCurrentUser={isCurrentUser}
                 onReact={(emoji) => onReact(msg.id, emoji)}
+                onReply={() => onReply(null as any)}
                 onReport={() => onReport(msg)}
                 onDelete={() => onDelete(msg.id)}
                 isOpen={openReactionPopoverId === msg.id}

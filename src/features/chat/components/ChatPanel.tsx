@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon } from 'lucide-react';
+import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon, X } from 'lucide-react';
 import { useChat, ChatMessage } from '../context/ChatContext';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
@@ -47,6 +47,7 @@ export default function ChatPanel() {
     const [loadingGifs, setLoadingGifs] = useState(false);
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<string | null>(null);
     const [isGifPopoverOpen, setIsGifPopoverOpen] = useState(false);
+    const [replyingTo, setReplyingTo] = useState<{ id: string, username: string, message: string } | null>(null);
 
     useEffect(() => {
         if (isGifPopoverOpen && gifs.length === 0) {
@@ -143,6 +144,15 @@ export default function ChatPanel() {
         }
     };
 
+    const handleReply = (msg: ChatMessage) => {
+        setReplyingTo({
+            id: msg.id,
+            username: msg.username,
+            message: msg.message || (msg.image_url ? "Image" : "")
+        });
+        inputRef.current?.focus();
+    };
+
     const handleSendMessage = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!newMessage.trim()) return;
@@ -157,8 +167,9 @@ export default function ChatPanel() {
             });
         }
 
-        sendMessage(newMessage);
+        sendMessage(newMessage, undefined, replyingTo || undefined);
         setNewMessage('');
+        setReplyingTo(null);
     };
 
     const handleSendGif = (url: string) => { sendMessage("", url); };
@@ -279,6 +290,7 @@ export default function ChatPanel() {
                                 reactionGroups={reactionGroups}
                                 openReactionPopoverId={openReactionPopoverId}
                                 onReact={sendReaction}
+                                onReply={() => handleReply(msg)}
                                 onReport={handleReportMessage}
                                 onDelete={deleteMessage}
                                 onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}
@@ -311,7 +323,19 @@ export default function ChatPanel() {
 
             {/* Input Area - Journal Style */}
             <div className="p-4 shrink-0 bg-card/50 border-t border-border">
-                <div className="relative flex items-end gap-2 bg-muted/40 p-2 rounded-lg border border-border focus-within:border-primary/50 transition-colors">
+                {replyingTo && (
+                    <div className="flex items-center justify-between bg-muted/30 p-2 rounded-t-lg border-x border-t border-border mb-[-1px] relative z-10">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
+                            <div className="w-1 h-8 bg-primary/40 rounded-full shrink-0"></div>
+                            <span className="font-semibold text-primary">Replying to {replyingTo.username}</span>
+                            <span className="truncate opacity-70"> - {replyingTo.message.substring(0, 50)}{replyingTo.message.length > 50 ? '...' : ''}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyingTo(null)}>
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
+                )}
+                <div className={`relative flex items-end gap-2 bg-muted/40 p-2 border border-border focus-within:border-primary/50 transition-colors ${replyingTo ? 'rounded-b-lg rounded-tr-lg' : 'rounded-lg'}`}>
                     {/* Mention Menu */}
                     <MentionMenu
                         isOpen={!!mentionQuery && mentionableUsers.length > 0}

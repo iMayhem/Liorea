@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, Image as ImageIcon, Loader2, Smile, Star, Film, Search, ChevronDown, Flag, Trash2, Hash } from 'lucide-react';
+import { ArrowLeft, Send, Image as ImageIcon, Loader2, Smile, Star, Film, Search, ChevronDown, Flag, Trash2, Hash, X } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/context/NotificationContext';
@@ -55,6 +55,8 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const [gifSearch, setGifSearch] = useState("");
     const [loadingGifs, setLoadingGifs] = useState(false);
 
+    // Reply State
+    const [replyingTo, setReplyingTo] = useState<{ id: number, username: string, content: string } | null>(null);
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
     const [isGifPopoverOpen, setIsGifPopoverOpen] = useState(false);
 
@@ -234,13 +236,25 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
     const sendPost = async () => {
         if (!newMessage.trim() || !activeJournal || !username) return;
-        const tempPost = { id: Date.now(), username, content: newMessage, created_at: Date.now() };
+        const tempPost = {
+            id: Date.now(),
+            username,
+            content: newMessage,
+            created_at: Date.now(),
+            replyTo: replyingTo || undefined
+        };
         setPosts(prev => [...prev, tempPost]);
         setNewMessage("");
+        setReplyingTo(null);
         const mentions = tempPost.content.match(/@(\w+)/g);
         if (mentions) { const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1)))); uniqueUsers.forEach(taggedUser => { if (taggedUser !== username) { addNotification(`${username} mentioned you in "${activeJournal.title}"`, taggedUser, `/journal?id=${activeJournal.id}`); } }); }
         try {
-            await api.journal.post({ journal_id: activeJournal.id, username, content: tempPost.content });
+            await api.journal.post({
+                journal_id: activeJournal.id,
+                username,
+                content: tempPost.content,
+                replyTo: replyingTo ? JSON.stringify(replyingTo) : undefined
+            });
             notifyChatUpdate(activeJournal.id);
         } catch (e) { console.error(e); }
     };
@@ -249,6 +263,14 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const val = e.target.value; setNewMessage(val); const cursorPos = e.target.selectionStart; const textBeforeCursor = val.slice(0, cursorPos); const match = textBeforeCursor.match(/@(\w*)$/); if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); } };
     const insertMention = (user: string) => { if (!mentionQuery) return; const cursorPos = chatInputRef.current?.selectionStart || 0; const textBefore = newMessage.slice(0, cursorPos).replace(/@(\w*)$/, `@${user} `); const textAfter = newMessage.slice(cursorPos); setNewMessage(textBefore + textAfter); setMentionQuery(null); chatInputRef.current?.focus(); };
     const handleEmojiClick = (emojiObj: any) => { setNewMessage(prev => prev + emojiObj.emoji); };
+    const handleReply = (post: Post) => {
+        setReplyingTo({
+            id: post.id,
+            username: post.username,
+            content: post.content || (post.image_url ? "Image" : "")
+        });
+        chatInputRef.current?.focus();
+    };
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => { if (mentionQuery && mentionableUsers.length > 0) { if (e.key === 'ArrowUp') { e.preventDefault(); setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionableUsers.length - 1)); } else if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(prev => (prev < mentionableUsers.length - 1 ? prev + 1 : 0)); } else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionableUsers[mentionIndex]); } else if (e.key === 'Escape') { setMentionQuery(null); } return; } if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPost(); } };
 
     const getReactionGroups = (reactions: Reaction[] | undefined) => { if (!reactions) return {}; const groups: Record<string, { count: number, hasReacted: boolean, users: string[] }> = {}; reactions.forEach(r => { if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false, users: [] }; groups[r.emoji].count++; groups[r.emoji].users.push(r.username); if (r.username === username) groups[r.emoji].hasReacted = true; }); return groups; };
@@ -332,6 +354,14 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                         </div>
                                     )}
 
+                                    {post.replyTo && (
+                                        <div className="flex items-center gap-1 mb-1 opacity-60 text-xs">
+                                            <div className="w-0.5 h-3 bg-white/40 rounded-full"></div>
+                                            <span className="font-semibold text-white">{post.replyTo.username}</span>
+                                            <span className="text-white/60 truncate max-w-[200px]">{post.replyTo.content}</span>
+                                        </div>
+                                    )}
+
                                     <div className="text-base text-white/90 leading-snug whitespace-pre-wrap break-words">
                                         <FormattedMessage content={post.content} />
                                     </div>
@@ -375,6 +405,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                 <MessageActions
                                     isCurrentUser={post.username === username}
                                     onReact={(emoji) => handleReact(post.id, emoji)}
+                                    onReply={() => handleReply(post)}
                                     onDelete={() => handleDeletePost(post.id)}
                                     onReport={() => handleReportMessage(post)}
                                     isOpen={openReactionPopoverId === post.id}
@@ -399,8 +430,19 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
 
             <div className="p-4 bg-card/10 shrink-0 border-t border-white/5">
-                {/* ... existing input area content ... */}
-                <div className="relative flex items-end gap-2 bg-muted/20 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+                {replyingTo && (
+                    <div className="flex items-center justify-between bg-white/5 p-2 rounded-t-lg border-x border-t border-white/10 mb-[-1px] relative z-10 w-full">
+                        <div className="flex items-center gap-2 text-sm text-white/60 truncate">
+                            <div className="w-1 h-8 bg-white/40 rounded-full shrink-0"></div>
+                            <span className="font-semibold text-white">Replying to {replyingTo.username}</span>
+                            <span className="truncate opacity-70"> - {replyingTo.content.substring(0, 50)}{replyingTo.content.length > 50 ? '...' : ''}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-white" onClick={() => setReplyingTo(null)}>
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
+                )}
+                <div className={`relative flex items-end gap-2 bg-muted/20 p-2 border border-white/10 focus-within:border-white/20 transition-colors ${replyingTo ? 'rounded-b-lg rounded-tr-lg' : 'rounded-lg'}`}>
                     {/* ... (keep existing JSX here, but since multi_replace is chunk-based, I'll just append ImageViewer at the end of the main div) */}
                     <MentionMenu
                         isOpen={!!mentionQuery && mentionableUsers.length > 0}

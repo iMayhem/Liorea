@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Smile, Trash2, Flag } from 'lucide-react';
+import { Smile, Trash2, Flag, Reply } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢", "🎉", "💯"];
@@ -9,6 +9,7 @@ const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢", "🎉", 
 interface MessageActionsProps {
     isCurrentUser: boolean;
     onReact: (emoji: string) => void;
+    onReply: () => void;
     onDelete?: () => void;
     onReport?: () => void;
     isOpen: boolean;
@@ -18,6 +19,7 @@ interface MessageActionsProps {
 export const MessageActions: React.FC<MessageActionsProps> = ({
     isCurrentUser,
     onReact,
+    onReply,
     onDelete,
     onReport,
     isOpen,
@@ -45,6 +47,13 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                     </div>
                 </PopoverContent>
             </Popover>
+
+            <button
+                onClick={onReply}
+                className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            >
+                <Reply className="w-4 h-4" />
+            </button>
 
             {isCurrentUser && onDelete && (
                 <button

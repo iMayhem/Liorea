@@ -74,7 +74,7 @@ export const api = {
         getFollowing: (username: string) => request<number[]>(`/journals/following?username=${username}`),
 
         create: (data: { username: string, title: string, tags: string, images: string, theme: string }) => request('/journals/create', { method: 'POST', body: JSON.stringify(data) }),
-        post: (data: { journal_id: number, username: string, content: string, image_url?: string }) => request('/journals/post', { method: 'POST', body: JSON.stringify(data) }),
+        post: (data: { journal_id: number, username: string, content: string, image_url?: string, replyTo?: string }) => request('/journals/post', { method: 'POST', body: JSON.stringify(data) }),
         follow: (journal_id: number, username: string) => request('/journals/follow', { method: 'POST', body: JSON.stringify({ journal_id, username }) }),
         react: (post_id: number, username: string, emoji: string) => request('/journals/react', { method: 'POST', body: JSON.stringify({ post_id, username, emoji }) }),
 

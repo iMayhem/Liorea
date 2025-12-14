@@ -22,6 +22,11 @@ export type Post = {
     created_at: number;
     photoURL?: string;
     reactions?: Reaction[];
+    replyTo?: {
+        id: number;
+        username: string;
+        content: string;
+    };
 };
 
 export type GiphyResult = {
