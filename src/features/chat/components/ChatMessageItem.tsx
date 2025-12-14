@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChatMessage } from '@/features/chat/context/ChatContext';
 import { FormattedMessage } from '@/components/chat/FormattedMessage';
 import { MessageActions } from '@/components/chat/MessageActions';
 import UserAvatar from '@/components/UserAvatar';
+import { ImageViewer } from '@/components/ui/ImageViewer';
 
 interface ChatMessageItemProps {
     msg: ChatMessage;
@@ -24,6 +25,8 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     openReactionPopoverId, onReact, onReport, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+
     if (!msg.message && !msg.image_url) return null;
 
     return (
@@ -48,7 +51,20 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
 
                 <div className="text-base text-foreground/90 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
                     {msg.image_url ? (
-                        <img src={msg.image_url} alt="Attachment" className="max-w-[300px] max-h-80 w-auto object-contain rounded-lg mt-1 border border-border" loading="lazy" />
+                        <>
+                            <img
+                                src={msg.image_url}
+                                alt="Attachment"
+                                className="max-w-[300px] max-h-80 w-auto object-contain rounded-lg mt-1 border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                                loading="lazy"
+                                onClick={() => setIsViewerOpen(true)}
+                            />
+                            <ImageViewer
+                                isOpen={isViewerOpen}
+                                onClose={() => setIsViewerOpen(false)}
+                                src={msg.image_url}
+                            />
+                        </>
                     ) : (
                         <FormattedMessage content={msg.message} />
                     )}

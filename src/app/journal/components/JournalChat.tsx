@@ -19,6 +19,7 @@ import { Journal, Post, Reaction, GiphyResult } from '../types';
 import { FormattedMessage } from '@/components/chat/FormattedMessage';
 import { MessageActions } from '@/components/chat/MessageActions';
 import { MentionMenu } from '@/components/chat/MentionMenu';
+import { ImageViewer } from '@/components/ui/ImageViewer';
 
 interface JournalChatProps {
     activeJournal: Journal | null;
@@ -53,8 +54,12 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const [gifs, setGifs] = useState<GiphyResult[]>([]);
     const [gifSearch, setGifSearch] = useState("");
     const [loadingGifs, setLoadingGifs] = useState(false);
+
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<number | null>(null);
     const [isGifPopoverOpen, setIsGifPopoverOpen] = useState(false);
+
+    // Image Viewer State
+    const [viewerImage, setViewerImage] = useState<string | null>(null);
 
     useEffect(() => {
         if (isGifPopoverOpen && gifs.length === 0) {
@@ -333,7 +338,13 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
                                     {post.image_url && (
                                         <div className="mt-2 select-none">
-                                            <img src={post.image_url} alt="Attachment" className="max-h-80 w-auto object-contain rounded-md border border-white/10" loading="lazy" />
+                                            <img
+                                                src={post.image_url}
+                                                alt="Attachment"
+                                                className="max-h-80 w-auto object-contain rounded-md border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
+                                                loading="lazy"
+                                                onClick={() => setViewerImage(post.image_url!)}
+                                            />
                                         </div>
                                     )}
 
@@ -374,7 +385,9 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
 
             <div className="p-4 bg-card/10 shrink-0 border-t border-white/5">
+                {/* ... existing input area content ... */}
                 <div className="relative flex items-end gap-2 bg-muted/20 p-2 rounded-lg border border-white/10 focus-within:border-white/20 transition-colors">
+                    {/* ... (keep existing JSX here, but since multi_replace is chunk-based, I'll just append ImageViewer at the end of the main div) */}
                     <MentionMenu
                         isOpen={!!mentionQuery && mentionableUsers.length > 0}
                         query={mentionQuery}
@@ -418,6 +431,12 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                     <Button onClick={sendPost} disabled={!newMessage.trim()} className="bg-white/10 hover:bg-white text-white hover:text-black h-9 w-9 shrink-0 rounded p-0"><Send className="w-4 h-4" /></Button>
                 </div>
             </div>
+
+            <ImageViewer
+                isOpen={!!viewerImage}
+                onClose={() => setViewerImage(null)}
+                src={viewerImage || ""}
+            />
         </div>
     );
 };
