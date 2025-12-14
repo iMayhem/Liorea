@@ -1,6 +1,5 @@
 import { BentoCard, CardContent, CardHeader, CardTitle } from '@/components/ui/BentoCard';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CommunityUser, usePresence } from '../context/PresenceContext';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,8 +39,8 @@ export default function PresencePanel({ users }: PresencePanelProps) {
           {onlineCount} Online
         </div>
       </CardHeader>
-      <CardContent className="p-0 flex-1 min-h-0">
-        <ScrollArea className="h-full px-4">
+      <CardContent className="p-0 flex-1 min-h-0 overflow-hidden relative">
+        <div className="h-full overflow-y-auto px-4 custom-scrollbar pb-4">
           <div className="space-y-4 py-4">
             {users.map((user) => {
               const isOnline = user.status === 'Online';
@@ -82,7 +81,7 @@ export default function PresencePanel({ users }: PresencePanelProps) {
               )
             })}
           </div>
-        </ScrollArea>
+        </div>
       </CardContent>
     </BentoCard>
   );
