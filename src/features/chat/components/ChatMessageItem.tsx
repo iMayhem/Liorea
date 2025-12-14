@@ -29,10 +29,22 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
 }: ChatMessageItemProps) {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
 
+    const scrollToMessage = (id: string) => {
+        const el = document.getElementById(`message-${id}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('bg-primary/20', 'transition-colors', 'duration-500');
+            setTimeout(() => el.classList.remove('bg-primary/20'), 1000);
+        }
+    };
+
     if (!msg.message && !msg.image_url) return null;
 
     return (
-        <div className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}>
+        <div
+            id={`message-${msg.id}`}
+            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}
+        >
             <div className="w-10 shrink-0 select-none pt-0.5">
                 {showHeader ? (
                     <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
@@ -52,9 +64,13 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 )}
 
                 {msg.replyTo && (
-                    <div className="flex items-center gap-1 mb-1 opacity-70 text-xs">
-                        <div className="w-0.5 h-3 bg-primary/40 rounded-full"></div>
-                        <span className="font-semibold text-primary">{msg.replyTo.username}</span>
+                    <div
+                        onClick={() => scrollToMessage(msg.replyTo!.id)}
+                        className="flex items-center gap-2 mb-0.5 opacity-60 hover:opacity-100 transition-opacity cursor-pointer text-xs group/reply select-none"
+                    >
+                        <div className="w-8 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-md border-b-0 border-r-0 translate-y-1"></div>
+                        <UserAvatar username={msg.replyTo.username} className="w-4 h-4" />
+                        <span className="font-semibold text-primary/80 group-hover/reply:underline active:scale-95 transition-transform">{msg.replyTo.username}</span>
                         <span className="text-muted-foreground truncate max-w-[200px]">{msg.replyTo.message}</span>
                     </div>
                 )}

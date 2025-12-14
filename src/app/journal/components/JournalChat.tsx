@@ -277,6 +277,15 @@ export const JournalChat: React.FC<JournalChatProps> = ({
     const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
+    const scrollToMessage = (id: number) => {
+        const el = document.getElementById(`journal-post-${id}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('bg-white/10', 'transition-colors', 'duration-500');
+            setTimeout(() => el.classList.remove('bg-white/10'), 1000);
+        }
+    };
+
     if (!activeJournal) return (
         <div className={`flex-1 flex flex-col glass-panel rounded-2xl overflow-hidden hidden md:flex`}>
             <div className="flex flex-col items-center justify-center h-full text-white/20 select-none"><Hash className="w-16 h-16 mb-4 opacity-20" /><p className="text-base">Select a journal to start reading</p></div>
@@ -340,6 +349,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                         return (
                             <div
                                 key={post.id}
+                                id={`journal-post-${post.id}`}
                                 className={`group relative flex gap-4 pr-2 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-6' : 'mt-0.5 py-0.5'}`}
                             >
                                 <div className="w-10 shrink-0 select-none pt-0.5">
@@ -355,9 +365,13 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                     )}
 
                                     {post.replyTo && (
-                                        <div className="flex items-center gap-1 mb-1 opacity-60 text-xs">
-                                            <div className="w-0.5 h-3 bg-white/40 rounded-full"></div>
-                                            <span className="font-semibold text-white">{post.replyTo.username}</span>
+                                        <div
+                                            onClick={() => scrollToMessage(post.replyTo!.id)}
+                                            className="flex items-center gap-2 mb-0.5 opacity-60 hover:opacity-100 transition-opacity cursor-pointer text-xs group/reply select-none"
+                                        >
+                                            <div className="w-8 h-3 border-l-2 border-t-2 border-white/30 rounded-tl-md border-b-0 border-r-0 translate-y-1"></div>
+                                            <UserAvatar username={post.replyTo.username} className="w-4 h-4" />
+                                            <span className="font-semibold text-white/80 group-hover/reply:underline active:scale-95 transition-transform">{post.replyTo.username}</span>
                                             <span className="text-white/60 truncate max-w-[200px]">{post.replyTo.content}</span>
                                         </div>
                                     )}
