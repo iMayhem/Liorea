@@ -331,12 +331,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 });
 
                 setCommunityUsers(prev => {
-                    // Optimization: Only update if length changed or top/bottom items changed (heuristic)
-                    if (prev.length !== list.length) return list;
-                    // Check first and last for quick diff
-                    const firstSame = prev[0]?.username === list[0]?.username && prev[0]?.last_seen === list[0]?.last_seen;
-                    const lastSame = prev[prev.length - 1]?.username === list[list.length - 1]?.username;
-                    return (firstSame && lastSame) ? prev : list;
+                    // Naive check removed: Always update if data is fresh to ensure status_text changes propagate.
+                    // React key diffing will handle DOM updates efficiently.
+                    // To prevent loop if data is identical, we can do a deep equality check or just JSON stringify.
+                    // JSON stringify is fast enough for <100 items.
+                    if (JSON.stringify(prev) === JSON.stringify(list)) return prev;
+                    return list;
                 });
                 lastUpdate = now;
             }
