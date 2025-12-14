@@ -256,15 +256,6 @@ export default function Header() {
                         <span className="hidden sm:inline">Study Room</span>
                     </Link>
 
-                    <Link href="/personal" className={cn(
-                        "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
-                        'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
-                        pathname === '/personal' && 'bg-white/10 text-white'
-                    )}>
-                        <Brain className="w-4 h-4" />
-                        <span className="hidden sm:inline">Personal</span>
-                    </Link>
-
                     <Link href="/journal" className={cn(
                         "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
                         'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
