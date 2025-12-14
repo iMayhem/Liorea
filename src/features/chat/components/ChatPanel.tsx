@@ -96,7 +96,9 @@ export default function ChatPanel() {
     const [mentionIndex, setMentionIndex] = useState(0);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // --- SMART SCROLL LOGIC ---
+    // Debounced Smart Scroll Logic
+    const initialLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     useLayoutEffect(() => {
         const container = scrollContainerRef.current;
         if (!container || messages.length === 0) return;
@@ -105,14 +107,18 @@ export default function ChatPanel() {
         const isNearBottom = distanceFromBottom < 300;
 
         if (!isInitialLoaded || isNearBottom) {
-            setTimeout(() => {
-                if (scrollContainerRef.current) {
-                    scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-                }
-            }, 100);
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+            }
+
+            if (initialLoadTimeoutRef.current) {
+                clearTimeout(initialLoadTimeoutRef.current);
+            }
 
             if (!isInitialLoaded) {
-                setTimeout(() => setIsInitialLoaded(true), 500);
+                initialLoadTimeoutRef.current = setTimeout(() => {
+                    setIsInitialLoaded(true);
+                }, 1000);
             }
         }
     }, [messages, isInitialLoaded]);

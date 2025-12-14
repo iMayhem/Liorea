@@ -14,8 +14,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { db } from '@/lib/firebase';
+import { db, firestore } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp } from 'firebase/database';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { compressImage } from '@/lib/compress';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -106,14 +107,38 @@ function JournalContent() {
     const handleFollowToggle = async () => {
         if (!activeJournal || !username) return;
         const isFollowing = followedIds.includes(activeJournal.id);
+
+        // 1. Optimistic UI
         if (isFollowing) {
             setFollowedIds(prev => prev.filter(id => id !== activeJournal.id));
         } else {
             setFollowedIds(prev => [...prev, activeJournal.id]);
         }
+
         try {
-            await api.journal.follow(activeJournal.id, username);
-        } catch (e) { console.error(e); }
+            // 2. Dual Write: Firestore (for Chat UI) + D1 (for Sidebar/Stats)
+            const followerRef = doc(firestore, `journals/${activeJournal.id}/followers/${username}`);
+
+            if (isFollowing) {
+                // Unfollow
+                await Promise.all([
+                    api.journal.follow(activeJournal.id, username), // Toggle API
+                    deleteDoc(followerRef)
+                ]);
+            } else {
+                // Follow
+                await Promise.all([
+                    api.journal.follow(activeJournal.id, username), // Toggle API
+                    setDoc(followerRef, {
+                        username,
+                        followed_at: serverTimestamp()
+                    })
+                ]);
+            }
+        } catch (e) {
+            console.error("Follow toggle failed", e);
+            // Revert optimistic if needed? For now, we assume success.
+        }
     };
 
     const sortedJournals = useMemo(() => { return [...journals].sort((a, b) => { const aFollow = followedIds.includes(a.id) ? 1 : 0; const bFollow = followedIds.includes(b.id) ? 1 : 0; if (aFollow !== bFollow) return bFollow - aFollow; return b.last_updated - a.last_updated; }); }, [journals, followedIds]);

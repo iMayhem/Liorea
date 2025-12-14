@@ -136,7 +136,12 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
         // Reset state
         setPosts([]); setHasMore(true); setIsInitialLoaded(false); setLoadingMore(false);
-        fetchFollowers(activeJournal.id);
+
+        // 0. Firestore Followers Listener (Real-time)
+        const followersUnsub = onSnapshot(collection(firestore, `journals/${activeJournal.id}/followers`), (snapshot) => {
+            const followers = snapshot.docs.map(doc => doc.id); // Doc ID is username
+            setCurrentFollowers(followers);
+        });
 
         // 1. Fetch D1 History
         const loadHistory = async () => {
@@ -218,7 +223,10 @@ export const JournalChat: React.FC<JournalChatProps> = ({
             setIsInitialLoaded(true);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            followersUnsub();
+        };
     }, [activeJournal]);
 
     useLayoutEffect(() => {
@@ -231,28 +239,34 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         }
     }, [posts]);
 
-    // Smart Scroll Logic
+    // Debounced Smart Scroll Logic
+    const initialLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     useLayoutEffect(() => {
         const container = scrollContainerRef.current;
         if (!container || posts.length === 0) return;
 
-        // If we are still initializing (first few loads), OR if user was already near bottom
-        // we force scroll to bottom.
-        // We define "near bottom" as within 300px.
+        // If not yet fully loaded OR near bottom, scroll to bottom
         const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
         const isNearBottom = distanceFromBottom < 300;
 
         if (!isInitialLoaded || isNearBottom) {
-            // Use timeout to allow layout to settle (images etc)
-            setTimeout(() => {
-                if (scrollContainerRef.current) {
-                    scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-                }
-            }, 100);
+            // Scroll to bottom
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+            }
 
-            // Only mark initial loaded after a short delay to ensure we catch the full initial batch
+            // Debounce the "loaded" state
+            // Every time posts change, we reset the timer.
+            // We only consider "Initial Load" done if no new posts arrive for 1000ms
+            if (initialLoadTimeoutRef.current) {
+                clearTimeout(initialLoadTimeoutRef.current);
+            }
+
             if (!isInitialLoaded) {
-                setTimeout(() => setIsInitialLoaded(true), 500);
+                initialLoadTimeoutRef.current = setTimeout(() => {
+                    setIsInitialLoaded(true);
+                }, 1000); // Wait 1s of silence before declaring "Loaded"
             }
         }
     }, [posts, isInitialLoaded]);
