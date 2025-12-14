@@ -226,10 +226,11 @@ export default function ChatPanel() {
 
     const getReactionGroups = (reactions: Record<string, any> | undefined) => {
         if (!reactions) return {};
-        const groups: Record<string, { count: number, hasReacted: boolean }> = {};
+        const groups: Record<string, { count: number, hasReacted: boolean, users: string[] }> = {};
         Object.values(reactions).forEach((r: any) => {
-            if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false };
+            if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false, users: [] };
             groups[r.emoji].count++;
+            groups[r.emoji].users.push(r.username);
             if (r.username === username) groups[r.emoji].hasReacted = true;
         });
         return groups;

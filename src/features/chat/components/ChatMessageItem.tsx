@@ -4,13 +4,14 @@ import { FormattedMessage } from '@/components/chat/FormattedMessage';
 import { MessageActions } from '@/components/chat/MessageActions';
 import UserAvatar from '@/components/UserAvatar';
 import { ImageViewer } from '@/components/ui/ImageViewer';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ChatMessageItemProps {
     msg: ChatMessage;
     isSequence: boolean;
     showHeader: boolean;
     isCurrentUser: boolean;
-    reactionGroups: Record<string, { count: number, hasReacted: boolean }>;
+    reactionGroups: Record<string, { count: number, hasReacted: boolean, users: string[] }>;
     openReactionPopoverId: string | null;
     onReact: (id: string, emoji: string) => void;
     onReport: (msg: ChatMessage) => void;
@@ -73,14 +74,27 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 {Object.keys(reactionGroups).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2 select-none">
                         {Object.entries(reactionGroups).map(([emoji, data]) => (
-                            <button
-                                key={emoji}
-                                onClick={() => onReact(msg.id, emoji)}
-                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-primary/20 border-primary/50 text-primary-foreground' : 'bg-muted/30 border-transparent hover:border-border text-muted-foreground'}`}
-                            >
-                                <span className="text-base">{emoji}</span>
-                                <span className={`text-xs font-bold ${data.hasReacted ? 'text-primary' : 'text-muted-foreground'}`}>{data.count}</span>
-                            </button>
+                            <TooltipProvider key={emoji}>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            onClick={() => onReact(msg.id, emoji)}
+                                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-primary/20 border-primary/50 text-primary-foreground' : 'bg-muted/30 border-transparent hover:border-border text-muted-foreground'}`}
+                                        >
+                                            <span className="text-base">{emoji}</span>
+                                            <span className={`text-xs font-bold ${data.hasReacted ? 'text-primary' : 'text-muted-foreground'}`}>{data.count}</span>
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border z-50">
+                                        <div className="flex flex-col gap-1">
+                                            {data.users.slice(0, 5).map((u, i) => (
+                                                <span key={i} className="text-xs font-medium">{u}</span>
+                                            ))}
+                                            {data.users.length > 5 && <span className="text-xs text-muted-foreground">and {data.users.length - 5} more</span>}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         ))}
                     </div>
                 )}
