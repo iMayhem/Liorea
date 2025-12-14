@@ -372,7 +372,16 @@
 }
 
 /* Force transparency on specific classes in beautiful mode */
-.beautiful-mode .bg-background,
+/* EXCLUDE bg-background from blur to keep wallpaper crisp */
+.beautiful-mode .bg-background {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Apply Blur ONLY to panels/cards */
 .beautiful-mode .bg-card,
 .beautiful-mode .bg-popover,
 .beautiful-mode .bg-muted,
@@ -382,12 +391,12 @@
 .beautiful-mode .bg-muted\/80,
 .beautiful-mode .glass-panel,
 .beautiful-mode .glass-panel-light {
-  background-color: rgba(0, 0, 0, 0.15) !important;
-  /* Reduced from 0.4 to 0.15 */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: none !important;
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  /* Slightly increased opacity for better readability on panels */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Hide black gradients in beautiful mode (e.g. StudyUserCard, JournalCard) */
