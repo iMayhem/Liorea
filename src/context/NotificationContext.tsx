@@ -33,6 +33,8 @@ export interface Notification {
 
 interface NotificationContextType {
   notifications: Notification[];
+  userNotifications: Notification[];
+  globalNotifications: Notification[];
   addNotification: (message: string, targetUser?: string, link?: string, type?: 'global' | 'personal') => Promise<void>;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -241,7 +243,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }));
 
   return (
-    <NotificationContext.Provider value={{ notifications: displayedNotifications, addNotification, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{
+      notifications: displayedNotifications,
+      userNotifications: userNotifications.map(n => ({ ...n, read: n.read || readIds.includes(n.id) })),
+      globalNotifications: globalNotifications.map(n => ({ ...n, read: readIds.includes(n.id) })), // Global ones don't have 'read' on backend usually, but we track locally
+      addNotification,
+      markAsRead,
+      markAllAsRead
+    }}>
       {children}
     </NotificationContext.Provider>
   );
