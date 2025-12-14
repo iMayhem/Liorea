@@ -2,7 +2,6 @@
 
 import { PresencePanel, WelcomePanel, StatusPanel, usePresence } from '@/features/study';
 import Header from '@/components/layout/Header';
-import { BentoGrid, BentoItem } from '@/components/layout/BentoGrid';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
@@ -10,11 +9,12 @@ import { useBackground } from '@/context/BackgroundContext';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import VersionInfo from './VersionInfo';
 import ExamCountdown from './ExamCountdown';
 
 export default function LioreaClient() {
   const { error, isLoading: isBackgroundLoading } = useBackground();
-  const { communityUsers, username } = usePresence(); // Changed onlineUsers to communityUsers
+  const { communityUsers, username } = usePresence();
   const router = useRouter();
   const nextYear = new Date().getFullYear() + 1;
 
@@ -80,8 +80,6 @@ export default function LioreaClient() {
           </div>
         </div>
 
-
-
         {/* Right Column - Exam Timers */}
         <div className="hidden md:flex w-72 flex-col pr-4 pb-4 pt-6 h-full shrink-0 gap-3">
           <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} />
@@ -90,6 +88,8 @@ export default function LioreaClient() {
         </div>
 
       </main>
+
+      <VersionInfo />
     </>
   );
 }
