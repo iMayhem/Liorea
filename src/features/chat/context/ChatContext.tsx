@@ -113,29 +113,45 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                 // We have 'd1History' (Legacy) and 'msgs' (Live Firestore).
                 // Problem: New messages are written to BOTH, but with different IDs (Firestore auto-id vs D1 auto-id).
                 // This causes duplicates.
-                // Solution: Deduplicate by (timestamp + username + message) signature.
-                // Firestore messages ('msgs') take precedence.
+                // Optimized Deduplication Strategy:
+                // 1. Combine all unique messages by ID first (to update modified Firestore docs).
+                // 2. Then apply Fuzzy Deduplication to merge dual-writes (D1 vs Firestore).
 
-                const firestoreSignatures = new Set(
-                    msgs.map(m => `${m.timestamp}_${m.username}_${m.message}`)
-                );
+                // A. Update existing items with new Firestore data (priority by ID)
+                const idMap = new Map<string, ChatMessage>();
+                prev.forEach(m => idMap.set(m.id, m));
+                msgs.forEach(m => idMap.set(m.id, m));
 
-                const filteredLegacy = prev.filter((p: ChatMessage) => {
-                    if (!p) return false;
-                    // If this legacy message exists in the new Firestore batch (by signature), drop it.
-                    // Also drop if it's already in the 'msgs' array by ID (standard dedupe).
-                    const sig = `${p.timestamp}_${p.username}_${p.message}`;
-                    const isDuplicateContent = firestoreSignatures.has(sig);
-                    const isDuplicateId = msgs.some(m => m.id === p.id);
+                let allMessages = Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
 
-                    return !isDuplicateContent && !isDuplicateId && !p.id.toString().startsWith('temp-');
-                });
+                // B. Fuzzy Dedupe: Remove duplicate content within 5 seconds window
+                // (Fixes "Double Messages" from dual-write with different IDs/Times)
+                const deduped: ChatMessage[] = [];
+                if (allMessages.length > 0) deduped.push(allMessages[0]);
 
-                // Combine: Filtered Legacy + New Firestore
-                // We re-sort to be sure.
-                const combined = [...filteredLegacy, ...msgs];
+                for (let i = 1; i < allMessages.length; i++) {
+                    const current = allMessages[i];
+                    const previous = deduped[deduped.length - 1];
 
-                return combined.sort((a, b) => a.timestamp - b.timestamp);
+                    const isSameUser = current.username === previous.username;
+                    const isSameContent = current.message === previous.message && current.image_url === previous.image_url;
+                    const timeDiff = Math.abs(current.timestamp - previous.timestamp);
+                    const isWithin5Seconds = timeDiff < 5000;
+
+                    if (isSameUser && isSameContent && isWithin5Seconds) {
+                        // It's a duplicate. Keep the one that looks "better" (e.g. Firestore ID usually longer or local pref).
+                        // Actually, Firestore IDs are random strings, D1 might be numeric or strings.
+                        // We prefer the one that is NOT 'temp-' if any.
+                        // Or just keep 'current' (later one, likely Firestore verified) and replace 'previous'?
+                        // Let's keep 'current' (Firestore snapshot usually updates last with server timestamp).
+                        deduped.pop();
+                        deduped.push(current);
+                    } else {
+                        deduped.push(current);
+                    }
+                }
+
+                return deduped;
             });
         });
 
