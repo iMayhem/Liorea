@@ -72,13 +72,17 @@ export default function SidebarControlPanel() {
                             </TooltipProvider>
                         </div>
                     </SheetTrigger>
-                    <SheetContent side="left" className="bg-[#313338] border-r-[#1F2023] text-zinc-100 w-[380px] sm:w-[540px] pt-10 flex flex-col h-full max-h-screen overflow-hidden">
-                        <SheetHeader>
-                            <SheetTitle className="text-zinc-100">Leaderboard</SheetTitle>
-                            <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
-                        </SheetHeader>
-                        <div className="flex-1 min-h-0 py-4 h-full relative">
-                            <Leaderboard users={leaderboardUsers} currentUsername={username} />
+                    <SheetContent side="left" className="bg-[#313338] border-r-[#1F2023] text-zinc-100 w-[380px] sm:w-[540px] p-0 h-full max-h-screen overflow-hidden">
+                        <div className="flex flex-col h-full w-full p-6 pt-10">
+                            <SheetHeader className="shrink-0 mb-4">
+                                <SheetTitle className="text-zinc-100">Leaderboard</SheetTitle>
+                                <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
+                            </SheetHeader>
+                            <div className="flex-1 min-h-0 relative">
+                                <div className="absolute inset-0">
+                                    <Leaderboard users={leaderboardUsers} currentUsername={username} />
+                                </div>
+                            </div>
                         </div>
                     </SheetContent>
                 </Sheet>
