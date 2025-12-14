@@ -136,9 +136,10 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                     const isSameUser = current.username === previous.username;
                     const isSameContent = current.message === previous.message && current.image_url === previous.image_url;
                     const timeDiff = Math.abs(current.timestamp - previous.timestamp);
-                    const isWithin5Seconds = timeDiff < 5000;
+                    // Increased window to 60s to handle significant clock skew between D1 and Firestore
+                    const isWithinWindow = timeDiff < 60000;
 
-                    if (isSameUser && isSameContent && isWithin5Seconds) {
+                    if (isSameUser && isSameContent && isWithinWindow) {
                         // It's a duplicate. Keep the one that looks "better" (e.g. Firestore ID usually longer or local pref).
                         // Actually, Firestore IDs are random strings, D1 might be numeric or strings.
                         // We prefer the one that is NOT 'temp-' if any.

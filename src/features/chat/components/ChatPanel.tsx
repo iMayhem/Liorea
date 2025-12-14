@@ -99,10 +99,13 @@ export default function ChatPanel() {
     // --- SCROLL LOGIC ---
     useLayoutEffect(() => {
         if (messages.length > 0 && !isInitialLoaded) {
-            if (scrollContainerRef.current) {
-                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-            }
-            setIsInitialLoaded(true);
+            // Force scroll to bottom with slight delay for paint
+            setTimeout(() => {
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                }
+                setIsInitialLoaded(true);
+            }, 100);
         }
     }, [messages, isInitialLoaded]);
 

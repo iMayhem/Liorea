@@ -197,6 +197,18 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         }
     }, [posts]);
 
+    // Force scroll to bottom on initial load
+    useLayoutEffect(() => {
+        if (posts.length > 0 && !isInitialLoaded) {
+            setTimeout(() => {
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                }
+                setIsInitialLoaded(true);
+            }, 100);
+        }
+    }, [posts, isInitialLoaded]);
+
     const handleScroll = () => {
         const container = scrollContainerRef.current;
         if (!container) return;
