@@ -86,7 +86,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                             <img
                                 src={msg.image_url}
                                 alt="Attachment"
-                                className="max-w-[300px] max-h-80 w-auto object-contain rounded-lg mt-1 border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                                className="max-w-[300px] h-[200px] w-auto object-cover rounded-lg mt-1 border border-border cursor-pointer hover:opacity-90 transition-opacity"
                                 loading="lazy"
                                 onClick={() => setIsViewerOpen(true)}
                             />

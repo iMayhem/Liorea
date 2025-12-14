@@ -390,7 +390,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                             <img
                                                 src={post.image_url}
                                                 alt="Attachment"
-                                                className="max-h-80 w-auto object-contain rounded-md border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
+                                                className="h-[200px] w-auto object-cover rounded-md border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
                                                 loading="lazy"
                                                 onClick={() => setViewerImage(post.image_url!)}
                                             />
