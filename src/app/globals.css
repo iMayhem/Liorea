@@ -376,15 +376,18 @@
 .beautiful-mode [class*="bg-card"],
 .beautiful-mode [class*="bg-popover"],
 .beautiful-mode [class*="bg-muted"] {
-  background-color: rgba(0, 0, 0, 0.4) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  /* Reduced from 0.4 to 0.15 */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
 }
 
-/* Specific overrides for gradients or complex backgrounds */
+/* Hide black gradients in beautiful mode (e.g. StudyUserCard) */
 .beautiful-mode .bg-gradient-to-t {
-  opacity: 0.5;
+  background: none !important;
+  opacity: 0 !important;
 }
 
 .beautiful-mode header {
