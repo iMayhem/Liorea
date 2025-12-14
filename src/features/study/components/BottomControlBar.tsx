@@ -57,7 +57,7 @@ export default function BottomControlBar({ }: BottomControlBarProps) {
                         </SheetTrigger>
                         <SheetContent side="left" className="bg-background border-r-border text-foreground w-[85vw] sm:w-[540px] pt-10">
                             <SheetHeader>
-                                {/* Accessibile Hidden Title if needed, or just visual header */}
+                                <SheetTitle className="text-foreground text-left">Leaderboard</SheetTitle>
                             </SheetHeader>
                             <div className="py-2 h-[calc(100vh-80px)]">
                                 <Leaderboard users={leaderboardUsers} currentUsername={username} />

@@ -148,64 +148,6 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
           </div>
         )}
       </CardContent>
-
-      <LeaderboardDebugger
-        users={displayUsers}
-        isLoading={isLoading}
-        lastUpdate={new Date()}
-      />
     </Card>
-  );
-}
-
-// ----------------------------------------------------------------------
-// DEBUGGER COMPONENT
-// ----------------------------------------------------------------------
-function LeaderboardDebugger({ users, isLoading, lastUpdate }: { users: any[], isLoading: boolean, lastUpdate: Date }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Removed production check to allow user to see it immediately
-  // if (process.env.NODE_ENV === 'production' && !isOpen) return null;
-
-  return (
-    <div className="border-t border-white/5 bg-black/40 mt-auto">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-wider text-red-400 hover:bg-white/5 transition-colors font-mono"
-      >
-        <span className="flex items-center gap-2">
-          <Bug className="w-3 h-3" />
-          Debug Matrix
-        </span>
-        <span>{isOpen ? 'Close' : 'Expand'}</span>
-      </button>
-
-      {isOpen && (
-        <div className="p-3 text-[10px] font-mono text-green-400 space-y-3 max-h-60 overflow-y-auto w-full break-all">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-black/50 p-2 rounded border border-white/10">
-              <span className="text-zinc-500 block mb-1">STATUS</span>
-              {isLoading ? <span className="text-yellow-400">LOADING...</span> : <span className="text-green-400">IDLE</span>}
-            </div>
-            <div className="bg-black/50 p-2 rounded border border-white/10">
-              <span className="text-zinc-500 block mb-1">COUNT</span>
-              {users.length} Records
-            </div>
-            <div className="bg-black/50 p-2 rounded border border-white/10 col-span-2">
-              <span className="text-zinc-500 block mb-1">LAST SYNC</span>
-              {lastUpdate.toLocaleTimeString()}
-            </div>
-          </div>
-
-          <div className="bg-black/50 p-2 rounded border border-white/10">
-            <span className="text-zinc-500 block mb-1">RAW DATA DUMP (First 3)</span>
-            <pre className="whitespace-pre-wrap opacity-70">
-              {JSON.stringify(users.slice(0, 3), null, 2)}
-            </pre>
-            {users.length > 3 && <div className="mt-1 text-center text-zinc-600">... {users.length - 3} more items ...</div>}
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

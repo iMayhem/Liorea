@@ -423,48 +423,6 @@ export default function ChatPanel() {
                 </div>
             </div>
 
-            <ChatDebugger logs={debugLogs} messages={messages} />
-        </div>
-    );
-};
-
-function ChatDebugger({ logs, messages }: { logs: string[], messages: ChatMessage[] }) {
-    const [isOpen, setIsOpen] = useState(false);
-    // Removed production check for now
-    // if (process.env.NODE_ENV === 'production') return null;
-
-    return (
-        <div className="border-t border-white/5 bg-black/40">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-3 py-1 text-[10px] uppercase tracking-wider text-red-400 hover:bg-white/5 transition-colors font-mono"
-            >
-                <div className="flex items-center gap-2">
-                    <Flag className="w-3 h-3" />
-                    <span>Chat Debugger</span>
-                </div>
-                <span>{isOpen ? 'Close' : 'Expand'}</span>
-            </button>
-
-            {isOpen && (
-                <div className="p-2 space-y-2 h-40 overflow-y-auto font-mono text-[10px] text-green-400">
-                    <div className="bg-black/50 p-2 rounded">
-                        <strong className="block text-zinc-500 mb-1">Live Logs:</strong>
-                        {logs.length === 0 ? <span className="opacity-50 italic">No events yet...</span> : (
-                            <ul className="space-y-1">
-                                {logs.map((log, i) => (
-                                    <li key={i} className="border-b border-white/5 pb-0.5 last:border-0">{log}</li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                    <div className="bg-black/50 p-2 rounded">
-                        <strong className="block text-zinc-500 mb-1">Message Stats:</strong>
-                        Count: {messages.length} <br />
-                        Last ID: {messages[messages.length - 1]?.id || 'N/A'}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
