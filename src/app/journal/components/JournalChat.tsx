@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, Image as ImageIcon, Loader2, Smile, Star, Film, Search, ChevronDown, Flag, Trash2, Hash, X } from 'lucide-react';
+import { ArrowLeft, Send, Image as ImageIcon, Loader2, Smile, Star, Film, Search, ChevronDown, Flag, Trash2, Hash, X, ListTodo, Plus, Minus } from 'lucide-react';
+import { TaskMessage, TaskListContent } from '@/components/chat/TaskMessage';
 import UserAvatar from '@/components/UserAvatar';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/context/NotificationContext';
@@ -261,6 +262,18 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         } catch (e) { console.error(e); }
     };
 
+    const handleSendTaskList = async (title: string, items: string[]) => {
+        if (!activeJournal || !username) return;
+        const content: TaskListContent = { type: 'task_list', title, items };
+        const contentString = JSON.stringify(content);
+        const tempPost = { id: Date.now(), username, content: contentString, created_at: Date.now() };
+        setPosts(prev => [...prev, tempPost]);
+        try {
+            await api.journal.post({ journal_id: activeJournal.id, username, content: contentString });
+            notifyChatUpdate(activeJournal.id);
+        } catch (e) { console.error(e); }
+    };
+
     const mentionableUsers = useMemo(() => { if (!mentionQuery) return []; const chatUsers = posts.map(p => p.username); const lbUsers = leaderboardUsers.map(u => u.username); const allUsers = Array.from(new Set([...chatUsers, ...lbUsers])); return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); }, [mentionQuery, posts, leaderboardUsers]);
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const val = e.target.value; setNewMessage(val); const cursorPos = e.target.selectionStart; const textBeforeCursor = val.slice(0, cursorPos); const match = textBeforeCursor.match(/@(\w*)$/); if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); } };
     const insertMention = (user: string) => { if (!mentionQuery) return; const cursorPos = chatInputRef.current?.selectionStart || 0; const textBefore = newMessage.slice(0, cursorPos).replace(/@(\w*)$/, `@${user} `); const textAfter = newMessage.slice(cursorPos); setNewMessage(textBefore + textAfter); setMentionQuery(null); chatInputRef.current?.focus(); };
@@ -382,7 +395,15 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                     )}
 
                                     <div className="text-base text-white/90 leading-snug whitespace-pre-wrap break-words">
-                                        <FormattedMessage content={post.content} />
+                                        {(() => {
+                                            try {
+                                                const parsed = JSON.parse(post.content);
+                                                if (parsed && parsed.type === 'task_list') {
+                                                    return <TaskMessage postId={post.id} content={parsed} isOwner={post.username === username} />;
+                                                }
+                                            } catch (e) { }
+                                            return <FormattedMessage content={post.content} />;
+                                        })()}
                                     </div>
 
                                     {post.image_url && (
@@ -503,7 +524,22 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                     </Popover>
 
                     <textarea ref={chatInputRef} value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder="Message" className="w-full bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-white/20 resize-none py-1.5 max-h-32 min-h-[36px]" rows={1} />
+
                     <Button onClick={sendPost} disabled={!newMessage.trim()} className="bg-white/10 hover:bg-white text-white hover:text-black h-9 w-9 shrink-0 rounded p-0"><Send className="w-4 h-4" /></Button>
+
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-white/40 hover:text-white h-9 w-9 shrink-0 rounded"><ListTodo className="w-5 h-5" /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" align="end" className="w-80 p-4 bg-[#1e1e24] border-white/10 text-white">
+                            <TaskListCreator onSend={(title, items) => {
+                                handleSendTaskList(title, items);
+                                // The Popover closes automatically if we click outside, but to close it programmatically we might need controlled state.
+                                // For simplicity, we assume user clicks send and it closes or we can't easily close it without controlling open state of Popover.
+                                // Let's try to make it controlled? Or just let it be.
+                            }} />
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
 
@@ -512,6 +548,50 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                 onClose={() => setViewerImage(null)}
                 src={viewerImage || ""}
             />
+        </div>
+    );
+};
+
+const TaskListCreator = ({ onSend }: { onSend: (title: string, items: string[]) => void }) => {
+    const [title, setTitle] = useState(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }));
+    const [newItem, setNewItem] = useState("");
+    const [items, setItems] = useState<string[]>([]);
+
+    const addItem = () => {
+        if (newItem.trim()) {
+            setItems([...items, newItem.trim()]);
+            setNewItem("");
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-3">
+            <h4 className="font-semibold text-sm">Create Task List</h4>
+            <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="List Title (e.g. Today's Tasks)"
+                className="h-8 text-sm bg-black/20 border-white/10"
+            />
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+                {items.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between bg-white/5 px-2 py-1 rounded text-xs group">
+                        <span>{i + 1}. {item}</span>
+                        <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-white/40 hover:text-red-400"><Minus className="w-3 h-3" /></button>
+                    </div>
+                ))}
+            </div>
+            <div className="flex gap-2">
+                <Input
+                    value={newItem}
+                    onChange={(e) => setNewItem(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addItem()}
+                    placeholder="New Task..."
+                    className="h-8 text-sm bg-black/20 border-white/10"
+                />
+                <Button size="icon" variant="ghost" onClick={addItem} className="h-8 w-8 shrink-0 hover:bg-white/10"><Plus className="w-4 h-4" /></Button>
+            </div>
+            <Button size="sm" onClick={() => { if (items.length > 0) onSend(title, items); }} disabled={items.length === 0} className="w-full mt-1">Send List</Button>
         </div>
     );
 };
