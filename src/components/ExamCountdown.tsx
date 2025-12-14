@@ -35,7 +35,7 @@ export default function ExamCountdown({ title, targetDate }: ExamCountdownProps)
 
     // Use theme variables from globals.css
     // card: primary/5 or card/50
-    const cardClass = "bg-primary/5 border-primary/20 text-foreground";
+    const cardClass = "bg-primary/5 border-white/10 text-foreground";
     const iconMetaClass = "bg-primary/10 text-primary group-hover:bg-primary/20";
 
     if (!timeLeft) {
