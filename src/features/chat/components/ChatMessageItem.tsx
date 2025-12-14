@@ -23,7 +23,7 @@ interface ChatMessageItemProps {
     formatTime: (ts: number) => string;
 }
 
-export function ChatMessageItem({
+export const ChatMessageItem = React.memo(function ChatMessageItem({
     msg, isSequence, showHeader, isCurrentUser, reactionGroups,
     openReactionPopoverId, onReact, onReply, onReport, onDelete, onOpenChange,
     formatDate, formatTime
@@ -142,4 +142,14 @@ export function ChatMessageItem({
             />
         </div>
     );
-}
+}, (prev, next) => {
+    // Optimize: Only re-render if message content, timestamp, or reactions change
+    // or if the "sequence/header" logic changes (which depends on neighbors, handled by parent passing different props)
+    return (
+        prev.msg.id === next.msg.id &&
+        prev.msg.message === next.msg.message &&
+        JSON.stringify(prev.msg.reactions) === JSON.stringify(next.msg.reactions) &&
+        prev.isSequence === next.isSequence && // Check if position in chain changed
+        prev.openReactionPopoverId === next.openReactionPopoverId // Check if *this* message's popover state changed
+    );
+});
