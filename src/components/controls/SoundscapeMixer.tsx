@@ -12,6 +12,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import dynamic from 'next/dynamic';
+
+// Use any to bypass TS check on dynamic import props for now, or just use standard react-player
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 
 interface SoundscapeMixerProps {
@@ -27,7 +31,7 @@ export default function SoundscapeMixer({ sounds, sidebarMode = false }: Soundsc
 
   useEffect(() => {
     sounds.forEach(sound => {
-      if (sound.file && !audioRefs.current.has(sound.id)) {
+      if (sound.id !== 'lofi' && sound.file && !audioRefs.current.has(sound.id)) {
         const audio = new Audio(sound.file);
         audio.loop = true;
         audioRefs.current.set(sound.id, audio);
@@ -81,6 +85,26 @@ export default function SoundscapeMixer({ sounds, sidebarMode = false }: Soundsc
       return;
     }
 
+    // Handle Lofi specifically (ReactPlayer)
+    if (soundId === 'lofi') {
+      if (activeSoundId === 'lofi') {
+        setActiveSoundId(null);
+      } else {
+        // Stop others
+        if (activeSoundId && activeSoundId !== 'lofi') {
+          const oldAudio = audioRefs.current.get(activeSoundId);
+          if (oldAudio) fade(oldAudio, 'out', masterVolume);
+        }
+        setActiveSoundId('lofi');
+      }
+      return;
+    }
+
+    if (activeSoundId === 'lofi') {
+      setActiveSoundId(null);
+      // Then continue to start new sound below
+    }
+
     if (activeSoundId === soundId) {
       const audio = audioRefs.current.get(soundId);
       if (audio) fade(audio, 'out', masterVolume);
@@ -88,7 +112,7 @@ export default function SoundscapeMixer({ sounds, sidebarMode = false }: Soundsc
       return;
     }
 
-    if (activeSoundId) {
+    if (activeSoundId && activeSoundId !== 'lofi') {
       const oldAudio = audioRefs.current.get(activeSoundId);
       if (oldAudio) fade(oldAudio, 'out', masterVolume);
     }
@@ -146,6 +170,27 @@ export default function SoundscapeMixer({ sounds, sidebarMode = false }: Soundsc
           </div>
         )}
       </div>
-    </TooltipProvider>
+
+
+      {/* Hidden Player for Lofi */}
+      <div className="hidden">
+        {sounds.find(s => s.id === 'lofi') && (
+          <ReactPlayer
+            url={sounds.find(s => s.id === 'lofi')?.file}
+            playing={activeSoundId === 'lofi'}
+            volume={masterVolume}
+            loop={true}
+            width="0"
+            height="0"
+            config={{
+              youtube: {
+                playerVars: { controls: 0 }
+              } as any
+
+            }}
+          />
+        )}
+      </div>
+    </TooltipProvider >
   );
 }
