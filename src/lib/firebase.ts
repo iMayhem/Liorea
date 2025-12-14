@@ -1,7 +1,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getAuth, GoogleAuthProvider } from "firebase/auth"; // Added Auth imports
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore"; // Added Firestore import
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsGYist7f2enKCGyHwBwSUw70wM_he1Ao",
@@ -16,8 +17,9 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getDatabase(app);
-const auth = getAuth(app); // Initialize Auth
-const googleProvider = new GoogleAuthProvider(); // Initialize Google Provider
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+const firestore = getFirestore(app); // Initialize Firestore
 
 let analytics;
 if (typeof window !== "undefined") {
@@ -28,4 +30,4 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { db, analytics, auth, googleProvider }; // Export them
+export { db, analytics, auth, googleProvider, firestore }; // Export firestore

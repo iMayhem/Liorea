@@ -1,8 +1,20 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { db } from '@/lib/firebase';
-import { ref, onValue, push, serverTimestamp, query, limitToLast, update } from 'firebase/database';
+import { firestore } from '@/lib/firebase';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  Timestamp,
+  doc,
+  updateDoc
+} from 'firebase/firestore';
 import { usePresence } from '@/features/study';
 import { useToast } from '@/hooks/use-toast';
 
@@ -66,54 +78,52 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // 2. LISTEN TO USER-SPECIFIC FIREBASE NODE
+  // 2. LISTEN TO USER-SPECIFIC FIRESTORE COLLECTION
   useEffect(() => {
     if (!username) return;
-    console.log("[NotificationContext] Subscribing to user notifications for:", username);
+    console.log("[NotificationContext] Subscribing to user notifications (Firestore) for:", username);
 
-    const notificationsRef = query(ref(db, `user_notifications/${username}`), limitToLast(20));
+    const notificationsRef = collection(firestore, 'users', username, 'notifications');
+    const q = query(notificationsRef, orderBy('timestamp', 'asc'), limit(50));
 
-    const unsubscribe = onValue(notificationsRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("[NotificationContext] User data received:", data);
-      if (data) {
-        const loaded: Notification[] = Object.entries(data).map(([key, value]: [string, any]) => ({
-          id: key,
-          message: value.message,
-          timestamp: value.timestamp,
-          link: value.link,
-          read: value.read, // Read from DB
-          type: 'personal'
-        }));
-        setUserNotifications(loaded);
-      } else {
-        setUserNotifications([]);
-      }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log("[NotificationContext] User data received (Firestore):", snapshot.size);
+      const loaded: Notification[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          message: data.message,
+          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : Date.now(),
+          link: data.link,
+          read: data.read,
+          type: 'personal' // Force type
+        };
+      });
+      setUserNotifications(loaded);
     });
 
     return () => unsubscribe();
   }, [username]);
 
-  // 3. LISTEN TO GLOBAL NOTIFICATIONS
+  // 3. LISTEN TO GLOBAL NOTIFICATIONS (FIRESTORE)
   useEffect(() => {
-    console.log("[NotificationContext] Subscribing to GLOBAL notifications");
-    const globalRef = query(ref(db, `notifications`), limitToLast(20));
+    console.log("[NotificationContext] Subscribing to GLOBAL notifications (Firestore)");
+    const globalRef = collection(firestore, 'global_notifications');
+    const q = query(globalRef, orderBy('timestamp', 'asc'), limit(50));
 
-    const unsubscribe = onValue(globalRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("[NotificationContext] Global data received:", data);
-      if (data) {
-        const loaded: Notification[] = Object.entries(data).map(([key, value]: [string, any]) => ({
-          id: key,
-          message: value.message,
-          timestamp: value.timestamp,
-          link: value.link,
-          type: 'global'
-        }));
-        setGlobalNotifications(loaded);
-      } else {
-        setGlobalNotifications([]);
-      }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log("[NotificationContext] Global data received (Firestore):", snapshot.size);
+      const loaded: Notification[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          message: data.message,
+          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : Date.now(),
+          link: data.link,
+          type: 'global' // Force type
+        };
+      });
+      setGlobalNotifications(loaded);
     });
     return () => unsubscribe();
   }, []);
@@ -175,28 +185,31 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }, [userNotifications, globalNotifications, readIds, toast]);
 
   // 3. SEND TO FIREBASE
-  // 3. SEND TO FIREBASE
+  // 3. SEND TO FIRESTORE
   const addNotification = async (message: string, targetUser?: string, link?: string, type: 'global' | 'personal' = 'global') => {
     console.log("[NotificationContext] addNotification called:", { message, targetUser, type });
     try {
       if (targetUser) {
-        const notificationsRef = ref(db, `user_notifications/${targetUser}`);
-        await push(notificationsRef, {
+        // Personal Notification
+        const userRef = collection(firestore, 'users', targetUser, 'notifications');
+        await addDoc(userRef, {
           message,
           link,
           type: 'personal',
-          timestamp: serverTimestamp()
+          timestamp: serverTimestamp(),
+          read: false
         });
       } else {
-        const notificationsRef = ref(db, `notifications`);
-        await push(notificationsRef, {
+        // Global Notification
+        const globalRef = collection(firestore, 'global_notifications');
+        await addDoc(globalRef, {
           message,
           link,
           type: 'global',
           timestamp: serverTimestamp()
         });
       }
-      console.log("[NotificationContext] Notification pushed successfully");
+      console.log("[NotificationContext] Notification pushed successfully to Firestore");
     } catch (error) {
       console.error("[NotificationContext] Failed to add notification", error);
     }
@@ -215,10 +228,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     // We check if this ID exists in our userNotifications list
     const isPersonal = userNotifications.some(n => n.id === id);
     if (isPersonal && username) {
-      // Update Firebase
-      // Note: We don't wait for this to finish, optimistic UI handles it
-      const notifRef = ref(db, `user_notifications/${username}/${id}`);
-      update(notifRef, { read: true }).catch(err => console.error("Failed to mark read on backend", err));
+      // Update Firestore
+      const notifRef = doc(firestore, 'users', username, 'notifications', id);
+      updateDoc(notifRef, { read: true }).catch(err => console.error("Failed to mark read on backend", err));
     }
   };
 
