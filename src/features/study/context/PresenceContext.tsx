@@ -392,6 +392,38 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         return userLookups.frameMap.get(targetUsername);
     }, [userLookups]);
 
+    // 5. Initialize/Maintain Study Session
+    useEffect(() => {
+        if (!joinedRoomId || !username) return;
+
+        let studyRef: any;
+        if (joinedRoomId === 'public') {
+            studyRef = ref(db, `/study_room_presence/${username}`);
+        } else {
+            studyRef = ref(db, `rooms/${joinedRoomId}/presence/${username}`);
+        }
+
+        const initialSeconds = 0; // Or fetch from somewhere if persisting session
+
+        // Write presence
+        set(studyRef, {
+            username: username,
+            photoURL: userImage || "",
+            equipped_frame: userFrame || "",
+            total_study_time: initialSeconds,
+            status: 'Online'
+        });
+
+        // Offline handler
+        onDisconnect(studyRef).remove();
+
+        return () => {
+            // Cleanup on unmount/leave
+            remove(studyRef);
+            onDisconnect(studyRef).cancel();
+        };
+    }, [joinedRoomId, username, userImage, userFrame]);
+
     // --- TIMER (Writes to Firestore) ---
     useEffect(() => {
         if (!username || !isStudying) return;
