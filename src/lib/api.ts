@@ -93,7 +93,14 @@ export const api = {
     chat: {
         getHistory: (room: string, before?: number) => request<any[]>(`/chat/history?room=${room}${before ? `&before=${before}` : ''}`),
         send: (data: { room_id: string, username: string, message: string, photoURL: string }) => request('/chat/send', { method: 'POST', body: JSON.stringify(data) }),
-        delete: (data: { room_id: string, message_id: string, username: string }) => request('/chat/delete', { method: 'DELETE', body: JSON.stringify(data) }),
+        delete: (data: { room_id: string, message_id: string, username: string }) => request('/chat/delete', {
+            method: 'DELETE',
+            body: JSON.stringify({
+                id: data.message_id,
+                room_id: data.room_id,
+                username: data.username
+            })
+        }),
     },
 
     upload: {
