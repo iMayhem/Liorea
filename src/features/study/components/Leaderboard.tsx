@@ -86,7 +86,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 flex-1 overflow-y-auto no-scrollbar space-y-2">
+      <CardContent className="p-0 flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-transparent">
         <AnimatePresence mode='popLayout'>
           {isLoading ? (
             <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
