@@ -371,14 +371,20 @@
   background-attachment: fixed;
 }
 
-.beautiful-mode .bg-background,
-.beautiful-mode .bg-card,
-.beautiful-mode .bg-popover,
-.beautiful-mode .bg-muted {
+/* Force transparency on all bg- classes in beautiful mode */
+.beautiful-mode [class*="bg-background"],
+.beautiful-mode [class*="bg-card"],
+.beautiful-mode [class*="bg-popover"],
+.beautiful-mode [class*="bg-muted"] {
   background-color: rgba(0, 0, 0, 0.4) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Specific overrides for gradients or complex backgrounds */
+.beautiful-mode .bg-gradient-to-t {
+  opacity: 0.5;
 }
 
 .beautiful-mode header {
