@@ -210,12 +210,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                 if (olderMessages.length < 20) setHasMore(false);
 
                 if (olderMessages.length > 0) {
-                    setMessages(prev => mergeAndDedupe(olderMessages, prev, deletedMessageIds));
+                    // Filter against fresh local storage data to avoid stale closures
+                    let currentDeleted = deletedMessageIds;
+                    if (typeof window !== "undefined") {
+                        try {
+                            const raw = localStorage.getItem(DELETED_IDS_KEY);
+                            if (raw) currentDeleted = new Set(JSON.parse(raw));
+                        } catch { }
+                    }
+                    setMessages(prev => mergeAndDedupe(olderMessages, prev, currentDeleted));
                 }
             }
         } catch (e) { console.error("Load more failed", e); }
         finally { setLoadingMore(false); }
-    }, [messages, loadingMore, hasMore]);
+    }, [messages, loadingMore, hasMore, deletedMessageIds]);
 
     // 3. SEND MESSAGE
     const sendMessage = useCallback(async (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => {
@@ -303,13 +311,24 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         const idStr = String(messageId);
 
         // 1. Update Blacklist (Local Persistence)
-        setDeletedMessageIds(prev => {
-            const next = new Set(prev).add(idStr);
-            if (typeof window !== "undefined") {
-                localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(next)));
-            }
-            return next;
-        });
+        // 1. Update Blacklist (Local Persistence) - SYNCHRONOUSLY
+        let nextDeletedIds = new Set(deletedMessageIds);
+        if (typeof window !== "undefined") {
+            try {
+                // Always read fresh from storage to avoid race conditions with multiple deletes
+                const stored = localStorage.getItem(DELETED_IDS_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    nextDeletedIds = new Set([...parsed]);
+                }
+            } catch { }
+
+            nextDeletedIds.add(idStr);
+            localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(nextDeletedIds)));
+        }
+
+        // Update React State
+        setDeletedMessageIds(nextDeletedIds);
 
         // 2. Optimistic Update (Filter out immediately)
         setMessages(prev => prev.filter(msg => String(msg.id) !== idStr));
