@@ -41,6 +41,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     };
 
     if (!msg.message && !msg.image_url) return null;
+    if (msg.deleted) return null;
 
     return (
         <div
@@ -81,9 +82,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 )}
 
                 <div className="text-base text-foreground/90 leading-[1.375rem] whitespace-pre-wrap break-words font-light tracking-wide">
-                    {msg.deleted ? (
-                        <span className="text-muted-foreground/60 italic text-sm">Message deleted</span>
-                    ) : msg.image_url ? (
+                    {msg.image_url ? (
                         <>
                             <img
                                 src={msg.image_url}
