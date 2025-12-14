@@ -7,7 +7,7 @@
     --font-body: var(--font-inter);
     /* Default */
 
-    --header-bg: #313338;
+    /* Default */
     /* Default Discord-like Dark */
     --theme-primary: 222.2 47.4% 11.2%;
     /* Default Primary */
@@ -104,8 +104,8 @@
   /* THEMES */
 
   /* Midnight */
+  /* Midnight */
   html.dark.theme-midnight {
-    --header-bg: #1e1b4b;
     --background: 265 40% 10%;
     --foreground: 210 40% 98%;
     --card: 265 40% 12%;
@@ -127,7 +127,6 @@
 
   /* Forest */
   html.dark.theme-forest {
-    --header-bg: #052e16;
     --background: 145 30% 10%;
     --foreground: 210 40% 98%;
     --card: 145 30% 12%;
@@ -149,7 +148,6 @@
 
   /* Berry */
   html.dark.theme-berry {
-    --header-bg: #4a044e;
     --background: 300 30% 10%;
     --foreground: 210 40% 98%;
     --card: 300 30% 12%;
@@ -171,7 +169,6 @@
 
   /* Sunset */
   html.dark.theme-sunset {
-    --header-bg: #431407;
     --background: 20 30% 10%;
     --foreground: 210 40% 98%;
     --card: 20 30% 12%;
@@ -193,7 +190,6 @@
 
   /* Ocean */
   html.dark.theme-ocean {
-    --header-bg: #083344;
     --background: 190 40% 10%;
     --foreground: 210 40% 98%;
     --card: 190 40% 12%;
@@ -215,7 +211,6 @@
 
   /* Lavender */
   html.dark.theme-lavender {
-    --header-bg: #2e1065;
     --background: 260 40% 10%;
     --foreground: 210 40% 98%;
     --card: 260 40% 12%;
@@ -238,7 +233,6 @@
 
   /* Rose */
   html.dark.theme-rose {
-    --header-bg: #4c0519;
     --background: 340 30% 10%;
     --foreground: 210 40% 98%;
     --card: 340 30% 12%;
@@ -261,7 +255,6 @@
 
   /* Slate */
   html.dark.theme-slate {
-    --header-bg: #0f172a;
     --background: 215 25% 10%;
     --foreground: 210 40% 98%;
     --card: 215 25% 12%;
@@ -284,7 +277,6 @@
 
   /* Amber */
   html.dark.theme-amber {
-    --header-bg: #451a03;
     --background: 35 40% 10%;
     --foreground: 210 40% 98%;
     --card: 35 40% 12%;
@@ -307,7 +299,6 @@
 
   /* Teal */
   html.dark.theme-teal {
-    --header-bg: #042f2e;
     --background: 175 40% 10%;
     --foreground: 210 40% 98%;
     --card: 175 40% 12%;
@@ -330,7 +321,6 @@
 
   /* Emerald */
   html.dark.theme-emerald {
-    --header-bg: #022c22;
     --background: 160 40% 10%;
     --foreground: 210 40% 98%;
     --card: 160 40% 12%;
