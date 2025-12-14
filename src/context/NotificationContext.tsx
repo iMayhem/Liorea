@@ -140,7 +140,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       }
     });
     return () => unsubscribe();
-  }, [globalNotifications, readIds]);
+  }, [readIds]);
 
   // 3. SEND TO FIREBASE
   const addNotification = async (message: string, targetUser?: string, link?: string) => {
