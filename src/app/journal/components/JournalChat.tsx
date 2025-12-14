@@ -13,6 +13,16 @@ import { db, firestore } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp, push } from 'firebase/database';
 import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import { compressImage } from '@/lib/compress';
+
+// Robust timestamp parser
+const parseTimestamp = (ts: any): number => {
+    if (!ts) return Date.now();
+    if (typeof ts === 'number') return ts;
+    if (ts.toMillis && typeof ts.toMillis === 'function') return ts.toMillis();
+    if (ts instanceof Date) return ts.getTime();
+    if (ts.seconds) return ts.seconds * 1000; // Handle raw Firestore object
+    return Date.now();
+};
 import dynamic from 'next/dynamic';
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -139,7 +149,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                     username: data.username,
                     content: data.content,
                     image_url: data.image_url,
-                    created_at: data.created_at?.toMillis ? data.created_at.toMillis() : (data.created_at || Date.now()),
+                    created_at: parseTimestamp(data.created_at),
                     replyTo: data.replyTo ? JSON.parse(data.replyTo) : undefined,
                     reactions: data.reactions ?
                         Object.entries(data.reactions).reduce((acc: any[], [uid, emoji]) => ([

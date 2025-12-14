@@ -21,6 +21,16 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot,
 // I need to make sure I import the right DB instance.
 import { firestore } from '@/lib/firebase';
 
+// Robust timestamp parser
+const parseTimestamp = (ts: any): number => {
+    if (!ts) return Date.now();
+    if (typeof ts === 'number') return ts;
+    if (ts.toMillis && typeof ts.toMillis === 'function') return ts.toMillis();
+    if (ts instanceof Date) return ts.getTime();
+    if (ts.seconds) return ts.seconds * 1000; // Handle raw Firestore object
+    return Date.now();
+};
+
 import { api } from '@/lib/api';
 import { CHAT_ROOM, DELETED_IDS_KEY } from '@/lib/constants';
 import { ChatMessage, ChatReaction } from '../types';
@@ -68,7 +78,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                     id: doc.id,
                     username: data.username,
                     message: data.message,
-                    timestamp: data.timestamp?.toMillis ? data.timestamp.toMillis() : (data.timestamp || Date.now()),
+                    timestamp: parseTimestamp(data.timestamp),
                     photoURL: data.photoURL,
                     image_url: data.image_url,
                     replyTo: data.replyTo,
