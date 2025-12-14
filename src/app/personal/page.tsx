@@ -50,15 +50,26 @@ export default function PersonalStudyPage() {
     const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
     const { toast } = useToast();
 
-    // Default to my personal room
+    // Default to my personal room (Random ID persisted in LocalStorage)
     useEffect(() => {
         if (username && !activeRoomId) {
-            setActiveRoomId(`room-${username}`);
+            const storageKey = `zenith_personal_room_${username}`;
+            const stored = localStorage.getItem(storageKey);
+
+            if (stored) {
+                setActiveRoomId(stored);
+            } else {
+                // Generate a random 6-character code
+                const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                localStorage.setItem(storageKey, newId);
+                setActiveRoomId(newId);
+            }
         }
     }, [username, activeRoomId]);
 
     // Derived: Are we in our own room?
-    const isOwner = activeRoomId === `room-${username}`;
+    // We check if the active room matches what's in local storage
+    const isOwner = username && activeRoomId === localStorage.getItem(`zenith_personal_room_${username}`);
 
     useEffect(() => {
         if (activeRoomId) {

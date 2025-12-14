@@ -20,7 +20,7 @@ export default function LioreaClient() {
 
   const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-21T09:00:00`), [nextYear]);
   const jeeSession2TargetDate = useMemo(() => new Date(`${nextYear}-04-02T09:00:00`), [nextYear]);
-  const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-05T14:00:00`), [nextYear]);
+  const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-03T14:00:00`), [nextYear]);
 
   useEffect(() => {
     // If the background is done loading and we find there's no user, redirect.
