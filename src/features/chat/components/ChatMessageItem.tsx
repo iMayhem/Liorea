@@ -28,7 +28,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     openReactionPopoverId, onReact, onReply, onReport, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
-    const { isMod } = usePresence();
+    const { isMod, username: currentUsername } = usePresence();
     const [isViewerOpen, setIsViewerOpen] = useState(false);
 
     const scrollToMessage = (id: string) => {
@@ -132,6 +132,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
 
             <MessageActions
                 isCurrentUser={isCurrentUser}
+                isModerator={currentUsername ? isMod(currentUsername) : false}
                 onReact={(emoji) => onReact(msg.id, emoji)}
                 onReply={() => onReply(null as any)}
                 onReport={() => onReport(msg)}

@@ -8,6 +8,7 @@ import { ref, push, onValue, query, limitToLast, serverTimestamp, remove } from 
 import { api } from '@/lib/api';
 const CHAT_ROOM = "study-room-1";
 const LOCAL_STORAGE_KEY = 'liorea_chat_history';
+const DELETED_IDS_KEY = 'liorea_chat_deleted_ids';
 
 export interface ChatReaction {
     id?: string;
@@ -49,12 +50,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [deletedMessageIds, setDeletedMessageIds] = useState<Set<string>>(new Set());
 
     // --- DEDUPLICATION HELPER ---
     // Merges two arrays of messages, removing duplicates based on (User + Content + Approx Time)
     // Priorities: Firebase Messages (String IDs) > D1 Messages (Number IDs)
-    const mergeAndDedupe = (current: ChatMessage[], incoming: ChatMessage[]) => {
-        const combined = [...current, ...incoming];
+    const mergeAndDedupe = (current: ChatMessage[], incoming: ChatMessage[], deletedIds: Set<string>) => {
+        const combined = [...current, ...incoming].filter(msg => !deletedIds.has(String(msg.id)));
 
         // 1. Sort by time
         combined.sort((a, b) => a.timestamp - b.timestamp);
@@ -103,11 +105,22 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             let sinceTimestamp = 0;
 
             // A. Local Storage
+            let savedDeletedIds = new Set<string>();
             if (typeof window !== "undefined") {
+                const storedDeleted = localStorage.getItem(DELETED_IDS_KEY);
+                if (storedDeleted) {
+                    try {
+                        savedDeletedIds = new Set(JSON.parse(storedDeleted));
+                        setDeletedMessageIds(savedDeletedIds);
+                    } catch (e) { }
+                }
+
                 const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
                 if (stored) {
                     try {
                         initialMessages = JSON.parse(stored);
+                        // Filter invalid messages immediately
+                        initialMessages = initialMessages.filter(m => !savedDeletedIds.has(String(m.id)));
                         if (initialMessages.length > 0) {
                             sinceTimestamp = initialMessages[initialMessages.length - 1].timestamp;
                         }
@@ -121,7 +134,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             try {
                 const d1Messages = await api.chat.getHistory(CHAT_ROOM);
                 if (mounted) {
-                    initialMessages = mergeAndDedupe(initialMessages, d1Messages);
+                    initialMessages = mergeAndDedupe(initialMessages, d1Messages, savedDeletedIds);
 
                     // Trim local storage if too big
                     if (initialMessages.length > 200) {
@@ -150,7 +163,25 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                 setMessages(prev => {
                     // Merge Live messages into existing state
                     // This handles the "D1 vs Firebase" duplicate issue
-                    const merged = mergeAndDedupe(prev, liveMessages);
+                    // We must use the current 'deletedMessageIds' state, but inside setMessages callback we might not have latest scope.
+                    // However, 'deletedMessageIds' is a state variable, so we should rely on a ref or just closure if dependency array covers it.
+                    // Since useEffect is [] dependency, we can't see 'deletedMessageIds' updates here easily without ref or removing dependency array.
+                    // Better approach: Read from localStorage directly for robustness in this live listener?
+                    // Or, just assume initial load captured most, and 'deleteMessage' will update state filter.
+
+                    // To be safe against closure staleness, we re-read local storage or use a ref. 
+                    // Let's use the assumption that 'deletedMessageIds' won't change *externally* often, 
+                    // but we do want to respect what we have.
+                    // Actually, let's just use a fresh read from LS for the filter to be super safe in this callback.
+                    let currentDeleted = new Set<string>();
+                    if (typeof window !== "undefined") {
+                        try {
+                            const raw = localStorage.getItem(DELETED_IDS_KEY);
+                            if (raw) currentDeleted = new Set(JSON.parse(raw));
+                        } catch { }
+                    }
+
+                    const merged = mergeAndDedupe(prev, liveMessages, currentDeleted);
 
                     // Cache updates
                     if (typeof window !== "undefined") {
@@ -179,7 +210,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                 if (olderMessages.length < 20) setHasMore(false);
 
                 if (olderMessages.length > 0) {
-                    setMessages(prev => mergeAndDedupe(olderMessages, prev));
+                    setMessages(prev => mergeAndDedupe(olderMessages, prev, deletedMessageIds));
                 }
             }
         } catch (e) { console.error("Load more failed", e); }
@@ -252,11 +283,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             });
         }
 
-        const reactionsRef = ref(db, `chats/${messageId}/reactions`);
-        if (existingReactionKey) {
-            remove(ref(db, `chats/${messageId}/reactions/${existingReactionKey}`));
-        } else {
-            push(reactionsRef, { username, emoji });
+        try {
+            const reactionsRef = ref(db, `chats/${messageId}/reactions`);
+            if (existingReactionKey) {
+                await remove(ref(db, `chats/${messageId}/reactions/${existingReactionKey}`));
+            } else {
+                await push(reactionsRef, { username, emoji });
+            }
+        } catch (e) {
+            console.error("Failed to sync reaction to Firebase:", e);
+            // Optional: Revert optimistic update here if critical, but for reactions usually acceptable to drift slightly until refresh
         }
     }, [username, messages]);
 
@@ -264,21 +300,28 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const deleteMessage = useCallback(async (messageId: string) => {
         if (!username) return;
 
-        // Optimistic Update
-        setMessages(prev => prev.filter(msg => String(msg.id) !== String(messageId)));
+        const idStr = String(messageId);
 
-        // Firebase Remove
-        // Note: We need to know if it's a Firebase ID or D1 ID.
-        // If it's D1 (number-like string), we can't delete directly from Firebase if it's not there.
-        // But for "live" messages, they are in Firebase.
-        // We will attempt to remove from Firebase 'chats/{id}'.
+        // 1. Update Blacklist (Local Persistence)
+        setDeletedMessageIds(prev => {
+            const next = new Set(prev).add(idStr);
+            if (typeof window !== "undefined") {
+                localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(next)));
+            }
+            return next;
+        });
+
+        // 2. Optimistic Update (Filter out immediately)
+        setMessages(prev => prev.filter(msg => String(msg.id) !== idStr));
+
+        // 3. Firebase Remove
         try {
             await remove(ref(db, `chats/${messageId}`));
         } catch (e) {
-            // Might be a D1 archived message, so Firebase remove implies nothing
+            console.warn("Firebase delete failed (possibly D1 message):", e);
         }
 
-        // D1 Remove
+        // 4. D1 Remove
         api.chat.delete({
             room_id: CHAT_ROOM,
             message_id: messageId,
