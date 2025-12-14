@@ -84,9 +84,9 @@ export default function LioreaClient() {
 
         {/* Right Column - Exam Timers */}
         <div className="hidden md:flex w-72 flex-col pr-4 pb-4 pt-6 h-full shrink-0 gap-3">
-          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} color="blue" />
-          <ExamCountdown title="JEE Mains (Session 2)" targetDate={jeeSession2TargetDate} color="orange" />
-          <ExamCountdown title="NEET UG" targetDate={neetTargetDate} color="green" />
+          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} />
+          <ExamCountdown title="JEE Mains (Session 2)" targetDate={jeeSession2TargetDate} />
+          <ExamCountdown title="NEET UG" targetDate={neetTargetDate} />
         </div>
 
       </main>
