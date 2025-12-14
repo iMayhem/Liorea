@@ -375,7 +375,9 @@
 .beautiful-mode [class*="bg-background"],
 .beautiful-mode [class*="bg-card"],
 .beautiful-mode [class*="bg-popover"],
-.beautiful-mode [class*="bg-muted"] {
+.beautiful-mode [class*="bg-muted"],
+.beautiful-mode .glass-panel,
+.beautiful-mode .glass-panel-light {
   background-color: rgba(0, 0, 0, 0.15) !important;
   /* Reduced from 0.4 to 0.15 */
   backdrop-filter: blur(8px);
@@ -384,7 +386,7 @@
   box-shadow: none !important;
 }
 
-/* Hide black gradients in beautiful mode (e.g. StudyUserCard) */
+/* Hide black gradients in beautiful mode (e.g. StudyUserCard, JournalCard) */
 .beautiful-mode .bg-gradient-to-t {
   background: none !important;
   opacity: 0 !important;
