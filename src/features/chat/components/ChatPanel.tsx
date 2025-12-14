@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 
 import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon, X } from 'lucide-react';
 import { useChat, ChatMessage } from '../context/ChatContext';
@@ -389,13 +389,13 @@ export default function ChatPanel() {
                         </PopoverContent>
                     </Popover>
 
-                    <Textarea
+                    <textarea
                         ref={inputRef}
                         value={newMessage}
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         placeholder="Message"
-                        className="min-h-[44px] max-h-32 py-3 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none placeholder:text-muted-foreground/50"
+                        className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-foreground text-base placeholder:text-muted-foreground/50 resize-none py-1.5 max-h-32 min-h-[36px]"
                         rows={1}
                     />
 
