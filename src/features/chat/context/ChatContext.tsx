@@ -109,25 +109,33 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
 
             // Merge with D1 history
             setMessages(prev => {
-                // We use 'd1History' closure variable but 'prev' might have more D1 stuff if we load more?
-                // Actually 'prev' effectively contains everything.
-                // We just need to merge 'msgs' (live) into 'prev'.
-                // Strategy: Keep all non-Firestore messages from 'prev' (which are D1), and replace Firestore ones?
-                // Or just Re-merge everything.
-                // Since 'msgs' is the FULL snapshot of the query (recent 50), it replaces the recent Firestore chunk.
-                // But D1 history is older.
-                // We should perform a deduplicated merge.
+                // Merge Logic:
+                // We have 'd1History' (Legacy) and 'msgs' (Live Firestore).
+                // Problem: New messages are written to BOTH, but with different IDs (Firestore auto-id vs D1 auto-id).
+                // This causes duplicates.
+                // Solution: Deduplicate by (timestamp + username + message) signature.
+                // Firestore messages ('msgs') take precedence.
 
-                const combined = [...prev, ...msgs];
-                const unique = new Map();
-                combined.forEach(m => unique.set(String(m.id), m));
+                const firestoreSignatures = new Set(
+                    msgs.map(m => `${m.timestamp}_${m.username}_${m.message}`)
+                );
 
-                // Filter deleted from result
-                const result = Array.from(unique.values())
-                    .sort((a, b) => a.timestamp - b.timestamp)
-                    .filter(m => !m.deleted);
+                const filteredLegacy = prev.filter((p: ChatMessage) => {
+                    if (!p) return false;
+                    // If this legacy message exists in the new Firestore batch (by signature), drop it.
+                    // Also drop if it's already in the 'msgs' array by ID (standard dedupe).
+                    const sig = `${p.timestamp}_${p.username}_${p.message}`;
+                    const isDuplicateContent = firestoreSignatures.has(sig);
+                    const isDuplicateId = msgs.some(m => m.id === p.id);
 
-                return result;
+                    return !isDuplicateContent && !isDuplicateId && !p.id.toString().startsWith('temp-');
+                });
+
+                // Combine: Filtered Legacy + New Firestore
+                // We re-sort to be sure.
+                const combined = [...filteredLegacy, ...msgs];
+
+                return combined.sort((a, b) => a.timestamp - b.timestamp);
             });
         });
 

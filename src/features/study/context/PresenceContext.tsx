@@ -340,15 +340,55 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
     const leaderboardUsers = useMemo(() => {
         const map = new Map<string, StudyUser>();
-        historicalLeaderboard.forEach(user => { if (user.username) map.set(user.username, user); });
-        studyUsers.forEach(user => { if (user.username) map.set(user.username, user); });
 
+        // 1. Seed with ALL users from Firestore Profiles (Base Roster)
+        firestoreProfiles.forEach((data, uid) => {
+            if (data.username) {
+                map.set(data.username, {
+                    username: data.username,
+                    total_study_time: 0,
+                    status: 'Online', // Status will be overwritten by Community merging if actually online
+                    photoURL: data.photoURL,
+                    status_text: data.status_text,
+                    equipped_frame: data.equipped_frame
+                });
+            }
+        });
+
+        // 2. Merge Today's Stats (Overwrites 0 time with actual time)
+        historicalLeaderboard.forEach(user => {
+            if (user.username) {
+                const existing = map.get(user.username);
+                if (existing) {
+                    existing.total_study_time = user.total_study_time;
+                    // Keep profile data if missing in stats, or update if stats has newer (unlikely for profile info)
+                } else {
+                    map.set(user.username, user);
+                }
+            }
+        });
+
+        // 3. Merge Live Study Room Data
+        studyUsers.forEach(user => {
+            if (user.username) {
+                const existing = map.get(user.username);
+                if (existing) {
+                    // Update time if live time is greater (it should be)
+                    existing.total_study_time = Math.max(existing.total_study_time, user.total_study_time);
+                    existing.status = 'Online';
+                } else {
+                    map.set(user.username, user);
+                }
+            }
+        });
+
+        // 4. Merge Community Presence (Online Status / Metadata)
         communityUsers.forEach(user => {
             if (user.username && map.has(user.username)) {
                 const existing = map.get(user.username)!;
+                // Update Metadata
                 if (!existing.photoURL && user.photoURL) existing.photoURL = user.photoURL;
                 if (!existing.equipped_frame && user.equipped_frame) existing.equipped_frame = user.equipped_frame;
-                // MERGE STATUS TEXT
                 if (user.status_text) existing.status_text = user.status_text;
             }
         });
@@ -360,7 +400,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             ...u,
             trend: (i % 3 === 0 ? 'up' : i % 3 === 1 ? 'down' : 'same') as 'up' | 'down' | 'same'
         }));
-    }, [historicalLeaderboard, studyUsers, communityUsers]);
+    }, [historicalLeaderboard, studyUsers, communityUsers, firestoreProfiles]);
 
     // --- CENTRAL IMAGE/FRAME LOOKUP ---
     const userLookups = useMemo(() => {
@@ -456,9 +496,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         };
 
         const interval = setInterval(() => {
-            // Legacy Realtime DB update (Optional? Removing to be pure Firestore as requested)
-            // const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
-            // set(myStudyTimeRef, increment(60));
+            // Legacy Realtime DB update (Required for live StudyGrid UI)
+            const myStudyTimeRef = ref(db, `/study_room_presence/${username}/total_study_time`);
+            set(myStudyTimeRef, increment(60));
 
             // Sync to Firestore
             updateFirestore();
