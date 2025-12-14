@@ -43,7 +43,9 @@ const loadingCircleTransition = {
     ease: "easeInOut",
 };
 
-export default function PersonalStudyPage() {
+import { Suspense } from 'react';
+
+function PersonalStudyContent() {
     const { studyUsers, joinSession, leaveSession, username } = usePresence();
     const searchParams = useSearchParams();
     const { addNotification } = useNotifications();
@@ -268,5 +270,34 @@ export default function PersonalStudyPage() {
 
             </div>
         </ChatProvider>
+    );
+}
+
+export default function PersonalStudyPage() {
+    return (
+        <Suspense fallback={
+            <div className="bg-transparent text-foreground h-screen w-screen flex flex-col items-center justify-center">
+                <Header />
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center gap-6 text-white"
+                >
+                    <motion.div
+                        className="flex justify-around items-center w-16 h-8"
+                        variants={loadingContainerVariants}
+                        initial="start"
+                        animate="end"
+                    >
+                        <motion.span className="block w-3 h-3 bg-accent rounded-full" variants={loadingCircleVariants} transition={loadingCircleTransition} />
+                        <motion.span className="block w-3 h-3 bg-accent rounded-full" variants={loadingCircleVariants} transition={loadingCircleTransition} />
+                        <motion.span className="block w-3 h-3 bg-accent rounded-full" variants={loadingCircleVariants} transition={loadingCircleTransition} />
+                    </motion.div>
+                    <h1 className="text-2xl font-semibold">Loading room...</h1>
+                </motion.div>
+            </div>
+        }>
+            <PersonalStudyContent />
+        </Suspense>
     );
 }
