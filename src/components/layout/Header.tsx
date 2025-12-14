@@ -1,8 +1,7 @@
 "use client";
 
-
 import Link from 'next/link';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Wand2, Brain, Megaphone } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Wand2, Brain } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -23,9 +22,10 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {
     const pathname = usePathname();
-    const { userNotifications, globalNotifications, markAsRead, markAllAsRead } = useNotifications();
-    const unreadPersonalCount = userNotifications.filter(n => !n.read).length;
-    const unreadGlobalCount = globalNotifications.filter(n => !n.read).length;
+    const { notifications, markAsRead, markAllAsRead } = useNotifications();
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+
 
     // Beautiful Mode State
     const [isBeautifulMode, setIsBeautifulMode] = useState(false);
@@ -102,7 +102,6 @@ export default function Header() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl h-[85vh] p-0 bg-background border-border overflow-hidden rounded-xl">
-                            <DialogTitle className="sr-only">Appearance Settings</DialogTitle>
                             <AppearanceSettings />
                         </DialogContent>
                     </Dialog>
@@ -112,6 +111,11 @@ export default function Header() {
                             <Settings className="w-5 h-5 text-white/80" />
                         </Button>
                     </Link>
+                    {/* <Link href="/shop">
+                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full" title="Item Shop">
+                            <ShoppingBag className="w-5 h-5" />
+                        </Button>
+                    </Link> */}
 
                     <Button
                         variant="ghost"
@@ -158,38 +162,47 @@ export default function Header() {
                         </DialogContent>
                     </Dialog>
 
-                    {/* GLOBAL NOTIFICATIONS (Megaphone) */}
+                    {/* NOTIFICATIONS */}
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full relative" title="Global Broadcasts">
-                                <Megaphone className="w-5 h-5" />
-                                {unreadGlobalCount > 0 && (
+                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full relative">
+                                <Bell className="w-5 h-5" />
+                                {unreadCount > 0 && (
                                     <span className="absolute top-0 right-0 flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
                                     </span>
                                 )}
+                                <span className="sr-only">Notifications</span>
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 bg-black/20 backdrop-blur-md border-white/20 text-white" align="end">
                             <div className="grid gap-4">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="font-medium leading-none flex items-center gap-2">
-                                        <Megaphone className="w-4 h-4 text-accent" />
-                                        <span>System Broadcasts</span>
-                                    </h4>
+                                    <h4 className="font-medium leading-none">Notifications</h4>
+                                    {notifications.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={markAllAsRead}
+                                            className="h-6 text-[10px] px-2 text-white/50 hover:text-accent hover:bg-white/10"
+                                        >
+                                            <CheckCheck className="w-3 h-3 mr-1" /> Mark all read
+                                        </Button>
+                                    )}
                                 </div>
                                 <Separator className="bg-white/10" />
-                                <div className="flex h-full flex-col">
-                                    <ScrollArea className="h-72">
-                                        {globalNotifications.length > 0 ? (
-                                            <div className="grid gap-2">
-                                                {globalNotifications.map((notification) => (
+                                <ScrollArea className="h-72">
+                                    {notifications.length > 0 ? (
+                                        <div className="grid gap-2">
+                                            {notifications.map((notification) => {
+                                                const fromUser = notification.message.split(' ')[0];
+                                                return (
                                                     <div
                                                         key={notification.id}
                                                         className={cn(
                                                             "mb-2 grid grid-cols-[auto_1fr] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
-                                                            !notification.read && "bg-white/10"
+                                                            !notification.read && "bg-white/5"
                                                         )}
                                                         onClick={() => {
                                                             markAsRead(notification.id);
@@ -199,11 +212,15 @@ export default function Header() {
                                                         }}
                                                     >
                                                         <div className="relative mt-1">
-                                                            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                                                                <Sparkles className="w-4 h-4 text-accent" />
-                                                            </div>
+                                                            {notification.type === 'global' ? (
+                                                                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                                                                    <Sparkles className="w-4 h-4 text-accent" />
+                                                                </div>
+                                                            ) : (
+                                                                <UserAvatar username={fromUser} className="w-8 h-8" />
+                                                            )}
                                                             {!notification.read && (
-                                                                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-black" />
+                                                                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
                                                             )}
                                                         </div>
 
@@ -216,90 +233,13 @@ export default function Header() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground text-center py-8">No global interrupts.</p>
-                                        )}
-                                    </ScrollArea>
-                                </div>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-
-                    {/* PERSONAL NOTIFICATIONS (Bell) */}
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-white rounded-full relative" title="Notifications">
-                                <Bell className="w-5 h-5" />
-                                {unreadPersonalCount > 0 && (
-                                    <span className="absolute top-0 right-0 flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
-                                    </span>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 bg-black/20 backdrop-blur-md border-white/20 text-white" align="end">
-                            <div className="grid gap-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-medium leading-none">Notifications</h4>
-                                    {userNotifications.length > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={markAllAsRead}
-                                            className="h-6 text-[10px] px-2 text-white/50 hover:text-accent hover:bg-white/10"
-                                        >
-                                            <CheckCheck className="w-3 h-3 mr-1" /> Mark all read
-                                        </Button>
+                                                )
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-8">No new notifications.</p>
                                     )}
-                                </div>
-                                <Separator className="bg-white/10" />
-                                <div className="flex h-full flex-col">
-                                    <ScrollArea className="h-72">
-                                        {userNotifications.length > 0 ? (
-                                            <div className="grid gap-2">
-                                                {userNotifications.map((notification) => {
-                                                    const fromUser = notification.message.split(' ')[0];
-                                                    return (
-                                                        <div
-                                                            key={notification.id}
-                                                            className={cn(
-                                                                "mb-2 grid grid-cols-[auto_1fr] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
-                                                                !notification.read && "bg-white/5"
-                                                            )}
-                                                            onClick={() => {
-                                                                markAsRead(notification.id);
-                                                                if (notification.link) {
-                                                                    window.location.href = notification.link;
-                                                                }
-                                                            }}
-                                                        >
-                                                            <div className="relative mt-1">
-                                                                <UserAvatar username={fromUser} className="w-8 h-8" />
-                                                                {!notification.read && (
-                                                                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
-                                                                )}
-                                                            </div>
-
-                                                            <div className="space-y-1">
-                                                                <p className={`text-sm leading-snug ${!notification.read ? 'font-semibold text-white' : 'text-white/80'}`}>
-                                                                    {notification.message}
-                                                                </p>
-                                                                <p className="text-[10px] text-muted-foreground">
-                                                                    {new Date(notification.timestamp).toLocaleString()}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground text-center py-8">No new notifications.</p>
-                                        )}
-                                    </ScrollArea>
-                                </div>
+                                </ScrollArea>
                             </div>
                         </PopoverContent>
                     </Popover>
