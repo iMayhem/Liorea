@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, onValue, push, serverTimestamp, query, limitToLast } from 'firebase/database';
+import { ref, onValue, push, serverTimestamp, query, limitToLast, update } from 'firebase/database';
 import { usePresence } from '@/features/study';
 import { useToast } from '@/hooks/use-toast';
 
@@ -78,7 +78,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           id: key,
           message: value.message,
           timestamp: value.timestamp,
-          link: value.link
+          timestamp: value.timestamp,
+          link: value.link,
+          read: value.read // Read from DB
         }));
 
         // CHECK FOR NEW (User)
@@ -167,10 +169,22 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // 4. Mark ONE as Read
   const markAsRead = (id: string) => {
-    if (readIds.includes(id)) return;
-    const newReadIds = [...readIds, id];
-    setReadIds(newReadIds);
-    localStorage.setItem('liorea-read-notifications', JSON.stringify(newReadIds));
+    // 1. Optimistic Local Update
+    if (!readIds.includes(id)) {
+      const newReadIds = [...readIds, id];
+      setReadIds(newReadIds);
+      localStorage.setItem('liorea-read-notifications', JSON.stringify(newReadIds));
+    }
+
+    // 2. Identify and Update Backend (Personal Only)
+    // We check if this ID exists in our userNotifications list
+    const isPersonal = userNotifications.some(n => n.id === id);
+    if (isPersonal && username) {
+      // Update Firebase
+      // Note: We don't wait for this to finish, optimistic UI handles it
+      const notifRef = ref(db, `user_notifications/${username}/${id}`);
+      update(notifRef, { read: true }).catch(err => console.error("Failed to mark read on backend", err));
+    }
   };
 
   // 5. Mark ALL as Read
@@ -184,7 +198,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const displayedNotifications = notifications.map(n => ({
     ...n,
-    read: readIds.includes(n.id)
+    ...n,
+    read: n.read || readIds.includes(n.id)
   }));
 
   return (

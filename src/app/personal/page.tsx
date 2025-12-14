@@ -8,9 +8,20 @@ import { usePresence } from '@/features/study';
 import { ChatProvider, ChatPanel } from '@/features/chat';
 import { StudyGrid } from '@/features/study';
 import { motion } from 'framer-motion';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Users, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 // Reusing same loading animation
 const loadingContainerVariants = {
@@ -34,47 +45,52 @@ export default function PersonalStudyPage() {
     const { studyUsers, joinSession, leaveSession, username } = usePresence();
     const [isJoining, setIsJoining] = useState(true);
     const [showCopied, setShowCopied] = useState(false);
+    const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+    const [joinInputCode, setJoinInputCode] = useState("");
+    const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
     const { toast } = useToast();
 
-    // Generate/Get Personal Room ID
-    // Ideally this could be a UUID, but 'room-<username>' is easy/stable for now
-    const personalRoomId = username ? `room-${username}` : null;
+    // Default to my personal room
+    useEffect(() => {
+        if (username && !activeRoomId) {
+            setActiveRoomId(`room-${username}`);
+        }
+    }, [username, activeRoomId]);
+
+    // Derived: Are we in our own room?
+    const isOwner = activeRoomId === `room-${username}`;
 
     useEffect(() => {
-        if (personalRoomId) {
-            joinSession(personalRoomId);
+        if (activeRoomId) {
+            joinSession(activeRoomId);
             const timer = setTimeout(() => setIsJoining(false), 1500);
             return () => {
                 clearTimeout(timer);
-                leaveSession();
+                if (activeRoomId) leaveSession(activeRoomId);
             };
         }
-    }, [joinSession, leaveSession, personalRoomId]);
+    }, [joinSession, leaveSession, activeRoomId]);
 
     const handleCopyInvite = () => {
-        if (!personalRoomId) return;
-        // In a real app we might want a clean URL, for now let's just copy the ID or a link if we had routing
-        // Since we don't have dynamic routing setup for /room/[id] yet, maybe we just tell them this is their private space.
-        // Wait, if friends want to join, they need to be able to *visit* this room.
-        // But the route is /personal. /personal always loads *my* room?
-        // Ah, if friend visits /personal, they see *their* room.
-        // To visit *my* room, we need a route like /room/[id].
-
-        // For now, let's just implement the 'Personal' aspect (isolation). 
-        // Real sharing requires a new page /room/[id]. 
-        // User asked "study with friends".
-        // I will just note this in the UI. For now it is truly PRIVATE (Solo).
-        // If they want to invite friends, they physically can't without a route.
-        // I'll add the UI for "Invite Link" but it might just be a placebo or simple ID clipboard copy for now
-        // until we add the dynamic route page.
-
-        navigator.clipboard.writeText(`I am studying in room: ${personalRoomId}`);
+        if (!activeRoomId) return;
+        navigator.clipboard.writeText(activeRoomId);
         setShowCopied(true);
         setTimeout(() => setShowCopied(false), 2000);
-        toast({ title: "Room ID Copied", description: "Share this ID... (Note: Feature to join specific IDs coming soon)" });
+        toast({ title: "Code Copied", description: "Share this code with friends to let them join." });
     };
 
-    if (isJoining || !personalRoomId) {
+    const handleJoinRoom = () => {
+        if (!joinInputCode.trim()) return;
+        const code = joinInputCode.trim();
+        // Basic validation/sanitization could go here
+        setActiveRoomId(code);
+        setJoinDialogOpen(false);
+        setJoinInputCode("");
+        setIsJoining(true); // Trigger loading animation again for UX
+        toast({ title: "Joining Room", description: `Entering room: ${code}` });
+    };
+
+    if (isJoining || !activeRoomId) {
         return (
             <div className="bg-transparent text-foreground h-screen w-screen flex flex-col items-center justify-center">
                 <Header />
@@ -100,7 +116,7 @@ export default function PersonalStudyPage() {
     }
 
     return (
-        <ChatProvider roomId={personalRoomId}>
+        <ChatProvider roomId={activeRoomId}>
             <div className="bg-transparent min-h-screen text-foreground overflow-hidden font-sans antialiased flex flex-col">
                 <Header />
 
@@ -108,22 +124,58 @@ export default function PersonalStudyPage() {
                 <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-20 relative">
 
                     {/* Invite Overlay / Header for Personal Room */}
-                    <div className="absolute top-24 right-8 z-10">
-                        {/* Optional: Add Invite Button here if we had routing */}
-                    </div>
+                    {/* <div className="absolute top-24 right-8 z-10"> */}
+                    {/* Optional: Add Invite Button here if we had routing */}
+                    {/* </div> */}
 
                     {/* LEFT: Study Grid Panel */}
                     <div className="w-[45%] flex flex-col bg-card/80 backdrop-blur-xl rounded-2xl border border-border shadow-xl overflow-hidden p-6 relative">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                Personal Space
-                                <span className="text-xs font-normal text-muted-foreground bg-white/10 px-2 py-0.5 rounded-full">Private</span>
+                                {isOwner ? "My Room" : "Friend's Room"}
+                                <span className={cn("text-xs font-normal px-2 py-0.5 rounded-full", isOwner ? "text-muted-foreground bg-white/10" : "text-indigo-200 bg-indigo-500/20")}>
+                                    {isOwner ? "Personal" : "Joined"}
+                                </span>
                             </h2>
-                            {/* Primitive Invite Mechanism */}
-                            <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-white" onClick={handleCopyInvite}>
-                                {showCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                                <span className="text-xs">Copy Roome ID</span>
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                {/* Join Button */}
+                                <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-white bg-white/5 hover:bg-white/10">
+                                            <LogIn className="w-4 h-4" />
+                                            <span className="text-xs">Join Friend</span>
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px] bg-[#1e1f22] border-zinc-700 text-zinc-100">
+                                        <DialogHeader>
+                                            <DialogTitle>Join a Private Room</DialogTitle>
+                                            <DialogDescription className="text-zinc-400">
+                                                Enter the room code shared by your friend to study together.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="flex flex-col gap-2">
+                                                <Input
+                                                    id="code"
+                                                    placeholder="e.g. room-username"
+                                                    value={joinInputCode}
+                                                    onChange={(e) => setJoinInputCode(e.target.value)}
+                                                    className="col-span-3 bg-black/20 border-zinc-700 text-white focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="submit" onClick={handleJoinRoom} className="bg-indigo-600 hover:bg-indigo-700 text-white">Join Room</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* Copy Button */}
+                                <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-white" onClick={handleCopyInvite}>
+                                    {showCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                    <span className="text-xs">Copy Code</span>
+                                </Button>
+                            </div>
                         </div>
                         <StudyGrid users={studyUsers} />
                     </div>

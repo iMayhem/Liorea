@@ -47,7 +47,7 @@ export default function StudyTogetherPage() {
     // On component unmount, stop counting time and clear timer
     return () => {
       clearTimeout(timer);
-      leaveSession();
+      leaveSession("public");
     };
   }, [joinSession, leaveSession]);
 

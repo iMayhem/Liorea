@@ -37,7 +37,7 @@ interface PresenceContextType {
     leaderboardUsers: StudyUser[];
     isStudying: boolean;
     joinSession: (roomId?: string) => void;
-    leaveSession: () => void;
+    leaveSession: (roomId?: string) => void;
     joinedRoomId: string | null;
     updateStatusMessage: (msg: string) => Promise<void>;
     getUserImage: (username: string) => string | undefined;
@@ -450,10 +450,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         setJoinedRoomId(roomId);
         setIsStudying(true);
     }, []);
-    const leaveSession = useCallback(() => {
+    const leaveSession = useCallback((specificRoomId?: string) => {
+        if (specificRoomId && joinedRoomId !== specificRoomId) return; // Don't leave if we already switched rooms
         setIsStudying(false);
         setJoinedRoomId(null);
-    }, []);
+    }, [joinedRoomId]);
 
     const updateStatusMessage = useCallback(async (msg: string) => {
         if (!username) return;
