@@ -185,7 +185,8 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                             ...acc,
                             { username: uid, emoji: emoji }
                         ]), [])
-                        : []
+                        : [],
+                    task_states: data.task_states || {}
                 });
             });
 
@@ -464,11 +465,37 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         const content: TaskListContent = { type: 'task_list', title, items };
         const contentString = JSON.stringify(content);
         const tempPost = { id: Date.now(), username, content: contentString, created_at: Date.now() };
-        setPosts(prev => [...prev, tempPost]);
+        // setPosts(prev => [...prev, tempPost]); // Let listener handle it
         try {
-            await api.journal.post({ journal_id: activeJournal.id, username, content: contentString }).catch(console.error);
+            await addDoc(collection(firestore, `journals/${activeJournal.id}/posts`), {
+                username,
+                content: contentString,
+                created_at: serverTimestamp(),
+                reactions: {},
+                task_states: {} // Initialize empty states
+            });
             notifyChatUpdate(activeJournal.id);
         } catch (e) { console.error(e); }
+    };
+
+    const handleToggleTask = async (postId: string | number, taskIndex: number) => {
+        if (!activeJournal || !username) return;
+        const post = posts.find(p => String(p.id) === String(postId));
+        if (!post) return;
+
+        // Optimistic update (optional, but good for UI)
+        // Actually, listener is fast enough usually. Let's rely on listener or update local state if we want instant feedback.
+        // For simplicity and correctness, we update Firestore and let listener update UI.
+
+        const currentStates = (post as any).task_states || {};
+        const newState = !currentStates[taskIndex];
+
+        try {
+            await updateDoc(doc(firestore, `journals/${activeJournal.id}/posts`, String(postId)), {
+                [`task_states.${taskIndex}`]: newState
+            });
+            notifyChatUpdate(activeJournal.id);
+        } catch (e) { console.error("Failed to toggle task", e); }
     };
 
     const mentionableUsers = useMemo(() => { if (!mentionQuery) return []; const chatUsers = posts.map(p => p.username); const lbUsers = leaderboardUsers.map(u => u.username); const allUsers = Array.from(new Set([...chatUsers, ...lbUsers])); return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); }, [mentionQuery, posts, leaderboardUsers]);
@@ -596,7 +623,15 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                             try {
                                                 const parsed = JSON.parse(post.content);
                                                 if (parsed && parsed.type === 'task_list') {
-                                                    return <TaskMessage postId={post.id} content={parsed} isOwner={post.username === username} />;
+                                                    return (
+                                                        <TaskMessage
+                                                            postId={post.id}
+                                                            content={parsed}
+                                                            isOwner={post.username === username}
+                                                            taskStates={(post as any).task_states || {}}
+                                                            onToggle={(idx) => handleToggleTask(post.id, idx)}
+                                                        />
+                                                    );
                                                 }
                                             } catch (e) { }
                                             return <FormattedMessage content={post.content} />;

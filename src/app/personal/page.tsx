@@ -1,16 +1,16 @@
-"use client";
-
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import BottomControlBar from '@/features/study/components/BottomControlBar';
 import { usePresence } from '@/features/study';
 import { ChatProvider, ChatPanel } from '@/features/chat';
 import { StudyGrid } from '@/features/study';
 import { motion } from 'framer-motion';
-import { Copy, Check, Users, LogIn, Brain } from 'lucide-react';
+import { Copy, Check, Users, LogIn, Brain, UserPlus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/context/NotificationContext';
 import {
     Dialog,
     DialogContent,
@@ -43,16 +43,30 @@ const loadingCircleTransition = {
 
 export default function PersonalStudyPage() {
     const { studyUsers, joinSession, leaveSession, username } = usePresence();
+    const searchParams = useSearchParams();
+    const { addNotification } = useNotifications();
+    const { toast } = useToast();
+
     const [isJoining, setIsJoining] = useState(true);
     const [showCopied, setShowCopied] = useState(false);
     const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [joinInputCode, setJoinInputCode] = useState("");
+    const [inviteUsername, setInviteUsername] = useState("");
     const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-    const { toast } = useToast();
 
-    // Default to my personal room (Random ID persisted in LocalStorage)
+    // 1. Auto-Join from URL or LocalStorage
     useEffect(() => {
-        if (username && !activeRoomId) {
+        // Prevent multi-trigger
+        if (activeRoomId) return;
+
+        const urlCode = searchParams.get('code');
+        if (urlCode && username) {
+            // Priority: URL Code
+            setActiveRoomId(urlCode);
+            // Ideally notify user they are joining via link?
+        } else if (username) {
+            // Fallback: Local Personal Room
             const storageKey = `zenith_personal_room_${username}`;
             const stored = localStorage.getItem(storageKey);
 
@@ -65,10 +79,9 @@ export default function PersonalStudyPage() {
                 setActiveRoomId(newId);
             }
         }
-    }, [username, activeRoomId]);
+    }, [username, activeRoomId, searchParams]);
 
     // Derived: Are we in our own room?
-    // We check if the active room matches what's in local storage
     const isOwner = username && activeRoomId === localStorage.getItem(`zenith_personal_room_${username}`);
 
     useEffect(() => {
@@ -98,6 +111,29 @@ export default function PersonalStudyPage() {
         setJoinInputCode("");
         setIsJoining(true); // Trigger loading animation again for UX
         toast({ title: "Joining Room", description: `Entering room: ${code}` });
+    };
+
+    const handleInviteFriend = async () => {
+        if (!inviteUsername.trim() || !username || !activeRoomId) return;
+        const target = inviteUsername.trim();
+        if (target === username) {
+            toast({ variant: "destructive", title: "Error", description: "You cannot invite yourself." });
+            return;
+        }
+
+        try {
+            await addNotification(
+                `${username} invited you to their study room.`,
+                target,
+                `/personal?code=${activeRoomId}`,
+                'personal'
+            );
+            toast({ title: "Invite Sent", description: `Invited ${target} to join.` });
+            setInviteDialogOpen(false);
+            setInviteUsername("");
+        } catch (e) {
+            toast({ variant: "destructive", title: "Error", description: "Failed to send invite." });
+        }
     };
 
     if (isJoining || !activeRoomId) {
@@ -143,6 +179,40 @@ export default function PersonalStudyPage() {
                                 </span>
                             </h2>
                             <div className="flex items-center gap-2">
+                                {/* Invite Button */}
+                                {isOwner && (
+                                    <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="h-8 gap-2 text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20">
+                                                <UserPlus className="w-4 h-4" />
+                                                <span className="text-xs">Invite</span>
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[425px] bg-[#1e1f22] border-zinc-700 text-zinc-100">
+                                            <DialogHeader>
+                                                <DialogTitle>Invite a Friend</DialogTitle>
+                                                <DialogDescription className="text-zinc-400">
+                                                    Send a notification to a friend to join this room directly.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="grid gap-4 py-4">
+                                                <div className="flex flex-col gap-2">
+                                                    <Input
+                                                        id="invite-username"
+                                                        placeholder="Enter username..."
+                                                        value={inviteUsername}
+                                                        onChange={(e) => setInviteUsername(e.target.value)}
+                                                        className="col-span-3 bg-black/20 border-zinc-700 text-white focus:ring-indigo-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button type="submit" onClick={handleInviteFriend} className="bg-indigo-600 hover:bg-indigo-700 text-white">Send Invite</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+
                                 {/* Join Button */}
                                 <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
                                     <DialogTrigger asChild>

@@ -21,6 +21,7 @@ export type Post = {
     image_url?: string;
     created_at: number;
     photoURL?: string;
+    task_states?: Record<number, boolean>;
     reactions?: Reaction[];
     replyTo?: {
         id: number | string;

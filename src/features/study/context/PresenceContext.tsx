@@ -13,6 +13,7 @@ import {
     doc,
     setDoc,
     getDoc,
+    deleteDoc,
     increment as incrementFirestore,
     serverTimestamp as serverTimestampFirestore
 } from 'firebase/firestore';
@@ -236,50 +237,79 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         return () => unsubscribe();
     }, [currentDate]);
 
-    // 2. Study Room Users (Throttled)
+    // 2. Study Room Users (Throttled + Hybrid Firestore/RDB)
     useEffect(() => {
         if (!joinedRoomId) {
             setStudyUsers([]);
             return;
         }
 
-        const path = joinedRoomId === 'public' ? '/study_room_presence' : `rooms/${joinedRoomId}/presence`;
-        const roomRef = ref(db, path);
-        let latestData: any = null;
-        let lastUpdate = 0;
+        let unsubscribe: any = () => { };
         let animationFrameId: number;
 
-        const processUpdates = () => {
-            const now = Date.now();
-            if (now - lastUpdate > 1000 && latestData) {
-                const list: StudyUser[] = Object.values(latestData)
-                    .filter((u: any) => u && u.username)
-                    .map((u: any) => ({
-                        username: u.username,
-                        photoURL: u.photoURL,
-                        equipped_frame: u.equipped_frame,
-                        total_study_time: Number(u.total_study_time) || 0,
-                        status: 'Online'
-                    }));
-                list.sort((a, b) => b.total_study_time - a.total_study_time);
+        if (joinedRoomId === 'public') {
+            // RDB Logic (Legacy & Fast for Public)
+            const path = '/study_room_presence';
+            const roomRef = ref(db, path);
+            let latestData: any = null;
+            let lastUpdate = 0;
 
-                setStudyUsers(prev => {
-                    if (prev.length !== list.length) return list;
-                    const isSame = prev.length === list.length && prev[0]?.username === list[0]?.username && prev[0]?.total_study_time === list[0]?.total_study_time;
-                    return isSame ? prev : list;
+            const processUpdates = () => {
+                const now = Date.now();
+                if (now - lastUpdate > 1000 && latestData) {
+                    const list: StudyUser[] = Object.values(latestData)
+                        .filter((u: any) => u && u.username)
+                        .map((u: any) => ({
+                            username: u.username,
+                            photoURL: u.photoURL,
+                            equipped_frame: u.equipped_frame,
+                            total_study_time: Number(u.total_study_time) || 0,
+                            status: 'Online'
+                        }));
+                    list.sort((a, b) => b.total_study_time - a.total_study_time);
+
+                    setStudyUsers(prev => {
+                        if (prev.length !== list.length) return list;
+                        const isSame = prev.length === list.length && prev[0]?.username === list[0]?.username && prev[0]?.total_study_time === list[0]?.total_study_time;
+                        return isSame ? prev : list;
+                    });
+                    lastUpdate = now;
+                }
+                animationFrameId = requestAnimationFrame(processUpdates);
+            };
+
+            unsubscribe = onValue(roomRef, (snapshot) => {
+                latestData = snapshot.val();
+            });
+            processUpdates();
+        } else {
+            // Firestore Logic (Personal Rooms)
+            const roomRef = collection(firestore, 'rooms', joinedRoomId, 'presence');
+            unsubscribe = onSnapshot(roomRef, (snapshot) => {
+                const now = Date.now();
+                const list: StudyUser[] = [];
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    // Heartbeat Check: Hide if stale > 2 minutes
+                    const lastSeen = data.last_seen?.toMillis ? data.last_seen.toMillis() : (data.last_seen || 0);
+                    if (now - lastSeen < 120000) { // 2 minutes
+                        list.push({
+                            username: data.username,
+                            photoURL: data.photoURL,
+                            equipped_frame: data.equipped_frame,
+                            total_study_time: data.total_study_time || 0,
+                            status: 'Online'
+                        });
+                    }
                 });
-                lastUpdate = now;
-            }
-            animationFrameId = requestAnimationFrame(processUpdates);
-        };
+                list.sort((a, b) => b.total_study_time - a.total_study_time);
+                setStudyUsers(list);
+            });
+        }
 
-        const unsubscribe = onValue(roomRef, (snapshot) => {
-            latestData = snapshot.val();
-        });
-        processUpdates();
         return () => {
             unsubscribe();
-            cancelAnimationFrame(animationFrameId);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, [joinedRoomId]);
 
@@ -448,51 +478,72 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!joinedRoomId || !username) return;
 
-        let studyRef: any;
-        if (joinedRoomId === 'public') {
-            studyRef = ref(db, `/study_room_presence/${username}`);
-        } else {
-            studyRef = ref(db, `rooms/${joinedRoomId}/presence/${username}`);
-        }
+        let rdbRef: any;
+        let firestoreHeartbeatInterval: NodeJS.Timeout;
 
         const initializeSession = async () => {
             let initialSeconds = 0;
 
             try {
-                // Fetch today's existing minutes from Firestore so we don't reset to 0
                 const today = new Date().toISOString().split('T')[0];
                 const statsRef = doc(firestore, 'daily_stats', `${today}_${username}`);
                 const statsSnap = await getDoc(statsRef);
-
                 if (statsSnap.exists()) {
                     const data = statsSnap.data();
-                    if (data.minutes) {
-                        initialSeconds = data.minutes * 60;
-                    }
+                    if (data.minutes) initialSeconds = data.minutes * 60;
                 }
-            } catch (e) {
-                console.error("Failed to fetch initial stats", e);
-            }
+            } catch (e) { console.error(e); }
 
-            // Write presence
-            set(studyRef, {
-                username: username,
-                photoURL: userImage || "",
-                equipped_frame: userFrame || "",
-                total_study_time: initialSeconds,
-                status: 'Online'
-            });
+            if (joinedRoomId === 'public') {
+                // RDB (Legacy)
+                rdbRef = ref(db, `/study_room_presence/${username}`);
+                set(rdbRef, {
+                    username,
+                    photoURL: userImage || "",
+                    equipped_frame: userFrame || "",
+                    total_study_time: initialSeconds,
+                    status: 'Online'
+                });
+                onDisconnect(rdbRef).remove();
+            } else {
+                // Firestore (Personal)
+                const roomUserRef = doc(firestore, 'rooms', joinedRoomId, 'presence', username);
+                const updateHeartbeat = async () => {
+                    try {
+                        await setDoc(roomUserRef, {
+                            username,
+                            photoURL: userImage || "",
+                            equipped_frame: userFrame || "",
+                            total_study_time: initialSeconds, // Note: This might need to update if we want live time in personal room without refreshing.
+                            // Currently `total_study_time` in presence is static initial or only updated slightly.
+                            // Ideally this should sync with the timer loop.
+                            last_seen: serverTimestampFirestore(),
+                            status: 'Online'
+                        }, { merge: true });
+                    } catch (e) { }
+                };
+
+                updateHeartbeat();
+                firestoreHeartbeatInterval = setInterval(updateHeartbeat, 60000); // Heartbeat every 1m
+
+                // Best effort cleanup
+                const cleanup = () => { deleteDoc(roomUserRef).catch(() => { }); };
+                window.addEventListener('beforeunload', cleanup);
+                return () => window.removeEventListener('beforeunload', cleanup);
+            }
         };
 
         initializeSession();
 
-        // Offline handler
-        onDisconnect(studyRef).remove();
-
         return () => {
-            // Cleanup on unmount/leave
-            remove(studyRef);
-            onDisconnect(studyRef).cancel();
+            if (rdbRef) {
+                remove(rdbRef);
+                onDisconnect(rdbRef).cancel();
+            }
+            if (firestoreHeartbeatInterval) clearInterval(firestoreHeartbeatInterval);
+            if (joinedRoomId !== 'public') {
+                deleteDoc(doc(firestore, 'rooms', joinedRoomId, 'presence', username)).catch(() => { });
+            }
         };
     }, [joinedRoomId, username, userImage, userFrame]);
 
