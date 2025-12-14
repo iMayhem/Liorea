@@ -236,6 +236,12 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         if (!username) return;
 
         try {
+            // SKIP numeric IDs (Legacy D1 messages)
+            if (!isNaN(Number(messageId))) {
+                console.warn("Cannot delete legacy D1 message:", messageId);
+                return;
+            }
+
             const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
             await updateDoc(doc(firestore, collectionPath, messageId), { deleted: true });
 

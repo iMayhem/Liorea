@@ -96,16 +96,24 @@ export default function ChatPanel() {
     const [mentionIndex, setMentionIndex] = useState(0);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // --- SCROLL LOGIC ---
+    // --- SMART SCROLL LOGIC ---
     useLayoutEffect(() => {
-        if (messages.length > 0 && !isInitialLoaded) {
-            // Force scroll to bottom with slight delay for paint
+        const container = scrollContainerRef.current;
+        if (!container || messages.length === 0) return;
+
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        const isNearBottom = distanceFromBottom < 300;
+
+        if (!isInitialLoaded || isNearBottom) {
             setTimeout(() => {
                 if (scrollContainerRef.current) {
                     scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
                 }
-                setIsInitialLoaded(true);
             }, 100);
+
+            if (!isInitialLoaded) {
+                setTimeout(() => setIsInitialLoaded(true), 500);
+            }
         }
     }, [messages, isInitialLoaded]);
 

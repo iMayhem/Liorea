@@ -231,15 +231,29 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         }
     }, [posts]);
 
-    // Force scroll to bottom on initial load
+    // Smart Scroll Logic
     useLayoutEffect(() => {
-        if (posts.length > 0 && !isInitialLoaded) {
+        const container = scrollContainerRef.current;
+        if (!container || posts.length === 0) return;
+
+        // If we are still initializing (first few loads), OR if user was already near bottom
+        // we force scroll to bottom.
+        // We define "near bottom" as within 300px.
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        const isNearBottom = distanceFromBottom < 300;
+
+        if (!isInitialLoaded || isNearBottom) {
+            // Use timeout to allow layout to settle (images etc)
             setTimeout(() => {
                 if (scrollContainerRef.current) {
                     scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
                 }
-                setIsInitialLoaded(true);
             }, 100);
+
+            // Only mark initial loaded after a short delay to ensure we catch the full initial batch
+            if (!isInitialLoaded) {
+                setTimeout(() => setIsInitialLoaded(true), 500);
+            }
         }
     }, [posts, isInitialLoaded]);
 
