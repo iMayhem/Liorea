@@ -18,6 +18,10 @@ import { compressImage } from '@/lib/compress';
 const parseTimestamp = (ts: any): number => {
     if (!ts) return Date.now();
     if (typeof ts === 'number') return ts;
+    if (typeof ts === 'string') {
+        const parsed = Date.parse(ts);
+        return isNaN(parsed) ? Date.now() : parsed;
+    }
     if (ts.toMillis && typeof ts.toMillis === 'function') return ts.toMillis();
     if (ts instanceof Date) return ts.getTime();
     if (ts.seconds) return ts.seconds * 1000; // Handle raw Firestore object
