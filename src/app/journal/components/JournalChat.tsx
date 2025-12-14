@@ -428,28 +428,30 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                         </div>
                                     )}
 
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                        {Object.entries(reactionGroups).map(([emoji, data]) => (
-                                            <TooltipProvider key={emoji}>
-                                                <Tooltip delayDuration={0}>
-                                                    <TooltipTrigger asChild>
-                                                        <button key={emoji} onClick={() => handleReact(post.id, emoji)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/60 text-indigo-100' : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'}`}>
-                                                            <span className="text-base leading-none">{emoji}</span>
-                                                            <span className="text-xs font-bold">{data.count}</span>
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent side="bottom" className="bg-[#18181b] text-white border-white/10 z-[100]">
-                                                        <div className="flex flex-col gap-1">
-                                                            {data.users.slice(0, 5).map((u, i) => (
-                                                                <span key={i} className="text-xs font-medium">{u}</span>
-                                                            ))}
-                                                            {data.users.length > 5 && <span className="text-xs text-muted-foreground">and {data.users.length - 5} more</span>}
-                                                        </div>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        ))}
-                                    </div>
+                                    {Object.keys(reactionGroups).length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-2">
+                                            {Object.entries(reactionGroups).map(([emoji, data]) => (
+                                                <TooltipProvider key={emoji}>
+                                                    <Tooltip delayDuration={0}>
+                                                        <TooltipTrigger asChild>
+                                                            <button key={emoji} onClick={() => handleReact(post.id, emoji)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-indigo-500/30 border-indigo-500/60 text-indigo-100' : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'}`}>
+                                                                <span className="text-base leading-none">{emoji}</span>
+                                                                <span className="text-xs font-bold">{data.count}</span>
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="bottom" className="bg-[#18181b] text-white border-white/10 z-[100]">
+                                                            <div className="flex flex-col gap-1">
+                                                                {data.users.slice(0, 5).map((u, i) => (
+                                                                    <span key={i} className="text-xs font-medium">{u}</span>
+                                                                ))}
+                                                                {data.users.length > 5 && <span className="text-xs text-muted-foreground">and {data.users.length - 5} more</span>}
+                                                            </div>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <MessageActions
