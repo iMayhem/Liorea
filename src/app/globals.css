@@ -363,3 +363,42 @@
   mask-image: radial-gradient(circle 14px at calc(100% - 10px) calc(100% - 10px), transparent 13px, black 14px);
   -webkit-mask-image: radial-gradient(circle 14px at calc(100% - 10px) calc(100% - 10px), transparent 13px, black 14px);
 }
+
+.beautiful-mode body {
+  background-image: url('https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/background/2151779607.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.beautiful-mode .bg-background,
+.beautiful-mode .bg-card,
+.beautiful-mode .bg-popover,
+.beautiful-mode .bg-muted {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.beautiful-mode header {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.beautiful-mode .text-foreground,
+.beautiful-mode .text-card-foreground,
+.beautiful-mode .text-popover-foreground {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  color: #ffffff !important;
+}
+
+.beautiful-mode .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.beautiful-mode .custom-emoji-picker {
+  --epr-bg-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(10px);
+}
