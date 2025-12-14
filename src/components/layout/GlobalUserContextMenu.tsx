@@ -48,8 +48,8 @@ export default function GlobalUserContextMenu() {
       className="fixed z-[100] w-48 animate-in fade-in zoom-in-95 duration-100"
       style={{ top: position.y, left: position.x }}
     >
-      <Card className="bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 p-1.5 shadow-2xl text-zinc-200 overflow-hidden rounded-xl w-52 ring-1 ring-white/5">
-        <div className="px-3 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1 select-none">
+      <Card className="bg-popover/80 backdrop-blur-xl border border-border p-1.5 shadow-2xl text-foreground overflow-hidden rounded-xl w-52 ring-1 ring-white/5">
+        <div className="px-3 py-2 text-xs font-bold text-muted-foreground/50 uppercase tracking-wider mb-1 select-none">
           @{targetUser}
         </div>
 
@@ -57,7 +57,7 @@ export default function GlobalUserContextMenu() {
 
         <button
           onClick={() => handleAction('Block User')}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors text-left"
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-destructive/10 text-destructive hover:text-destructive transition-colors text-left"
         >
           <Ban className="w-4 h-4" />
           Block User
@@ -65,7 +65,7 @@ export default function GlobalUserContextMenu() {
 
         <button
           onClick={handleReport}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 transition-colors text-left"
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg hover:bg-destructive/10 text-destructive hover:text-destructive transition-colors text-left"
         >
           <XCircle className="w-4 h-4" />
           Report Abuse

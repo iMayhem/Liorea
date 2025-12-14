@@ -358,7 +358,7 @@ export default function ChatPanel() {
                             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-9 w-9 shrink-0 rounded"><Smile className="w-5 h-5" /></Button>
                         </PopoverTrigger>
                         <PopoverContent side="top" className="w-auto p-0 border-none bg-transparent shadow-none">
-                            <EmojiPicker theme={'dark' as any} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={400} searchDisabled={false} skinTonesDisabled />
+                            <EmojiPicker theme={'dark' as any} onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} height={400} searchDisabled={false} skinTonesDisabled className="custom-emoji-picker" />
                         </PopoverContent>
                     </Popover>
 
