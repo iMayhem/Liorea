@@ -126,13 +126,33 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
     const fetchFollowers = async (id: number) => { try { const data = await api.journal.getFollowers(id); setCurrentFollowers(data); } catch (e) { } };
 
-    // FIRESTORE LIVE LISTENER (Firestore Only)
+    // FIRESTORE LIVE LISTENER (Hybrid: Firestore + D1)
     useEffect(() => {
         if (!activeJournal) return;
 
         // Reset state
         setPosts([]); setHasMore(true); setIsInitialLoaded(false); setLoadingMore(false);
         fetchFollowers(activeJournal.id);
+
+        // 1. Fetch D1 History
+        const loadHistory = async () => {
+            try {
+                const history = await api.journal.getPosts(activeJournal.id);
+                const formattedHistory = history.map((post: any) => ({
+                    ...post,
+                    id: String(post.id),
+                    created_at: parseTimestamp(post.created_at)
+                }));
+                // Set initial
+                setPosts(prev => {
+                    const combined = [...formattedHistory, ...prev];
+                    const unique = new Map();
+                    combined.forEach(p => unique.set(String(p.id), p));
+                    return Array.from(unique.values()).sort((a, b) => a.created_at - b.created_at);
+                });
+            } catch (e) { console.error("D1 history failed", e); }
+        };
+        loadHistory();
 
         const q = query(
             collection(firestore, `journals/${activeJournal.id}/posts`),
@@ -159,8 +179,38 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                         : []
                 });
             });
-            setPosts(livePosts); // Direct set
-            setHasMore(false); // Stop loader (Pagination not yet implemented for Firestore)
+
+            setPosts(prev => {
+                const idMap = new Map<string, Post>();
+                prev.forEach(p => idMap.set(String(p.id), p));
+                livePosts.forEach(p => idMap.set(String(p.id), p));
+
+                const allPosts = Array.from(idMap.values()).sort((a, b) => a.created_at - b.created_at);
+
+                // Fuzzy Dedupe
+                const deduped: Post[] = [];
+                if (allPosts.length > 0) deduped.push(allPosts[0]);
+
+                for (let i = 1; i < allPosts.length; i++) {
+                    const current = allPosts[i];
+                    const previous = deduped[deduped.length - 1];
+
+                    const isSameUser = current.username === previous.username;
+                    const isSameContent = current.content === previous.content && current.image_url === previous.image_url;
+                    const timeDiff = Math.abs(current.created_at - previous.created_at);
+                    const isWithinWindow = timeDiff < 60000;
+
+                    if (isSameUser && isSameContent && isWithinWindow) {
+                        deduped.pop();
+                        deduped.push(current);
+                    } else {
+                        deduped.push(current);
+                    }
+                }
+                return deduped;
+            });
+
+            setHasMore(false);
             setIsInitialLoaded(true);
         });
 
@@ -228,6 +278,10 @@ export const JournalChat: React.FC<JournalChatProps> = ({
             // Also call D1 delete for data consistency if ID is number?
 
             if (activeJournal) notifyChatUpdate(activeJournal.id);
+            // D1 Delete (Best effort)
+            if (typeof postId === 'number') {
+                await api.journal.deletePost(postId, username).catch(console.error);
+            }
         } catch (e) {
             console.error(e);
             // Revert optimistic? Nah.
@@ -380,7 +434,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         const tempPost = { id: Date.now(), username, content: contentString, created_at: Date.now() };
         setPosts(prev => [...prev, tempPost]);
         try {
-            // await api.journal.post({ journal_id: activeJournal.id, username, content: contentString });
+            await api.journal.post({ journal_id: activeJournal.id, username, content: contentString }).catch(console.error);
             notifyChatUpdate(activeJournal.id);
         } catch (e) { console.error(e); }
     };

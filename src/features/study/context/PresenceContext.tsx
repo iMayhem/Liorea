@@ -193,11 +193,26 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     // 1. Leaderboard (Live from Firestore 'daily_stats')
+    // Auto-reset at midnight by tracking 'currentDate'
+    const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+
     useEffect(() => {
-        const today = new Date().toISOString().split('T')[0];
+        const checkDate = () => {
+            const now = new Date().toISOString().split('T')[0];
+            if (now !== currentDate) {
+                setCurrentDate(now);
+            }
+        };
+        // Check every minute
+        const interval = setInterval(checkDate, 60000);
+        return () => clearInterval(interval);
+    }, [currentDate]);
+
+    useEffect(() => {
+        // Query depends on 'currentDate' so it resets exactly when day flips
         const q = queryFirestore(
             collection(firestore, 'daily_stats'),
-            where('date', '==', today),
+            where('date', '==', currentDate),
             orderBy('minutes', 'desc'),
             limitFirestore(50)
         );
@@ -218,7 +233,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [currentDate]);
 
     // 2. Study Room Users (Throttled)
     useEffect(() => {

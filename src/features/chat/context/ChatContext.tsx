@@ -59,22 +59,46 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     const [hasMore, setHasMore] = useState(false); // Pagination not fully implemented for Firestore yet in this step
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
-    // 1. LIVE LISTENER (Firestore Only)
+    // 1. LIVE LISTENER (Hybrid: Firestore + D1)
     useEffect(() => {
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
+        let d1History: ChatMessage[] = [];
 
-        // Simple Firestore Query
+        // Fetch D1 history first
+        const fetchHistory = async () => {
+            if (!username) return; // Wait for auth
+            try {
+                const history = await api.chat.getHistory(effectiveRoomId);
+                d1History = history.map((msg: any) => ({
+                    ...msg,
+                    id: String(msg.id),
+                    timestamp: parseTimestamp(msg.timestamp), // Use robust parser
+                    reactions: msg.reactions || {}
+                }));
+                // Initial set from D1
+                setMessages(prev => {
+                    const combined = [...d1History, ...prev];
+                    const unique = new Map();
+                    combined.forEach(m => unique.set(String(m.id), m));
+                    return Array.from(unique.values()).sort((a, b) => a.timestamp - b.timestamp);
+                });
+            } catch (e) {
+                console.error("Failed to fetch legacy history:", e);
+            }
+        };
+        fetchHistory();
+
         const q = query(
             collection(firestore, collectionPath),
             orderBy('timestamp', 'asc'),
-            limit(100) // Increase limit since we don't have backfill
+            limit(100)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const msgs: ChatMessage[] = [];
+            const liveMsgs: ChatMessage[] = [];
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
-                msgs.push({
+                liveMsgs.push({
                     id: doc.id,
                     username: data.username,
                     message: data.message,
@@ -91,11 +115,49 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                         : {}
                 });
             });
-            setMessages(msgs); // Direct set, no merging/deduping needed
+
+            // Merge & Deduplicate
+            setMessages(prev => {
+                // 1. Combine D1 History (fetched above, or existing in prev) with Live updates
+                // We trust 'liveMsgs' as the source of truth for their specific IDs.
+                // We trust 'prev' for older D1 messages that might not be in 'liveMsgs' due to limit(100).
+
+                // Map by ID first
+                const idMap = new Map<string, ChatMessage>();
+                prev.forEach(m => idMap.set(m.id, m));
+                liveMsgs.forEach(m => idMap.set(m.id, m));
+
+                const allMessages = Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+
+                // 2. Fuzzy Deduplication (The Fix for Double Messages)
+                const deduped: ChatMessage[] = [];
+                if (allMessages.length > 0) deduped.push(allMessages[0]);
+
+                for (let i = 1; i < allMessages.length; i++) {
+                    const current = allMessages[i];
+                    const previous = deduped[deduped.length - 1];
+
+                    const isSameUser = current.username === previous.username;
+                    const isSameContent = current.message === previous.message && current.image_url === previous.image_url;
+                    const timeDiff = Math.abs(current.timestamp - previous.timestamp);
+                    const isWithinWindow = timeDiff < 60000; // 60s window
+
+                    if (isSameUser && isSameContent && isWithinWindow) {
+                        // Duplicate found. Keep the one with the string ID if possible (Firestore), or just the latest one (Current).
+                        // Usually D1 has ID '123' and Firestore has 'abc'.
+                        // We replace previous with current as current is likely the fresh live one.
+                        deduped.pop();
+                        deduped.push(current);
+                    } else {
+                        deduped.push(current);
+                    }
+                }
+                return deduped;
+            });
         });
 
         return () => unsubscribe();
-    }, [roomId, isPublic]);
+    }, [roomId, isPublic, effectiveRoomId, username]);
 
     // 3. SEND MESSAGE
     const sendMessage = useCallback(async (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => {
