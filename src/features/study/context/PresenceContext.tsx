@@ -164,9 +164,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!username || !joinedRoomId) return;
 
-        // Dynamic Room Path
-        const roomPrefix = `rooms/${joinedRoomId}`;
-        const studyRef = ref(db, `${roomPrefix}/presence/${username}`);
+        // Dynamic Room Path: Legacy support for "public" -> root /study_room_presence
+        let studyRef;
+        if (joinedRoomId === 'public') {
+            studyRef = ref(db, `/study_room_presence/${username}`);
+        } else {
+            studyRef = ref(db, `rooms/${joinedRoomId}/presence/${username}`);
+        }
+
         const commRef = ref(db, `/community_presence/${username}`);
 
         const initializeStudySession = async () => {
@@ -244,7 +249,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        const roomRef = ref(db, `rooms/${joinedRoomId}/presence`);
+        const path = joinedRoomId === 'public' ? '/study_room_presence' : `rooms/${joinedRoomId}/presence`;
+        const roomRef = ref(db, path);
         let latestData: any = null;
         let lastUpdate = 0;
         let animationFrameId: number;

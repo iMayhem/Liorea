@@ -65,7 +65,9 @@ export const useChatSync = (roomId: string = "public") => {
             let initialMessages: ChatMessage[] = [];
 
             try {
-                const d1Messages = await api.chat.getHistory(roomId);
+                // If public, use legacy CHAT_ROOM ID ("study-room-1"), else use new ID
+                const targetRoomId = roomId === 'public' ? CHAT_ROOM : roomId;
+                const d1Messages = await api.chat.getHistory(targetRoomId);
                 if (mounted) {
                     initialMessages = mergeAndDedupe(initialMessages, d1Messages);
 
@@ -82,7 +84,8 @@ export const useChatSync = (roomId: string = "public") => {
         init();
 
         // C. Firebase Live Listener
-        const chatRef = query(ref(db, `rooms/${roomId}/chats`), limitToLast(30));
+        const fbPath = roomId === 'public' ? 'chats' : `rooms/${roomId}/chats`;
+        const chatRef = query(ref(db, fbPath), limitToLast(30));
 
         const handleSnapshot = (snapshot: any) => {
             const data = snapshot.val();
@@ -119,7 +122,8 @@ export const useChatSync = (roomId: string = "public") => {
 
         const oldestMessage = messages[0];
         try {
-            const olderMessages: ChatMessage[] = await api.chat.getHistory(roomId, oldestMessage.timestamp);
+            const targetRoomId = roomId === 'public' ? CHAT_ROOM : roomId;
+            const olderMessages: ChatMessage[] = await api.chat.getHistory(targetRoomId, oldestMessage.timestamp);
             if (olderMessages) {
                 if (olderMessages.length < 20) setHasMore(false);
 

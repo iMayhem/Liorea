@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { db } from '@/lib/firebase';
+
 import { ref, push, remove, serverTimestamp, update } from 'firebase/database';
 
 import { api } from '@/lib/api';
@@ -23,9 +24,16 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
+
+
 export const ChatProvider = ({ children, roomId = "public" }: { children: ReactNode, roomId?: string }) => {
     const { username, userImage } = usePresence();
 
+    const isPublic = roomId === 'public';
+    // Use legacy logic for public room to restore data
+    const effectiveRoomId = isPublic ? CHAT_ROOM : roomId;
+
+    // Sync Hook also needs to know if it's legacy mode
     const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync(roomId);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
@@ -34,7 +42,8 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         if ((!message.trim() && !image_url) || !username) return;
 
         // Send to Firebase (UI updates via listener)
-        push(ref(db, `rooms/${roomId}/chats`), {
+        const fbPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
+        push(ref(db, fbPath), {
             username,
             message,
             image_url: image_url || "",
@@ -45,7 +54,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
 
         // Backup to D1 (Silent)
         api.chat.send({
-            room_id: roomId,
+            room_id: effectiveRoomId,
             username,
             message,
             photoURL: userImage || ""
@@ -95,9 +104,10 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         }
 
         try {
-            const reactionsRef = ref(db, `rooms/${roomId}/chats/${messageId}/reactions`);
+            const path = isPublic ? `chats/${messageId}/reactions` : `rooms/${roomId}/chats/${messageId}/reactions`;
+            const reactionsRef = ref(db, path);
             if (existingReactionKey) {
-                await remove(ref(db, `rooms/${roomId}/chats/${messageId}/reactions/${existingReactionKey}`));
+                await remove(ref(db, `${path}/${existingReactionKey}`));
             } else {
                 await push(reactionsRef, { username, emoji });
             }
@@ -116,14 +126,15 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         // 2. Firebase Tombstone (Soft Delete for specific real-time propagation)
         // We update the node to have { deleted: true } so other clients can filter it out
         try {
-            await update(ref(db, `rooms/${roomId}/chats/${messageId}`), { deleted: true });
+            const path = isPublic ? `chats/${messageId}` : `rooms/${roomId}/chats/${messageId}`;
+            await update(ref(db, path), { deleted: true });
         } catch (e) {
             console.error("Firebase delete failed:", e);
         }
 
         // 3. D1 Remove (Permanent)
         api.chat.delete({
-            room_id: roomId,
+            room_id: effectiveRoomId,
             message_id: messageId,
             username
         }).catch(e => console.error("D1 Delete failed:", e));
