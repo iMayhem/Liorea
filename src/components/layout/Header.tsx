@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Wand2 } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Wand2, Brain } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -254,6 +254,15 @@ export default function Header() {
                     )}>
                         <Sparkles className="w-4 h-4" />
                         <span className="hidden sm:inline">Study Room</span>
+                    </Link>
+
+                    <Link href="/personal" className={cn(
+                        "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
+                        'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
+                        pathname === '/personal' && 'bg-white/10 text-white'
+                    )}>
+                        <Brain className="w-4 h-4" />
+                        <span className="hidden sm:inline">Personal</span>
                     </Link>
 
                     <Link href="/journal" className={cn(

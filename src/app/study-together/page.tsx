@@ -37,7 +37,7 @@ export default function StudyTogetherPage() {
 
   useEffect(() => {
     // Start the session
-    joinSession();
+    joinSession("public");
 
     // Show a "joining" state for a short period for better UX
     const timer = setTimeout(() => {
@@ -77,7 +77,7 @@ export default function StudyTogetherPage() {
   }
 
   return (
-    <ChatProvider>
+    <ChatProvider roomId="public">
       <div className="bg-transparent min-h-screen text-foreground overflow-hidden font-sans antialiased flex flex-col">
         <Header />
 

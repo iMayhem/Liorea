@@ -23,10 +23,10 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-export const ChatProvider = ({ children }: { children: ReactNode }) => {
+export const ChatProvider = ({ children, roomId = "public" }: { children: ReactNode, roomId?: string }) => {
     const { username, userImage } = usePresence();
 
-    const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync();
+    const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync(roomId);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
     // 3. SEND MESSAGE
@@ -34,7 +34,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         if ((!message.trim() && !image_url) || !username) return;
 
         // Send to Firebase (UI updates via listener)
-        push(ref(db, 'chats'), {
+        push(ref(db, `rooms/${roomId}/chats`), {
             username,
             message,
             image_url: image_url || "",
@@ -45,7 +45,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         // Backup to D1 (Silent)
         api.chat.send({
-            room_id: CHAT_ROOM,
+            room_id: roomId,
             username,
             message,
             photoURL: userImage || "",
@@ -53,7 +53,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             replyTo: replyTo
         }).catch(e => console.error("D1 Backup failed:", e));
 
-    }, [username, userImage]);
+    }, [username, userImage, roomId]);
 
     // 4. SEND REACTION
     const sendReaction = useCallback(async (messageId: string, emoji: string) => {
@@ -97,16 +97,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }
 
         try {
-            const reactionsRef = ref(db, `chats/${messageId}/reactions`);
+            const reactionsRef = ref(db, `rooms/${roomId}/chats/${messageId}/reactions`);
             if (existingReactionKey) {
-                await remove(ref(db, `chats/${messageId}/reactions/${existingReactionKey}`));
+                await remove(ref(db, `rooms/${roomId}/chats/${messageId}/reactions/${existingReactionKey}`));
             } else {
                 await push(reactionsRef, { username, emoji });
             }
         } catch (e) {
             console.error("Failed to sync reaction to Firebase:", e);
         }
-    }, [username, messages, setMessages]);
+    }, [username, messages, setMessages, roomId]);
 
     // 5. DELETE MESSAGE (Real-time with Tombstone)
     const deleteMessage = useCallback(async (messageId: string) => {
@@ -118,19 +118,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         // 2. Firebase Tombstone (Soft Delete for specific real-time propagation)
         // We update the node to have { deleted: true } so other clients can filter it out
         try {
-            await update(ref(db, `chats/${messageId}`), { deleted: true });
+            await update(ref(db, `rooms/${roomId}/chats/${messageId}`), { deleted: true });
         } catch (e) {
             console.error("Firebase delete failed:", e);
         }
 
         // 3. D1 Remove (Permanent)
         api.chat.delete({
-            room_id: CHAT_ROOM,
+            room_id: roomId,
             message_id: messageId,
             username
         }).catch(e => console.error("D1 Delete failed:", e));
 
-    }, [username, setMessages]);
+    }, [username, setMessages, roomId]);
 
     const sendTypingEvent = useCallback(async () => { }, []);
 

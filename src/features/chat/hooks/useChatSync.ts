@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { CHAT_ROOM, LOCAL_STORAGE_KEY } from '@/lib/constants';
 import { ChatMessage } from '../types';
 
-export const useChatSync = () => {
+export const useChatSync = (roomId: string = "public") => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -65,7 +65,7 @@ export const useChatSync = () => {
             let initialMessages: ChatMessage[] = [];
 
             try {
-                const d1Messages = await api.chat.getHistory(CHAT_ROOM);
+                const d1Messages = await api.chat.getHistory(roomId);
                 if (mounted) {
                     initialMessages = mergeAndDedupe(initialMessages, d1Messages);
 
@@ -82,7 +82,7 @@ export const useChatSync = () => {
         init();
 
         // C. Firebase Live Listener
-        const chatRef = query(ref(db, 'chats'), limitToLast(30));
+        const chatRef = query(ref(db, `rooms/${roomId}/chats`), limitToLast(30));
 
         const handleSnapshot = (snapshot: any) => {
             const data = snapshot.val();
@@ -110,7 +110,7 @@ export const useChatSync = () => {
             mounted = false;
             unsubscribe();
         };
-    }, [mergeAndDedupe]);
+    }, [mergeAndDedupe, roomId]);
 
     // 2. PAGINATION
     const loadMoreMessages = useCallback(async () => {
@@ -119,7 +119,7 @@ export const useChatSync = () => {
 
         const oldestMessage = messages[0];
         try {
-            const olderMessages: ChatMessage[] = await api.chat.getHistory(CHAT_ROOM, oldestMessage.timestamp);
+            const olderMessages: ChatMessage[] = await api.chat.getHistory(roomId, oldestMessage.timestamp);
             if (olderMessages) {
                 if (olderMessages.length < 20) setHasMore(false);
 
@@ -129,7 +129,7 @@ export const useChatSync = () => {
             }
         } catch (e) { console.error("Load more failed", e); }
         finally { setLoadingMore(false); }
-    }, [messages, loadingMore, hasMore, mergeAndDedupe]);
+    }, [messages, loadingMore, hasMore, mergeAndDedupe, roomId]);
 
     return {
         messages,

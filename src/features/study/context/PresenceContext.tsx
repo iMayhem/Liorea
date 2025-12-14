@@ -36,8 +36,9 @@ interface PresenceContextType {
     communityUsers: CommunityUser[];
     leaderboardUsers: StudyUser[];
     isStudying: boolean;
-    joinSession: () => void;
+    joinSession: (roomId?: string) => void;
     leaveSession: () => void;
+    joinedRoomId: string | null;
     updateStatusMessage: (msg: string) => Promise<void>;
     getUserImage: (username: string) => string | undefined;
 
@@ -65,6 +66,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const [userRoles, setUserRoles] = useState<Record<string, string>>({});
 
     const [isStudying, setIsStudying] = useState(false);
+    const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
     const unsavedMinutesRef = useRef(0);
     const { toast } = useToast();
 
@@ -160,9 +162,11 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
     // --- ACTIVE STUDY LOGIC ---
     useEffect(() => {
-        if (!username) return;
+        if (!username || !joinedRoomId) return;
 
-        const studyRef = ref(db, `/study_room_presence/${username}`);
+        // Dynamic Room Path
+        const roomPrefix = `rooms/${joinedRoomId}`;
+        const studyRef = ref(db, `${roomPrefix}/presence/${username}`);
         const commRef = ref(db, `/community_presence/${username}`);
 
         const initializeStudySession = async () => {
@@ -202,7 +206,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 update(commRef, { is_studying: false }).catch(() => { });
             }
         };
-    }, [username, isStudying, userImage, userFrame]);
+    }, [username, isStudying, joinedRoomId, userImage, userFrame]);
 
     // ... (DATA LISTENERS unchanged) ...
 
@@ -233,9 +237,14 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         return () => clearInterval(interval);
     }, []);
 
-    // 2. Study Room Users (Throttled)
+    // 2. Study Room Users (Throttled) - Depends on joinedRoomId
     useEffect(() => {
-        const roomRef = ref(db, '/study_room_presence');
+        if (!joinedRoomId) {
+            setStudyUsers([]);
+            return;
+        }
+
+        const roomRef = ref(db, `rooms/${joinedRoomId}/presence`);
         let latestData: any = null;
         let lastUpdate = 0;
         let animationFrameId: number;
@@ -285,7 +294,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             unsubscribe();
             cancelAnimationFrame(animationFrameId);
         };
-    }, []);
+    }, [joinedRoomId]);
 
     // 3. Community Presence (Throttled)
     useEffect(() => {
@@ -435,10 +444,16 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             clearInterval(interval);
             flushToCloudflare();
         };
-    }, [username, isStudying]);
+    }, [username, isStudying]); // Timer is independent of room? Yes, personal study time.
 
-    const joinSession = useCallback(() => setIsStudying(true), []);
-    const leaveSession = useCallback(() => setIsStudying(false), []);
+    const joinSession = useCallback((roomId: string = "public") => {
+        setJoinedRoomId(roomId);
+        setIsStudying(true);
+    }, []);
+    const leaveSession = useCallback(() => {
+        setIsStudying(false);
+        setJoinedRoomId(null);
+    }, []);
 
     const updateStatusMessage = useCallback(async (msg: string) => {
         if (!username) return;
@@ -456,8 +471,8 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         studyUsers, leaderboardUsers, communityUsers,
         isStudying, joinSession, leaveSession, updateStatusMessage,
         getUserImage, getUserFrame,
-        userRoles, isMod
-    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame, userRoles, isMod]);
+        userRoles, isMod, joinedRoomId
+    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame, userRoles, isMod, joinedRoomId]);
 
     return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };
