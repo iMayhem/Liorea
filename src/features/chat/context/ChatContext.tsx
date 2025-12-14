@@ -192,28 +192,39 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     const sendReaction = useCallback(async (messageId: string, emoji: string) => {
         if (!username) return;
 
-        // Optimistic UI update (optional, but good for responsiveness)
-        // setMessages... (Skip for complex map logic, let live listener handle it fast enough)
+        // SKIP numeric IDs (Legacy D1 messages) - Firestore can't update them as they don't exist as docs
+        if (!isNaN(Number(messageId))) {
+            console.warn("Cannot react to legacy D1 message:", messageId);
+            return;
+        }
 
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
         const msgRef = doc(firestore, collectionPath, messageId);
 
         try {
-            // We toggle: If exists, remove. If new, add.
-            // Since we use a Map `reactions: { username: emoji }`, we can read it first or check local state.
+            // We need to know current state to toggle.
+            // Trusting 'messages' state is usually fine, but for 100% accuracy we could transaction.
+            // For now, using 'messages' state finding is acceptable for UI responsiveness.
             const currentMsg = messages.find(m => m.id === messageId);
             const currentReaction = currentMsg?.reactions?.[username]?.emoji;
 
             if (currentReaction === emoji) {
-                // Remove
+                // Remove reaction
                 await updateDoc(msgRef, {
                     [`reactions.${username}`]: deleteField()
                 });
             } else {
-                // Add/Update (Overwrite)
-                await updateDoc(msgRef, {
-                    [`reactions.${username}`]: emoji
-                });
+                // Add/Update reaction (Use setDoc with merge to ensure 'reactions' map exists if somehow missing)
+                // updateDoc with dot notation requires the parent field ('reactions') to nominally exist or be creatable.
+                // Safest is setDoc merge for the specific field path if we were setting top level, 
+                // but dot notation in updateDoc works fine for standard nested maps.
+                // However, to be extra safe against "No document to update":
+
+                await setDoc(msgRef, {
+                    reactions: {
+                        [username]: emoji
+                    }
+                }, { merge: true });
             }
         } catch (e) {
             console.error("Failed to sync reaction to Firestore:", e);
