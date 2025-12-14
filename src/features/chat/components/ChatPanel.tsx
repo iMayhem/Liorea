@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+
 import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon, X } from 'lucide-react';
 import { useChat, ChatMessage } from '../context/ChatContext';
 import { usePresence } from '@/features/study/context/PresenceContext';
@@ -387,13 +389,13 @@ export default function ChatPanel() {
                         </PopoverContent>
                     </Popover>
 
-                    <textarea
+                    <Textarea
                         ref={inputRef}
                         value={newMessage}
-                        onChange={(e) => { handleInputChange(e as any); }} // Casting for textarea/input mismatch if needed, but logic is same
-                        onKeyDown={(e) => { handleKeyDown(e as any); }}
-                        placeholder="Message Study Room..."
-                        className="w-full bg-transparent border-none focus:ring-0 text-foreground text-base placeholder:text-muted-foreground resize-none py-1.5 max-h-32 min-h-[36px] no-scrollbar"
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Message"
+                        className="min-h-[44px] max-h-32 py-3 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none placeholder:text-muted-foreground/50"
                         rows={1}
                     />
 

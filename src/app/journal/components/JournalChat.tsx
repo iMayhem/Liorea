@@ -369,7 +369,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                             onClick={() => scrollToMessage(post.replyTo!.id)}
                                             className="flex items-center gap-2 mb-0.5 opacity-60 hover:opacity-100 transition-opacity cursor-pointer text-xs group/reply select-none"
                                         >
-                                            <div className="w-8 h-3 border-l-2 border-t-2 border-white/30 rounded-tl-md border-b-0 border-r-0 translate-y-1"></div>
+                                            <div className="w-8 h-3 border-l-2 border-t-2 border-white/60 rounded-tl-md border-b-0 border-r-0 translate-y-1"></div>
                                             <UserAvatar username={post.replyTo.username} className="w-4 h-4" />
                                             <span className="font-semibold text-white/80 group-hover/reply:underline active:scale-95 transition-transform">{post.replyTo.username}</span>
                                             <span className="text-white/60 truncate max-w-[200px]">{post.replyTo.content}</span>
@@ -497,7 +497,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                         </PopoverContent>
                     </Popover>
 
-                    <textarea ref={chatInputRef} value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder={`Message #${activeJournal.title}`} className="w-full bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-white/20 resize-none py-1.5 max-h-32 min-h-[36px]" rows={1} />
+                    <textarea ref={chatInputRef} value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder="Message" className="w-full bg-transparent border-none focus:ring-0 text-white text-base placeholder:text-white/20 resize-none py-1.5 max-h-32 min-h-[36px]" rows={1} />
                     <Button onClick={sendPost} disabled={!newMessage.trim()} className="bg-white/10 hover:bg-white text-white hover:text-black h-9 w-9 shrink-0 rounded p-0"><Send className="w-4 h-4" /></Button>
                 </div>
             </div>

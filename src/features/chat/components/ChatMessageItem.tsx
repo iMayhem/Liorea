@@ -68,7 +68,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                         onClick={() => scrollToMessage(msg.replyTo!.id)}
                         className="flex items-center gap-2 mb-0.5 opacity-60 hover:opacity-100 transition-opacity cursor-pointer text-xs group/reply select-none"
                     >
-                        <div className="w-8 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-md border-b-0 border-r-0 translate-y-1"></div>
+                        <div className="w-8 h-3 border-l-2 border-t-2 border-primary/60 rounded-tl-md border-b-0 border-r-0 translate-y-1"></div>
                         <UserAvatar username={msg.replyTo.username} className="w-4 h-4" />
                         <span className="font-semibold text-primary/80 group-hover/reply:underline active:scale-95 transition-transform">{msg.replyTo.username}</span>
                         <span className="text-muted-foreground truncate max-w-[200px]">{msg.replyTo.message}</span>
