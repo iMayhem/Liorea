@@ -48,7 +48,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             room_id: CHAT_ROOM,
             username,
             message,
-            photoURL: userImage || ""
+            photoURL: userImage || "",
+            image_url: image_url,
+            replyTo: replyTo
         }).catch(e => console.error("D1 Backup failed:", e));
 
     }, [username, userImage]);
