@@ -139,7 +139,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                     username: data.username,
                     content: data.content,
                     image_url: data.image_url,
-                    created_at: data.created_at?.toMillis ? data.created_at.toMillis() : data.created_at,
+                    created_at: data.created_at?.toMillis ? data.created_at.toMillis() : (data.created_at || Date.now()),
                     replyTo: data.replyTo ? JSON.parse(data.replyTo) : undefined,
                     reactions: data.reactions ?
                         Object.entries(data.reactions).reduce((acc: any[], [uid, emoji]) => ([
