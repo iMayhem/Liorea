@@ -189,7 +189,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         const userRef = collection(firestore, 'users', targetUser, 'notifications');
         await addDoc(userRef, {
           message,
-          link,
+          link: link || null,
           type: 'personal',
           timestamp: serverTimestamp(),
           read: false
@@ -199,7 +199,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         const globalRef = collection(firestore, 'global_notifications');
         await addDoc(globalRef, {
           message,
-          link,
+          link: link || null,
           type: 'global',
           timestamp: serverTimestamp()
         });
