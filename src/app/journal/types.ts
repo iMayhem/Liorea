@@ -1,5 +1,5 @@
 export type Reaction = {
-    post_id: number;
+    post_id: number | string;
     username: string;
     emoji: string;
 };
@@ -15,7 +15,7 @@ export type Journal = {
 };
 
 export type Post = {
-    id: number;
+    id: number | string;
     username: string;
     content: string;
     image_url?: string;
@@ -23,7 +23,7 @@ export type Post = {
     photoURL?: string;
     reactions?: Reaction[];
     replyTo?: {
-        id: number;
+        id: number | string;
         username: string;
         content: string;
     };

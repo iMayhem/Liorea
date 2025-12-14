@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import dynamic from 'next/dynamic';
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { db } from '@/lib/firebase';
-import { ref, push, serverTimestamp } from 'firebase/database';
+// import { ref, push, serverTimestamp } from 'firebase/database'; // Removed
 import { useToast } from '@/hooks/use-toast';
 import { compressImage } from '@/lib/compress';
 
@@ -51,6 +51,18 @@ export default function ChatPanel() {
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<string | null>(null);
     const [isGifPopoverOpen, setIsGifPopoverOpen] = useState(false);
     const [replyingTo, setReplyingTo] = useState<{ id: string, username: string, message: string } | null>(null);
+
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+    const handleReactionWrapped = async (id: string, emoji: string) => {
+        setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] Reacting to ${id} with ${emoji}...`, ...prev]);
+        try {
+            await sendReaction(id, emoji);
+            setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] Success`, ...prev]);
+        } catch (e: any) {
+            setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] Error: ${e?.message || e}`, ...prev]);
+        }
+    };
 
     useEffect(() => {
         if (isGifPopoverOpen && gifs.length === 0) {
@@ -132,7 +144,11 @@ export default function ChatPanel() {
     const handleReportMessage = async (msg: ChatMessage) => {
         if (!username) return;
         try {
-            await push(ref(db, 'reports'), {
+            // Updated to Firestore
+            const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+            const { firestore } = await import('@/lib/firebase'); // Dynamic import to ensure we get proper instance if needed or just import top level.
+            // Actually better to import top level. But for this small cleanup:
+            await addDoc(collection(firestore, 'reports'), {
                 reporter: username,
                 reported_user: msg.username,
                 message_content: msg.message || "Image/GIF",
@@ -142,7 +158,8 @@ export default function ChatPanel() {
                 status: "pending"
             });
             toast({ title: "Report Sent", description: "Admins have been notified." });
-        } catch (e) {
+        } catch (e: any) {
+            // console.error(e);
             toast({ variant: "destructive", title: "Error", description: "Could not send report." });
         }
     };
@@ -292,7 +309,7 @@ export default function ChatPanel() {
                                 isCurrentUser={isCurrentUser}
                                 reactionGroups={reactionGroups}
                                 openReactionPopoverId={openReactionPopoverId}
-                                onReact={sendReaction}
+                                onReact={handleReactionWrapped}
                                 onReply={() => handleReply(msg)}
                                 onReport={handleReportMessage}
                                 onDelete={deleteMessage}
@@ -405,6 +422,49 @@ export default function ChatPanel() {
                     </Button>
                 </div>
             </div>
+
+            <ChatDebugger logs={debugLogs} messages={messages} />
         </div>
     );
 };
+
+function ChatDebugger({ logs, messages }: { logs: string[], messages: ChatMessage[] }) {
+    const [isOpen, setIsOpen] = useState(false);
+    // Removed production check for now
+    // if (process.env.NODE_ENV === 'production') return null;
+
+    return (
+        <div className="border-t border-white/5 bg-black/40">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between px-3 py-1 text-[10px] uppercase tracking-wider text-red-400 hover:bg-white/5 transition-colors font-mono"
+            >
+                <div className="flex items-center gap-2">
+                    <Flag className="w-3 h-3" />
+                    <span>Chat Debugger</span>
+                </div>
+                <span>{isOpen ? 'Close' : 'Expand'}</span>
+            </button>
+
+            {isOpen && (
+                <div className="p-2 space-y-2 h-40 overflow-y-auto font-mono text-[10px] text-green-400">
+                    <div className="bg-black/50 p-2 rounded">
+                        <strong className="block text-zinc-500 mb-1">Live Logs:</strong>
+                        {logs.length === 0 ? <span className="opacity-50 italic">No events yet...</span> : (
+                            <ul className="space-y-1">
+                                {logs.map((log, i) => (
+                                    <li key={i} className="border-b border-white/5 pb-0.5 last:border-0">{log}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                    <div className="bg-black/50 p-2 rounded">
+                        <strong className="block text-zinc-500 mb-1">Message Stats:</strong>
+                        Count: {messages.length} <br />
+                        Last ID: {messages[messages.length - 1]?.id || 'N/A'}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

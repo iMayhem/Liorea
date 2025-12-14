@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
-import { ref, onValue, set } from 'firebase/database';
+import { firestore } from '@/lib/firebase';
+import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,7 @@ export interface TaskListContent {
 }
 
 interface TaskMessageProps {
-    postId: number;
+    postId: number | string;
     content: TaskListContent;
     isOwner: boolean;
 }
@@ -22,10 +22,12 @@ export const TaskMessage: React.FC<TaskMessageProps> = ({ postId, content, isOwn
     const [taskStates, setTaskStates] = useState<Record<number, boolean>>({});
 
     useEffect(() => {
-        const taskRef = ref(db, `journal_tasks/${postId}`);
-        const unsubscribe = onValue(taskRef, (snapshot) => {
+        // Use a separate collection 'journal_tasks' for task states, docId = String(postId)
+        if (!postId) return;
+        const taskDocRef = doc(firestore, 'journal_tasks', String(postId));
+        const unsubscribe = onSnapshot(taskDocRef, (snapshot) => {
             if (snapshot.exists()) {
-                setTaskStates(snapshot.val());
+                setTaskStates(snapshot.data() as Record<number, boolean>);
             } else {
                 setTaskStates({});
             }
@@ -33,10 +35,13 @@ export const TaskMessage: React.FC<TaskMessageProps> = ({ postId, content, isOwn
         return () => unsubscribe();
     }, [postId]);
 
-    const toggleTask = (index: number) => {
+    const toggleTask = async (index: number) => {
         if (!isOwner) return; // Only owner can toggle?
         const newState = !taskStates[index];
-        set(ref(db, `journal_tasks/${postId}/${index}`), newState);
+        const taskDocRef = doc(firestore, 'journal_tasks', String(postId));
+
+        // Use setDoc with merge to ensure document exists if it handles the first click
+        await setDoc(taskDocRef, { [index]: newState }, { merge: true });
     };
 
     return (
