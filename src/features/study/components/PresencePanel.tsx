@@ -1,7 +1,7 @@
 import { BentoCard, CardContent, CardHeader, CardTitle } from '@/components/ui/BentoCard';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CommunityUser } from '../context/PresenceContext';
+import { CommunityUser, usePresence } from '../context/PresenceContext';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserAvatar from '@/components/UserAvatar';
@@ -22,6 +22,7 @@ const getTimeAgo = (timestamp?: number) => {
 }
 
 export default function PresencePanel({ users }: PresencePanelProps) {
+  const { isMod } = usePresence();
   const onlineCount = users.filter(u => u.status === 'Online').length;
 
   return (
@@ -61,6 +62,9 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                     <div className="flex justify-between items-center">
                       <p className={cn("font-semibold text-sm truncate transition-colors", isOnline ? "text-foreground" : "text-muted-foreground")}>
                         {user.username}
+                        {isMod(user.username) && (
+                          <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
+                        )}
                       </p>
                     </div>
 

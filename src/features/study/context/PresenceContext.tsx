@@ -40,7 +40,10 @@ interface PresenceContextType {
     leaveSession: () => void;
     updateStatusMessage: (msg: string) => Promise<void>;
     getUserImage: (username: string) => string | undefined;
+
     getUserFrame: (username: string) => string | undefined;
+    userRoles: Record<string, string>;
+    isMod: (username: string) => boolean;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -59,6 +62,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
     const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
     const [historicalLeaderboard, setHistoricalLeaderboard] = useState<StudyUser[]>([]);
+    const [userRoles, setUserRoles] = useState<Record<string, string>>({});
 
     const [isStudying, setIsStudying] = useState(false);
     const unsavedMinutesRef = useRef(0);
@@ -140,6 +144,19 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             onDisconnect(commRef).cancel(); // CRITICAL: Cancel onDisconnect when username changes/unmounts
         };
     }, [username, userImage, userFrame]);
+
+    // --- ROLES LISTENER ---
+    useEffect(() => {
+        const rolesRef = ref(db, 'roles');
+        const unsubscribe = onValue(rolesRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setUserRoles(snapshot.val());
+            } else {
+                setUserRoles({});
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     // --- ACTIVE STUDY LOGIC ---
     useEffect(() => {
@@ -432,12 +449,15 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
 
 
+    const isMod = useCallback((u: string) => userRoles[u] === 'mod', [userRoles]);
+
     const value = useMemo(() => ({
         username, userImage, setUsername, setUserImage,
         studyUsers, leaderboardUsers, communityUsers,
         isStudying, joinSession, leaveSession, updateStatusMessage,
-        getUserImage, getUserFrame
-    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame]);
+        getUserImage, getUserFrame,
+        userRoles, isMod
+    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame, userRoles, isMod]);
 
     return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };

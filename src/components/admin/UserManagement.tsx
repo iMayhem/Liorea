@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Loader2, Gavel } from "lucide-react";
+import { Search, Loader2, Gavel, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { ref, update, remove } from "firebase/database";
+import { usePresence } from "@/features/study";
 
 type AdminUser = {
     username: string;
@@ -22,7 +25,23 @@ export default function UserManagement() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+
     const { toast } = useToast();
+    const { isMod } = usePresence();
+
+    const handleToggleMod = async (username: string) => {
+        try {
+            if (isMod(username)) {
+                await remove(ref(db, `roles/${username}`));
+                toast({ title: "Role Removed", description: `${username} is no longer a moderator.` });
+            } else {
+                await update(ref(db, `roles`), { [username]: 'mod' });
+                toast({ title: "Role Added", description: `${username} is now a moderator.` });
+            }
+        } catch (e) {
+            toast({ variant: "destructive", title: "Failed to update role" });
+        }
+    };
 
     const handleBanUser = async (username: string) => {
         if (!confirm(`Are you sure you want to ban ${username}?`)) return;
@@ -118,13 +137,25 @@ export default function UserManagement() {
                                                 {user.username[0].toUpperCase()}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="font-medium text-white">{user.username}</TableCell>
+                                        <TableCell className="font-medium text-white">
+                                            {user.username}
+                                            {isMod(user.username) && <span className="ml-2 text-indigo-400 text-xs font-bold border border-indigo-500/50 px-1 rounded bg-indigo-500/10">MOD</span>}
+                                        </TableCell>
                                         <TableCell className="text-zinc-400 text-xs">Recently</TableCell>
                                         <TableCell className="text-zinc-300">
                                             {user.session_mic_seconds ? Math.round(user.session_mic_seconds / 60) : 0} m
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex gap-2 justify-end">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleToggleMod(user.username)}
+                                                    className={isMod(user.username) ? "text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/20" : "text-zinc-500 hover:text-indigo-400 hover:bg-indigo-500/20"}
+                                                    title={isMod(user.username) ? "Remove Mod" : "Make Mod"}
+                                                >
+                                                    <Shield className="w-4 h-4" />
+                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

@@ -5,6 +5,7 @@ import { MessageActions } from '@/components/chat/MessageActions';
 import UserAvatar from '@/components/UserAvatar';
 import { ImageViewer } from '@/components/ui/ImageViewer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePresence } from '@/features/study/context/PresenceContext';
 
 interface ChatMessageItemProps {
     msg: ChatMessage;
@@ -27,6 +28,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     openReactionPopoverId, onReact, onReply, onReport, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
+    const { isMod } = usePresence();
     const [isViewerOpen, setIsViewerOpen] = useState(false);
 
     const scrollToMessage = (id: string) => {
@@ -59,6 +61,9 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 {showHeader && (
                     <div className="flex items-center gap-2 mb-1 select-none">
                         <span className="text-base font-semibold text-foreground hover:underline cursor-pointer">{msg.username}</span>
+                        {isMod(msg.username) && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
+                        )}
                         <span className="text-xs text-muted-foreground ml-1">{formatDate(msg.timestamp)} at {formatTime(msg.timestamp)}</span>
                     </div>
                 )}

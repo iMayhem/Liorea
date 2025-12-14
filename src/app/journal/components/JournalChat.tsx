@@ -14,6 +14,7 @@ import { compressImage } from '@/lib/compress';
 import dynamic from 'next/dynamic';
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePresence } from '@/features/study/context/PresenceContext';
 import { api } from '@/lib/api';
 import { Journal, Post, Reaction, GiphyResult } from '../types';
 import { FormattedMessage } from '@/components/chat/FormattedMessage';
@@ -40,6 +41,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 }) => {
     const { toast } = useToast();
     const { addNotification } = useNotifications();
+    const { isMod } = usePresence();
 
     const [posts, setPosts] = useState<Post[]>([]);
     const [hasMore, setHasMore] = useState(true);
@@ -360,6 +362,9 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                                     {showHeader && (
                                         <div className="flex items-center gap-2 mb-1 select-none">
                                             <span className="text-base font-semibold text-white hover:underline cursor-pointer">{post.username}</span>
+                                            {isMod(post.username) && (
+                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
+                                            )}
                                             <span className="text-xs text-white/30 ml-1">{formatDate(post.created_at)} at {formatTime(post.created_at)}</span>
                                         </div>
                                     )}
