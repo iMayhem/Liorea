@@ -35,7 +35,7 @@ export const useChatSync = () => {
                 msg.message === lastAdded.message &&
                 Math.abs(msg.timestamp - lastAdded.timestamp) < 5000; // 5 sec window
 
-            if (isSameID) {
+            if (isSameID || isSameContent) {
                 // If duplicate, merge them to preserve content + reactions
                 const mergedMsg = {
                     ...lastAdded,
