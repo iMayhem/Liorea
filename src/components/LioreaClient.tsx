@@ -18,8 +18,8 @@ export default function LioreaClient() {
   const router = useRouter();
   const nextYear = new Date().getFullYear() + 1;
 
-  const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-24T09:00:00`), [nextYear]);
-  const jeeSession2TargetDate = useMemo(() => new Date(`${nextYear}-04-01T09:00:00`), [nextYear]);
+  const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-21T09:00:00`), [nextYear]);
+  const jeeSession2TargetDate = useMemo(() => new Date(`${nextYear}-04-02T09:00:00`), [nextYear]);
   const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-05T14:00:00`), [nextYear]);
 
   useEffect(() => {
@@ -82,8 +82,8 @@ export default function LioreaClient() {
 
         {/* Right Column - Exam Timers */}
         <div className="hidden md:flex w-72 flex-col pr-4 pb-4 pt-6 h-full shrink-0 gap-3">
-          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} />
-          <ExamCountdown title="JEE Mains (Session 2)" targetDate={jeeSession2TargetDate} />
+          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} displayDate="21-30 jan 26" />
+          <ExamCountdown title="JEE Mains (Session 2)" targetDate={jeeSession2TargetDate} displayDate="2-9 apr 26" />
           <ExamCountdown title="NEET UG" targetDate={neetTargetDate} />
         </div>
 

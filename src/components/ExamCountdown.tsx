@@ -7,9 +7,10 @@ import { Card } from '@/components/ui/card';
 interface ExamCountdownProps {
     title: string;
     targetDate: Date;
+    displayDate?: string;
 }
 
-export default function ExamCountdown({ title, targetDate }: ExamCountdownProps) {
+export default function ExamCountdown({ title, targetDate, displayDate }: ExamCountdownProps) {
     const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
     useEffect(() => {
@@ -57,7 +58,7 @@ export default function ExamCountdown({ title, targetDate }: ExamCountdownProps)
                     <span className="font-bold text-base tracking-wide">{title}</span>
                 </div>
                 <div className="text-[10px] font-mono opacity-60 bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">
-                    {targetDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
+                    {displayDate || targetDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
                 </div>
             </div>
 
