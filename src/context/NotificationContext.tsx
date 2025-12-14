@@ -28,10 +28,23 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const { username } = usePresence();
+  const [username, setUsername] = useState<string | null>(null);
+  const { username: presenceUsername } = usePresence();
+
+  useEffect(() => {
+    if (presenceUsername) setUsername(presenceUsername);
+  }, [presenceUsername]);
+
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [userNotifications, setUserNotifications] = useState<Notification[]>([]);
+  const [globalNotifications, setGlobalNotifications] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
+
+  // Computed combined notifications
+  const notifications = React.useMemo(() => {
+    const combined = [...userNotifications, ...globalNotifications];
+    return combined.sort((a, b) => b.timestamp - a.timestamp);
+  }, [userNotifications, globalNotifications]);
 
   // 1. Load "Read" status from Local Storage
   useEffect(() => {
@@ -61,44 +74,73 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onValue(notificationsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const loadedNotifications: Notification[] = Object.entries(data).map(([key, value]: [string, any]) => ({
+        const loaded: Notification[] = Object.entries(data).map(([key, value]: [string, any]) => ({
           id: key,
           message: value.message,
           timestamp: value.timestamp,
           link: value.link
         }));
 
-        // Sort by newest first
-        loadedNotifications.sort((a, b) => b.timestamp - a.timestamp);
-
-        // CHECK FOR NEW NOTIFICATIONS
-        if (loadedNotifications.length > 0) {
-          const latest = loadedNotifications[0];
-          const isRecent = Date.now() - latest.timestamp < 5000;
+        // CHECK FOR NEW (User)
+        if (loaded.length > 0) {
+          // Sort temp to get latest
+          loaded.sort((a, b) => b.timestamp - a.timestamp);
+          const latest = loaded[0];
+          const isRecent = Date.now() - latest.timestamp < 10000; // Increased window slightly
           const isRead = readIds.includes(latest.id);
 
-          // If it's new, recent, and NOT read yet
-          if (isRecent && !isRead && (!notifications.length || latest.id !== notifications[0].id)) {
+          // Check if it's actually new compared to current state
+          const currentLatestId = userNotifications.length > 0 ? userNotifications.sort((a, b) => b.timestamp - a.timestamp)[0].id : null;
 
-            // 1. Show Visual Toast
-            toast({
-              title: "New Notification",
-              description: latest.message,
-            });
-
-            // 2. Play Sound 🔔
+          if (isRecent && !isRead && latest.id !== currentLatestId) {
+            toast({ title: "New Notification", description: latest.message });
             playSound();
           }
         }
-
-        setNotifications(loadedNotifications);
+        setUserNotifications(loaded);
       } else {
-        setNotifications([]);
+        setUserNotifications([]);
       }
     });
 
     return () => unsubscribe();
-  }, [username, readIds]); // Re-run if username changes
+  }, [username, readIds]); // Intentionally omitting userNotifications from dependency to avoid loop, handled by ref check or just letting logic run
+
+  // 3. LISTEN TO GLOBAL NOTIFICATIONS
+  useEffect(() => {
+    const globalRef = query(ref(db, `notifications`), limitToLast(20));
+
+    const unsubscribe = onValue(globalRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const loaded: Notification[] = Object.entries(data).map(([key, value]: [string, any]) => ({
+          id: key,
+          message: value.message,
+          timestamp: value.timestamp,
+          link: value.link
+        }));
+
+        // CHECK FOR NEW (Global)
+        if (loaded.length > 0) {
+          loaded.sort((a, b) => b.timestamp - a.timestamp);
+          const latest = loaded[0];
+          const isRecent = Date.now() - latest.timestamp < 10000;
+          const isRead = readIds.includes(latest.id);
+
+          const currentLatestId = globalNotifications.length > 0 ? globalNotifications.sort((a, b) => b.timestamp - a.timestamp)[0].id : null;
+
+          if (isRecent && !isRead && latest.id !== currentLatestId) {
+            toast({ title: "System Broadcast", description: latest.message });
+            playSound();
+          }
+        }
+        setGlobalNotifications(loaded);
+      } else {
+        setGlobalNotifications([]);
+      }
+    });
+    return () => unsubscribe();
+  }, [globalNotifications, readIds]);
 
   // 3. SEND TO FIREBASE
   const addNotification = async (message: string, targetUser?: string, link?: string) => {

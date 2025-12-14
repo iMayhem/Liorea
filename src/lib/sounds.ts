@@ -37,9 +37,30 @@ export const sounds: Sound[] = [
     icon: 'Waves'
   },
   {
-    id: 'lofi',
-    name: 'Lofi Girl',
-    file: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+    id: 'lofi-group',
+    name: 'Lofi',
+    file: '',
+    icon: 'Music'
+  },
+];
+
+export const lofiOptions: Sound[] = [
+  {
+    id: 'jazz-lofi',
+    name: 'Jazz Lofi',
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/jazzlofi.mp3',
+    icon: 'Music'
+  },
+  {
+    id: 'mushie-lofi',
+    name: 'Mushie Lofi',
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/mushielofi.mp3',
     icon: 'Headphones'
+  },
+  {
+    id: 'kitty-lofi',
+    name: 'Kitty Lofi',
+    file: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/kittylofi.mp3',
+    icon: 'Cat'
   },
 ];
