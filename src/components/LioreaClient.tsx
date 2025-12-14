@@ -10,6 +10,7 @@ import { useBackground } from '@/context/BackgroundContext';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import ExamCountdown from './ExamCountdown';
 
 export default function LioreaClient() {
   const { error, isLoading: isBackgroundLoading } = useBackground();
@@ -78,9 +79,13 @@ export default function LioreaClient() {
           </div>
         </div>
 
-        {/* Right Column - Spacer */}
-        {/* Same width as left column to force perfect centering of middle column */}
-        <div className="hidden md:block w-72 shrink-0 pr-4" />
+
+
+        {/* Right Column - Exam Timers */}
+        <div className="hidden md:flex w-72 flex-col pr-4 pb-4 pt-6 h-full shrink-0 gap-3">
+          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} color="blue" />
+          <ExamCountdown title="NEET UG" targetDate={neetTargetDate} color="green" />
+        </div>
 
       </main>
     </>
