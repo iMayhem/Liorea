@@ -269,7 +269,17 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         const tempPost = { id: Date.now(), username, content: contentString, created_at: Date.now() };
         setPosts(prev => [...prev, tempPost]);
         try {
-            await api.journal.post({ journal_id: activeJournal.id, username, content: contentString });
+            // We assume api.journal.post returns the created post object with the real ID
+            const res: any = await api.journal.post({ journal_id: activeJournal.id, username, content: contentString });
+
+            // Initialize Firebase data for this post with full structure
+            if (res && res.id) {
+                set(ref(db, `journal_tasks/${res.id}`), {
+                    title: title,
+                    items: items.map(t => ({ text: t, completed: false }))
+                });
+            }
+
             notifyChatUpdate(activeJournal.id);
         } catch (e) { console.error(e); }
     };
