@@ -150,7 +150,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
       </CardContent>
 
       <LeaderboardDebugger
-        users={fetchedUsers}
+        users={displayUsers}
         isLoading={isLoading}
         lastUpdate={new Date()}
       />

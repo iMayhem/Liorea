@@ -355,6 +355,20 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         setNewMessage("");
         setReplyingTo(null);
 
+        // --- MENTION NOTIFICATIONS ---
+        const mentions = content.match(/@(\w+)/g);
+        if (mentions && username) {
+            const uniqueUsers = Array.from(new Set(mentions.map(m => m.substring(1))));
+            uniqueUsers.forEach(taggedUser => {
+                if (taggedUser !== username) {
+                    // Assuming we can link to the specific journal if we had a route?
+                    // For now, just link to Journal page? Or '/journal?id=...'
+                    // Let's use generic link or just notification text.
+                    addNotification(`${username} mentioned you in Journal: ${activeJournal.title}`, taggedUser);
+                }
+            });
+        }
+
         try {
             await addDoc(collection(firestore, `journals/${activeJournal.id}/posts`), {
                 username,
