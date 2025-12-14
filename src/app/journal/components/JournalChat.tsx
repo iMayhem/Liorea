@@ -456,6 +456,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
                                 <MessageActions
                                     isCurrentUser={post.username === username}
+                                    isModerator={isMod(username)}
                                     onReact={(emoji) => handleReact(post.id, emoji)}
                                     onReply={() => handleReply(post)}
                                     onDelete={() => handleDeletePost(post.id)}

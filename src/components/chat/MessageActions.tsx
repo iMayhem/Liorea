@@ -8,6 +8,7 @@ const QUICK_EMOJIS = ["🔥", "❤️", "👍", "😂", "😮", "😢", "🎉", 
 
 interface MessageActionsProps {
     isCurrentUser: boolean;
+    isModerator?: boolean;
     onReact: (emoji: string) => void;
     onReply: () => void;
     onDelete?: () => void;
@@ -18,6 +19,7 @@ interface MessageActionsProps {
 
 export const MessageActions: React.FC<MessageActionsProps> = ({
     isCurrentUser,
+    isModerator = false,
     onReact,
     onReply,
     onDelete,
@@ -55,7 +57,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                 <Reply className="w-4 h-4" />
             </button>
 
-            {isCurrentUser && onDelete && (
+            {(isCurrentUser || isModerator) && onDelete && (
                 <button
                     onClick={onDelete}
                     className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10 transition-colors"
