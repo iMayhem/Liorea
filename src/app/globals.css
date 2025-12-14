@@ -371,11 +371,15 @@
   background-attachment: fixed;
 }
 
-/* Force transparency on all bg- classes in beautiful mode */
-.beautiful-mode [class*="bg-background"],
-.beautiful-mode [class*="bg-card"],
-.beautiful-mode [class*="bg-popover"],
-.beautiful-mode [class*="bg-muted"],
+/* Force transparency on specific classes in beautiful mode */
+.beautiful-mode .bg-background,
+.beautiful-mode .bg-card,
+.beautiful-mode .bg-popover,
+.beautiful-mode .bg-muted,
+.beautiful-mode .bg-card\/80,
+.beautiful-mode .bg-card\/50,
+.beautiful-mode .bg-muted\/40,
+.beautiful-mode .bg-muted\/80,
 .beautiful-mode .glass-panel,
 .beautiful-mode .glass-panel-light {
   background-color: rgba(0, 0, 0, 0.15) !important;
