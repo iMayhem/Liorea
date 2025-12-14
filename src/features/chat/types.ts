@@ -17,4 +17,5 @@ export interface ChatMessage {
         username: string;
         message: string;
     };
+    deleted?: boolean;
 }

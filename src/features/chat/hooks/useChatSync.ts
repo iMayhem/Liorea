@@ -5,36 +5,15 @@ import { api } from '@/lib/api';
 import { CHAT_ROOM, LOCAL_STORAGE_KEY } from '@/lib/constants';
 import { ChatMessage } from '../types';
 
-export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>, deletedTick: number) => {
+export const useChatSync = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    // --- RE-FILTERING EFFECT ---
-    // React to changes in the blacklist (e.g. after initial load or deletion)
-    useEffect(() => {
-        const currentDeleted = deletedMessageIdsRef.current || new Set<string>();
-        setMessages(prev => {
-            const filetered = prev.filter(msg => !currentDeleted.has(String(msg.id)));
-            // Only update if count changes to avoid loops? 
-            // setMessages is stable, but creating new array might be wasteful if no change. 
-            // But correctness first.
-            if (filetered.length !== prev.length) {
-                console.log('[SYNC] Re-filtering messages due to tick update. Removed:', prev.length - filetered.length);
-                return filetered;
-            }
-            return prev;
-        });
-    }, [deletedTick, deletedMessageIdsRef]);
-
     // --- DEDUPLICATION HELPER ---
-    const mergeAndDedupe = useCallback((current: ChatMessage[], incoming: ChatMessage[], deletedIds: Set<string>) => {
+    const mergeAndDedupe = useCallback((current: ChatMessage[], incoming: ChatMessage[]) => {
         // console.log('[SYNC] Merging. Deleted Count:', deletedIds.size);
-        const combined = [...current, ...incoming].filter(msg => {
-            const isDeleted = deletedIds.has(String(msg.id));
-            if (isDeleted) console.log('[SYNC] Filtering out deleted msg:', msg.id);
-            return !isDeleted;
-        });
+        const combined = [...current, ...incoming];
 
         // 1. Sort by time
         combined.sort((a, b) => a.timestamp - b.timestamp);
@@ -56,19 +35,26 @@ export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>,
                 msg.message === lastAdded.message &&
                 Math.abs(msg.timestamp - lastAdded.timestamp) < 5000; // 5 sec window
 
-            if (isSameID || isSameContent) {
-                // If duplicate, keep the "better" one (Firebase ID preferred usually, or the one with reactions)
-                const lastIsFirebase = isNaN(Number(lastAdded.id));
-                const currIsFirebase = isNaN(Number(msg.id));
-
-                if (currIsFirebase && !lastIsFirebase) {
-                    unique[unique.length - 1] = msg;
-                }
+            if (isSameID) {
+                // If duplicate, merge them to preserve content + reactions
+                const mergedMsg = {
+                    ...lastAdded,
+                    ...msg,
+                    // Ensure we don't lose content if one source has it and other doesn't (fetching partials)
+                    message: msg.message || lastAdded.message,
+                    username: msg.username || lastAdded.username,
+                    timestamp: msg.timestamp || lastAdded.timestamp,
+                    // Always prefer the reactions from the "incoming" (usually newer/live) source if present
+                    reactions: msg.reactions || lastAdded.reactions
+                };
+                unique[unique.length - 1] = mergedMsg;
             } else {
                 unique.push(msg);
             }
         }
-        return unique;
+
+        // Final Filter: Remove any messages marked as deleted
+        return unique.filter(m => !m.deleted);
     }, []);
 
     // 1. INITIAL LOAD & LIVE LISTENER
@@ -78,24 +64,10 @@ export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>,
         const init = async () => {
             let initialMessages: ChatMessage[] = [];
 
-            // A. Local Storage
-            const currentDeletedIds = deletedMessageIdsRef.current || new Set<string>();
-
-            if (typeof window !== "undefined") {
-                const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-                if (stored) {
-                    try {
-                        initialMessages = JSON.parse(stored);
-                        initialMessages = initialMessages.filter(m => !currentDeletedIds.has(String(m.id)));
-                    } catch (e) { }
-                }
-            }
-
-            // B. Fetch History from D1
             try {
                 const d1Messages = await api.chat.getHistory(CHAT_ROOM);
                 if (mounted) {
-                    initialMessages = mergeAndDedupe(initialMessages, d1Messages, currentDeletedIds);
+                    initialMessages = mergeAndDedupe(initialMessages, d1Messages);
 
                     if (initialMessages.length > 200) {
                         initialMessages = initialMessages.slice(initialMessages.length - 200);
@@ -122,8 +94,7 @@ export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>,
                 }));
 
                 setMessages(prev => {
-                    const currentDeleted = deletedMessageIdsRef.current || new Set<string>();
-                    const merged = mergeAndDedupe(prev, liveMessages, currentDeleted);
+                    const merged = mergeAndDedupe(prev, liveMessages);
 
                     if (typeof window !== "undefined") {
                         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged.slice(-200)));
@@ -139,7 +110,7 @@ export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>,
             mounted = false;
             unsubscribe();
         };
-    }, [mergeAndDedupe, deletedMessageIdsRef]);
+    }, [mergeAndDedupe]);
 
     // 2. PAGINATION
     const loadMoreMessages = useCallback(async () => {
@@ -153,13 +124,12 @@ export const useChatSync = (deletedMessageIdsRef: RefObject<Set<string> | null>,
                 if (olderMessages.length < 20) setHasMore(false);
 
                 if (olderMessages.length > 0) {
-                    const currentDeleted = deletedMessageIdsRef.current || new Set<string>();
-                    setMessages(prev => mergeAndDedupe(olderMessages, prev, currentDeleted));
+                    setMessages(prev => mergeAndDedupe(olderMessages, prev));
                 }
             }
         } catch (e) { console.error("Load more failed", e); }
         finally { setLoadingMore(false); }
-    }, [messages, loadingMore, hasMore, deletedMessageIdsRef, mergeAndDedupe]);
+    }, [messages, loadingMore, hasMore, mergeAndDedupe]);
 
     return {
         messages,

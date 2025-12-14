@@ -66,6 +66,15 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                 </button>
             )}
 
+            {!isCurrentUser && onReport && onDelete && (
+                <button
+                    onClick={onDelete}
+                    className="bg-[#18181b] border border-white/10 shadow-lg p-1.5 rounded-full text-white/70 hover:text-red-400 hover:bg-white/10 transition-colors"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            )}
+
             {!isCurrentUser && onReport && (
                 <button
                     onClick={onReport}

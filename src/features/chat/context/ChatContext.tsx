@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { db } from '@/lib/firebase';
-import { ref, push, remove, serverTimestamp } from 'firebase/database';
+import { ref, push, remove, serverTimestamp, update } from 'firebase/database';
 
 import { api } from '@/lib/api';
 import { CHAT_ROOM, DELETED_IDS_KEY } from '@/lib/constants';
@@ -12,8 +12,8 @@ import { useChatSync } from '../hooks/useChatSync';
 
 interface ChatContextType {
     messages: ChatMessage[];
-    sendMessage: (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => void;
-    sendReaction: (messageId: string, emoji: string) => void;
+    sendMessage: (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => Promise<void>;
+    sendReaction: (messageId: string, emoji: string) => Promise<void>;
     sendTypingEvent: () => void;
     typingUsers: string[];
     loadMoreMessages: () => Promise<void>;
@@ -26,27 +26,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const { username, userImage } = usePresence();
 
-    // We use a ref for the sync hook to avoid stale closures in listeners
-    const deletedIdsRef = useRef<Set<string>>(new Set());
-    // We use state to trigger re-renders when deletion happens
-    const [deletedTick, setDeletedTick] = useState(0);
-
-    // Initialize Deleted IDs
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const stored = localStorage.getItem(DELETED_IDS_KEY);
-            if (stored) {
-                try {
-                    deletedIdsRef.current = new Set(JSON.parse(stored));
-                    // Trigger tick to force sync hook to re-filter
-                    console.log('[CONTEXT] Loaded deleted IDs from LS. Count:', deletedIdsRef.current.size);
-                    setDeletedTick(t => t + 1);
-                } catch (e) { }
-            }
-        }
-    }, []);
-
-    const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync(deletedIdsRef, deletedTick);
+    const { messages, setMessages, loadMoreMessages, hasMore } = useChatSync();
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
     // 3. SEND MESSAGE
@@ -126,36 +106,22 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [username, messages, setMessages]);
 
-    // 5. DELETE MESSAGE
+    // 5. DELETE MESSAGE (Real-time with Tombstone)
     const deleteMessage = useCallback(async (messageId: string) => {
-        console.log('[DELETE] Attempting to delete:', messageId);
         if (!username) return;
 
-        const idStr = String(messageId);
+        // 1. Optimistic Update
+        setMessages(prev => prev.filter(msg => String(msg.id) !== String(messageId)));
 
-        // 1. Update Blacklist (Local Persistence)
-        if (deletedIdsRef.current) {
-            deletedIdsRef.current.add(idStr);
-            console.log('[DELETE] Added to blacklist. Size:', deletedIdsRef.current.size);
-            if (typeof window !== "undefined") {
-                localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(deletedIdsRef.current)));
-            }
-        }
-
-        // Trigger re-render if needed via setDeletedTick, though setMessages below usually handles UI
-        setDeletedTick(t => t + 1);
-
-        // 2. Optimistic Update (Filter out immediately)
-        setMessages(prev => prev.filter(msg => String(msg.id) !== idStr));
-
-        // 3. Firebase Remove
+        // 2. Firebase Tombstone (Soft Delete for specific real-time propagation)
+        // We update the node to have { deleted: true } so other clients can filter it out
         try {
-            await remove(ref(db, `chats/${messageId}`));
+            await update(ref(db, `chats/${messageId}`), { deleted: true });
         } catch (e) {
-            console.warn("Firebase delete failed (possibly D1 message):", e);
+            console.error("Firebase delete failed:", e);
         }
 
-        // 4. D1 Remove
+        // 3. D1 Remove (Permanent)
         api.chat.delete({
             room_id: CHAT_ROOM,
             message_id: messageId,

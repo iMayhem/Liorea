@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChatMessage } from '@/features/chat/context/ChatContext';
+import { ChatMessage } from '@/features/chat/types';
 import { FormattedMessage } from '@/components/chat/FormattedMessage';
 import { MessageActions } from '@/components/chat/MessageActions';
 import UserAvatar from '@/components/UserAvatar';

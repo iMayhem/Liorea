@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 
 
 import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon, X } from 'lucide-react';
-import { useChat, ChatMessage } from '../context/ChatContext';
+import { useChat } from '../context/ChatContext';
+import { ChatMessage } from '../types';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { useNotifications } from '@/context/NotificationContext';
 import UserAvatar from '@/components/UserAvatar';
