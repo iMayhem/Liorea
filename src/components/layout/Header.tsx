@@ -102,6 +102,7 @@ export default function Header() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl h-[85vh] p-0 bg-background border-border overflow-hidden rounded-xl">
+                            <DialogTitle className="sr-only">Appearance Settings</DialogTitle>
                             <AppearanceSettings />
                         </DialogContent>
                     </Dialog>
