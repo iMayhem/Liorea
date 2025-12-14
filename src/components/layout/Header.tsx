@@ -212,7 +212,13 @@ export default function Header() {
                                                         }}
                                                     >
                                                         <div className="relative mt-1">
-                                                            <UserAvatar username={fromUser} className="w-8 h-8" />
+                                                            {notification.type === 'global' ? (
+                                                                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                                                                    <Sparkles className="w-4 h-4 text-accent" />
+                                                                </div>
+                                                            ) : (
+                                                                <UserAvatar username={fromUser} className="w-8 h-8" />
+                                                            )}
                                                             {!notification.read && (
                                                                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
                                                             )}

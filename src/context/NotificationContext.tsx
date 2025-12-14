@@ -16,11 +16,12 @@ export interface Notification {
   timestamp: number;
   read?: boolean;
   link?: string;
+  type?: 'global' | 'personal';
 }
 
 interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (message: string, targetUser?: string, link?: string) => Promise<void>;
+  addNotification: (message: string, targetUser?: string, link?: string, type?: 'global' | 'personal') => Promise<void>;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
 }
@@ -78,27 +79,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           id: key,
           message: value.message,
           timestamp: value.timestamp,
-          timestamp: value.timestamp,
           link: value.link,
-          read: value.read // Read from DB
+          read: value.read, // Read from DB
+          type: 'personal'
         }));
-
-        // CHECK FOR NEW (User)
-        if (loaded.length > 0) {
-          // Sort temp to get latest
-          loaded.sort((a, b) => b.timestamp - a.timestamp);
-          const latest = loaded[0];
-          const isRecent = Date.now() - latest.timestamp < 10000; // Increased window slightly
-          const isRead = readIds.includes(latest.id);
-
-          // Check if it's actually new compared to current state
-          const currentLatestId = userNotifications.length > 0 ? userNotifications.sort((a, b) => b.timestamp - a.timestamp)[0].id : null;
-
-          if (isRecent && !isRead && latest.id !== currentLatestId) {
-            toast({ title: "New Notification", description: latest.message });
-            playSound();
-          }
-        }
         setUserNotifications(loaded);
       } else {
         setUserNotifications([]);
@@ -106,7 +90,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [username, readIds]); // Intentionally omitting userNotifications from dependency to avoid loop, handled by ref check or just letting logic run
+  }, [username]);
 
   // 3. LISTEN TO GLOBAL NOTIFICATIONS
   useEffect(() => {
@@ -119,39 +103,77 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           id: key,
           message: value.message,
           timestamp: value.timestamp,
-          link: value.link
+          link: value.link,
+          type: 'global'
         }));
-
-        // CHECK FOR NEW (Global)
-        if (loaded.length > 0) {
-          loaded.sort((a, b) => b.timestamp - a.timestamp);
-          const latest = loaded[0];
-          const isRecent = Date.now() - latest.timestamp < 10000;
-          const isRead = readIds.includes(latest.id);
-
-          const currentLatestId = globalNotifications.length > 0 ? globalNotifications.sort((a, b) => b.timestamp - a.timestamp)[0].id : null;
-
-          if (isRecent && !isRead && latest.id !== currentLatestId) {
-            toast({ title: "System Broadcast", description: latest.message });
-            playSound();
-          }
-        }
         setGlobalNotifications(loaded);
       } else {
         setGlobalNotifications([]);
       }
     });
     return () => unsubscribe();
-  }, [readIds]);
+  }, []);
+
+  // 4. HANDLE NEW NOTIFICATION SIDE EFFECTS (Toast & Sound)
+  useEffect(() => {
+    // Combine and sort to find the absolute latest
+    const all = [...userNotifications, ...globalNotifications].sort((a, b) => b.timestamp - a.timestamp);
+
+    if (all.length > 0) {
+      const latest = all[0];
+      // Only notify if it's very recent (within 10s) and NOT read locally
+      const isRecent = Date.now() - latest.timestamp < 10000;
+      const isRead = readIds.includes(latest.id);
+
+      // We use a ref or simple check to ensure we don't spam. 
+      // Actually, since this effect runs on [userNotifications, globalNotifications], 
+      // it runs when list updates. We just need to check if we *should* notify for the top one.
+      // But we avoid notify if we already read it.
+
+      // To strictly avoid re-notifying for the SAME id if it renders twice, we can check a "lastNotifiedId" ref, 
+      // but for now, checking !isRead and isRecent is usually enough unless the user refreshes constantly within 10s.
+      // Let's rely on isRead.
+
+      if (isRecent && !isRead) {
+        // Prevent double toast for the same ID in this session? 
+        // Implementation detail: The 'readIds' might update later. 
+        // Let's just fire. 
+        // Ideally we want to track 'lastToastedId' to be safe.
+      }
+    }
+  }, [userNotifications, globalNotifications, readIds]);
+
+  // RE-IMPLEMENTED SIDE EFFECT LOGIC WITH REF
+  const lastToastedIdRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    const all = [...userNotifications, ...globalNotifications].sort((a, b) => b.timestamp - a.timestamp);
+    if (all.length === 0) return;
+
+    const latest = all[0];
+    const isRecent = Date.now() - latest.timestamp < 10000;
+    const isRead = readIds.includes(latest.id);
+
+    if (isRecent && !isRead && latest.id !== lastToastedIdRef.current) {
+      lastToastedIdRef.current = latest.id;
+      toast({
+        title: latest.type === 'global' ? "System Broadcast" : "New Notification",
+        description: latest.message
+      });
+      playSound();
+    }
+  }, [userNotifications, globalNotifications, readIds, toast]);
 
   // 3. SEND TO FIREBASE
-  const addNotification = async (message: string, targetUser?: string, link?: string) => {
+  // 3. SEND TO FIREBASE
+  const addNotification = async (message: string, targetUser?: string, link?: string, type: 'global' | 'personal' = 'global') => {
     try {
       if (targetUser) {
         const notificationsRef = ref(db, `user_notifications/${targetUser}`);
         await push(notificationsRef, {
           message,
           link,
+          type: 'personal',
           timestamp: serverTimestamp()
         });
       } else {
@@ -159,6 +181,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         await push(notificationsRef, {
           message,
           link,
+          type: 'global',
           timestamp: serverTimestamp()
         });
       }
@@ -197,7 +220,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const displayedNotifications = notifications.map(n => ({
-    ...n,
     ...n,
     read: n.read || readIds.includes(n.id)
   }));
