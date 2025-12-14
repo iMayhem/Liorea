@@ -166,7 +166,7 @@ export default function Leaderboard({ users, currentUsername }: LeaderboardProps
                   <div className="shrink-0 flex flex-col items-end gap-1">
                     {(user as any).trend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
                     {(user as any).trend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
-                    {(!(user as any).trend || (user as any).trend === 'same') && <Minus className="w-4 h-4 text-zinc-600" />}
+                    {(!(user as any).trend || (user as any).trend === 'same') && null}
                   </div>
                 </motion.div>
               );

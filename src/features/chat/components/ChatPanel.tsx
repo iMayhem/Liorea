@@ -23,7 +23,7 @@ import { MessageActions } from '@/components/chat/MessageActions';
 import { MentionMenu } from '@/components/chat/MentionMenu';
 import { ChatMessageItem } from './ChatMessageItem';
 
-type GiphyResult = { id: string; images: { fixed_height: { url: string }; original: { url: string }; downsized: { url: string }; } }
+type GiphyResult = { id: string; images: { fixed_height: { url: string }; fixed_height_small: { url: string }; original: { url: string }; downsized: { url: string }; } }
 // ... (skip down to map)
 
 
@@ -342,7 +342,7 @@ export default function ChatPanel() {
                                 </div>
                                 <div className="h-60 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
                                     {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-muted-foreground">Loading...</div> : gifs.map(gif => (
-                                        <img key={gif.id} src={gif.images.fixed_height.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.downsized?.url || gif.images.original.url)} />
+                                        <img key={gif.id} src={gif.images.fixed_height_small.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.fixed_height_small.url)} />
                                     ))}
                                 </div>
                             </div>
