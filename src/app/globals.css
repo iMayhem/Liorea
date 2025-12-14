@@ -364,11 +364,18 @@
   -webkit-mask-image: radial-gradient(circle 14px at calc(100% - 10px) calc(100% - 10px), transparent 13px, black 14px);
 }
 
-.beautiful-mode body {
+.beautiful-mode {
   background-image: url('https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/background/2151779607.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
+}
+
+.beautiful-mode body {
+  background-color: transparent !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  min-height: 100vh;
 }
 
 /* Force transparency on specific classes in beautiful mode */
