@@ -11,7 +11,7 @@ import { useNotifications } from '@/context/NotificationContext';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { db, firestore } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp, push } from 'firebase/database';
-import { collection, query, orderBy, limit, onSnapshot, addDoc, doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
+import { collection, query, orderBy, limit, limitToLast, onSnapshot, addDoc, doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import { compressImage } from '@/lib/compress';
 
 // Robust timestamp parser
@@ -137,7 +137,7 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         const q = query(
             collection(firestore, `journals/${activeJournal.id}/posts`),
             orderBy('created_at', 'asc'),
-            limit(100)
+            limitToLast(100)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -160,6 +160,8 @@ export const JournalChat: React.FC<JournalChatProps> = ({
                 });
             });
             setPosts(livePosts); // Direct set
+            setHasMore(false); // Stop loader (Pagination not yet implemented for Firestore)
+            setIsInitialLoaded(true);
         });
 
         return () => unsubscribe();
