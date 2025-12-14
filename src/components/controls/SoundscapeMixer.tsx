@@ -172,16 +172,16 @@ export default function SoundscapeMixer({ sounds, sidebarMode = false }: Soundsc
       </div>
 
 
-      {/* Hidden Player for Lofi */}
-      <div className="hidden">
+      {/* Invisible Player for Lofi (display:none blocks YT) */}
+      <div className="fixed top-0 left-0 opacity-0 pointer-events-none w-px h-px overflow-hidden">
         {sounds.find(s => s.id === 'lofi') && (
           <ReactPlayer
             url={sounds.find(s => s.id === 'lofi')?.file}
             playing={activeSoundId === 'lofi'}
             volume={masterVolume}
             loop={true}
-            width="0"
-            height="0"
+            width="100%"
+            height="100%"
             config={{
               youtube: {
                 playerVars: { controls: 0 }
