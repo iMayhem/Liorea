@@ -225,12 +225,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 return {
                     username: data.username,
                     total_study_time: (data.minutes || 0) * 60,
-                    status: 'Online',
+                    status: 'Online' as 'Online',
                     photoURL: data.photoURL,
                     status_text: data.status_text,
                     equipped_frame: data.equipped_frame
                 };
-            });
+            }).filter(u => u.username);
             setHistoricalLeaderboard(list);
         });
 
@@ -292,7 +292,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                     const data = doc.data();
                     // Heartbeat Check: Hide if stale > 2 minutes
                     const lastSeen = data.last_seen?.toMillis ? data.last_seen.toMillis() : (data.last_seen || 0);
-                    if (now - lastSeen < 120000) { // 2 minutes
+                    if (now - lastSeen < 120000 && data.username) { // 2 minutes & Valid Username
                         list.push({
                             username: data.username,
                             photoURL: data.photoURL,
