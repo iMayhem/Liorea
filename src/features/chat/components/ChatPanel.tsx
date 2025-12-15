@@ -221,8 +221,8 @@ export default function ChatPanel() {
 
     const mentionableUsers = useMemo(() => {
         if (!mentionQuery) return [];
-        const allUsers = leaderboardUsers.map(u => u.username);
-        return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5);
+        const allUsers = leaderboardUsers.filter(u => u && u.username).map(u => u.username);
+        return allUsers.filter(u => u && u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5);
     }, [mentionQuery, leaderboardUsers]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

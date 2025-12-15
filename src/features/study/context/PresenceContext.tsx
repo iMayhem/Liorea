@@ -389,7 +389,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
 
         // 1. Seed with ALL users from Firestore Profiles (Base Roster)
         firestoreProfiles.forEach((data, uid) => {
-            if (data.username) {
+            if (data && data.username) {
                 map.set(data.username, {
                     username: data.username,
                     total_study_time: 0,

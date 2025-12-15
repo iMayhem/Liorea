@@ -510,7 +510,13 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         }
     };
 
-    const mentionableUsers = useMemo(() => { if (!mentionQuery) return []; const chatUsers = posts.map(p => p.username); const lbUsers = leaderboardUsers.map(u => u.username); const allUsers = Array.from(new Set([...chatUsers, ...lbUsers])); return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); }, [mentionQuery, posts, leaderboardUsers]);
+    const mentionableUsers = useMemo(() => {
+        if (!mentionQuery) return [];
+        const chatUsers = posts.map(p => p.username).filter(Boolean);
+        const lbUsers = leaderboardUsers.map(u => u.username).filter(Boolean);
+        const allUsers = Array.from(new Set([...chatUsers, ...lbUsers]));
+        return allUsers.filter(u => u && u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5);
+    }, [mentionQuery, posts, leaderboardUsers]);
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => { const val = e.target.value; setNewMessage(val); const cursorPos = e.target.selectionStart; const textBeforeCursor = val.slice(0, cursorPos); const match = textBeforeCursor.match(/@(\w*)$/); if (match) { setMentionQuery(match[1]); setMentionIndex(0); } else { setMentionQuery(null); } };
     const insertMention = (user: string) => { if (!mentionQuery) return; const cursorPos = chatInputRef.current?.selectionStart || 0; const textBefore = newMessage.slice(0, cursorPos).replace(/@(\w*)$/, `@${user} `); const textAfter = newMessage.slice(cursorPos); setNewMessage(textBefore + textAfter); setMentionQuery(null); chatInputRef.current?.focus(); };
     const handleEmojiClick = (emojiObj: any) => { setNewMessage(prev => prev + emojiObj.emoji); };

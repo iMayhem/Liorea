@@ -102,6 +102,8 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
             const liveMsgs: ChatMessage[] = [];
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
+                if (!data || !data.username) return;
+
                 liveMsgs.push({
                     id: doc.id,
                     username: data.username,
