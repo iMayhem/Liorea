@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { usePresence } from '@/features/study';
-import { useScreenShare } from '../context/ScreenShareContext';
-import { Users, LogOut, Trophy, Monitor, MonitorX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { usePresence } from '@/features/study';
+import { Users, LogOut, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
     Sheet,
@@ -21,7 +22,6 @@ interface BottomControlBarProps {
 
 export default function BottomControlBar({ }: BottomControlBarProps) {
     const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
-    const { startSharing, stopSharing, isSharing } = useScreenShare();
     const router = useRouter();
 
     const handleLeave = () => {
@@ -50,16 +50,7 @@ export default function BottomControlBar({ }: BottomControlBarProps) {
                     {/* Sound Controls */}
                     <SoundscapeMixer sounds={sounds} sidebarMode={false} />
 
-                    {/* Screen Share Toggle */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => isSharing ? stopSharing() : startSharing('public')}
-                        className={`rounded-full w-9 h-9 transition-colors ${isSharing ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-600' : 'hover:bg-muted text-muted-foreground hover:text-primary'}`}
-                        title={isSharing ? "Stop Sharing" : "Share Screen"}
-                    >
-                        {isSharing ? <MonitorX className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-                    </Button>
+
 
                     {/* Leaderboard */}
                     <Sheet>
