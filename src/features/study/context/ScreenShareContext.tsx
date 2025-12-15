@@ -20,11 +20,28 @@ const ScreenShareContext = createContext<ScreenShareContextType | undefined>(und
 const SERVERS = {
     iceServers: [
         {
-            urls: [
-                "stun:stun1.l.google.com:19302",
-                "stun:stun2.l.google.com:19302"
-            ]
-        }
+            urls: "stun:stun.relay.metered.ca:80",
+        },
+        {
+            urls: "turn:standard.relay.metered.ca:80",
+            username: "74ba25a723d27c303a52e8d2",
+            credential: "Ho7GkPMhUtlsEHWD",
+        },
+        {
+            urls: "turn:standard.relay.metered.ca:80?transport=tcp",
+            username: "74ba25a723d27c303a52e8d2",
+            credential: "Ho7GkPMhUtlsEHWD",
+        },
+        {
+            urls: "turn:standard.relay.metered.ca:443",
+            username: "74ba25a723d27c303a52e8d2",
+            credential: "Ho7GkPMhUtlsEHWD",
+        },
+        {
+            urls: "turns:standard.relay.metered.ca:443?transport=tcp",
+            username: "74ba25a723d27c303a52e8d2",
+            credential: "Ho7GkPMhUtlsEHWD",
+        },
     ],
     iceCandidatePoolSize: 10,
 };
