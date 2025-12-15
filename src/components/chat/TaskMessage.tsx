@@ -34,7 +34,11 @@ export const TaskMessage: React.FC<TaskMessageProps> = ({ postId, content, isOwn
                             <span className="text-white/40 font-mono text-sm pt-0.5 w-4">{idx + 1}.</span>
 
                             <button
-                                onClick={() => onToggle(idx)}
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggle(idx);
+                                }}
                                 disabled={!isOwner}
                                 className={cn(
                                     "shrink-0 w-5 h-5 rounded flex items-center justify-center transition-colors border-none",

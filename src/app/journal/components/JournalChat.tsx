@@ -11,7 +11,7 @@ import { useNotifications } from '@/context/NotificationContext';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { db, firestore } from '@/lib/firebase';
 import { ref, onValue, set, serverTimestamp, push } from 'firebase/database';
-import { collection, query, orderBy, limit, limitToLast, onSnapshot, addDoc, doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
+import { collection, query, orderBy, limit, limitToLast, onSnapshot, addDoc, doc, updateDoc, deleteDoc, deleteField, setDoc } from 'firebase/firestore';
 import { compressImage } from '@/lib/compress';
 
 // Robust timestamp parser
@@ -480,22 +480,34 @@ export const JournalChat: React.FC<JournalChatProps> = ({
 
     const handleToggleTask = async (postId: string | number, taskIndex: number) => {
         if (!activeJournal || !username) return;
-        const post = posts.find(p => String(p.id) === String(postId));
-        if (!post) return;
+        console.log(`[ToggleTask] Attempting to toggle ${postId}, index ${taskIndex}`);
 
-        // Optimistic update (optional, but good for UI)
-        // Actually, listener is fast enough usually. Let's rely on listener or update local state if we want instant feedback.
-        // For simplicity and correctness, we update Firestore and let listener update UI.
+        const post = posts.find(p => String(p.id) === String(postId));
+        if (!post) {
+            console.error("[ToggleTask] Post not found locally");
+            return;
+        }
 
         const currentStates = (post as any).task_states || {};
         const newState = !currentStates[taskIndex];
+        console.log(`[ToggleTask] New state for index ${taskIndex}: ${newState}`);
 
         try {
-            await updateDoc(doc(firestore, `journals/${activeJournal.id}/posts`, String(postId)), {
-                [`task_states.${taskIndex}`]: newState
-            });
+            // Use setDoc with merge to be safe against missing task_states map or doc structure issues
+            // Although updateDoc is usually fine, setDoc with merge handles "create map if missing" better for some nested cases
+            const docRef = doc(firestore, `journals/${activeJournal.id}/posts`, String(postId));
+            await setDoc(docRef, {
+                task_states: {
+                    [taskIndex]: newState
+                }
+            }, { merge: true });
+
             notifyChatUpdate(activeJournal.id);
-        } catch (e) { console.error("Failed to toggle task", e); }
+            console.log("[ToggleTask] Firestore update success");
+        } catch (e) {
+            console.error("Failed to toggle task", e);
+            toast({ variant: "destructive", title: "Error", description: "Failed to update task status" });
+        }
     };
 
     const mentionableUsers = useMemo(() => { if (!mentionQuery) return []; const chatUsers = posts.map(p => p.username); const lbUsers = leaderboardUsers.map(u => u.username); const allUsers = Array.from(new Set([...chatUsers, ...lbUsers])); return allUsers.filter(u => u.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 5); }, [mentionQuery, posts, leaderboardUsers]);
