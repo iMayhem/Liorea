@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { usePresence } from '@/features/study';
-import { Button } from '@/components/ui/button';
-import { usePresence } from '@/features/study';
+
 import { Users, LogOut, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
