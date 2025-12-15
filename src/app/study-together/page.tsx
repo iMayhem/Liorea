@@ -7,6 +7,7 @@ import BottomControlBar from '@/features/study/components/BottomControlBar';
 import { usePresence } from '@/features/study';
 import { ChatProvider, ChatPanel } from '@/features/chat';
 import { StudyGrid } from '@/features/study';
+import { ScreenShareProvider } from '@/features/study/context/ScreenShareContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users } from 'lucide-react';
 import BigPomodoroTimer from '@/features/timer/components/BigPomodoroTimer';
@@ -77,29 +78,31 @@ export default function StudyTogetherPage() {
   }
 
   return (
-    <ChatProvider roomId="public">
-      <div className="bg-transparent min-h-screen text-foreground overflow-hidden font-sans antialiased flex flex-col">
-        <Header />
+    <ScreenShareProvider>
+      <ChatProvider roomId="public">
+        <div className="bg-transparent min-h-screen text-foreground overflow-hidden font-sans antialiased flex flex-col">
+          <Header />
 
-        {/* Content Container - Match Journal's Layout */}
-        <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-20">
+          {/* Content Container - Match Journal's Layout */}
+          <main className="container mx-auto pt-20 px-4 h-screen flex gap-6 pb-20">
 
-          {/* LEFT: Study Grid Panel (Solid) - No Header */}
-          <div className="w-[45%] flex flex-col bg-card/80 backdrop-blur-xl rounded-2xl border border-border shadow-xl overflow-hidden p-6">
-            <StudyGrid users={studyUsers} />
-          </div>
+            {/* LEFT: Study Grid Panel (Solid) - No Header */}
+            <div className="w-[45%] flex flex-col bg-card/80 backdrop-blur-xl rounded-2xl border border-border shadow-xl overflow-hidden p-6">
+              <StudyGrid users={studyUsers} />
+            </div>
 
-          {/* RIGHT: Chat Panel (Solid) */}
-          <div className="flex-1 flex flex-col bg-transparent rounded-2xl border-none shadow-none overflow-hidden relative">
-            <ChatPanel />
-          </div>
+            {/* RIGHT: Chat Panel (Solid) */}
+            <div className="flex-1 flex flex-col bg-transparent rounded-2xl border-none shadow-none overflow-hidden relative">
+              <ChatPanel />
+            </div>
 
-        </main>
+          </main>
 
-        {/* BOTTOM CONTROL BAR */}
-        <BottomControlBar />
+          {/* BOTTOM CONTROL BAR */}
+          <BottomControlBar />
 
-      </div>
-    </ChatProvider>
+        </div>
+      </ChatProvider>
+    </ScreenShareProvider>
   );
 }

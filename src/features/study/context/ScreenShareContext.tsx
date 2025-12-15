@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, onValue, set, push, remove, onDisconnect } from 'firebase/database';
+import { ref, onValue, set, push, remove, onDisconnect, update } from 'firebase/database';
+import { usePresence } from './PresenceContext';
 
 interface ScreenShareContextType {
     startSharing: (roomId: string) => Promise<void>;
@@ -13,6 +14,9 @@ interface ScreenShareContextType {
     isSharing: boolean;
     isViewing: boolean;
     error: string | null;
+    hostUsername: string | null;
+    hiddenStreams: Set<string>;
+    toggleHiddenStream: (username: string) => void;
 }
 
 const ScreenShareContext = createContext<ScreenShareContextType | undefined>(undefined);
@@ -47,11 +51,43 @@ const SERVERS = {
 };
 
 export const ScreenShareProvider = ({ children }: { children: React.ReactNode }) => {
+    const { username: myUsername } = usePresence();
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
     const [isSharing, setIsSharing] = useState(false);
     const [isViewing, setIsViewing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [hostUsername, setHostUsername] = useState<string | null>(null);
+    const [hiddenStreams, setHiddenStreams] = useState<Set<string>>(new Set());
+
+    // Auto-Join Logic
+    const { joinedRoomId } = usePresence();
+
+    useEffect(() => {
+        if (!joinedRoomId) return;
+
+        const hostRef = ref(db, `screenshare/${joinedRoomId}/host`);
+        const unsubscribe = onValue(hostRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.username && data.active) {
+                // Host detected.
+                // If I am not the host, and not already viewing, AND not hiding this user...
+                // AND I am not sharing myself.
+                if (data.username !== myUsername) { // Let the joinStream logic handle isViewing check to avoid loops if careful, 
+                    // but better to check here or we loop calls.
+                    // We need a way to know if we are 'connected' to THIS room's stream.
+                    // internal 'activeRoomId' ref helps.
+
+                    // Simple logic: update hostUsername state. 
+                    setHostUsername(data.username);
+                }
+            } else {
+                setHostUsername(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [joinedRoomId, myUsername]);
 
     // Refs for non-react state WebRTC objects
     const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -72,12 +108,24 @@ export const ScreenShareProvider = ({ children }: { children: React.ReactNode })
         setIsSharing(false);
         setIsViewing(false);
         setError(null);
+        setHostUsername(null);
+    }, []);
+
+    const toggleHiddenStream = useCallback((username: string) => {
+        setHiddenStreams(prev => {
+            const next = new Set(prev);
+            if (next.has(username)) next.delete(username);
+            else next.add(username);
+            return next;
+        });
     }, []);
 
     const startSharing = useCallback(async (roomId: string) => {
+        if (!myUsername) return;
         try {
             cleanup();
             activeRoomId.current = roomId;
+            setHostUsername(myUsername); // I am the host
 
             // 1. Get Screen Stream
             const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -119,9 +167,10 @@ export const ScreenShareProvider = ({ children }: { children: React.ReactNode })
             // SIMPLIFIED MVP for 1:1 (or just 1 connection for now to prove concept easily)
             // Let's try the robust way: Host creates PC when it detects a viewer.
 
+
             // Register Host Presence
             const hostRef = ref(db, `screenshare/${roomId}/host`);
-            set(hostRef, { active: true, timestamp: Date.now() });
+            set(hostRef, { active: true, username: myUsername, timestamp: Date.now() });
             onDisconnect(hostRef).remove();
 
             // Listen for Viewers
@@ -146,7 +195,7 @@ export const ScreenShareProvider = ({ children }: { children: React.ReactNode })
             setError(err.message || "Failed to start screen share");
             cleanup();
         }
-    }, [cleanup]); // dependencies
+    }, [cleanup, myUsername]); // dependencies
 
     const initiateConnectionToViewer = async (roomId: string, viewerId: string, stream: MediaStream) => {
         console.log("Initiating connection to viewer:", viewerId);
@@ -205,7 +254,20 @@ export const ScreenShareProvider = ({ children }: { children: React.ReactNode })
     const joinStream = useCallback(async (roomId: string) => {
         cleanup();
         activeRoomId.current = roomId;
-        setIsViewing(true);
+        setIsViewing(true); // Don't set viewing YES until we know there IS a host? 
+        // For now, let's keep it simple.
+
+        // Listen for Host Info
+        const hostInfoRef = ref(db, `screenshare/${roomId}/host`);
+        onValue(hostInfoRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.username) {
+                setHostUsername(data.username);
+            } else {
+                setHostUsername(null);
+                setRemoteStream(null); // No host, no stream
+            }
+        });
 
         const viewerId = `viewer_${Math.random().toString(36).substr(2, 9)}`;
         console.log("Joining as viewer:", viewerId);
@@ -263,6 +325,16 @@ export const ScreenShareProvider = ({ children }: { children: React.ReactNode })
 
     }, [cleanup]);
 
+    // Effect to trigger Join when host appears (Moved here to be after joinStream definition)
+    useEffect(() => {
+        if (hostUsername && joinedRoomId && !isViewing && !isSharing && !hiddenStreams.has(hostUsername)) {
+            // Host exists, we are in room, not viewing yet.
+            // Auto-join.
+            console.log("Auto-joining screen share for room:", joinedRoomId);
+            joinStream(joinedRoomId);
+        }
+    }, [hostUsername, joinedRoomId, isViewing, isSharing, hiddenStreams, joinStream]);
+
     return (
         <ScreenShareContext.Provider value={{
             startSharing,
@@ -272,7 +344,10 @@ export const ScreenShareProvider = ({ children }: { children: React.ReactNode })
             remoteStream,
             isSharing,
             isViewing,
-            error
+            error,
+            hostUsername,
+            hiddenStreams,
+            toggleHiddenStream
         }}>
             {children}
         </ScreenShareContext.Provider>
