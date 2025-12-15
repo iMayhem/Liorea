@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase'; // Assuming this now exports 'db' as Firest
 // So `db` IS Realtime Database instance.
 // I need `firestore` instance. Usually it's exported as `firestore` or `db` if valid.
 // I will import `firestore` from `@/lib/firebase` assuming it exists or I might validly guessing.
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot, doc, updateDoc, deleteDoc, setDoc, deleteField, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, limitToLast, onSnapshot, doc, updateDoc, deleteDoc, setDoc, deleteField, where, getDocs } from 'firebase/firestore';
 // I need to make sure I import the right DB instance.
 import { firestore } from '@/lib/firebase';
 
@@ -66,13 +66,21 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     // 1. LIVE LISTENER (Hybrid: Firestore + D1)
     useEffect(() => {
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
+        console.log(`[ChatDebug] Initializing chat for room: ${roomId} (Effective: ${effectiveRoomId})`);
+
         let d1History: ChatMessage[] = [];
 
         // Fetch D1 history first
         const fetchHistory = async () => {
-            if (!username) return; // Wait for auth
+            if (!username) {
+                console.log("[ChatDebug] Waiting for username...");
+                return;
+            }
             try {
+                console.log("[ChatDebug] Fetching D1 history...");
                 const history = await api.chat.getHistory(effectiveRoomId);
+                console.log(`[ChatDebug] D1 history fetched: ${history.length} messages`);
+
                 d1History = history.map((msg: any) => ({
                     ...msg,
                     id: String(msg.id),
@@ -87,7 +95,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                     return Array.from(unique.values()).sort((a, b) => a.timestamp - b.timestamp);
                 });
             } catch (e) {
-                console.error("Failed to fetch legacy history:", e);
+                console.error("[ChatDebug] Failed to fetch legacy history:", e);
             }
         };
         fetchHistory();
@@ -95,14 +103,23 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         const q = query(
             collection(firestore, collectionPath),
             orderBy('timestamp', 'asc'),
-            limit(100)
+            limitToLast(100)
         );
 
+        console.log(`[ChatDebug] Setting up Firestore listener on: ${collectionPath}`);
         const unsubscribe = onSnapshot(q, (snapshot) => {
+            console.log(`[ChatDebug] Firestore snapshot received. Docs: ${snapshot.docs.length}`);
             const liveMsgs: ChatMessage[] = [];
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
-                if (!data || !data.username) return;
+                if (!data) {
+                    console.warn(`[ChatDebug] Empty data for doc ${doc.id}`);
+                    return;
+                }
+                if (!data.username) {
+                    console.warn(`[ChatDebug] Missing username for doc ${doc.id}, skipping safely.`);
+                    return;
+                }
 
                 liveMsgs.push({
                     id: doc.id,
@@ -121,6 +138,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                         : {}
                 });
             });
+            console.log(`[ChatDebug] Processed ${liveMsgs.length} live messages`);
 
             // Merge & Deduplicate
             setMessages(prev => {
@@ -158,8 +176,11 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                         deduped.push(current);
                     }
                 }
+                console.log(`[ChatDebug] Final filtered message count: ${deduped.length}`);
                 return deduped;
             });
+        }, (error) => {
+            console.error("[ChatDebug] Firestore Listener Error:", error);
         });
 
         return () => unsubscribe();
