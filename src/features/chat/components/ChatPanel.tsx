@@ -31,7 +31,7 @@ type GiphyResult = { id: string; images: { fixed_height: { url: string }; fixed_
 
 
 export default function ChatPanel() {
-    const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore, deleteMessage } = useChat();
+    const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore, isLoadingMore, deleteMessage } = useChat();
     const { username, leaderboardUsers } = usePresence();
     const { addNotification } = useNotifications();
     const { toast } = useToast();
@@ -140,7 +140,7 @@ export default function ChatPanel() {
         if (!container) return;
         const { scrollTop, scrollHeight, clientHeight } = container;
         setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
-        if (scrollTop < 50 && hasMore) {
+        if (scrollTop < 50 && hasMore && !isLoadingMore) {
             prevScrollHeight.current = scrollHeight;
             loadMoreMessages();
         }
@@ -307,7 +307,7 @@ export default function ChatPanel() {
                 className={`flex-1 p-0 overflow-y-auto relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
             >
                 <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
-                    {hasMore && <div className="text-center py-4 text-xs text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
+                    {isLoadingMore && <div className="text-center py-4 text-xs text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
 
                     {messages.map((msg, index) => {
                         const isSequence = index > 0 && messages[index - 1].username === msg.username;

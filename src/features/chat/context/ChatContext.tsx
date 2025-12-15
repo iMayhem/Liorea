@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase'; // Assuming this now exports 'db' as Firest
 // So `db` IS Realtime Database instance.
 // I need `firestore` instance. Usually it's exported as `firestore` or `db` if valid.
 // I will import `firestore` from `@/lib/firebase` assuming it exists or I might validly guessing.
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, limitToLast, onSnapshot, doc, updateDoc, deleteDoc, setDoc, deleteField, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, limitToLast, startAfter, onSnapshot, doc, updateDoc, deleteDoc, setDoc, deleteField, where, getDocs } from 'firebase/firestore';
 // I need to make sure I import the right DB instance.
 import { firestore } from '@/lib/firebase';
 
@@ -47,6 +47,7 @@ interface ChatContextType {
     typingUsers: string[];
     loadMoreMessages: () => Promise<void>;
     hasMore: boolean;
+    isLoadingMore: boolean;
     deleteMessage: (messageId: string) => void;
 }
 
@@ -103,8 +104,11 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         const q = query(
             collection(firestore, collectionPath),
             orderBy('timestamp', 'asc'),
-            limitToLast(100)
+            limitToLast(30)
         );
+
+        // Assume hasMore is true initially if we're doing pagination
+        setHasMore(true);
 
         console.log(`[ChatDebug] Setting up Firestore listener on: ${collectionPath}`);
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -276,11 +280,103 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     }, [username, roomId, isPublic, effectiveRoomId]);
 
     const sendTypingEvent = useCallback(async () => { }, []);
-    const loadMoreMessages = useCallback(async () => { }, []); // TODO: Implement cursor pagination
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    // 6. PAGINATION
+    const loadMoreMessages = useCallback(async () => {
+        if (!hasMore || messages.length === 0 || isLoadingMore) return;
+
+        setIsLoadingMore(true);
+        // Find oldest message currently in view
+        // Since messages are sorted asc (oldest first), the first one is oldest.
+        const oldestMsg = messages[0];
+        if (!oldestMsg) {
+            setIsLoadingMore(false);
+            return;
+        }
+
+        // If it's a D1 legacy message (numeric ID), we might need API fetching support.
+        // For now, assume we're paging through Firestore history primarily.
+        if (!isNaN(Number(oldestMsg.id))) {
+            console.log("[ChatDebug] Reached legacy history boundary. API pagination not fully implemented.");
+            setHasMore(false);
+            setIsLoadingMore(false);
+            return;
+        }
+
+        const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
+        console.log(`[ChatDebug] Loading more messages before: ${oldestMsg.timestamp}`);
+
+        try {
+            // We need to fetch messages OLDER than the current oldest.
+            // Query: timestamps < oldest.timestamp, sorted desc (newest first of that set), limit 20.
+            const q = query(
+                collection(firestore, collectionPath),
+                orderBy('timestamp', 'desc'),
+                startAfter(oldestMsg.timestamp), // Using timestamp for cursor is simpler than doc snapshot if unique enough
+                limit(20)
+            );
+
+            // NOTE: startAfter with a value requires the field to be in orderBy. 
+            // If using doc snapshot, we'd need the actual snapshot which we don't store in state.
+            // Using timestamp is generally okay if millisecond precision is unique.
+
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                setHasMore(false);
+                setIsLoadingMore(false);
+                return;
+            }
+
+            const olderMsgs: ChatMessage[] = [];
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                if (!data || !data.username) return;
+                olderMsgs.push({
+                    id: doc.id,
+                    username: data.username,
+                    message: data.message,
+                    timestamp: parseTimestamp(data.timestamp),
+                    photoURL: data.photoURL,
+                    image_url: data.image_url,
+                    replyTo: data.replyTo,
+                    deleted: data.deleted,
+                    reactions: data.reactions ?
+                        Object.entries(data.reactions).reduce((acc, [uid, emoji]) => ({
+                            ...acc,
+                            [uid]: { username: uid, emoji: emoji as string }
+                        }), {})
+                        : {}
+                });
+            });
+
+            // These come back DESC (newest to oldest). Reverse to get chronological ASC chunk.
+            olderMsgs.reverse();
+
+            console.log(`[ChatDebug] Loaded ${olderMsgs.length} older messages.`);
+
+            setMessages(prev => {
+                // Prepend, filtering duplicates using the same Map logic
+                const combined = [...olderMsgs, ...prev];
+                const unique = new Map();
+                combined.forEach(m => unique.set(String(m.id), m));
+                return Array.from(unique.values()).sort((a, b) => a.timestamp - b.timestamp);
+            });
+
+            if (snapshot.docs.length < 20) {
+                setHasMore(false); // Likely exhausted
+            }
+
+        } catch (e) {
+            console.error("[ChatDebug] Error loading older messages:", e);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [messages, hasMore, isPublic, roomId, isLoadingMore]);
 
     const value = useMemo(() => ({
-        messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage
-    }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage]);
+        messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage, isLoadingMore
+    }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage, isLoadingMore]);
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
