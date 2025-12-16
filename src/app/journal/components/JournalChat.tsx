@@ -230,6 +230,20 @@ export const JournalChat: React.FC<JournalChatProps> = ({
         };
     }, [activeJournal]);
 
+    // Sound Effect
+    useEffect(() => {
+        if (!isInitialLoaded || posts.length === 0) return;
+        const lastPost = posts[posts.length - 1]; // Assuming posts are sorted oldest to newest (bottom is new) based on rendering
+        // Wait, rendering maps `posts`. Check sort in fetch.
+        // `Array.from(idMap.values()).sort((a, b) => a.created_at - b.created_at)` -> Oldest first. So last element is newest.
+        if (lastPost.username !== username) {
+            const audio = new Audio('https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/notifchat.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(e => console.error("Audio play failed", e));
+        }
+    }, [posts.length, isInitialLoaded, username]);
+
+
     useLayoutEffect(() => {
         const container = scrollContainerRef.current;
         if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {

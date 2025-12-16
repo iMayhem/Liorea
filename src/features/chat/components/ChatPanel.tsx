@@ -64,6 +64,18 @@ export default function ChatPanel() {
         }
     };
 
+    // Sound Effect
+    useEffect(() => {
+        if (!isInitialLoaded || messages.length === 0) return;
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.username !== username) {
+            const audio = new Audio('https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/notifchat.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(e => console.error("Audio play failed", e));
+        }
+    }, [messages.length, isInitialLoaded, username]); // Depend on length to detect new messages
+
+
     useEffect(() => {
         if (isGifPopoverOpen && gifs.length === 0) {
             fetchGifs();
