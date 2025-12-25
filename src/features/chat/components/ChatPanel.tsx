@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 
-import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon, X } from 'lucide-react';
+import { Send, MessageSquare, Plus, Film, Smile, Search, Trash2, Loader2, ChevronDown, Flag, Image as ImageIcon, X, Volume2, VolumeX } from 'lucide-react';
 import { useChat } from '../context/ChatContext';
 import { ChatMessage } from '../types';
 import { usePresence } from '@/features/study/context/PresenceContext';
@@ -25,6 +25,7 @@ import { FormattedMessage } from '@/components/chat/FormattedMessage';
 import { MessageActions } from '@/components/chat/MessageActions';
 import { MentionMenu } from '@/components/chat/MentionMenu';
 import { ChatMessageItem } from './ChatMessageItem';
+import { soundEffects } from '@/lib/sound-effects';
 
 type TenorResult = { id: string; media_formats: { tinygif: { url: string }; mediumgif: { url: string }; gif: { url: string }; } }
 
@@ -67,10 +68,17 @@ export default function ChatPanel() {
     useEffect(() => {
         if (!isInitialLoaded || messages.length === 0) return;
         const lastMsg = messages[messages.length - 1];
+
+        // Only play sound for other users' messages
         if (lastMsg.username !== username) {
-            const audio = new Audio('https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/notifchat.mp3');
-            audio.volume = 0.5;
-            audio.play().catch(e => console.error("Audio play failed", e));
+            // Check if message contains a mention of the current user
+            const isMention = username && lastMsg.message.toLowerCase().includes(`@${username.toLowerCase()}`);
+
+            if (isMention) {
+                soundEffects.play('notification');
+            } else {
+                soundEffects.play('messageReceive');
+            }
         }
     }, [messages.length, isInitialLoaded, username]); // Depend on length to detect new messages
 
@@ -304,6 +312,22 @@ export default function ChatPanel() {
                         <span className="text-xs text-muted-foreground hidden sm:inline ml-2">General Channel</span>
                     </div>
                 </div>
+
+                {/* Mute Button */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                        soundEffects.setEnabled(!soundEffects.getEnabled());
+                    }}
+                >
+                    {soundEffects.getEnabled() ? (
+                        <Volume2 className="w-4 h-4" />
+                    ) : (
+                        <VolumeX className="w-4 h-4" />
+                    )}
+                </Button>
             </div>
 
             {/* Chat Area */}

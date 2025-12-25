@@ -115,35 +115,55 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
                                 </div>
 
                                 {/* AVATAR SECTION */}
-                                <div className="p-6 bg-black/20 rounded-xl border border-white/5">
-                                    <div className="flex items-center gap-8">
+                                <div className="relative overflow-hidden rounded-2xl border border-border bg-card/50 shadow-sm transition-all hover:bg-card/80 group/card">
+                                    {/* Decorative Banner */}
+                                    <div className="h-32 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent relative">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
+                                    </div>
+
+                                    <div className="px-8 pb-8 -mt-12 flex flex-col items-center relative z-10">
+                                        {/* Avatar */}
                                         <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                            <div className="w-24 h-24 rounded-full bg-discord-gray overflow-hidden border-4 border-discord-dark shadow-xl text-discord-text-muted flex items-center justify-center relative">
+                                            <div className="w-24 h-24 rounded-full bg-muted overflow-hidden border-4 border-background shadow-xl flex items-center justify-center relative transition-transform group-hover:scale-105 duration-300">
                                                 {userImage ? (
                                                     <img src={userImage || undefined} className="w-full h-full object-cover" alt="avatar" />
                                                 ) : (
-                                                    <UserIcon className="w-10 h-10 opacity-50" />
+                                                    <UserIcon className="w-10 h-10 text-muted-foreground opacity-50" />
                                                 )}
+
+                                                {/* Hover Overlay */}
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                    <Upload className="w-8 h-8 text-white scale-75 group-hover:scale-100 transition-transform duration-200" />
+                                                </div>
                                             </div>
-                                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Upload className="w-8 h-8 text-white" />
-                                            </div>
+
                                             {/* Status Indicator */}
-                                            <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-discord-dark"></div>
+                                            <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-background shadow-sm" title="Online"></div>
                                         </div>
 
-                                        <div className="space-y-3">
-                                            <div className="space-y-1">
-                                                <h3 className="font-semibold text-lg text-white">{username || 'User'}</h3>
-                                                <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={loading}>
-                                                    {loading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
-                                                    Change Avatar
-                                                </Button>
-                                                <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleUploadAvatar} />
-                                            </div>
-                                            <p className="text-xs text-discord-text-muted">
-                                                Recommended size: 256x256px.
+                                        {/* User Info */}
+                                        <div className="text-center mt-4 space-y-1">
+                                            <h3 className="text-2xl font-bold text-foreground tracking-tight">{username || 'User'}</h3>
+                                            <p className="text-sm text-muted-foreground font-medium">Ready to focus?</p>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-xs">
+                                            <Button
+                                                variant="outline"
+                                                className="w-full border-primary/20 hover:border-primary/50 hover:bg-primary/5 text-primary-foreground/90 font-medium transition-all"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={loading}
+                                            >
+                                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                                                Change Avatar
+                                            </Button>
+
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold opacity-60">
+                                                Recommended: 256x256px
                                             </p>
+
+                                            <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={handleUploadAvatar} />
                                         </div>
                                     </div>
                                 </div>

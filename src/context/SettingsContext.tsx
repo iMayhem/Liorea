@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type TextSize = "sm" | "md" | "lg";
 export type FontOption = 'inter' | 'roboto' | 'lato' | 'montserrat' | 'open-sans' | 'poppins' | 'oswald' | 'playfair' | 'merriweather' | 'space-mono' | 'nunito' | 'raleway' | 'ubuntu';
-export type ThemeOption = 'default' | 'midnight' | 'forest' | 'berry' | 'sunset' | 'ocean' | 'lavender' | 'rose' | 'slate' | 'amber' | 'teal' | 'emerald';
+export type ThemeOption = 'default' | 'midnight' | 'forest' | 'berry' | 'sunset' | 'ocean' | 'lavender' | 'rose' | 'slate' | 'amber' | 'teal' | 'emerald' | 'crimson' | 'sapphire' | 'mint' | 'coral' | 'indigo' | 'gold';
 
 interface SettingsContextType {
     textSize: TextSize;
@@ -43,10 +43,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const storedTheme = localStorage.getItem("liorea-theme") as ThemeOption;
         if (storedTheme) {
             setThemeState(storedTheme);
-            document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean', 'theme-lavender', 'theme-rose', 'theme-slate', 'theme-amber', 'theme-teal', 'theme-emerald');
+            document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean', 'theme-lavender', 'theme-rose', 'theme-slate', 'theme-amber', 'theme-teal', 'theme-emerald', 'theme-crimson', 'theme-sapphire', 'theme-mint', 'theme-coral', 'theme-indigo', 'theme-gold');
             document.documentElement.classList.add(`theme-${storedTheme}`);
         } else {
-            document.documentElement.classList.add(`theme-default`);
+            // Default to Emerald
+            setThemeState('emerald');
+            document.documentElement.classList.add(`theme-emerald`);
         }
 
     }, []);
@@ -75,7 +77,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const setTheme = (newTheme: ThemeOption) => {
         setThemeState(newTheme);
         localStorage.setItem("liorea-theme", newTheme);
-        document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean', 'theme-lavender', 'theme-rose', 'theme-slate', 'theme-amber', 'theme-teal', 'theme-emerald');
+        document.documentElement.classList.remove('theme-default', 'theme-midnight', 'theme-forest', 'theme-berry', 'theme-sunset', 'theme-ocean', 'theme-lavender', 'theme-rose', 'theme-slate', 'theme-amber', 'theme-teal', 'theme-emerald', 'theme-crimson', 'theme-sapphire', 'theme-mint', 'theme-coral', 'theme-indigo', 'theme-gold');
         document.documentElement.classList.add(`theme-${newTheme}`);
     };
 

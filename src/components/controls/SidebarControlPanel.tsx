@@ -83,11 +83,7 @@ export default function SidebarControlPanel() {
                         </div>
                     </SheetTrigger>
                     <SheetContent side="left" className="bg-[#313338] border-r-[#1F2023] text-zinc-100 w-[380px] sm:w-[540px] p-0 h-full max-h-screen overflow-hidden">
-                        <div className="flex flex-col h-full w-full p-6 pt-10">
-                            <SheetHeader className="shrink-0 mb-4">
-                                <SheetTitle className="text-zinc-100">Leaderboard</SheetTitle>
-                                <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
-                            </SheetHeader>
+                        <div className="flex flex-col h-full w-full p-6">
                             <div className="flex-1 min-h-0 relative h-full">
                                 <Leaderboard
                                     users={getLeaderboardData()}

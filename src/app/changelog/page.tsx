@@ -1,121 +1,162 @@
 "use client";
 
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Bug, Zap, Wrench, FileText, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Bug, Zap, Wrench, Calendar, ChevronLeft } from "lucide-react";
 
-const versions = [
-    {
-        version: "1.0.0",
-        date: "December 25, 2025",
-        badge: "Stable Release",
-        badgeColor: "bg-primary",
-        changes: [
-            { type: "feature", icon: Sparkles, text: "Multiple Reactions: Add multiple emoji reactions to messages" },
-            { type: "feature", icon: Sparkles, text: "Smart Emoji Picker: 48 curated emojis with frequency tracking" },
-            { type: "feature", icon: Sparkles, text: "Sound Effects: Subtle UI sounds for better feedback" },
-            { type: "feature", icon: Sparkles, text: "Multi-Timeframe Leaderboards: Daily, Weekly, and All-Time views" },
-            { type: "feature", icon: Sparkles, text: "Focus Mode Indicator: See when users are in focus mode" },
-            { type: "feature", icon: Sparkles, text: "Screen Sharing: Share your screen with study partners" },
-            { type: "fix", icon: Bug, text: "Fixed chat scroll jumping when adding reactions" },
-            { type: "fix", icon: Bug, text: "Fixed notification sounds playing on page load" },
-            { type: "fix", icon: Bug, text: "Fixed notification read status not persisting" },
-            { type: "perf", icon: Zap, text: "60-70% reduction in Firestore reads" },
-            { type: "perf", icon: Zap, text: "Optimized message loading (100 → 50 messages)" },
-            { type: "tech", icon: Wrench, text: "Migrated chat system to Firestore" },
-            { type: "tech", icon: Wrench, text: "Implemented optimistic UI updates" },
-        ]
-    },
-    {
-        version: "0.1.0",
-        date: "Beta Releases",
-        badge: "Beta",
-        badgeColor: "bg-muted",
-        changes: [
-            { type: "feature", icon: Sparkles, text: "Initial study together functionality" },
-            { type: "feature", icon: Sparkles, text: "Basic chat system" },
-            { type: "feature", icon: Sparkles, text: "User presence tracking" },
-            { type: "feature", icon: Sparkles, text: "Daily leaderboard" },
-            { type: "feature", icon: Sparkles, text: "Journal feature" },
-            { type: "feature", icon: Sparkles, text: "Admin panel" },
-        ]
-    }
-];
+interface ChangelogVersion {
+    version: string;
+    date: string;
+    content: string;
+}
 
 export default function ChangelogPage() {
+    const [versions, setVersions] = useState<ChangelogVersion[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/changelog')
+            .then(res => res.json())
+            .then(data => {
+                setVersions(data.versions || []);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to load changelog:', err);
+                setLoading(false);
+            });
+    }, []);
+
+    const getVersionBadge = (version: string) => {
+        if (version.includes('0.')) return { text: 'Beta', color: 'bg-muted' };
+        return { text: 'Stable', color: 'bg-primary' };
+    };
+
+    const parseMarkdownToSections = (content: string) => {
+        const lines = content.split('\n');
+        const sections: { title: string; items: string[] }[] = [];
+        let currentSection: { title: string; items: string[] } | null = null;
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            // Section headers (### )
+            if (trimmed.startsWith('###')) {
+                if (currentSection) sections.push(currentSection);
+                currentSection = {
+                    title: trimmed.replace(/^###\s*/, ''),
+                    items: []
+                };
+            }
+            // List items (- )
+            else if (trimmed.startsWith('-') && currentSection) {
+                currentSection.items.push(trimmed.replace(/^-\s*/, ''));
+            }
+        }
+
+        if (currentSection) sections.push(currentSection);
+        return sections;
+    };
+
+    const getIconForSection = (title: string) => {
+        if (title.includes('✨') || title.includes('New Features')) return Sparkles;
+        if (title.includes('🐛') || title.includes('Bug Fixes')) return Bug;
+        if (title.includes('⚡') || title.includes('Performance')) return Zap;
+        if (title.includes('🔧') || title.includes('Technical')) return Wrench;
+        return Sparkles;
+    };
+
+    if (loading) {
+        return (
+            <div className="h-[calc(100vh-72px)] overflow-hidden bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-[calc(100vh-72px)] overflow-hidden bg-background">
             <div className="container max-w-3xl mx-auto py-8 px-4 h-full flex flex-col">
                 {/* Header */}
-                <div className="mb-6 shrink-0">
-                    <div className="flex items-center gap-3 mb-2">
-                        <FileText className="w-8 h-8 text-primary" />
-                        <h1 className="text-3xl font-bold">Versions</h1>
+                <div className="mb-6 shrink-0 flex items-center gap-4">
+                    <Link href="/home">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground">
+                            <ChevronLeft className="w-6 h-6" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-4xl font-bold text-foreground mb-2">Changelog</h1>
+                        <p className="text-muted-foreground">Track all updates and improvements to Liorea</p>
                     </div>
-                    <p className="text-muted-foreground text-sm">Track all updates and improvements to Liorea</p>
                 </div>
 
-                {/* Scrollable Panel */}
+                {/* Scrollable Content */}
                 <div className="flex-1 overflow-hidden rounded-lg border border-border bg-card/30 backdrop-blur-sm">
                     <div className="h-full overflow-y-auto p-6">
                         {/* Timeline */}
-                        <div className="relative pb-8">
+                        <div className="relative space-y-8">
                             {/* Vertical line */}
-                            <div className="absolute left-[19px] top-0 bottom-0 w-[2px] bg-border" />
+                            <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-border"></div>
 
-                            {/* Version items */}
-                            <div className="space-y-8">
-                                {versions.map((version, vIdx) => (
-                                    <div key={version.version} className="relative">
-                                        {/* Timeline dot */}
-                                        <div className="absolute left-0 top-2 w-10 h-10 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
-                                            <FileText className="w-5 h-5 text-primary" />
+                            {versions.map((versionData, idx) => {
+                                const badge = getVersionBadge(versionData.version);
+                                const sections = parseMarkdownToSections(versionData.content);
+
+                                return (
+                                    <div key={versionData.version} className="relative pl-12">
+                                        {/* Version badge */}
+                                        <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm z-10">
+                                            {idx + 1}
                                         </div>
 
-                                        {/* Content card */}
-                                        <div className="ml-16">
-                                            <Card className="p-5 hover:shadow-lg transition-shadow">
-                                                {/* Version header */}
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <h2 className="text-xl font-bold">Version {version.version}</h2>
-                                                            <Badge className={version.badgeColor}>{version.badge}</Badge>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                                            <Calendar className="w-3.5 h-3.5" />
-                                                            <span>{version.date}</span>
-                                                        </div>
-                                                    </div>
+                                        <Card className="p-6 bg-card border-border">
+                                            {/* Version header */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <h2 className="text-2xl font-bold text-foreground">
+                                                        v{versionData.version}
+                                                    </h2>
+                                                    <span className={`px-2 py-1 rounded-md text-xs font-semibold ${badge.color} text-primary-foreground`}>
+                                                        {badge.text}
+                                                    </span>
                                                 </div>
+                                                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                                    <Calendar className="w-4 h-4" />
+                                                    {versionData.date}
+                                                </div>
+                                            </div>
 
-                                                {/* Changes list */}
-                                                <div className="space-y-2.5">
-                                                    {version.changes.map((change, idx) => {
-                                                        const Icon = change.icon;
-                                                        return (
-                                                            <div key={idx} className="flex items-start gap-3 group">
-                                                                <div className={`
-                                  w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5
-                                  ${change.type === 'feature' ? 'bg-primary/10 text-primary' : ''}
-                                  ${change.type === 'fix' ? 'bg-destructive/10 text-destructive' : ''}
-                                  ${change.type === 'perf' ? 'bg-yellow-500/10 text-yellow-500' : ''}
-                                  ${change.type === 'tech' ? 'bg-blue-500/10 text-blue-500' : ''}
-                                `}>
-                                                                    <Icon className="w-4 h-4" />
-                                                                </div>
-                                                                <p className="text-sm leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors">
-                                                                    {change.text}
-                                                                </p>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </Card>
-                                        </div>
+                                            {/* Sections */}
+                                            <div className="space-y-4">
+                                                {sections.map((section, sIdx) => {
+                                                    const Icon = getIconForSection(section.title);
+                                                    return (
+                                                        <div key={sIdx}>
+                                                            <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                                                                <Icon className="w-5 h-5" />
+                                                                {section.title}
+                                                            </h3>
+                                                            <ul className="space-y-1.5 ml-7">
+                                                                {section.items.map((item, iIdx) => (
+                                                                    <li key={iIdx} className="text-sm text-muted-foreground flex items-start gap-2">
+                                                                        <span className="text-primary mt-1">•</span>
+                                                                        <span dangerouslySetInnerHTML={{
+                                                                            __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+                                                                        }} />
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </Card>
                                     </div>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

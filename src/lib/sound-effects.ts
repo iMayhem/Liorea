@@ -2,7 +2,7 @@
 export const UI_SOUNDS = {
     // Chat & Messaging
     messageSend: 'https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3',
-    messageReceive: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/mention_notification.mp3', // Using existing notification sound
+    messageReceive: 'https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3', // Soft pop for standard messages
     reaction: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
 
     // UI Interactions
@@ -10,7 +10,7 @@ export const UI_SOUNDS = {
     toggle: 'https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3',
 
     // Notifications
-    notification: 'https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3',
+    notification: 'https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/notifchat.mp3', // Distinct notification sound (mentions/system)
     success: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
     error: 'https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3',
 

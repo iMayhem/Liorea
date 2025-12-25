@@ -5,10 +5,9 @@ import { db } from '@/lib/firebase';
 import { ref, onValue, push, serverTimestamp, query, limitToLast, update } from 'firebase/database';
 import { usePresence } from '@/features/study';
 import { useToast } from '@/hooks/use-toast';
+import { soundEffects } from '@/lib/sound-effects';
 
-// 🔔 SOUND URL (A soft glass ping)
-// You can upload your own 'notification.mp3' to your R2 bucket and replace this URL later if you want.
-const NOTIFICATION_SOUND = "https://pub-cb3ee67ac9934a35a6d7ddc427fbcab6.r2.dev/sounds/mention_notification.mp3";
+// 🔔 SOUND URL handled by soundEffects manager (src/lib/sound-effects.ts)
 
 export interface Notification {
   id: string;
@@ -58,13 +57,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // --- HELPER: PLAY SOUND ---
   const playSound = () => {
-    try {
-      const audio = new Audio(NOTIFICATION_SOUND);
-      audio.volume = 0.4; // Keep it subtle, not ear-piercing
-      audio.play().catch(e => console.warn("Audio play blocked (user needs to interact first)", e));
-    } catch (e) {
-      // Ignore audio errors
-    }
+    soundEffects.play('notification');
   };
 
   // 2. LISTEN TO USER-SPECIFIC FIREBASE NODE

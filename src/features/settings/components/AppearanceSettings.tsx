@@ -56,6 +56,12 @@ export function AppearanceSettings({ onClose }: AppearanceSettingsProps) {
                                     { id: 'amber', name: 'Amber', color: '#451a03' },
                                     { id: 'teal', name: 'Teal', color: '#042f2e' },
                                     { id: 'emerald', name: 'Emerald', color: '#022c22' },
+                                    { id: 'crimson', name: 'Crimson', color: '#450a0a' },
+                                    { id: 'sapphire', name: 'Sapphire', color: '#172554' },
+                                    { id: 'mint', name: 'Mint', color: '#064e3b' },
+                                    { id: 'coral', name: 'Coral', color: '#7c2d12' },
+                                    { id: 'indigo', name: 'Indigo', color: '#312e81' },
+                                    { id: 'gold', name: 'Gold', color: '#713f12' },
                                 ] as const
                             ).map((t) => (
                                 <button

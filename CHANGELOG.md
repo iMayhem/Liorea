@@ -2,6 +2,39 @@
 
 All notable changes to Liorea will be documented in this file.
 
+## [1.0.1] - 2025-12-26
+
+### ✨ New Features
+- **18 Color Themes**: Added 6 new vibrant themes (Crimson, Sapphire, Mint, Coral, Indigo, Gold) for total of 18 themes
+- **Mute Button**: Added sound effects mute/unmute toggle in study room chat header
+- **Compact Emoji Picker**: Reduced to 20 most commonly used emojis with smart layout
+
+### 🎨 UI/UX Improvements
+- **Leaderboard Redesign**: Compact dropdown for timeframe selection, removed clutter, increased spacing
+- **Top 20 Display**: Limited leaderboard to show only top 20 users across all timeframes
+- **Smooth Scrolling**: Added GPU acceleration and performance optimizations for silky-smooth scrolling
+- **Loading Optimizations**: Added eager presence initialization and loading skeletons for instant feedback
+- **Changelog Page**: Redesigned with timeline-style layout and scrollable panel
+
+### ⚡ Performance Improvements
+- **Leaderboard Optimization**: Implemented React.memo and useMemo to prevent unnecessary re-renders
+- **Presence Loading**: Optimized initialization to show users online faster
+- **Chat Loading**: Added delay to prevent race conditions with presence system
+- **Scroll Performance**: GPU-accelerated scrolling with hardware acceleration
+
+### 🐛 Bug Fixes
+- **Version Display**: Removed "Beta" tag, now shows stable v1.0.1
+- **Theme Types**: Fixed TypeScript errors for new color themes
+- **Notification Persistence**: Fixed read status not persisting across sessions
+- **Reaction System**: Fixed multiple reactions per user functionality
+
+### 🔧 Technical Improvements
+- **Error Handling**: Improved error logging for presence sync and chat history
+- **Sound Effects**: Better state management with getEnabled() method
+- **Memoization**: Optimized component rendering across the app
+
+---
+
 ## [1.0.0] - 2025-12-25
 
 ### 🎉 Official Release
