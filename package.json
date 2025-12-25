@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "generate:changelog": "node src/scripts/generate-changelog.mjs",
+    "prebuild": "node src/scripts/generate-changelog.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

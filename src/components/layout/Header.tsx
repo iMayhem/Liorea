@@ -56,7 +56,7 @@ export default function Header() {
     return (
         <header
             className={cn(
-                "fixed top-0 left-0 right-0 z-30 px-4 h-[72px] flex items-center",
+                "fixed top-0 left-0 right-0 z-50 px-4 h-[72px] flex items-center",
                 "border-b border-white/5 transition-colors duration-500",
                 "bg-background/60 backdrop-blur-xl"
             )}

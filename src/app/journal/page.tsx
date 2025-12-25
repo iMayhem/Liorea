@@ -24,6 +24,7 @@ import { api } from '@/lib/api';
 import { JournalSidebar } from './components/JournalSidebar';
 import { JournalChat } from './components/JournalChat';
 import { Journal } from './types';
+import { JournalOverlay } from '@/components/layout/JournalOverlay';
 
 function JournalContent() {
     const { username, leaderboardUsers } = usePresence();
@@ -144,7 +145,7 @@ function JournalContent() {
     const sortedJournals = useMemo(() => { return [...journals].sort((a, b) => { const aFollow = followedIds.includes(a.id) ? 1 : 0; const bFollow = followedIds.includes(b.id) ? 1 : 0; if (aFollow !== bFollow) return bFollow - aFollow; return b.last_updated - a.last_updated; }); }, [journals, followedIds]);
 
     return (
-        <div className="min-h-screen text-white bg-transparent overflow-hidden">
+        <div className="min-h-screen text-white bg-transparent overflow-hidden relative">
             <Header />
             <input type="file" ref={cardFileInputRef} className="hidden" accept="image/*" multiple onChange={handleCardFileChange} />
 
@@ -189,6 +190,7 @@ function JournalContent() {
 export default function JournalPage() {
     return (
         <div className="min-h-screen text-white bg-transparent overflow-hidden">
+            <JournalOverlay />
             <Suspense fallback={<div className="flex h-screen items-center justify-center text-white/50">Loading...</div>}>
                 <JournalContent />
             </Suspense>
