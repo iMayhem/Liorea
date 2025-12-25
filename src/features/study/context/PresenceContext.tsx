@@ -29,6 +29,7 @@ export interface StudyUser {
     status_text?: string;
     equipped_frame?: string;
     trend?: 'up' | 'down' | 'same';
+    is_focus_mode?: boolean;
 }
 
 export interface CommunityUser {
@@ -39,6 +40,7 @@ export interface CommunityUser {
     is_studying: boolean;
     photoURL?: string;
     equipped_frame?: string;
+    is_focus_mode?: boolean;
 }
 
 interface PresenceContextType {
@@ -49,6 +51,10 @@ interface PresenceContextType {
     studyUsers: StudyUser[];
     communityUsers: CommunityUser[];
     leaderboardUsers: StudyUser[];
+    weeklyLeaderboard: StudyUser[];
+    allTimeLeaderboard: StudyUser[];
+    selectedTimeframe: 'daily' | 'weekly' | 'alltime';
+    setSelectedTimeframe: (timeframe: 'daily' | 'weekly' | 'alltime') => void;
     isStudying: boolean;
     joinSession: (roomId?: string) => void;
     leaveSession: (roomId?: string) => void;
@@ -77,6 +83,9 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const [studyUsers, setStudyUsers] = useState<StudyUser[]>([]);
     const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
     const [historicalLeaderboard, setHistoricalLeaderboard] = useState<StudyUser[]>([]);
+    const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<StudyUser[]>([]);
+    const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<StudyUser[]>([]);
+    const [selectedTimeframe, setSelectedTimeframe] = useState<'daily' | 'weekly' | 'alltime'>('daily');
     const [userRoles, setUserRoles] = useState<Record<string, string>>({});
 
     const [isStudying, setIsStudying] = useState(false);
@@ -237,6 +246,129 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
         return () => unsubscribe();
     }, [currentDate]);
 
+    // 1b. Weekly Leaderboard (Last 7 days aggregation)
+    useEffect(() => {
+        const getDateDaysAgo = (days: number) => {
+            const date = new Date();
+            date.setDate(date.getDate() - days);
+            return date.toISOString().split('T')[0];
+        };
+
+        const startDate = getDateDaysAgo(7);
+        const endDate = new Date().toISOString().split('T')[0];
+
+        const q = queryFirestore(
+            collection(firestore, 'daily_stats'),
+            where('date', '>=', startDate),
+            where('date', '<=', endDate)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            // Aggregate by username
+            const userMap = new Map<string, {
+                username: string;
+                totalMinutes: number;
+                photoURL?: string;
+                status_text?: string;
+                equipped_frame?: string;
+            }>();
+
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                if (!data.username) return;
+
+                const existing = userMap.get(data.username) || {
+                    username: data.username,
+                    totalMinutes: 0,
+                    photoURL: data.photoURL,
+                    status_text: data.status_text,
+                    equipped_frame: data.equipped_frame
+                };
+
+                existing.totalMinutes += data.minutes || 0;
+                // Keep most recent profile data
+                if (data.photoURL) existing.photoURL = data.photoURL;
+                if (data.status_text) existing.status_text = data.status_text;
+                if (data.equipped_frame) existing.equipped_frame = data.equipped_frame;
+
+                userMap.set(data.username, existing);
+            });
+
+            const list: StudyUser[] = Array.from(userMap.values())
+                .map(user => ({
+                    username: user.username,
+                    total_study_time: user.totalMinutes * 60, // Convert to seconds
+                    status: 'Online' as const,
+                    photoURL: user.photoURL,
+                    status_text: user.status_text,
+                    equipped_frame: user.equipped_frame
+                }))
+                .sort((a, b) => b.total_study_time - a.total_study_time)
+                .slice(0, 50); // Top 50
+
+            setWeeklyLeaderboard(list);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    // 1c. All-Time Leaderboard (All historical data aggregation)
+    useEffect(() => {
+        const q = queryFirestore(
+            collection(firestore, 'daily_stats'),
+            orderBy('date', 'desc'),
+            limitFirestore(500) // Optimized limit - reduced from 2000
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            // Aggregate by username
+            const userMap = new Map<string, {
+                username: string;
+                totalMinutes: number;
+                photoURL?: string;
+                status_text?: string;
+                equipped_frame?: string;
+            }>();
+
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                if (!data.username) return;
+
+                const existing = userMap.get(data.username) || {
+                    username: data.username,
+                    totalMinutes: 0,
+                    photoURL: data.photoURL,
+                    status_text: data.status_text,
+                    equipped_frame: data.equipped_frame
+                };
+
+                existing.totalMinutes += data.minutes || 0;
+                // Keep most recent profile data
+                if (data.photoURL) existing.photoURL = data.photoURL;
+                if (data.status_text) existing.status_text = data.status_text;
+                if (data.equipped_frame) existing.equipped_frame = data.equipped_frame;
+
+                userMap.set(data.username, existing);
+            });
+
+            const list: StudyUser[] = Array.from(userMap.values())
+                .map(user => ({
+                    username: user.username,
+                    total_study_time: user.totalMinutes * 60, // Convert to seconds
+                    status: 'Online' as const,
+                    photoURL: user.photoURL,
+                    status_text: user.status_text,
+                    equipped_frame: user.equipped_frame
+                }))
+                .sort((a, b) => b.total_study_time - a.total_study_time)
+                .slice(0, 100); // Top 100
+
+            setAllTimeLeaderboard(list);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
     // 2. Study Room Users (Throttled + Hybrid Firestore/RDB)
     useEffect(() => {
         if (!joinedRoomId) {
@@ -334,6 +466,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                             status: u.status || 'Offline',
                             last_seen: u.last_seen || Date.now(),
                             is_studying: u.is_studying || false,
+                            is_focus_mode: u.is_focus_mode || false,
 
                             // Merged Fields
                             photoURL: profile.photoURL || u.photoURL || "", // Fallback to RDB if migrated slowly
@@ -436,6 +569,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 if (!existing.photoURL && user.photoURL) existing.photoURL = user.photoURL;
                 if (!existing.equipped_frame && user.equipped_frame) existing.equipped_frame = user.equipped_frame;
                 if (user.status_text) existing.status_text = user.status_text;
+                if (user.is_focus_mode !== undefined) existing.is_focus_mode = user.is_focus_mode;
             }
         });
 
@@ -634,10 +768,12 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const value = useMemo(() => ({
         username, userImage, setUsername, setUserImage,
         studyUsers, leaderboardUsers, communityUsers,
+        weeklyLeaderboard, allTimeLeaderboard,
+        selectedTimeframe, setSelectedTimeframe,
         isStudying, joinSession, leaveSession, updateStatusMessage,
         getUserImage, getUserFrame,
         userRoles, isMod, joinedRoomId
-    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame, userRoles, isMod, joinedRoomId]);
+    }), [username, userImage, setUsername, setUserImage, studyUsers, leaderboardUsers, communityUsers, weeklyLeaderboard, allTimeLeaderboard, selectedTimeframe, isStudying, joinSession, leaveSession, updateStatusMessage, getUserImage, getUserFrame, userRoles, isMod, joinedRoomId]);
 
     return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 };

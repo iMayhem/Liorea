@@ -13,6 +13,8 @@ import MobileMessage from '@/components/layout/MobileMessage';
 import { UserContextMenuProvider } from '@/context/UserContextMenuContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import ConnectionStatus from '@/components/layout/ConnectionStatus';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
@@ -20,23 +22,39 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <Suspense>
                 <NavigationEvents />
             </Suspense>
-            <BackgroundProvider>
-                <SettingsProvider>
-                    <BackgroundDisplay />
-                    <FocusProvider>
-                        <FocusOverlay />
-                        <PresenceProvider>
-                            <NotificationProvider>
-                                <UserContextMenuProvider>
-                                    {children}
-                                    <MobileMessage />
-                                    <GlobalUserContextMenu />
-                                </UserContextMenuProvider>
-                            </NotificationProvider>
-                        </PresenceProvider>
-                    </FocusProvider>
-                </SettingsProvider>
-            </BackgroundProvider>
+
+            {/* Connection status indicator */}
+            <ConnectionStatus />
+
+            <ErrorBoundary name="Background Provider">
+                <BackgroundProvider>
+                    <ErrorBoundary name="Settings Provider">
+                        <SettingsProvider>
+                            <BackgroundDisplay />
+                            <ErrorBoundary name="Presence Provider">
+                                <PresenceProvider>
+                                    <ErrorBoundary name="Focus Provider">
+                                        <FocusProvider>
+                                            <FocusOverlay />
+                                            <ErrorBoundary name="Notification Provider">
+                                                <NotificationProvider>
+                                                    <ErrorBoundary name="User Context Menu Provider">
+                                                        <UserContextMenuProvider>
+                                                            {children}
+                                                            <MobileMessage />
+                                                            <GlobalUserContextMenu />
+                                                        </UserContextMenuProvider>
+                                                    </ErrorBoundary>
+                                                </NotificationProvider>
+                                            </ErrorBoundary>
+                                        </FocusProvider>
+                                    </ErrorBoundary>
+                                </PresenceProvider>
+                            </ErrorBoundary>
+                        </SettingsProvider>
+                    </ErrorBoundary>
+                </BackgroundProvider>
+            </ErrorBoundary>
             <Toaster />
         </>
     );

@@ -47,13 +47,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     return combined.sort((a, b) => b.timestamp - a.timestamp);
   }, [userNotifications, globalNotifications]);
 
-  // 1. Load "Read" status from Local Storage
+  // 1. Load "Read" status from Local Storage (per user)
   useEffect(() => {
+    if (!username) return;
     try {
-      const localRead = localStorage.getItem('liorea-read-notifications');
+      const localRead = localStorage.getItem(`liorea-read-notifications-${username}`);
       if (localRead) setReadIds(JSON.parse(localRead));
     } catch (e) { }
-  }, []);
+  }, [username]);
 
   // --- HELPER: PLAY SOUND ---
   const playSound = () => {
@@ -165,8 +166,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }, [userNotifications, globalNotifications, readIds, toast]);
 
   // 3. SEND TO FIREBASE
-  // 3. SEND TO FIREBASE
-  const addNotification = async (message: string, targetUser?: string, link?: string, type: 'global' | 'personal' = 'global') => {
+  const addNotification = React.useCallback(async (message: string, targetUser?: string, link?: string, type: 'global' | 'personal' = 'global') => {
     try {
       if (targetUser) {
         const notificationsRef = ref(db, `user_notifications/${targetUser}`);
@@ -188,44 +188,56 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Failed to add notification", error);
     }
-  };
+  }, []);
 
   // 4. Mark ONE as Read
-  const markAsRead = (id: string) => {
+  const markAsRead = React.useCallback((id: string) => {
     // 1. Optimistic Local Update
     if (!readIds.includes(id)) {
       const newReadIds = [...readIds, id];
       setReadIds(newReadIds);
-      localStorage.setItem('liorea-read-notifications', JSON.stringify(newReadIds));
+      if (username) {
+        localStorage.setItem(`liorea-read-notifications-${username}`, JSON.stringify(newReadIds));
+      }
     }
 
     // 2. Identify and Update Backend (Personal Only)
-    // We check if this ID exists in our userNotifications list
     const isPersonal = userNotifications.some(n => n.id === id);
     if (isPersonal && username) {
-      // Update Firebase
-      // Note: We don't wait for this to finish, optimistic UI handles it
       const notifRef = ref(db, `user_notifications/${username}/${id}`);
       update(notifRef, { read: true }).catch(err => console.error("Failed to mark read on backend", err));
     }
-  };
+  }, [readIds, userNotifications, username]);
 
   // 5. Mark ALL as Read
-  const markAllAsRead = () => {
+  const markAllAsRead = React.useCallback(() => {
     const allIds = notifications.map(n => n.id);
     const combinedIds = Array.from(new Set([...readIds, ...allIds]));
 
     setReadIds(combinedIds);
-    localStorage.setItem('liorea-read-notifications', JSON.stringify(combinedIds));
-  };
+    if (username) {
+      localStorage.setItem(`liorea-read-notifications-${username}`, JSON.stringify(combinedIds));
+    }
+  }, [notifications, readIds]);
 
-  const displayedNotifications = notifications.map(n => ({
-    ...n,
-    read: n.read || readIds.includes(n.id)
-  }));
+  const displayedNotifications = React.useMemo(() =>
+    notifications.map(n => ({
+      ...n,
+      read: n.read || readIds.includes(n.id)
+    })),
+    [notifications, readIds]
+  );
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = React.useMemo(() => ({
+    notifications: displayedNotifications,
+    addNotification,
+    markAsRead,
+    markAllAsRead
+  }), [displayedNotifications, addNotification, markAsRead, markAllAsRead]);
 
   return (
-    <NotificationContext.Provider value={{ notifications: displayedNotifications, addNotification, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );

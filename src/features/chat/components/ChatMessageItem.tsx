@@ -16,7 +16,6 @@ interface ChatMessageItemProps {
     openReactionPopoverId: string | null;
     onReact: (id: string, emoji: string) => void;
     onReply: (element: HTMLElement) => void;
-    onReport: (msg: ChatMessage) => void;
     onDelete: (id: string) => void;
     onOpenChange: (open: boolean) => void;
     formatDate: (ts: number) => string;
@@ -25,7 +24,7 @@ interface ChatMessageItemProps {
 
 export const ChatMessageItem = React.memo(function ChatMessageItem({
     msg, isSequence, showHeader, isCurrentUser, reactionGroups,
-    openReactionPopoverId, onReact, onReply, onReport, onDelete, onOpenChange,
+    openReactionPopoverId, onReact, onReply, onDelete, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
     const { isMod, username: currentUsername } = usePresence();
@@ -136,7 +135,6 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 isModerator={currentUsername ? isMod(currentUsername) : false}
                 onReact={(emoji) => onReact(msg.id, emoji)}
                 onReply={() => onReply(null as any)}
-                onReport={() => onReport(msg)}
                 onDelete={() => onDelete(msg.id)}
                 isOpen={openReactionPopoverId === msg.id}
                 onOpenChange={onOpenChange}
@@ -144,12 +142,15 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
         </div>
     );
 }, (prev, next) => {
-    // Optimize: Only re-render if message content, timestamp, or reactions change
+    // Optimize: Only re-render if message content, timestamp, reactions, or deleted state change
     // or if the "sequence/header" logic changes (which depends on neighbors, handled by parent passing different props)
+    const reactionsEqual = JSON.stringify(prev.msg.reactions) === JSON.stringify(next.msg.reactions);
+
     return (
         prev.msg.id === next.msg.id &&
         prev.msg.message === next.msg.message &&
-        JSON.stringify(prev.msg.reactions) === JSON.stringify(next.msg.reactions) &&
+        prev.msg.deleted === next.msg.deleted && // Check if deleted state changed
+        reactionsEqual && // Deep compare reactions
         prev.isSequence === next.isSequence && // Check if position in chain changed
         prev.openReactionPopoverId === next.openReactionPopoverId // Check if *this* message's popover state changed
     );

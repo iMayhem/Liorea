@@ -1,11 +1,15 @@
-import { Award, Clock, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { Award, Clock, Trophy, TrendingUp, TrendingDown, Calendar, Infinity } from 'lucide-react';
 import { StudyUser } from '@/features/study';
 import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect } from 'react';
 
+export type LeaderboardTimeframe = 'daily' | 'weekly' | 'alltime';
+
 interface LeaderboardProps {
   users: StudyUser[];
   currentUsername?: string | null;
+  timeframe?: LeaderboardTimeframe;
+  onTimeframeChange?: (timeframe: LeaderboardTimeframe) => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -23,25 +27,76 @@ interface LeaderboardEntry {
   trend?: 'up' | 'down' | 'same';
 }
 
-export default function Leaderboard({ users, currentUsername }: LeaderboardProps) {
+export default function Leaderboard({ users, currentUsername, timeframe = 'daily', onTimeframeChange }: LeaderboardProps) {
   // Use props directly
   const displayUsers = users;
   const isLoading = false; // Data is pushed from context live
+
+  const getTimeframeLabel = () => {
+    switch (timeframe) {
+      case 'daily': return 'Daily Leaderboard';
+      case 'weekly': return 'Weekly Leaderboard';
+      case 'alltime': return 'All-Time Leaderboard';
+    }
+  };
+
+  const getTimeframeIcon = () => {
+    switch (timeframe) {
+      case 'daily': return <Trophy className="text-yellow-500 w-5 h-5" />;
+      case 'weekly': return <Calendar className="text-blue-500 w-5 h-5" />;
+      case 'alltime': return <Infinity className="text-purple-500 w-5 h-5" />;
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-transparent overflow-hidden">
       {/* Header - Fixed */}
       <div className="p-0 pb-4 shrink-0 relative z-10">
+        {/* Timeframe Tabs */}
+        {onTimeframeChange && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => onTimeframeChange('daily')}
+              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${timeframe === 'daily'
+                  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80 border border-white/10'
+                }`}
+            >
+              Daily
+            </button>
+            <button
+              onClick={() => onTimeframeChange('weekly')}
+              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${timeframe === 'weekly'
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80 border border-white/10'
+                }`}
+            >
+              Weekly
+            </button>
+            <button
+              onClick={() => onTimeframeChange('alltime')}
+              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${timeframe === 'alltime'
+                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80 border border-white/10'
+                }`}
+            >
+              All-Time
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold flex items-center gap-2 text-white">
-            <Trophy className="text-yellow-500 w-5 h-5" />
-            Daily Leaderboard
+            {getTimeframeIcon()}
+            {getTimeframeLabel()}
           </h3>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-400">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span>Live</span>
-          </div>
+          {timeframe === 'daily' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-400">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span>Live</span>
+            </div>
+          )}
         </div>
       </div>
 

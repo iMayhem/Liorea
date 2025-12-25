@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function SidebarControlPanel() {
-    const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
+    const { studyUsers, leaderboardUsers, weeklyLeaderboard, allTimeLeaderboard, selectedTimeframe, setSelectedTimeframe, leaveSession, username } = usePresence();
     const router = useRouter();
     const [isMuted, setIsMuted] = useState(false); // Mock state for now
 
@@ -26,6 +26,16 @@ export default function SidebarControlPanel() {
     const handleLeave = () => {
         leaveSession();
         router.push('/home');
+    };
+
+    // Get the appropriate leaderboard data based on selected timeframe
+    const getLeaderboardData = () => {
+        switch (selectedTimeframe) {
+            case 'daily': return leaderboardUsers;
+            case 'weekly': return weeklyLeaderboard;
+            case 'alltime': return allTimeLeaderboard;
+            default: return leaderboardUsers;
+        }
     };
 
     return (
@@ -79,7 +89,12 @@ export default function SidebarControlPanel() {
                                 <SheetDescription className="text-zinc-400">Top students by focus time.</SheetDescription>
                             </SheetHeader>
                             <div className="flex-1 min-h-0 relative h-full">
-                                <Leaderboard users={leaderboardUsers} currentUsername={username} />
+                                <Leaderboard
+                                    users={getLeaderboardData()}
+                                    currentUsername={username}
+                                    timeframe={selectedTimeframe}
+                                    onTimeframeChange={setSelectedTimeframe}
+                                />
                             </div>
                         </div>
                     </SheetContent>

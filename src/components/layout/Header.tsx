@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Wand2, Brain } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Brain } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -24,31 +24,6 @@ export default function Header() {
     const pathname = usePathname();
     const { notifications, markAsRead, markAllAsRead } = useNotifications();
     const unreadCount = notifications.filter(n => !n.read).length;
-
-
-
-    // Beautiful Mode State
-    const [isBeautifulMode, setIsBeautifulMode] = useState(false);
-
-    useEffect(() => {
-        const stored = localStorage.getItem('beautiful-mode');
-        if (stored === 'true') {
-            setIsBeautifulMode(true);
-            document.documentElement.classList.add('beautiful-mode');
-        }
-    }, []);
-
-    const toggleBeautifulMode = () => {
-        const newValue = !isBeautifulMode;
-        setIsBeautifulMode(newValue);
-        if (newValue) {
-            document.documentElement.classList.add('beautiful-mode');
-            localStorage.setItem('beautiful-mode', 'true');
-        } else {
-            document.documentElement.classList.remove('beautiful-mode');
-            localStorage.setItem('beautiful-mode', 'false');
-        }
-    };
 
     // Feedback/Bug Report State
     const { username } = usePresence();
@@ -116,16 +91,6 @@ export default function Header() {
                             <ShoppingBag className="w-5 h-5" />
                         </Button>
                     </Link> */}
-
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={toggleBeautifulMode}
-                        className={cn("text-white hover:bg-white/20 hover:text-white rounded-full transition-all duration-300", isBeautifulMode && "bg-white/20 text-yellow-300 shadow-[0_0_15px_rgba(253,224,71,0.5)]")}
-                        title="Beautiful Mode"
-                    >
-                        <Wand2 className="w-5 h-5" />
-                    </Button>
 
                     {/* BUG REPORT / FEEDBACK BUTTON */}
                     <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
@@ -278,6 +243,15 @@ export default function Header() {
                     )}>
                         <NotebookText className="w-4 h-4" />
                         <span className="hidden sm:inline">Journal</span>
+                    </Link>
+
+                    <Link href="/changelog" className={cn(
+                        "flex items-center gap-2 py-1.5 px-3 rounded-full transition-colors text-sm",
+                        'text-white/80 hover:text-white bg-black/20 backdrop-blur-sm',
+                        pathname === '/changelog' && 'bg-white/10 text-white'
+                    )}>
+                        <CheckCheck className="w-4 h-4" />
+                        <span className="hidden sm:inline">Changelog</span>
                     </Link>
 
                 </nav>

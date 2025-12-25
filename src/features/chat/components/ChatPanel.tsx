@@ -26,8 +26,7 @@ import { MessageActions } from '@/components/chat/MessageActions';
 import { MentionMenu } from '@/components/chat/MentionMenu';
 import { ChatMessageItem } from './ChatMessageItem';
 
-type GiphyResult = { id: string; images: { fixed_height: { url: string }; fixed_height_small: { url: string }; original: { url: string }; downsized: { url: string }; } }
-// ... (skip down to map)
+type TenorResult = { id: string; media_formats: { tinygif: { url: string }; mediumgif: { url: string }; gif: { url: string }; } }
 
 
 export default function ChatPanel() {
@@ -45,7 +44,7 @@ export default function ChatPanel() {
     const prevScrollHeight = useRef(0);
 
     // GIF & Emoji State
-    const [gifs, setGifs] = useState<GiphyResult[]>([]);
+    const [gifs, setGifs] = useState<TenorResult[]>([]);
     const [gifSearch, setGifSearch] = useState("");
     const [loadingGifs, setLoadingGifs] = useState(false);
     const [openReactionPopoverId, setOpenReactionPopoverId] = useState<string | null>(null);
@@ -110,10 +109,26 @@ export default function ChatPanel() {
 
     // Debounced Smart Scroll Logic
     const initialLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const previousMessagesRef = useRef<ChatMessage[]>([]);
 
     useLayoutEffect(() => {
         const container = scrollContainerRef.current;
         if (!container || messages.length === 0) return;
+
+        // Check if only reactions changed (not new messages)
+        const previousMessages = previousMessagesRef.current;
+        const onlyReactionsChanged =
+            messages.length === previousMessages.length &&
+            messages.every((msg, idx) => {
+                const prev = previousMessages[idx];
+                return prev && msg.id === prev.id && msg.message === prev.message;
+            });
+
+        // If only reactions changed, preserve exact scroll position
+        if (onlyReactionsChanged && previousMessages.length > 0) {
+            previousMessagesRef.current = messages;
+            return; // Don't scroll at all
+        }
 
         const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
         const isNearBottom = distanceFromBottom < 300;
@@ -123,16 +138,14 @@ export default function ChatPanel() {
                 scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
             }
 
-            if (initialLoadTimeoutRef.current) {
-                clearTimeout(initialLoadTimeoutRef.current);
-            }
-
+            // Set initial loaded immediately for instant chat appearance
             if (!isInitialLoaded) {
-                initialLoadTimeoutRef.current = setTimeout(() => {
-                    setIsInitialLoaded(true);
-                }, 1000);
+                setIsInitialLoaded(true);
             }
         }
+
+        // Update previous messages for next comparison
+        previousMessagesRef.current = messages;
     }, [messages, isInitialLoaded]);
 
     useEffect(() => {
@@ -170,29 +183,6 @@ export default function ChatPanel() {
 
     // --- ACTIONS ---
 
-    const handleReportMessage = async (msg: ChatMessage) => {
-        if (!username) return;
-        try {
-            // Updated to Firestore
-            const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-            const { firestore } = await import('@/lib/firebase'); // Dynamic import to ensure we get proper instance if needed or just import top level.
-            // Actually better to import top level. But for this small cleanup:
-            await addDoc(collection(firestore, 'reports'), {
-                reporter: username,
-                reported_user: msg.username,
-                message_content: msg.message || "Image/GIF",
-                message_id: msg.id,
-                room: "Study Room",
-                timestamp: serverTimestamp(),
-                status: "pending"
-            });
-            toast({ title: "Report Sent", description: "Admins have been notified." });
-        } catch (e: any) {
-            // console.error(e);
-            toast({ variant: "destructive", title: "Error", description: "Could not send report." });
-        }
-    };
-
     const handleReply = (msg: ChatMessage) => {
         setReplyingTo({
             id: msg.id,
@@ -226,8 +216,8 @@ export default function ChatPanel() {
     const fetchGifs = async (query: string = "") => {
         setLoadingGifs(true);
         try {
-            const data = await (query ? api.giphy.search(query) : api.giphy.trending());
-            setGifs(data.data);
+            const data = await (query ? api.tenor.search(query) : api.tenor.trending());
+            setGifs(data.results || []);
         } catch (error) { console.error("Failed to fetch GIFs", error); } finally { setLoadingGifs(false); }
     };
 
@@ -284,20 +274,24 @@ export default function ChatPanel() {
         return 'Several people are typing...';
     };
 
+    const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
     const getReactionGroups = (reactions: Record<string, any> | undefined) => {
         if (!reactions) return {};
         const groups: Record<string, { count: number, hasReacted: boolean, users: string[] }> = {};
         Object.values(reactions).forEach((r: any) => {
-            if (!groups[r.emoji]) groups[r.emoji] = { count: 0, hasReacted: false, users: [] };
-            groups[r.emoji].count++;
-            groups[r.emoji].users.push(r.username);
-            if (r.username === username) groups[r.emoji].hasReacted = true;
+            // Handle both single emoji (string) and multiple emojis (array)
+            const emojis = Array.isArray(r.emoji) ? r.emoji : [r.emoji];
+            emojis.forEach((emoji: string) => {
+                if (!groups[emoji]) groups[emoji] = { count: 0, hasReacted: false, users: [] };
+                groups[emoji].count++;
+                groups[emoji].users.push(r.username);
+                if (r.username === username) groups[emoji].hasReacted = true;
+            });
         });
         return groups;
     };
-
-    const formatDate = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    const formatTime = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
     return (
         <div className="flex-1 flex flex-col h-full bg-card/80 backdrop-blur-xl border border-border rounded-2xl overflow-hidden shadow-2xl">
@@ -316,7 +310,7 @@ export default function ChatPanel() {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className={`flex-1 p-0 overflow-y-auto relative transition-opacity duration-500 ease-in ${isInitialLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className="flex-1 p-0 overflow-y-auto relative"
             >
                 <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
                     {hasMore && <div className="text-center py-4 text-xs text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
@@ -340,7 +334,6 @@ export default function ChatPanel() {
                                 openReactionPopoverId={openReactionPopoverId}
                                 onReact={handleReactionWrapped}
                                 onReply={() => handleReply(msg)}
-                                onReport={handleReportMessage}
                                 onDelete={deleteMessage}
                                 onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}
                                 formatDate={formatDate}
@@ -416,7 +409,7 @@ export default function ChatPanel() {
                                 </div>
                                 <div className="h-60 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1">
                                     {loadingGifs ? <div className="col-span-2 text-center py-4 text-xs text-muted-foreground">Loading...</div> : gifs.map(gif => (
-                                        <img key={gif.id} src={gif.images.fixed_height_small.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.images.fixed_height_small.url)} />
+                                        <img key={gif.id} src={gif.media_formats.tinygif.url} className="w-full h-auto object-cover rounded cursor-pointer hover:opacity-80" onClick={() => handleSendGif(gif.media_formats.mediumgif.url)} />
                                     ))}
                                 </div>
                             </div>

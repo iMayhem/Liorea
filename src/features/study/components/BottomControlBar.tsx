@@ -3,6 +3,7 @@ import { usePresence } from '@/features/study';
 
 import { Users, LogOut, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import {
     Sheet,
     SheetContent,
@@ -20,12 +21,23 @@ interface BottomControlBarProps {
 }
 
 export default function BottomControlBar({ }: BottomControlBarProps) {
-    const { studyUsers, leaderboardUsers, leaveSession, username } = usePresence();
+    const { studyUsers, leaderboardUsers, weeklyLeaderboard, allTimeLeaderboard, selectedTimeframe, setSelectedTimeframe, leaveSession, username } = usePresence();
     const router = useRouter();
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
     const handleLeave = () => {
         leaveSession();
         router.push('/home');
+    };
+
+    // Get the appropriate leaderboard data based on selected timeframe
+    const getLeaderboardData = () => {
+        switch (selectedTimeframe) {
+            case 'daily': return leaderboardUsers;
+            case 'weekly': return weeklyLeaderboard;
+            case 'alltime': return allTimeLeaderboard;
+            default: return leaderboardUsers;
+        }
     };
 
     return (
@@ -40,19 +52,11 @@ export default function BottomControlBar({ }: BottomControlBarProps) {
 
                 {/* CENTER: Controls */}
                 <div className="flex items-center gap-3 md:gap-4">
-
-                    {/* Timer Toggle Removed */}
-
-
-
-
                     {/* Sound Controls */}
                     <SoundscapeMixer sounds={sounds} sidebarMode={false} />
 
-
-
                     {/* Leaderboard */}
-                    <Sheet>
+                    <Sheet open={isLeaderboardOpen} onOpenChange={setIsLeaderboardOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 hover:bg-muted text-muted-foreground hover:text-primary transition-colors">
                                 <Trophy className="w-5 h-5" />
@@ -63,7 +67,12 @@ export default function BottomControlBar({ }: BottomControlBarProps) {
                                 <SheetTitle className="text-foreground text-left">Leaderboard</SheetTitle>
                             </SheetHeader>
                             <div className="flex-1 min-h-0 overflow-hidden py-2">
-                                <Leaderboard users={leaderboardUsers} currentUsername={username} />
+                                <Leaderboard
+                                    users={getLeaderboardData()}
+                                    currentUsername={username}
+                                    timeframe={selectedTimeframe}
+                                    onTimeframeChange={setSelectedTimeframe}
+                                />
                             </div>
                         </SheetContent>
                     </Sheet>

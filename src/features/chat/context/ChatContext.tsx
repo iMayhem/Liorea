@@ -36,6 +36,7 @@ const parseTimestamp = (ts: any): number => {
 };
 
 import { api } from '@/lib/api';
+import { soundEffects } from '@/lib/sound-effects';
 import { CHAT_ROOM, DELETED_IDS_KEY } from '@/lib/constants';
 import { ChatMessage, ChatReaction } from '../types';
 
@@ -103,12 +104,10 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         const q = query(
             collection(firestore, collectionPath),
             orderBy('timestamp', 'asc'),
-            limitToLast(100)
+            limitToLast(50) // Optimized - reduced from 100
         );
 
-        console.log(`[ChatDebug] Setting up Firestore listener on: ${collectionPath}`);
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            console.log(`[ChatDebug] Firestore snapshot received. Docs: ${snapshot.docs.length}`);
             const liveMsgs: ChatMessage[] = [];
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
@@ -131,25 +130,55 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                     replyTo: data.replyTo,
                     deleted: data.deleted,
                     reactions: data.reactions ?
-                        Object.entries(data.reactions).reduce((acc, [uid, emoji]) => ({
-                            ...acc,
-                            [uid]: { username: uid, emoji: emoji as string }
-                        }), {})
+                        Object.entries(data.reactions).reduce((acc, [uid, reactionData]) => {
+                            // Handle both old format (string) and new format (object with emoji field)
+                            let emoji;
+                            if (typeof reactionData === 'string') {
+                                emoji = reactionData; // Old format
+                            } else if (reactionData && typeof reactionData === 'object') {
+                                emoji = (reactionData as any).emoji; // New format
+                            }
+
+                            return {
+                                ...acc,
+                                [uid]: { username: uid, emoji }
+                            };
+                        }, {})
                         : {}
                 });
             });
-            console.log(`[ChatDebug] Processed ${liveMsgs.length} live messages`);
 
             // Merge & Deduplicate
             setMessages(prev => {
+                // Play notification sound for new messages (not from current user)
+                const newMessages = liveMsgs.filter(msg =>
+                    !prev.find(p => p.id === msg.id) && msg.username !== username
+                );
+                if (newMessages.length > 0) {
+                    soundEffects.play('messageReceive', 0.3);
+                }
+
                 // 1. Combine D1 History (fetched above, or existing in prev) with Live updates
                 // We trust 'liveMsgs' as the source of truth for their specific IDs.
                 // We trust 'prev' for older D1 messages that might not be in 'liveMsgs' due to limit(100).
 
                 // Map by ID first
                 const idMap = new Map<string, ChatMessage>();
-                prev.forEach(m => idMap.set(m.id, m));
-                liveMsgs.forEach(m => idMap.set(m.id, m));
+
+                // Add all previous messages (includes D1 history)
+                prev.forEach(m => {
+                    idMap.set(m.id, m);
+                });
+
+                liveMsgs.forEach(liveMsg => {
+                    const existing = idMap.get(liveMsg.id);
+                    // If we optimistically marked as deleted, keep that state
+                    if (existing?.deleted && !liveMsg.deleted) {
+                        idMap.set(liveMsg.id, { ...liveMsg, deleted: true });
+                    } else {
+                        idMap.set(liveMsg.id, liveMsg);
+                    }
+                });
 
                 const allMessages = Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
 
@@ -176,11 +205,10 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                         deduped.push(current);
                     }
                 }
-                console.log(`[ChatDebug] Final filtered message count: ${deduped.length}`);
                 return deduped;
             });
         }, (error) => {
-            console.error("[ChatDebug] Firestore Listener Error:", error);
+            console.error("Firestore Listener Error:", error);
         });
 
         return () => unsubscribe();
@@ -203,7 +231,8 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                 reactions: {}
             });
 
-
+            // Play send sound
+            soundEffects.play('messageSend', 0.4);
 
         } catch (e) {
             console.error("Error sending message:", e);
@@ -225,30 +254,62 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         const msgRef = doc(firestore, collectionPath, messageId);
 
         try {
-            // We need to know current state to toggle.
-            // Trusting 'messages' state is usually fine, but for 100% accuracy we could transaction.
-            // For now, using 'messages' state finding is acceptable for UI responsiveness.
+            // Get current message to check existing reactions
             const currentMsg = messages.find(m => m.id === messageId);
-            const currentReaction = currentMsg?.reactions?.[username]?.emoji;
+            const currentUserReaction = currentMsg?.reactions?.[username];
 
-            if (currentReaction === emoji) {
-                // Remove reaction
-                await updateDoc(msgRef, {
-                    [`reactions.${username}`]: deleteField()
-                });
+            // Check if user already has this specific emoji
+            const hasThisEmoji = currentUserReaction?.emoji === emoji ||
+                (Array.isArray(currentUserReaction?.emoji) && currentUserReaction.emoji.includes(emoji));
+
+            if (hasThisEmoji) {
+                // Remove this specific emoji
+                if (Array.isArray(currentUserReaction?.emoji)) {
+                    const updatedEmojis = currentUserReaction.emoji.filter(e => e !== emoji);
+                    if (updatedEmojis.length === 0) {
+                        // Remove user's reactions entirely if no emojis left
+                        await updateDoc(msgRef, {
+                            [`reactions.${username}`]: deleteField()
+                        });
+                    } else {
+                        // Update with remaining emojis
+                        await setDoc(msgRef, {
+                            reactions: {
+                                [username]: { username, emoji: updatedEmojis }
+                            }
+                        }, { merge: true });
+                    }
+                } else {
+                    // Single emoji, remove it
+                    await updateDoc(msgRef, {
+                        [`reactions.${username}`]: deleteField()
+                    });
+                }
             } else {
-                // Add/Update reaction (Use setDoc with merge to ensure 'reactions' map exists if somehow missing)
-                // updateDoc with dot notation requires the parent field ('reactions') to nominally exist or be creatable.
-                // Safest is setDoc merge for the specific field path if we were setting top level, 
-                // but dot notation in updateDoc works fine for standard nested maps.
-                // However, to be extra safe against "No document to update":
+                // Add new emoji to user's reactions
+                let newEmojis: string | string[];
+
+                if (currentUserReaction?.emoji) {
+                    // User has existing reactions, add to array
+                    if (Array.isArray(currentUserReaction.emoji)) {
+                        newEmojis = [...currentUserReaction.emoji, emoji];
+                    } else {
+                        newEmojis = [currentUserReaction.emoji, emoji];
+                    }
+                } else {
+                    // First reaction from this user
+                    newEmojis = emoji;
+                }
 
                 await setDoc(msgRef, {
                     reactions: {
-                        [username]: emoji
+                        [username]: { username, emoji: newEmojis }
                     }
                 }, { merge: true });
             }
+
+            // Play reaction sound
+            soundEffects.play('reaction', 0.3);
         } catch (e) {
             console.error("Failed to sync reaction to Firestore:", e);
         }
@@ -265,15 +326,23 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                 return;
             }
 
+            // Optimistic UI update - immediately mark as deleted in local state
+            setMessages(prev => prev.map(msg =>
+                msg.id === messageId ? { ...msg, deleted: true } : msg
+            ));
+
             const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
             await updateDoc(doc(firestore, collectionPath, messageId), { deleted: true });
 
-
         } catch (e) {
             console.error("Firestore delete failed:", e);
+            // Revert optimistic update on error
+            setMessages(prev => prev.map(msg =>
+                msg.id === messageId ? { ...msg, deleted: false } : msg
+            ));
         }
 
-    }, [username, roomId, isPublic, effectiveRoomId]);
+    }, [username, roomId, isPublic, messages]);
 
     const sendTypingEvent = useCallback(async () => { }, []);
     const loadMoreMessages = useCallback(async () => { }, []); // TODO: Implement cursor pagination

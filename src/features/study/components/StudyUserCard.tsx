@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StudyUser } from '../context/PresenceContext';
 import UserAvatar from '@/components/UserAvatar';
-import { Clock } from 'lucide-react';
+import { Clock, EyeOff } from 'lucide-react';
 
 interface StudyUserCardProps {
     user: StudyUser;
@@ -13,6 +13,14 @@ export const StudyUserCard = React.memo(function StudyUserCard({ user, formatTim
         <div className="relative group cursor-pointer h-40 bg-card hover:bg-accent/50 transition-all rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 border border-border">
             {/* Decorative Background */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+
+            {/* Focus Mode Badge */}
+            {user.is_focus_mode && (
+                <div className="absolute top-2 right-2 z-30 bg-purple-500/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                    <EyeOff className="w-3 h-3 text-white" />
+                    <span className="text-[10px] font-bold text-white">Focus</span>
+                </div>
+            )}
 
             {/* Content */}
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-3">
@@ -35,6 +43,7 @@ export const StudyUserCard = React.memo(function StudyUserCard({ user, formatTim
         prev.user.username === next.user.username &&
         prev.user.total_study_time === next.user.total_study_time &&
         prev.user.photoURL === next.user.photoURL &&
-        prev.user.equipped_frame === next.user.equipped_frame
+        prev.user.equipped_frame === next.user.equipped_frame &&
+        prev.user.is_focus_mode === next.user.is_focus_mode
     );
 });
