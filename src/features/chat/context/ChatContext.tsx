@@ -77,6 +77,11 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                 console.log("[ChatDebug] Waiting for username...");
                 return;
             }
+
+            // Wait a moment for presence to initialize
+            // This prevents loading chat when user shows as offline initially
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             try {
                 console.log("[ChatDebug] Fetching D1 history...");
                 const history = await api.chat.getHistory(effectiveRoomId);

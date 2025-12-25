@@ -92,6 +92,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
     const unsavedMinutesRef = useRef(0);
     const { toast } = useToast();
+    const [presenceInitialized, setPresenceInitialized] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('liorea-username');
@@ -119,6 +120,36 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             setUserFrameState(null);
             setIsStudying(false);
         }
+    }, [username]);
+
+    // --- EAGER PRESENCE INITIALIZATION ---
+    // Set online status immediately, don't wait for Firebase connection
+    useEffect(() => {
+        if (!username) return;
+
+        const commRef = ref(db, `/community_presence/${username}`);
+
+        // Set online status IMMEDIATELY (optimistic)
+        update(commRef, {
+            username: username,
+            status: 'Online',
+            last_seen: serverTimestamp(),
+            is_studying: false
+        }).then(() => {
+            setPresenceInitialized(true);
+        }).catch(err => {
+            console.error("Failed to set initial presence:", err);
+            setPresenceInitialized(true); // Still mark as initialized
+        });
+
+        // Cleanup on unmount
+        return () => {
+            update(commRef, {
+                status: 'Offline',
+                last_seen: serverTimestamp(),
+                is_studying: false
+            });
+        };
     }, [username]);
 
     // --- GLOBAL PRESENCE (Write) ---
