@@ -64,6 +64,9 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     const [hasMore, setHasMore] = useState(false); // Pagination not fully implemented for Firestore yet in this step
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
+    // Prevent sounds on initial load
+    const isInitialLoadRef = useRef(true);
+
     // 1. LIVE LISTENER (Hybrid: Firestore + D1)
     useEffect(() => {
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
@@ -155,14 +158,6 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
 
             // Merge & Deduplicate
             setMessages(prev => {
-                // Play notification sound for new messages (not from current user)
-                const newMessages = liveMsgs.filter(msg =>
-                    !prev.find(p => p.id === msg.id) && msg.username !== username
-                );
-                if (newMessages.length > 0) {
-                    soundEffects.play('messageReceive', 0.3);
-                }
-
                 // 1. Combine D1 History (fetched above, or existing in prev) with Live updates
                 // We trust 'liveMsgs' as the source of truth for their specific IDs.
                 // We trust 'prev' for older D1 messages that might not be in 'liveMsgs' due to limit(100).
@@ -175,8 +170,18 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                     idMap.set(m.id, m);
                 });
 
+                // Check for REALLY new messages for sound effects
+                const brandNewMessages: ChatMessage[] = [];
+
                 liveMsgs.forEach(liveMsg => {
                     const existing = idMap.get(liveMsg.id);
+
+                    // Identify if this is a new message we haven't seen before
+                    // AND it's not from the current user
+                    if (!existing && liveMsg.username !== username) {
+                        brandNewMessages.push(liveMsg);
+                    }
+
                     // If we optimistically marked as deleted, keep that state
                     if (existing?.deleted && !liveMsg.deleted) {
                         idMap.set(liveMsg.id, { ...liveMsg, deleted: true });
@@ -184,6 +189,32 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                         idMap.set(liveMsg.id, liveMsg);
                     }
                 });
+
+                // SOUND EFFECT LOGIC
+                // Only play if not initial load
+                if (!isInitialLoadRef.current) {
+                    if (brandNewMessages.length > 0) {
+                        // Check for mentions
+                        // Case-insensitive check for @username
+                        const isMention = username && brandNewMessages.some(m =>
+                            m.message.toLowerCase().includes(`@${username.toLowerCase()}`)
+                        );
+
+                        if (isMention) {
+                            soundEffects.play('notification');
+                        } else {
+                            soundEffects.play('messageReceive', 0.3);
+                        }
+                    }
+                } else {
+                    // First load completed
+                    if (prev.length > 0 || liveMsgs.length > 0) {
+                        isInitialLoadRef.current = false;
+                    }
+                    // Note: If no messages exist at all, we might stay in initial load until first message?
+                    // Better to set false after first snapshot processing regardless of message count.
+                    isInitialLoadRef.current = false;
+                }
 
                 const allMessages = Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
 
@@ -215,6 +246,7 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         }, (error) => {
             console.error("Firestore Listener Error:", error);
         });
+
 
         return () => unsubscribe();
     }, [roomId, isPublic, effectiveRoomId, username]);

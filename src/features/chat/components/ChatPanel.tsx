@@ -64,23 +64,7 @@ export default function ChatPanel() {
         }
     };
 
-    // Sound Effect
-    useEffect(() => {
-        if (!isInitialLoaded || messages.length === 0) return;
-        const lastMsg = messages[messages.length - 1];
 
-        // Only play sound for other users' messages
-        if (lastMsg.username !== username) {
-            // Check if message contains a mention of the current user
-            const isMention = username && lastMsg.message.toLowerCase().includes(`@${username.toLowerCase()}`);
-
-            if (isMention) {
-                soundEffects.play('notification');
-            } else {
-                soundEffects.play('messageReceive');
-            }
-        }
-    }, [messages.length, isInitialLoaded, username]); // Depend on length to detect new messages
 
 
     useEffect(() => {
