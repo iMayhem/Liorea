@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Brain } from 'lucide-react';
+import { Sparkles, Bell, BookOpenCheck, Home, NotebookText, CheckCheck, Bug, Loader2, ShoppingBag, Brain, Pin, PinOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {
     const pathname = usePathname();
-    const { notifications, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, togglePin } = useNotifications();
     const unreadCount = notifications.filter(n => !n.read).length;
 
     // Feedback/Bug Report State
@@ -166,8 +166,9 @@ export default function Header() {
                                                     <div
                                                         key={notification.id}
                                                         className={cn(
-                                                            "mb-2 grid grid-cols-[auto_1fr] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors",
-                                                            !notification.read && "bg-white/5"
+                                                            "mb-2 grid grid-cols-[auto_1fr_auto] gap-3 items-start pb-4 last:mb-0 last:pb-0 hover:bg-white/5 p-2 rounded cursor-pointer transition-colors relative group/item",
+                                                            !notification.read && "bg-white/5",
+                                                            notification.pinned && "border-l-2 border-accent pl-1.5"
                                                         )}
                                                         onClick={() => {
                                                             markAsRead(notification.id);
@@ -187,6 +188,9 @@ export default function Header() {
                                                             {!notification.read && (
                                                                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-black" />
                                                             )}
+                                                            {notification.pinned && (
+                                                                <Pin className="absolute -bottom-1 -right-1 w-3 h-3 text-accent fill-accent" />
+                                                            )}
                                                         </div>
 
                                                         <div className="space-y-1">
@@ -197,6 +201,22 @@ export default function Header() {
                                                                 {new Date(notification.timestamp).toLocaleString()}
                                                             </p>
                                                         </div>
+
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className={cn(
+                                                                "h-7 w-7 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity",
+                                                                notification.pinned ? "opacity-100 text-accent" : "text-white/30 hover:text-white"
+                                                            )}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                togglePin(notification.id);
+                                                            }}
+                                                            title={notification.pinned ? "Unpin" : "Pin"}
+                                                        >
+                                                            {notification.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                                                        </Button>
                                                     </div>
                                                 )
                                             })}

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, onValue, push, serverTimestamp, query, limitToLast, update } from 'firebase/database';
+import { ref, onValue, push, serverTimestamp, query, limitToLast, update, set } from 'firebase/database';
 import { usePresence } from '@/features/study';
 import { useToast } from '@/hooks/use-toast';
 import { soundEffects } from '@/lib/sound-effects';
@@ -14,6 +14,7 @@ export interface Notification {
   message: string;
   timestamp: number;
   read?: boolean;
+  pinned?: boolean;
   link?: string;
   type?: 'global' | 'personal';
 }
@@ -23,6 +24,7 @@ interface NotificationContextType {
   addNotification: (message: string, targetUser?: string, link?: string, type?: 'global' | 'personal') => Promise<void>;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  togglePin: (id: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -39,6 +41,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [userNotifications, setUserNotifications] = useState<Notification[]>([]);
   const [globalNotifications, setGlobalNotifications] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
 
   // Computed combined notifications
   const notifications = React.useMemo(() => {
@@ -46,12 +49,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     return combined.sort((a, b) => b.timestamp - a.timestamp);
   }, [userNotifications, globalNotifications]);
 
-  // 1. Load "Read" status from Local Storage (per user)
+  // 1. Load "Read" status and "Pinned" status from Local Storage (per user)
   useEffect(() => {
     if (!username) return;
     try {
       const localRead = localStorage.getItem(`liorea-read-notifications-${username}`);
       if (localRead) setReadIds(JSON.parse(localRead));
+
+      const localPinned = localStorage.getItem(`liorea-pinned-notifications-${username}`);
+      if (localPinned) setPinnedIds(JSON.parse(localPinned));
     } catch (e) { }
   }, [username]);
 
@@ -60,13 +66,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     soundEffects.play('notification');
   };
 
-  // 2. LISTEN TO USER-SPECIFIC FIREBASE NODE
+  // 2. LISTEN TO USER-SPECIFIC FIREBASE NODE (Notifications & Pinned Status)
   useEffect(() => {
     if (!username) return;
 
     const notificationsRef = query(ref(db, `user_notifications/${username}`), limitToLast(20));
+    const pinnedRef = ref(db, `user_pinned/${username}`);
 
-    const unsubscribe = onValue(notificationsRef, (snapshot) => {
+    const unsubNodes = onValue(notificationsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const loaded: Notification[] = Object.entries(data).map(([key, value]: [string, any]) => ({
@@ -83,7 +90,19 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => unsubscribe();
+    const unsubPinned = onValue(pinnedRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setPinnedIds(Object.keys(data));
+      } else {
+        setPinnedIds([]);
+      }
+    });
+
+    return () => {
+      unsubNodes();
+      unsubPinned();
+    };
   }, [username]);
 
   // 3. LISTEN TO GLOBAL NOTIFICATIONS
@@ -213,21 +232,45 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [notifications, readIds]);
 
-  const displayedNotifications = React.useMemo(() =>
-    notifications.map(n => ({
+  const togglePin = React.useCallback((id: string) => {
+    const isPinned = pinnedIds.includes(id);
+    const newPinnedIds = isPinned ? pinnedIds.filter(pId => pId !== id) : [...pinnedIds, id];
+
+    setPinnedIds(newPinnedIds);
+    if (username) {
+      localStorage.setItem(`liorea-pinned-notifications-${username}`, JSON.stringify(newPinnedIds));
+      // Update Firebase
+      const pinRef = ref(db, `user_pinned/${username}/${id}`);
+      if (isPinned) {
+        set(pinRef, null);
+      } else {
+        set(pinRef, true);
+      }
+    }
+  }, [pinnedIds, username]);
+
+  const displayedNotifications = React.useMemo(() => {
+    const combined = notifications.map(n => ({
       ...n,
-      read: n.read || readIds.includes(n.id)
-    })),
-    [notifications, readIds]
-  );
+      read: n.read || readIds.includes(n.id),
+      pinned: pinnedIds.includes(n.id)
+    }));
+
+    return combined.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return b.timestamp - a.timestamp;
+    });
+  }, [notifications, readIds, pinnedIds]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = React.useMemo(() => ({
     notifications: displayedNotifications,
     addNotification,
     markAsRead,
-    markAllAsRead
-  }), [displayedNotifications, addNotification, markAsRead, markAllAsRead]);
+    markAllAsRead,
+    togglePin
+  }), [displayedNotifications, addNotification, markAsRead, markAllAsRead, togglePin]);
 
   return (
     <NotificationContext.Provider value={contextValue}>
