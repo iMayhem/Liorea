@@ -16,11 +16,12 @@ export default function LioreaClient() {
   const { error, isLoading: isBackgroundLoading } = useBackground();
   const { communityUsers, username } = usePresence();
   const router = useRouter();
-  const nextYear = new Date().getFullYear() + 1;
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
 
-  const jeeTargetDate = useMemo(() => new Date(`${nextYear}-01-21T09:00:00`), [nextYear]);
-  const jeeSession2TargetDate = useMemo(() => new Date(`${nextYear}-04-02T09:00:00`), [nextYear]);
-  const neetTargetDate = useMemo(() => new Date(`${nextYear}-05-03T14:00:00`), [nextYear]);
+  const jeeTargetDate = useMemo(() => new Date(`${currentYear}-01-21T09:00:00`), [currentYear]);
+  const jeeSession2TargetDate = useMemo(() => new Date(`${currentYear}-04-02T09:00:00`), [currentYear]);
+  const neetTargetDate = useMemo(() => new Date(`${currentYear}-05-03T14:00:00`), [currentYear]);
 
   useEffect(() => {
     // If the background is done loading and we find there's no user, redirect.
@@ -82,9 +83,9 @@ export default function LioreaClient() {
 
         {/* Right Column - Exam Timers */}
         <div className="hidden md:flex w-72 flex-col pr-4 pb-4 pt-6 h-full shrink-0 gap-3">
-          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} displayDate="21-30 jan 26" />
-          <ExamCountdown title="JEE Mains (Session 2)" targetDate={jeeSession2TargetDate} displayDate="2-9 apr 26" />
-          <ExamCountdown title="NEET UG" targetDate={neetTargetDate} />
+          <ExamCountdown title="JEE Mains (Session 1)" targetDate={jeeTargetDate} displayDate="21-30 Jan 26" />
+          <ExamCountdown title="JEE Mains (Session 2)" targetDate={jeeSession2TargetDate} displayDate="2-9 Apr 26" />
+          <ExamCountdown title="NEET UG" targetDate={neetTargetDate} displayDate="3 May 26" />
         </div>
 
       </main>
