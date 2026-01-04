@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StudyUser } from '../context/PresenceContext';
 import UserAvatar from '@/components/UserAvatar';
 import { Clock, EyeOff } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StudyUserCardProps {
     user: StudyUser;
