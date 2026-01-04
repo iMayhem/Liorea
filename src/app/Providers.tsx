@@ -15,8 +15,10 @@ import { SettingsProvider } from '@/context/SettingsContext';
 import GlobalUserContextMenu from '@/components/layout/GlobalUserContextMenu';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import ConnectionStatus from '@/components/layout/ConnectionStatus';
+import { useKeepAlive } from '@/hooks/use-keep-alive';
 
 export function Providers({ children }: { children: React.ReactNode }) {
+    useKeepAlive();
     return (
         <>
             <Suspense>
