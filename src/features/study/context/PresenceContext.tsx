@@ -102,13 +102,35 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const setUsername = useCallback((name: string | null) => {
+        const oldName = username;
         setUsernameState(name);
+
         if (name) {
             localStorage.setItem('liorea-username', name);
+
+            // Handle Cleanup of Old Username (Duplication Fix)
+            if (oldName && oldName !== name) {
+                console.log(`Cleaning up old identity: ${oldName} -> ${name}`);
+
+                // 1. Remove from Realtime DB nodes
+                remove(ref(db, `/community_presence/${oldName}`));
+                remove(ref(db, `/study_room_presence/${oldName}`));
+
+                // 2. Remove from Firestore Persistent Metadata
+                deleteDoc(doc(firestore, 'users', oldName)).catch(() => { });
+
+                // 3. Update RTDB for new name immediately to avoid race
+                update(ref(db, `/community_presence/${name}`), {
+                    username: name,
+                    status: 'Online',
+                    last_seen: serverTimestamp(),
+                    is_studying: false
+                });
+            }
         } else {
-            if (username) {
-                remove(ref(db, `/study_room_presence/${username}`));
-                update(ref(db, `/community_presence/${username}`), {
+            if (oldName) {
+                remove(ref(db, `/study_room_presence/${oldName}`));
+                update(ref(db, `/community_presence/${oldName}`), {
                     status: 'Offline',
                     last_seen: serverTimestamp(),
                     is_studying: false
@@ -120,7 +142,7 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
             setUserFrameState(null);
             setIsStudying(false);
         }
-    }, [username]);
+    }, [username, setUserImage]);
 
     // --- EAGER PRESENCE INITIALIZATION ---
     // Set online status immediately, don't wait for Firebase connection
