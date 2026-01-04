@@ -159,37 +159,21 @@ export default function ChatPanel() {
                 container.scrollTop += heightDiff;
             }
         } else if (!isInitialLoaded || isNearBottom) {
-            if (scrollContainerRef.current) {
-                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-            }
-
-            if (!isInitialLoaded) {
-                setIsInitialLoaded(true);
-            }
+            container.scrollTop = container.scrollHeight;
+            if (!isInitialLoaded) setIsInitialLoaded(true);
         }
 
         previousMessagesRef.current = messages;
         prevScrollHeightRef.current = container.scrollHeight;
     }, [messages, isInitialLoaded]);
 
-    // Force scroll to bottom when initial load completes
+    // Replay handles for when new messages arrive while user is at the bottom
     useEffect(() => {
-        if (messages.length > 0 && isInitialLoaded) {
-            const timer = setTimeout(() => {
-                const container = scrollContainerRef.current;
-                if (container) {
-                    container.scrollTop = container.scrollHeight;
-                }
-            }, 100);
-            return () => clearTimeout(timer);
-        }
-    }, [isInitialLoaded, messages.length]);
-
-    useEffect(() => {
-        if (isInitialLoaded && messages.length > 0) {
+        if (isInitialLoaded) {
             const container = scrollContainerRef.current;
             if (container) {
                 const { scrollTop, scrollHeight, clientHeight } = container;
+                // If user is already looking at the bottom, stay at the bottom
                 if (scrollHeight - scrollTop - clientHeight < 150) {
                     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
                 }
@@ -207,16 +191,6 @@ export default function ChatPanel() {
             loadMoreMessages();
         }
     };
-
-    useLayoutEffect(() => {
-        const container = scrollContainerRef.current;
-        if (container && prevScrollHeight.current > 0 && container.scrollHeight > prevScrollHeight.current) {
-            const newScrollHeight = container.scrollHeight;
-            const diff = newScrollHeight - prevScrollHeight.current;
-            container.scrollTop = diff + container.scrollTop;
-            prevScrollHeight.current = 0;
-        }
-    }, [messages]);
 
     // --- ACTIONS ---
 
