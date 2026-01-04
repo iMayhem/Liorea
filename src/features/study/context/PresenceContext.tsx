@@ -15,7 +15,9 @@ import {
     getDoc,
     deleteDoc,
     increment as incrementFirestore,
-    serverTimestamp as serverTimestampFirestore
+    serverTimestamp as serverTimestampFirestore,
+    getDocs,
+    writeBatch
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -119,7 +121,54 @@ export const PresenceProvider = ({ children }: { children: ReactNode }) => {
                 // 2. Remove from Firestore Persistent Metadata
                 deleteDoc(doc(firestore, 'users', oldName)).catch(() => { });
 
-                // 3. Update RTDB for new name immediately to avoid race
+                // 3. Migrate Firebase Realtime DB Data (Notifications & Pinned)
+                const migrateFirebaseData = async () => {
+                    try {
+                        // A. Notifications
+                        const oldNotifRef = ref(db, `user_notifications/${oldName}`);
+                        const newNotifRef = ref(db, `user_notifications/${name}`);
+                        onValue(oldNotifRef, (snapshot) => {
+                            const data = snapshot.val();
+                            if (data) {
+                                set(newNotifRef, data).then(() => remove(oldNotifRef));
+                            }
+                        }, { onlyOnce: true });
+
+                        // B. Pinned Notifications
+                        const oldPinnedRef = ref(db, `user_pinned/${oldName}`);
+                        const newPinnedRef = ref(db, `user_pinned/${name}`);
+                        onValue(oldPinnedRef, (snapshot) => {
+                            const data = snapshot.val();
+                            if (data) {
+                                set(newPinnedRef, data).then(() => remove(oldPinnedRef));
+                            }
+                        }, { onlyOnce: true });
+
+                        // 4. Migrate Firestore Chats (So user can still delete them)
+                        const chatsQuery = queryFirestore(collection(firestore, 'chats'), where('username', '==', oldName));
+                        const chatSnaps = await getDocs(chatsQuery);
+                        const chatBatch = writeBatch(firestore);
+                        chatSnaps.forEach(chatDoc => {
+                            chatBatch.update(chatDoc.ref, { username: name });
+                        });
+                        await chatBatch.commit();
+
+                        // 5. Migrate Firestore Daily Stats (Leaderboard progress)
+                        const statsQuery = queryFirestore(collection(firestore, 'daily_stats'), where('username', '==', oldName));
+                        const statsSnaps = await getDocs(statsQuery);
+                        const statsBatch = writeBatch(firestore);
+                        statsSnaps.forEach(statDoc => {
+                            statsBatch.update(statDoc.ref, { username: name });
+                        });
+                        await statsBatch.commit();
+
+                    } catch (e) {
+                        console.error("Firebase migration failed", e);
+                    }
+                };
+                migrateFirebaseData();
+
+                // 6. Update RTDB for new name immediately to avoid race
                 update(ref(db, `/community_presence/${name}`), {
                     username: name,
                     status: 'Online',
