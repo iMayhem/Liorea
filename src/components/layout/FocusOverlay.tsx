@@ -1,10 +1,12 @@
+"use client";
+
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useFocus } from '@/context/FocusContext';
 import { cn } from '@/lib/utils';
 import { X, EyeOff, Users, Clock, Flame } from 'lucide-react';
 import { usePresence } from '@/features/study';
 import UserAvatar from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState, useRef } from 'react';
 
 interface FocusEvent {
   id: string;
@@ -17,8 +19,11 @@ export default function FocusOverlay() {
   const { isFocusMode, toggleFocusMode } = useFocus();
   const { communityUsers, username: myUsername } = usePresence();
 
-  // Filter for people in focus mode
-  const focusUsers = communityUsers.filter(u => u.is_focus_mode);
+  // Filter for people in focus mode - memoized to prevent infinite renders
+  const focusUsers = useMemo(() =>
+    communityUsers.filter(u => u && u.is_focus_mode),
+    [communityUsers]
+  );
 
   // Track joins/leaves for activity log
   const [events, setEvents] = useState<FocusEvent[]>([]);
