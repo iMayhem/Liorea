@@ -45,32 +45,36 @@ export default function PresencePanel({ users }: PresencePanelProps) {
             {users.map((user) => {
               const isOnline = user.status === 'Online';
               const lastSeen = getTimeAgo(user.last_seen);
+              const isFocus = user.is_focus_mode;
 
               return (
-                <div key={user.username} className="flex items-center gap-3 group pl-4">
-                  <div className="relative">
+                <div
+                  key={user.username}
+                  className={cn(
+                    "flex items-center gap-3 group px-4 py-2 transition-all duration-300 rounded-xl mx-2",
+                    isFocus && "bg-purple-500/5 ring-1 ring-purple-500/20"
+                  )}
+                >
+                  <div className="relative shrink-0">
                     <UserAvatar username={user.username} className="w-9 h-9" />
 
                     <span className={cn(
                       "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-black z-10",
-                      isOnline ? (user.is_focus_mode ? "bg-purple-500 animate-pulse" : "bg-green-500") : "bg-gray-500"
+                      isOnline ? (isFocus ? "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)] animate-pulse" : "bg-green-500") : "bg-gray-500"
                     )} />
                   </div>
 
-                  <div className={cn(
-                    "flex-grow overflow-hidden transition-all duration-300",
-                    user.is_focus_mode && "pl-2 border-l border-purple-500/30"
-                  )}>
-                    <div className="flex justify-between items-center">
+                  <div className="flex-grow overflow-hidden">
+                    <div className="flex justify-between items-center gap-2">
                       <p className={cn(
                         "font-semibold text-sm truncate transition-colors flex items-center gap-1.5",
                         isOnline ? "text-foreground" : "text-muted-foreground",
-                        user.is_focus_mode && "text-purple-400"
+                        isFocus && "text-purple-400"
                       )}>
                         {user.username}
-                        {user.is_focus_mode && <EyeOff className="w-3 h-3" />}
+                        {isFocus && <EyeOff className="w-3.5 h-3.5 opacity-70" />}
                         {isMod(user.username) && (
-                          <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
+                          <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
                         )}
                       </p>
                     </div>
@@ -80,8 +84,8 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                         {user.status_text}
                       </p>
                     ) : (
-                      <p className={cn("text-xs", isOnline ? (user.is_focus_mode ? "text-purple-400/80" : "text-green-500/80") : "text-muted-foreground/60")}>
-                        {isOnline ? (user.is_focus_mode ? 'In Focus Mode' : (user.is_studying ? 'Studying' : 'Online')) : lastSeen}
+                      <p className={cn("text-xs font-medium", isOnline ? (isFocus ? "text-purple-400/80" : "text-green-500/80") : "text-muted-foreground/60")}>
+                        {isOnline ? (isFocus ? 'In Focus Mode' : (user.is_studying ? 'Studying' : 'Online')) : lastSeen}
                       </p>
                     )}
                   </div>
