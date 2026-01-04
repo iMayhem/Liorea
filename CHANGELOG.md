@@ -1,6 +1,24 @@
 # Changelog
 
 All notable changes to Liorea will be documented in this file.
+    
+## [1.1.0] - 2026-01-04
+
+### ✨ New Features
+- **Focus Chamber Overlay**: Fully immersive, real-time grid showing all active focusers with live updates.
+- **Focus Activity Feed**: Real-time tracking of focus room entries and exits within the chamber.
+- **Focus Pulse**: Beautiful purple pulsing glow effects for users in deep focus mode.
+- **Refined Presence Indicators**: New premium visual indicators and row highlights for focusers in the community panel.
+
+### 🎨 UI/UX Improvements
+- **Layout Consistency**: Unified alignment grid in Community Panel for Online, Offline, and Focus states.
+- **Smooth Transitions**: GPU-accelerated glow animations and soft-pulse indicators.
+
+### 🐛 Bug Fixes
+- **Stability**: Resolved critical ReferenceErrors and React render loops in Focus Room components.
+- **Alignment**: Fixed layout-breaking border shifts in the Presence Panel.
+
+---
 
 ## [1.0.2] - 2026-01-04
 
