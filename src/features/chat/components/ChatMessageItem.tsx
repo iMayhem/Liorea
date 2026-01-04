@@ -125,17 +125,17 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                 </div>
 
                 {Object.keys(reactionGroups).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2 select-none">
+                    <div className="flex flex-wrap gap-0.5 mt-1 select-none">
                         {Object.entries(reactionGroups).map(([emoji, data]) => (
                             <TooltipProvider key={emoji}>
                                 <Tooltip delayDuration={0}>
                                     <TooltipTrigger asChild>
                                         <button
                                             onClick={() => onReact(msg.id, emoji)}
-                                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors ${data.hasReacted ? 'bg-primary/20 border-primary/50 text-primary-foreground' : 'bg-muted/30 border-transparent hover:border-border text-muted-foreground'}`}
+                                            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border transition-colors ${data.hasReacted ? 'bg-primary/20 border-primary/50 text-primary-foreground' : 'bg-muted/30 border-transparent hover:border-border text-muted-foreground'}`}
                                         >
-                                            <span className="text-base">{emoji}</span>
-                                            <span className={`text-xs font-bold ${data.hasReacted ? 'text-primary' : 'text-muted-foreground'}`}>{data.count}</span>
+                                            <span className="text-sm">{emoji}</span>
+                                            <span className={`text-[10px] font-bold ${data.hasReacted ? 'text-primary' : 'text-muted-foreground'}`}>{data.count}</span>
                                         </button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-border z-50">

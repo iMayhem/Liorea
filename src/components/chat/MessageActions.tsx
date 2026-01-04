@@ -89,10 +89,10 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                 <PopoverTrigger asChild>
                     <button
-                        className="hover:bg-accent/50 rounded p-1.5 transition-colors"
+                        className="hover:bg-accent/50 rounded p-1 transition-colors"
                         title="Add reaction"
                     >
-                        <Smile className="w-4 h-4" />
+                        <Smile className="w-3.5 h-3.5" />
                     </button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -148,20 +148,20 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             {/* Reply Button */}
             <button
                 onClick={onReply}
-                className="hover:bg-accent/50 rounded p-1.5 transition-colors"
+                className="hover:bg-accent/50 rounded p-1 transition-colors"
                 title="Reply"
             >
-                <Reply className="w-4 h-4" />
+                <Reply className="w-3.5 h-3.5" />
             </button>
 
             {/* Delete Button (only for current user or moderators) */}
             {(isCurrentUser || isModerator) && (
                 <button
                     onClick={onDelete}
-                    className="hover:bg-destructive/20 text-destructive rounded p-1.5 transition-colors"
+                    className="hover:bg-destructive/20 text-destructive rounded p-1 transition-colors"
                     title="Delete message"
                 >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                 </button>
             )}
         </div>

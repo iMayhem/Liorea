@@ -42,24 +42,24 @@ const LeaderboardItem = memo(({
   const { rankStyle, rowBg } = useMemo(() => {
     let rankStyle = "text-zinc-500 font-mono font-semibold text-xs bg-zinc-800/50";
     let rowBg = isMe
-      ? "bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border-emerald-500/30"
+      ? "bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border-emerald-500/20"
       : "bg-white/5 border-white/5 hover:bg-white/10";
 
     if (index === 0) {
       rankStyle = "text-yellow-400 bg-yellow-400/10";
       rowBg = isMe
-        ? "bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-yellow-500/50"
-        : "bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/20";
+        ? "bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-yellow-500/30"
+        : "bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/10 hover:bg-yellow-500/5";
     } else if (index === 1) {
       rankStyle = "text-slate-300 bg-slate-400/10";
       rowBg = isMe
-        ? "bg-gradient-to-r from-slate-400/20 to-slate-500/10 border-slate-400/50"
-        : "bg-gradient-to-r from-slate-500/10 to-transparent border-slate-500/20";
+        ? "bg-gradient-to-r from-slate-400/20 to-slate-500/10 border-slate-400/30"
+        : "bg-gradient-to-r from-slate-500/10 to-transparent border-slate-500/10 hover:bg-slate-500/5";
     } else if (index === 2) {
       rankStyle = "text-orange-400 bg-orange-400/10";
       rowBg = isMe
-        ? "bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-500/50"
-        : "bg-gradient-to-r from-orange-500/10 to-transparent border-orange-500/20";
+        ? "bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-500/30"
+        : "bg-gradient-to-r from-orange-500/10 to-transparent border-orange-500/10 hover:bg-orange-500/5";
     }
 
     return { rankStyle, rowBg };
