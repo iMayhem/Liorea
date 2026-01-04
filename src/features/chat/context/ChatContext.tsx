@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase'; // Assuming this now exports 'db' as Firest
 // So `db` IS Realtime Database instance.
 // I need `firestore` instance. Usually it's exported as `firestore` or `db` if valid.
 // I will import `firestore` from `@/lib/firebase` assuming it exists or I might validly guessing.
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, limitToLast, onSnapshot, doc, updateDoc, deleteDoc, setDoc, deleteField, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, limitToLast, onSnapshot, doc, updateDoc, deleteDoc, setDoc, deleteField, where, getDocs, Timestamp } from 'firebase/firestore';
 // I need to make sure I import the right DB instance.
 import { firestore } from '@/lib/firebase';
 
@@ -314,9 +314,14 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
         try {
             console.log("[ChatDebug] Fetching history older than:", oldestMessage.timestamp);
             const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
+
+            // Core Fix: Firestore needs a Timestamp object for comparison if the field is a Timestamp.
+            // Converting our number back to Timestamp.
+            const queryTimestamp = Timestamp.fromMillis(oldestMessage.timestamp);
+
             const q = query(
                 collection(firestore, collectionPath),
-                where('timestamp', '<', oldestMessage.timestamp),
+                where('timestamp', '<', queryTimestamp),
                 orderBy('timestamp', 'desc'),
                 limit(50)
             );
