@@ -1,7 +1,7 @@
 import { BentoCard, CardContent, CardHeader, CardTitle } from '@/components/ui/BentoCard';
 import { cn } from '@/lib/utils';
 import { CommunityUser, usePresence } from '../context/PresenceContext';
-import { Users } from 'lucide-react';
+import { Users, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserAvatar from '@/components/UserAvatar';
 
@@ -53,14 +53,22 @@ export default function PresencePanel({ users }: PresencePanelProps) {
 
                     <span className={cn(
                       "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-black z-10",
-                      isOnline ? "bg-green-500" : "bg-gray-500"
+                      isOnline ? (user.is_focus_mode ? "bg-purple-500 animate-pulse" : "bg-green-500") : "bg-gray-500"
                     )} />
                   </div>
 
-                  <div className="flex-grow overflow-hidden">
+                  <div className={cn(
+                    "flex-grow overflow-hidden transition-all duration-300",
+                    user.is_focus_mode && "pl-2 border-l border-purple-500/30"
+                  )}>
                     <div className="flex justify-between items-center">
-                      <p className={cn("font-semibold text-sm truncate transition-colors", isOnline ? "text-foreground" : "text-muted-foreground")}>
+                      <p className={cn(
+                        "font-semibold text-sm truncate transition-colors flex items-center gap-1.5",
+                        isOnline ? "text-foreground" : "text-muted-foreground",
+                        user.is_focus_mode && "text-purple-400"
+                      )}>
                         {user.username}
+                        {user.is_focus_mode && <EyeOff className="w-3 h-3" />}
                         {isMod(user.username) && (
                           <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
                         )}
@@ -72,8 +80,8 @@ export default function PresencePanel({ users }: PresencePanelProps) {
                         {user.status_text}
                       </p>
                     ) : (
-                      <p className={cn("text-xs", isOnline ? "text-green-500/80" : "text-muted-foreground/60")}>
-                        {isOnline ? (user.is_studying ? 'Studying' : 'Online') : lastSeen}
+                      <p className={cn("text-xs", isOnline ? (user.is_focus_mode ? "text-purple-400/80" : "text-green-500/80") : "text-muted-foreground/60")}>
+                        {isOnline ? (user.is_focus_mode ? 'In Focus Mode' : (user.is_studying ? 'Studying' : 'Online')) : lastSeen}
                       </p>
                     )}
                   </div>

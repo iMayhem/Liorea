@@ -24,7 +24,13 @@ export const StudyUserCard = React.memo(function StudyUserCard({ user, formatTim
 
             {/* Content */}
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-3">
-                <UserAvatar username={user.username} className="w-16 h-16 mb-2 border-2 border-border shadow-md transition-transform group-hover:scale-105" />
+                <UserAvatar
+                    username={user.username}
+                    className={cn(
+                        "w-16 h-16 mb-2 border-2 border-border shadow-md transition-all duration-500 group-hover:scale-105",
+                        user.is_focus_mode && "focus-glow"
+                    )}
+                />
 
                 {/* Name & Time */}
                 <div className="flex flex-col items-center w-full">
