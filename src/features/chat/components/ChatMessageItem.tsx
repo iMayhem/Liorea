@@ -47,7 +47,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     return (
         <div
             id={`message-${msg.id}`}
-            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-1 ${showHeader ? 'mt-4' : 'mt-0'} ${msg.status === 'sending' ? 'opacity-50' : ''}`}
+            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-0.5 ${showHeader ? 'mt-3' : 'mt-0'} ${msg.status === 'sending' ? 'opacity-50' : ''}`}
         >
             <div className="w-10 shrink-0 select-none pt-0.5">
                 {showHeader ? (
@@ -61,7 +61,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
 
             <div className="flex-1 min-w-0">
                 {showHeader && (
-                    <div className="flex items-center gap-2 mb-1 select-none">
+                    <div className="flex items-center gap-2 mb-0.5 select-none">
                         <span className="text-base font-semibold text-foreground hover:underline cursor-pointer">{msg.username}</span>
                         {isMod(msg.username) && (
                             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
