@@ -47,13 +47,13 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     return (
         <div
             id={`message-${msg.id}`}
-            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-0.5 ${showHeader ? 'mt-3' : 'mt-0'} ${msg.status === 'sending' ? 'opacity-50' : ''}`}
+            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-0 ${showHeader ? 'mt-1.5' : 'mt-0'} ${msg.status === 'sending' ? 'opacity-50' : ''}`}
         >
-            <div className="w-10 shrink-0 select-none pt-0.5">
+            <div className="w-10 shrink-0 select-none pt-0">
                 {showHeader ? (
                     <UserAvatar username={msg.username} fallbackUrl={msg.photoURL} className="w-10 h-10 hover:opacity-90 cursor-pointer" />
                 ) : (
-                    <div className="text-[10px] text-muted-foreground/0 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-1 select-none">
+                    <div className="text-[10px] text-muted-foreground/0 opacity-0 group-hover:opacity-100 text-right w-full pr-2 pt-0 select-none">
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                     </div>
                 )}
@@ -61,7 +61,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
 
             <div className="flex-1 min-w-0">
                 {showHeader && (
-                    <div className="flex items-center gap-2 mb-0.5 select-none">
+                    <div className="flex items-center gap-2 mb-0 select-none">
                         <span className="text-base font-semibold text-foreground hover:underline cursor-pointer">{msg.username}</span>
                         {isMod(msg.username) && (
                             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded">MOD</span>
