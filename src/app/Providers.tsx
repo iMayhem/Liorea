@@ -33,21 +33,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
                             <BackgroundDisplay />
                             <ErrorBoundary name="Presence Provider">
                                 <PresenceProvider>
-                                    <ErrorBoundary name="Focus Provider">
-                                        <FocusProvider>
-                                            <FocusOverlay />
-                                            <ErrorBoundary name="Notification Provider">
-                                                <NotificationProvider>
-                                                    <ErrorBoundary name="User Context Menu Provider">
-                                                        <UserContextMenuProvider>
+                                    <ErrorBoundary name="Notification Provider">
+                                        <NotificationProvider>
+                                            <ErrorBoundary name="User Context Menu Provider">
+                                                <UserContextMenuProvider>
+                                                    <ErrorBoundary name="Focus Provider">
+                                                        <FocusProvider>
+                                                            <FocusOverlay />
                                                             {children}
                                                             <MobileMessage />
                                                             <GlobalUserContextMenu />
-                                                        </UserContextMenuProvider>
+                                                        </FocusProvider>
                                                     </ErrorBoundary>
-                                                </NotificationProvider>
+                                                </UserContextMenuProvider>
                                             </ErrorBoundary>
-                                        </FocusProvider>
+                                        </NotificationProvider>
                                     </ErrorBoundary>
                                 </PresenceProvider>
                             </ErrorBoundary>
