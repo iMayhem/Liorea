@@ -45,7 +45,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     return (
         <div
             id={`message-${msg.id}`}
-            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors ${showHeader ? 'mt-4' : 'mt-0.5 py-0.5'}`}
+            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-1 ${showHeader ? 'mt-4' : 'mt-0'}`}
         >
             <div className="w-10 shrink-0 select-none pt-0.5">
                 {showHeader ? (
