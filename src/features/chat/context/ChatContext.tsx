@@ -49,6 +49,7 @@ interface ChatContextType {
     loadMoreMessages: () => Promise<void>;
     hasMore: boolean;
     deleteMessage: (messageId: string) => void;
+    retryMessage: (msg: ChatMessage) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -61,72 +62,29 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     const effectiveRoomId = isPublic ? CHAT_ROOM : roomId;
 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [hasMore, setHasMore] = useState(false); // Pagination not fully implemented for Firestore yet in this step
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
     // Prevent sounds on initial load
     const isInitialLoadRef = useRef(true);
 
-    // 1. LIVE LISTENER (Hybrid: Firestore + D1)
+    // 1. LIVE LISTENER (Pure Firestore)
     useEffect(() => {
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
-        console.log(`[ChatDebug] Initializing chat for room: ${roomId} (Effective: ${effectiveRoomId})`);
-
-        let d1History: ChatMessage[] = [];
-
-        // Fetch D1 history first
-        const fetchHistory = async () => {
-            if (!username) {
-                console.log("[ChatDebug] Waiting for username...");
-                return;
-            }
-
-            // Wait a moment for presence to initialize
-            // This prevents loading chat when user shows as offline initially
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            try {
-                console.log("[ChatDebug] Fetching D1 history...");
-                const history = await api.chat.getHistory(effectiveRoomId);
-                console.log(`[ChatDebug] D1 history fetched: ${history.length} messages`);
-
-                d1History = history.map((msg: any) => ({
-                    ...msg,
-                    id: String(msg.id),
-                    timestamp: parseTimestamp(msg.timestamp), // Use robust parser
-                    reactions: msg.reactions || {}
-                }));
-                // Initial set from D1
-                setMessages(prev => {
-                    const combined = [...d1History, ...prev];
-                    const unique = new Map();
-                    combined.forEach(m => unique.set(String(m.id), m));
-                    return Array.from(unique.values()).sort((a, b) => a.timestamp - b.timestamp);
-                });
-            } catch (e) {
-                console.error("[ChatDebug] Failed to fetch legacy history:", e);
-            }
-        };
-        fetchHistory();
+        console.log(`[ChatDebug] Initializing pure Firestore chat for room: ${roomId}`);
 
         const q = query(
             collection(firestore, collectionPath),
             orderBy('timestamp', 'asc'),
-            limitToLast(50) // Optimized - reduced from 100
+            limitToLast(50) // Reduced live window for better pagination compatibility
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const liveMsgs: ChatMessage[] = [];
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
-                if (!data) {
-                    console.warn(`[ChatDebug] Empty data for doc ${doc.id}`);
-                    return;
-                }
-                if (!data.username) {
-                    console.warn(`[ChatDebug] Missing username for doc ${doc.id}, skipping safely.`);
-                    return;
-                }
+                if (!data || !data.username) return;
 
                 liveMsgs.push({
                     id: doc.id,
@@ -137,116 +95,53 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                     image_url: data.image_url,
                     replyTo: data.replyTo,
                     deleted: data.deleted,
+                    status: 'sent',
+                    nonce: data.nonce,
                     reactions: data.reactions ?
                         Object.entries(data.reactions).reduce((acc, [uid, reactionData]) => {
-                            // Handle both old format (string) and new format (object with emoji field)
                             let emoji;
                             if (typeof reactionData === 'string') {
-                                emoji = reactionData; // Old format
+                                emoji = reactionData;
                             } else if (reactionData && typeof reactionData === 'object') {
-                                emoji = (reactionData as any).emoji; // New format
+                                emoji = (reactionData as any).emoji;
                             }
-
-                            return {
-                                ...acc,
-                                [uid]: { username: uid, emoji }
-                            };
+                            return { ...acc, [uid]: { username: uid, emoji } };
                         }, {})
                         : {}
                 });
             });
 
-            // Merge & Deduplicate
             setMessages(prev => {
-                // 1. Combine D1 History (fetched above, or existing in prev) with Live updates
-                // We trust 'liveMsgs' as the source of truth for their specific IDs.
-                // We trust 'prev' for older D1 messages that might not be in 'liveMsgs' due to limit(100).
-
-                // Map by ID first
                 const idMap = new Map<string, ChatMessage>();
+                const serverNonces = new Set(liveMsgs.map(m => m.nonce).filter(Boolean));
 
-                // Add all previous messages (includes D1 history)
-                prev.forEach(m => {
-                    idMap.set(m.id, m);
+                prev.forEach(msg => {
+                    if (msg.status === 'sending' && serverNonces.has(msg.nonce)) return;
+                    idMap.set(msg.id, msg);
                 });
 
-                // Check for REALLY new messages for sound effects
                 const brandNewMessages: ChatMessage[] = [];
-
-                liveMsgs.forEach(liveMsg => {
-                    const existing = idMap.get(liveMsg.id);
-
-                    // Identify if this is a new message we haven't seen before
-                    // AND it's not from the current user
-                    if (!existing && liveMsg.username !== username) {
-                        brandNewMessages.push(liveMsg);
+                liveMsgs.forEach(msg => {
+                    if (!idMap.has(msg.id) && !isInitialLoadRef.current && msg.username !== username) {
+                        brandNewMessages.push(msg);
                     }
-
-                    // If we optimistically marked as deleted, keep that state
-                    if (existing?.deleted && !liveMsg.deleted) {
-                        idMap.set(liveMsg.id, { ...liveMsg, deleted: true });
-                    } else {
-                        idMap.set(liveMsg.id, liveMsg);
-                    }
+                    idMap.set(msg.id, msg);
                 });
 
-                // SOUND EFFECT LOGIC
-                // Only play if not initial load
-                if (!isInitialLoadRef.current) {
-                    if (brandNewMessages.length > 0) {
-                        // Check for mentions
-                        // Case-insensitive check for @username
-                        const isMention = username && brandNewMessages.some(m =>
-                            m.message.toLowerCase().includes(`@${username.toLowerCase()}`)
-                        );
-
-                        if (isMention) {
-                            soundEffects.play('notification');
-                        } else {
-                            soundEffects.play('messageReceive', 0.3);
-                        }
-                    }
-                } else {
-                    // First load completed
-                    if (prev.length > 0 || liveMsgs.length > 0) {
-                        isInitialLoadRef.current = false;
-                    }
-                    // Note: If no messages exist at all, we might stay in initial load until first message?
-                    // Better to set false after first snapshot processing regardless of message count.
-                    isInitialLoadRef.current = false;
+                if (!isInitialLoadRef.current && brandNewMessages.length > 0) {
+                    const isMention = username && brandNewMessages.some(m =>
+                        m.message.toLowerCase().includes(`@${username.toLowerCase()}`)
+                    );
+                    if (isMention) soundEffects.play('notification');
+                    else soundEffects.play('messageReceive', 0.3);
                 }
 
-                const allMessages = Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
-
-                // 2. Fuzzy Deduplication (The Fix for Double Messages)
-                const deduped: ChatMessage[] = [];
-                if (allMessages.length > 0) deduped.push(allMessages[0]);
-
-                for (let i = 1; i < allMessages.length; i++) {
-                    const current = allMessages[i];
-                    const previous = deduped[deduped.length - 1];
-
-                    const isSameUser = current.username === previous.username;
-                    const isSameContent = current.message === previous.message && current.image_url === previous.image_url;
-                    const timeDiff = Math.abs(current.timestamp - previous.timestamp);
-                    const isWithinWindow = timeDiff < 60000; // 60s window
-
-                    if (isSameUser && isSameContent && isWithinWindow) {
-                        // Duplicate found. Keep the one with the string ID if possible (Firestore), or just the latest one (Current).
-                        // Usually D1 has ID '123' and Firestore has 'abc'.
-                        // We replace previous with current as current is likely the fresh live one.
-                        deduped.pop();
-                        deduped.push(current);
-                    } else {
-                        deduped.push(current);
-                    }
-                }
-                return deduped;
+                isInitialLoadRef.current = false;
+                return Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
             });
         }, (error) => {
             console.error("Firestore Listener Error:", error);
         });
-
 
         return () => unsubscribe();
     }, [roomId, isPublic, effectiveRoomId, username]);
@@ -254,6 +149,26 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     // 3. SEND MESSAGE
     const sendMessage = useCallback(async (message: string, image_url?: string, replyTo?: ChatMessage['replyTo']) => {
         if ((!message.trim() && !image_url) || !username) return;
+
+        const nonce = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const tempId = `temp-${nonce}`;
+
+        // 1. Optimistic Update
+        const optimisticMsg: ChatMessage = {
+            id: tempId,
+            username,
+            message,
+            timestamp: Date.now(),
+            photoURL: userImage || "",
+            image_url: image_url || "",
+            replyTo: replyTo || undefined,
+            status: 'sending',
+            nonce,
+            reactions: {}
+        };
+
+        setMessages(prev => [...prev, optimisticMsg].sort((a, b) => a.timestamp - b.timestamp));
+        soundEffects.play('messageSend', 0.4);
 
         const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
 
@@ -265,17 +180,24 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
                 photoURL: userImage || "",
                 timestamp: serverTimestamp(),
                 replyTo: replyTo || null,
-                reactions: {}
+                reactions: {},
+                nonce
             });
-
-            // Play send sound
-            soundEffects.play('messageSend', 0.4);
-
         } catch (e) {
             console.error("Error sending message:", e);
+            // 2. Error State
+            setMessages(prev => prev.map(m =>
+                m.id === tempId ? { ...m, status: 'error' } : m
+            ));
         }
 
     }, [username, userImage, roomId, isPublic, effectiveRoomId]);
+
+    const retryMessage = useCallback(async (msg: ChatMessage) => {
+        // Remove the error message and retry
+        setMessages(prev => prev.filter(m => m.id !== msg.id));
+        await sendMessage(msg.message, msg.image_url, msg.replyTo);
+    }, [sendMessage]);
 
     // 4. SEND REACTION
     const sendReaction = useCallback(async (messageId: string, emoji: string) => {
@@ -382,11 +304,62 @@ export const ChatProvider = ({ children, roomId = "public" }: { children: ReactN
     }, [username, roomId, isPublic, messages]);
 
     const sendTypingEvent = useCallback(async () => { }, []);
-    const loadMoreMessages = useCallback(async () => { }, []); // TODO: Implement cursor pagination
+    // 2. LOAD MORE (Pagination)
+    const loadMoreMessages = useCallback(async () => {
+        if (isFetchingMore || !hasMore || messages.length === 0) return;
+
+        setIsFetchingMore(true);
+        const oldestMessage = messages[0];
+
+        try {
+            console.log("[ChatDebug] Fetching history older than:", oldestMessage.timestamp);
+            const collectionPath = isPublic ? 'chats' : `rooms/${roomId}/chats`;
+            const q = query(
+                collection(firestore, collectionPath),
+                where('timestamp', '<', oldestMessage.timestamp),
+                orderBy('timestamp', 'desc'),
+                limit(50)
+            );
+
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                setHasMore(false);
+                return;
+            }
+
+            const historyMsgs: ChatMessage[] = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    username: data.username,
+                    message: data.message,
+                    timestamp: parseTimestamp(data.timestamp),
+                    photoURL: data.photoURL,
+                    image_url: data.image_url,
+                    replyTo: data.replyTo,
+                    deleted: data.deleted,
+                    reactions: data.reactions || {}
+                };
+            }).reverse();
+
+            setMessages(prev => {
+                const idMap = new Map<string, ChatMessage>();
+                [...historyMsgs, ...prev].forEach(msg => idMap.set(msg.id, msg));
+                return Array.from(idMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+            });
+
+            if (snapshot.docs.length < 50) setHasMore(false);
+
+        } catch (e) {
+            console.error("Failed to load more messages:", e);
+        } finally {
+            setIsFetchingMore(false);
+        }
+    }, [messages, isFetchingMore, hasMore, roomId, isPublic]);
 
     const value = useMemo(() => ({
-        messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage
-    }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage]);
+        messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage, retryMessage
+    }), [messages, sendMessage, sendReaction, typingUsers, sendTypingEvent, loadMoreMessages, hasMore, deleteMessage, retryMessage]);
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };

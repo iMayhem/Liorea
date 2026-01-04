@@ -18,4 +18,6 @@ export interface ChatMessage {
         message: string;
     };
     deleted?: boolean;
+    status?: 'sending' | 'sent' | 'error';
+    nonce?: string; // For reconciling optimistic updates
 }

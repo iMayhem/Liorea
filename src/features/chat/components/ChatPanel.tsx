@@ -31,7 +31,10 @@ type TenorResult = { id: string; media_formats: { tinygif: { url: string }; medi
 
 
 export default function ChatPanel() {
-    const { messages, sendMessage, sendReaction, sendTypingEvent, typingUsers, loadMoreMessages, hasMore, deleteMessage } = useChat();
+    const {
+        messages, sendMessage, sendReaction, sendTypingEvent,
+        typingUsers, loadMoreMessages, hasMore, deleteMessage, retryMessage
+    } = useChat();
     const { username, leaderboardUsers } = usePresence();
     const { addNotification } = useNotifications();
     const { toast } = useToast();
@@ -99,7 +102,27 @@ export default function ChatPanel() {
     const [mentionIndex, setMentionIndex] = useState(0);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // Debounced Smart Scroll Logic
+    // Pagination & Infinite Scroll
+    const topSentinelRef = useRef<HTMLDivElement>(null);
+    const [isInitialLoadingMore, setIsInitialLoadingMore] = useState(false);
+    const prevScrollHeightRef = useRef<number>(0);
+
+    // Observer for Top Sentinel (Load More)
+    useEffect(() => {
+        if (!hasMore) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && isInitialLoaded) {
+                console.log("[ChatDebug] Top sentinel hit - triggers loadMore");
+                loadMoreMessages();
+            }
+        }, { threshold: 1.0 });
+
+        if (topSentinelRef.current) observer.observe(topSentinelRef.current);
+        return () => observer.disconnect();
+    }, [hasMore, isInitialLoaded, loadMoreMessages]);
+
+    // Initial load timeout and message tracking
     const initialLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const previousMessagesRef = useRef<ChatMessage[]>([]);
 
@@ -125,20 +148,42 @@ export default function ChatPanel() {
         const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
         const isNearBottom = distanceFromBottom < 300;
 
-        if (!isInitialLoaded || isNearBottom) {
+        // SCROLL ANCHORING: If we prepended messages (messages length increased but not near bottom)
+        const isPrepend = messages.length > previousMessages.length && !isNearBottom && isInitialLoaded;
+
+        if (isPrepend) {
+            // Anchor to the previous top message
+            const newScrollHeight = container.scrollHeight;
+            const heightDiff = newScrollHeight - prevScrollHeightRef.current;
+            if (heightDiff > 0) {
+                container.scrollTop += heightDiff;
+            }
+        } else if (!isInitialLoaded || isNearBottom) {
             if (scrollContainerRef.current) {
                 scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
             }
 
-            // Set initial loaded immediately for instant chat appearance
             if (!isInitialLoaded) {
                 setIsInitialLoaded(true);
             }
         }
 
-        // Update previous messages for next comparison
         previousMessagesRef.current = messages;
+        prevScrollHeightRef.current = container.scrollHeight;
     }, [messages, isInitialLoaded]);
+
+    // Force scroll to bottom when initial load completes
+    useEffect(() => {
+        if (messages.length > 0 && isInitialLoaded) {
+            const timer = setTimeout(() => {
+                const container = scrollContainerRef.current;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isInitialLoaded, messages.length]);
 
     useEffect(() => {
         if (isInitialLoaded && messages.length > 0) {
@@ -321,7 +366,10 @@ export default function ChatPanel() {
                 className="flex-1 p-0 overflow-y-auto relative"
             >
                 <div className="p-4 pb-2 min-h-full flex flex-col justify-end">
-                    {hasMore && <div className="text-center py-4 text-xs text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>}
+                    {/* Sentinel for Infinite Scroll */}
+                    <div ref={topSentinelRef} className="h-4 w-full flex items-center justify-center">
+                        {hasMore && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground opacity-50" />}
+                    </div>
 
                     {messages.map((msg, index) => {
                         const isSequence = index > 0 && messages[index - 1].username === msg.username;
@@ -343,6 +391,7 @@ export default function ChatPanel() {
                                 onReact={handleReactionWrapped}
                                 onReply={() => handleReply(msg)}
                                 onDelete={deleteMessage}
+                                onRetry={() => retryMessage(msg)}
                                 onOpenChange={(open) => setOpenReactionPopoverId(open ? msg.id : null)}
                                 formatDate={formatDate}
                                 formatTime={formatTime}

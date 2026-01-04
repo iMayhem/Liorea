@@ -6,6 +6,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { ImageViewer } from '@/components/ui/ImageViewer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePresence } from '@/features/study/context/PresenceContext';
+import { Loader2, AlertCircle, RefreshCcw } from 'lucide-react';
 
 interface ChatMessageItemProps {
     msg: ChatMessage;
@@ -17,6 +18,7 @@ interface ChatMessageItemProps {
     onReact: (id: string, emoji: string) => void;
     onReply: (element: HTMLElement) => void;
     onDelete: (id: string) => void;
+    onRetry: () => void;
     onOpenChange: (open: boolean) => void;
     formatDate: (ts: number) => string;
     formatTime: (ts: number) => string;
@@ -24,7 +26,7 @@ interface ChatMessageItemProps {
 
 export const ChatMessageItem = React.memo(function ChatMessageItem({
     msg, isSequence, showHeader, isCurrentUser, reactionGroups,
-    openReactionPopoverId, onReact, onReply, onDelete, onOpenChange,
+    openReactionPopoverId, onReact, onReply, onDelete, onRetry, onOpenChange,
     formatDate, formatTime
 }: ChatMessageItemProps) {
     const { isMod, username: currentUsername } = usePresence();
@@ -45,7 +47,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     return (
         <div
             id={`message-${msg.id}`}
-            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-1 ${showHeader ? 'mt-4' : 'mt-0'}`}
+            className={`group relative flex gap-4 pr-4 hover:bg-white/[0.04] -mx-4 px-4 transition-colors py-1 ${showHeader ? 'mt-4' : 'mt-0'} ${msg.status === 'sending' ? 'opacity-50' : ''}`}
         >
             <div className="w-10 shrink-0 select-none pt-0.5">
                 {showHeader ? (
@@ -99,6 +101,27 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
                     ) : (
                         <FormattedMessage content={msg.message} />
                     )}
+
+                    {msg.status === 'sending' && (
+                        <span className="inline-flex items-center ml-2 text-[10px] text-muted-foreground animate-pulse">
+                            <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" />
+                            sending...
+                        </span>
+                    )}
+
+                    {msg.status === 'error' && (
+                        <div className="flex items-center gap-2 mt-1 text-red-500 text-xs font-medium">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            Failed to send
+                            <button
+                                onClick={() => onRetry()}
+                                className="flex items-center gap-1 px-2 py-0.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 transition-colors"
+                            >
+                                <RefreshCcw className="w-3 h-3" />
+                                Retry
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {Object.keys(reactionGroups).length > 0 && (
@@ -149,9 +172,10 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
     return (
         prev.msg.id === next.msg.id &&
         prev.msg.message === next.msg.message &&
-        prev.msg.deleted === next.msg.deleted && // Check if deleted state changed
-        reactionsEqual && // Deep compare reactions
-        prev.isSequence === next.isSequence && // Check if position in chain changed
-        prev.openReactionPopoverId === next.openReactionPopoverId // Check if *this* message's popover state changed
+        prev.msg.deleted === next.msg.deleted &&
+        prev.msg.status === next.msg.status && // Check for status changes
+        reactionsEqual &&
+        prev.isSequence === next.isSequence &&
+        prev.openReactionPopoverId === next.openReactionPopoverId
     );
 });
