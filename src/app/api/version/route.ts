@@ -8,6 +8,6 @@ export async function GET() {
         const version = getLatestVersion();
         return NextResponse.json({ version });
     } catch (error) {
-        return NextResponse.json({ version: '1.0.1' }, { status: 500 });
+        return NextResponse.json({ version: '1.0.2' }, { status: 500 });
     }
 }

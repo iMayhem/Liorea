@@ -154,10 +154,10 @@ export const api = {
                 retry: true
             }),
 
-        updateProfile: (photoURL: string) =>
+        updateProfile: (data: { photoURL?: string, username?: string }) =>
             request('/user/profile', {
                 method: 'POST',
-                body: JSON.stringify({ photoURL })
+                body: JSON.stringify(data)
             }),
         updateStatus: (username: string, status_text: string) =>
             request('/user/status', {

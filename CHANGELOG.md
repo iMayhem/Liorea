@@ -2,6 +2,18 @@
 
 All notable changes to Liorea will be documented in this file.
 
+## [1.0.2] - 2026-01-04
+
+### ✨ New Features
+- **Username Change**: Added ability for users to change their display name directly from Profile Settings.
+- **Instant Sync**: Username changes now reflect instantly across the entire application without refresh.
+
+### 🔧 Technical Improvements
+- **API updates**: Enhanced profile update endpoint to support optional username modification.
+- **Validation**: Integrated client-side validation for minimum username length.
+
+---
+
 ## [1.0.1] - 2025-12-26
 
 ### ✨ New Features

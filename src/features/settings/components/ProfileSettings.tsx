@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { usePresence } from '@/features/study/context/PresenceContext';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Upload, LogOut, User as UserIcon, Palette, X, CheckCheck, Settings, Home } from "lucide-react";
@@ -18,10 +19,13 @@ interface ProfileSettingsProps {
 }
 
 export function ProfileSettings({ onClose }: ProfileSettingsProps) {
-    const { username, setUserImage, userImage } = usePresence();
+    const { username, setUsername, setUserImage, userImage } = usePresence();
     const { toast } = useToast();
     const { textSize, setTextSize, font, setFont, theme, setTheme } = useSettings();
     const [loading, setLoading] = useState(false);
+    const [updatingUsername, setUpdatingUsername] = useState(false);
+    const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [tempUsername, setTempUsername] = useState(username || '');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +38,7 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
             setUserImage(url); // Updates Context + Firebase RTDB
 
             // Persist to D1 (So other users/API see it)
-            await api.auth.updateProfile(url);
+            await api.auth.updateProfile({ photoURL: url });
 
             toast({ title: "Avatar Updated" });
         } catch (e) {
@@ -42,6 +46,31 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
             toast({ variant: "destructive", title: "Upload Failed" });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdateUsername = async () => {
+        if (!tempUsername.trim() || tempUsername === username) {
+            setIsEditingUsername(false);
+            return;
+        }
+
+        if (tempUsername.length < 3) {
+            toast({ variant: "destructive", title: "Too short", description: "Username must be at least 3 characters long." });
+            return;
+        }
+
+        setUpdatingUsername(true);
+        try {
+            await api.auth.updateProfile({ username: tempUsername.trim() });
+            setUsername(tempUsername.trim());
+            toast({ title: "Username Updated" });
+            setIsEditingUsername(false);
+        } catch (e: any) {
+            console.error(e);
+            toast({ variant: "destructive", title: "Update Failed", description: e.message || "Username might already be taken." });
+        } finally {
+            setUpdatingUsername(false);
         }
     };
 
@@ -145,6 +174,62 @@ export function ProfileSettings({ onClose }: ProfileSettingsProps) {
                                         <div className="text-center mt-4 space-y-1">
                                             <h3 className="text-2xl font-bold text-foreground tracking-tight">{username || 'User'}</h3>
                                             <p className="text-sm text-muted-foreground font-medium">Ready to focus?</p>
+                                        </div>
+
+                                        {/* Username Edit Section */}
+                                        <div className="w-full mt-8 space-y-4">
+                                            <div className="p-4 rounded-xl bg-background/50 border border-border/50 flex flex-col gap-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-y-0.5">
+                                                        <Label className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Username</Label>
+                                                        {isEditingUsername ? (
+                                                            <div className="pt-1">
+                                                                <Input
+                                                                    value={tempUsername}
+                                                                    onChange={(e) => setTempUsername(e.target.value)}
+                                                                    className="h-9 bg-background border-primary/30 w-48"
+                                                                    autoFocus
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') handleUpdateUsername();
+                                                                        if (e.key === 'Escape') setIsEditingUsername(false);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-foreground font-medium">{username || 'User'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {isEditingUsername ? (
+                                                            <>
+                                                                <Button variant="ghost" size="sm" onClick={() => setIsEditingUsername(false)}>
+                                                                    Cancel
+                                                                </Button>
+                                                                <Button size="sm" onClick={handleUpdateUsername} disabled={updatingUsername}>
+                                                                    {updatingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                                                                </Button>
+                                                            </>
+                                                        ) : (
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                className="bg-muted hover:bg-muted/80"
+                                                                onClick={() => {
+                                                                    setTempUsername(username || '');
+                                                                    setIsEditingUsername(true);
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {!isEditingUsername && (
+                                                    <p className="text-[10px] text-muted-foreground italic">
+                                                        Your username is visible to everyone in the community.
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Actions */}
